@@ -1,5 +1,6 @@
 import cheerio from 'cheerio-without-node-native';
-import { fetchHtml } from '../pelisplus/http.js'; // Usaremos el http.js local estándar
+import { fetchHtml } from '../pelisplus/http.js';
+import { normalizeTitle, calculateSimilarity } from '../utils/string.js';
 
 /**
  * Desempaqueta código ofuscado con P.A.C.K.E.R (usado por reproductores)
@@ -120,20 +121,10 @@ async function resolveGoodstream(embedUrl) {
 }
 
 /**
- * Normaliza un título para comparaciones
+ * Comprueba si un título es una coincidencia aceptable (score > 0.4)
  */
-function normalizeTitle(t) {
-    if (!t) return '';
-    return t.toLowerCase()
-        .replace(/[áàäâ]/g, 'a')
-        .replace(/[éèëê]/g, 'e')
-        .replace(/[íìïî]/g, 'i')
-        .replace(/[óòöô]/g, 'o')
-        .replace(/[úùüû]/g, 'u')
-        .replace(/ñ/g, 'n')
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+function isGoodMatch(query, result, minScore = 0.4) {
+    return calculateSimilarity(query, result) >= minScore;
 }
 
 async function getTmdbInfo(tmdbId, mediaType) {
@@ -188,9 +179,10 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         let movieMatch = searchData.results.find(r => r.tmdb_id == tmdbId && r.type === targetType);
         
         if (!movieMatch) {
-            // Fallback 1: Coincidencia exacta de título normalizado + Tipo
-            const normalizedQuery = normalizeTitle(searchTitle);
-            movieMatch = searchData.results.find(r => normalizeTitle(r.title) === normalizedQuery && r.type === targetType);
+            // Fallback 1: Coincidencia mediante similitud (Fuzzy Match)
+            movieMatch = searchData.results.find(r => 
+                isGoodMatch(searchTitle, r.title) && r.type === targetType
+            );
         }
 
         if (!movieMatch) {

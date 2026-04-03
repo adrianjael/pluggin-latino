@@ -1,4 +1,5 @@
 import { fetchHtml } from './http.js';
+import { normalizeTitle, calculateSimilarity } from '../utils/string.js';
 
 /**
  * Desempaqueta código ofuscado con P.A.C.K.E.R (usado por reproductores)
@@ -148,20 +149,10 @@ async function resolveVimeos(embedUrl) {
 }
 
 /**
- * Normaliza un título para comparaciones
+ * Comprueba si un título es una coincidencia aceptable (score > 0.4)
  */
-function normalizeTitle(t) {
-    if (!t) return '';
-    return t.toLowerCase()
-        .replace(/[áàäâ]/g, 'a')
-        .replace(/[éèëê]/g, 'e')
-        .replace(/[íìïî]/g, 'i')
-        .replace(/[óòöô]/g, 'o')
-        .replace(/[úùüû]/g, 'u')
-        .replace(/ñ/g, 'n')
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+function isGoodMatch(query, result, minScore = 0.4) {
+    return calculateSimilarity(query, result) >= minScore;
 }
 
 async function getTmdbInfo(tmdbId, mediaType) {
@@ -216,8 +207,12 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         }
 
         // 3. Match closest movie/series title/year
-        const normalizedQuery = normalizeTitle(searchTitle);
-        let matchedPost = searchData.data.posts.find(p => normalizeTitle(p.title) === normalizedQuery);
+        let matchedPost = searchData.data.posts.find(p => calculateSimilarity(searchTitle, p.title) > 0.9);
+
+        if (!matchedPost) {
+            // Intento 2: Similitud aceptable (Fuzzy)
+            matchedPost = searchData.data.posts.find(p => isGoodMatch(searchTitle, p.title));
+        }
 
         if (!matchedPost && searchYear) {
             matchedPost = searchData.data.posts.find(p => p.years && p.years.toString().includes(searchYear));

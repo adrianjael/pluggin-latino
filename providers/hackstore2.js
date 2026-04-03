@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-03T20:14:02.615Z
+ * Generated: 2026-04-03T20:21:43.112Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -97,6 +97,29 @@ function fetchHtml(url, referer) {
       return "";
     }
   });
+}
+
+// src/utils/string.js
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function calculateSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.length > 5 && norm2.length > 5 && (norm2.includes(norm1) || norm1.includes(norm2)))
+    return 0.9;
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0) {
+    return norm1 === norm2 ? 1 : norm1.includes(norm2) || norm2.includes(norm1) ? 0.5 : 0;
+  }
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
 }
 
 // src/hackstore2/extractor.js
@@ -232,10 +255,8 @@ function resolveVimeos(embedUrl) {
     }
   });
 }
-function normalizeTitle(t) {
-  if (!t)
-    return "";
-  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+function isGoodMatch(query, result, minScore = 0.4) {
+  return calculateSimilarity(query, result) >= minScore;
 }
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
@@ -282,8 +303,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         console.log("[HackStore2] Not found in search results.");
         return [];
       }
-      const normalizedQuery = normalizeTitle(searchTitle);
-      let matchedPost = searchData.data.posts.find((p) => normalizeTitle(p.title) === normalizedQuery);
+      let matchedPost = searchData.data.posts.find((p) => calculateSimilarity(searchTitle, p.title) > 0.9);
+      if (!matchedPost) {
+        matchedPost = searchData.data.posts.find((p) => isGoodMatch(searchTitle, p.title));
+      }
       if (!matchedPost && searchYear) {
         matchedPost = searchData.data.posts.find((p) => p.years && p.years.toString().includes(searchYear));
       }

@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-03T20:14:02.666Z
+ * Generated: 2026-04-03T20:21:43.178Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -64,58 +64,63 @@ var BASE_URL = "https://www.pelisplushd.la";
 var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var COMMON_HEADERS = {
   "User-Agent": DEFAULT_UA,
-  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-  "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+  "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
   "Cache-Control": "no-cache",
   "Pragma": "no-cache",
-  "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-  "Sec-Ch-Ua-Mobile": "?0",
-  "Sec-Ch-Ua-Platform": '"Windows"',
-  "Sec-Fetch-Dest": "document",
-  "Sec-Fetch-Mode": "navigate",
-  "Sec-Fetch-Site": "none",
-  "Sec-Fetch-User": "?1",
   "Upgrade-Insecure-Requests": "1"
 };
 function fetchText(_0) {
-  return __async(this, arguments, function* (url, options = {}) {
+  return __async(this, arguments, function* (url, referer = BASE_URL) {
     try {
-      const response = yield fetch(url, __spreadValues({
-        headers: __spreadValues(__spreadValues({}, COMMON_HEADERS), options.headers)
-      }, options));
+      const headers = __spreadValues({}, COMMON_HEADERS);
+      if (referer)
+        headers["Referer"] = referer;
+      const response = yield fetch(url, { headers, timeout: 1e4 });
       if (!response.ok) {
-        throw new Error(`HTTP error ${response.status} for ${url}`);
+        console.warn(`[HTTP] Error ${response.status} en ${url}`);
+        return "";
       }
       return yield response.text();
     } catch (error) {
-      console.error(`[PelisPlusHD] Fetch error: ${error.message}`);
-      throw error;
+      console.error(`[HTTP] Fetch error: ${error.message} (${url})`);
+      return "";
     }
   });
 }
 function fetchHtml(url, referer) {
   return __async(this, null, function* () {
-    try {
-      const headers = __spreadValues({}, COMMON_HEADERS);
-      if (referer) {
-        headers["Referer"] = referer;
-        headers["Sec-Fetch-Site"] = "same-origin";
-      }
-      const response = yield fetch(url, {
-        headers
-      });
-      if (!response.ok)
-        throw new Error(`HTTP Error: ${response.status}`);
-      return yield response.text();
-    } catch (error) {
-      console.error(`[PelisPlusHD] fetchHtml error: ${error.message}`);
-      return "";
-    }
+    return fetchText(url, referer);
   });
 }
 
 // src/pelisplus/extractor.js
 var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
+
+// src/utils/string.js
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function calculateSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.length > 5 && norm2.length > 5 && (norm2.includes(norm1) || norm1.includes(norm2)))
+    return 0.9;
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0) {
+    return norm1 === norm2 ? 1 : norm1.includes(norm2) || norm2.includes(norm1) ? 0.5 : 0;
+  }
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+
+// src/pelisplus/extractor.js
 function unpackEval(payload, radix, symtab) {
   return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
     let result = 0;
@@ -131,23 +136,8 @@ function unpackEval(payload, radix, symtab) {
     return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
   });
 }
-function normalizeTitle(t) {
-  if (!t)
-    return "";
-  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-}
-function titleMatch(queryTitle, resultTitle) {
-  const q = normalizeTitle(queryTitle);
-  const r = normalizeTitle(resultTitle);
-  if (!q || !r)
-    return false;
-  if (r === q || r.includes(q) || q.includes(r))
-    return true;
-  const qWords = q.split(" ").filter((w) => w.length > 2);
-  const rWords = r.split(" ");
-  if (qWords.length === 0)
-    return false;
-  return qWords.every((w) => rWords.includes(w));
+function isGoodMatch(query, result, minScore = 0.4) {
+  return calculateSimilarity(query, result) >= minScore;
 }
 function resolveStreamwish(embedUrl) {
   return __async(this, null, function* () {
@@ -297,11 +287,11 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         );
         if (!match) {
           match = results.find(
-            (r) => titleMatch(query, r.title) && r.href.includes(targetType)
+            (r) => isGoodMatch(query, r.title) && r.href.includes(targetType)
           );
         }
         if (!match) {
-          match = results.find((r) => titleMatch(query, r.title));
+          match = results.find((r) => isGoodMatch(query, r.title, 0.3));
         }
         if (match) {
           movieUrl = BASE_URL + match.href;

@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T20:14:02.660Z
+ * Generated: 2026-04-03T20:21:43.171Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -75,41 +75,61 @@ module.exports = __toCommonJS(pelispanda_exports);
 var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
 
 // src/pelisplus/http.js
+var BASE_URL = "https://www.pelisplushd.la";
 var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var COMMON_HEADERS = {
   "User-Agent": DEFAULT_UA,
-  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-  "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+  "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
   "Cache-Control": "no-cache",
   "Pragma": "no-cache",
-  "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-  "Sec-Ch-Ua-Mobile": "?0",
-  "Sec-Ch-Ua-Platform": '"Windows"',
-  "Sec-Fetch-Dest": "document",
-  "Sec-Fetch-Mode": "navigate",
-  "Sec-Fetch-Site": "none",
-  "Sec-Fetch-User": "?1",
   "Upgrade-Insecure-Requests": "1"
 };
-function fetchHtml(url, referer) {
-  return __async(this, null, function* () {
+function fetchText(_0) {
+  return __async(this, arguments, function* (url, referer = BASE_URL) {
     try {
       const headers = __spreadValues({}, COMMON_HEADERS);
-      if (referer) {
+      if (referer)
         headers["Referer"] = referer;
-        headers["Sec-Fetch-Site"] = "same-origin";
+      const response = yield fetch(url, { headers, timeout: 1e4 });
+      if (!response.ok) {
+        console.warn(`[HTTP] Error ${response.status} en ${url}`);
+        return "";
       }
-      const response = yield fetch(url, {
-        headers
-      });
-      if (!response.ok)
-        throw new Error(`HTTP Error: ${response.status}`);
       return yield response.text();
     } catch (error) {
-      console.error(`[PelisPlusHD] fetchHtml error: ${error.message}`);
+      console.error(`[HTTP] Fetch error: ${error.message} (${url})`);
       return "";
     }
   });
+}
+function fetchHtml(url, referer) {
+  return __async(this, null, function* () {
+    return fetchText(url, referer);
+  });
+}
+
+// src/utils/string.js
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function calculateSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.length > 5 && norm2.length > 5 && (norm2.includes(norm1) || norm1.includes(norm2)))
+    return 0.9;
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0) {
+    return norm1 === norm2 ? 1 : norm1.includes(norm2) || norm2.includes(norm1) ? 0.5 : 0;
+  }
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
 }
 
 // src/pelispanda/extractor.js
@@ -226,10 +246,8 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
-function normalizeTitle(t) {
-  if (!t)
-    return "";
-  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+function isGoodMatch(query, result, minScore = 0.4) {
+  return calculateSimilarity(query, result) >= minScore;
 }
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
@@ -274,8 +292,9 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       const targetType = mediaType === "movie" ? "pelicula" : "serie";
       let movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId && r.type === targetType);
       if (!movieMatch) {
-        const normalizedQuery = normalizeTitle(searchTitle);
-        movieMatch = searchData.results.find((r) => normalizeTitle(r.title) === normalizedQuery && r.type === targetType);
+        movieMatch = searchData.results.find(
+          (r) => isGoodMatch(searchTitle, r.title) && r.type === targetType
+        );
       }
       if (!movieMatch) {
         movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId);

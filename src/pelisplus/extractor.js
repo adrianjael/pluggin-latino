@@ -1,8 +1,6 @@
-/**
- * Extractor Logic for PelisPlusHD
- */
 import { fetchText, fetchHtml, BASE_URL } from './http.js';
 import cheerio from 'cheerio-without-node-native';
+import { normalizeTitle, calculateSimilarity } from '../utils/string.js';
 
 /**
  * Desempaqueta código ofuscado con P.A.C.K.E.R (usado por reproductores)
@@ -23,36 +21,10 @@ function unpackEval(payload, radix, symtab) {
 
 
 /**
- * Normaliza un título para comparaciones (quita acentos, caracteres especiales y espacios extra)
+ * Comprueba si un título es una coincidencia aceptable (score > 0.4)
  */
-function normalizeTitle(t) {
-    if (!t) return '';
-    return t.toLowerCase()
-        .replace(/[áàäâ]/g, 'a')
-        .replace(/[éèëê]/g, 'e')
-        .replace(/[íìïî]/g, 'i')
-        .replace(/[óòöô]/g, 'o')
-        .replace(/[úùüû]/g, 'u')
-        .replace(/ñ/g, 'n')
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-}
-
-/**
- * Comprueba si un título encontrado coincide con la búsqueda
- */
-function titleMatch(queryTitle, resultTitle) {
-    const q = normalizeTitle(queryTitle);
-    const r = normalizeTitle(resultTitle);
-    if (!q || !r) return false;
-    if (r === q || r.includes(q) || q.includes(r)) return true;
-    
-    // Si no coincide directo, comparar palabras clave (evitando artículos cortos)
-    const qWords = q.split(' ').filter(w => w.length > 2);
-    const rWords = r.split(' ');
-    if (qWords.length === 0) return false;
-    return qWords.every(w => rWords.includes(w));
+function isGoodMatch(query, result, minScore = 0.4) {
+    return calculateSimilarity(query, result) >= minScore;
 }
 
 async function resolveStreamwish(embedUrl) {
@@ -225,17 +197,17 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 r.href.includes(targetType)
             );
 
-            // Intento 2: Título contiene el query + Tipo exacto
+            // Intento 2: Título parecido mediante similitud (Fuzzy Match)
             if (!match) {
                 match = results.find(r => 
-                    titleMatch(query, r.title) && 
+                    isGoodMatch(query, r.title) && 
                     r.href.includes(targetType)
                 );
             }
 
-            // Intento 3: Cualquier coincidencia de título (Fallback último)
+            // Intento 3: Cualquier coincidencia de título con score mínimo
             if (!match) {
-                match = results.find(r => titleMatch(query, r.title));
+                match = results.find(r => isGoodMatch(query, r.title, 0.3));
             }
 
             if (match) {

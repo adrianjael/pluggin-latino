@@ -1,12 +1,12 @@
 {
   "name": "AdrianJael",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "scrapers": [
     {
       "id": "pelisplus",
       "name": "PelisPlusHD",
       "description": "Peliculas y series en espanol latino desde PelisPlusHD.la",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -29,7 +29,7 @@
       "id": "hackstore2",
       "name": "HackStore2",
       "description": "API Nativa de Peliculas en HD",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -52,7 +52,7 @@
       "id": "pelispanda",
       "name": "PelisPanda",
       "description": "Películas y series directo desde pelispanda.org",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
