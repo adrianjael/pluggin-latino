@@ -233,10 +233,18 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             const qualityStr = player.quality ? player.quality : "HD";
             const langStr = player.lang ? player.lang : "Latino";
 
+            let headers = {};
+            if (serverName === 'vimeos') {
+                headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Referer": "https://vimeos.net/" };
+            } else if (serverName === 'goodstream') {
+                headers = { "Referer": "https://goodstream.one/" };
+            }
+
             streams.push({
                 server: serverName,
                 title: `${serverName} (${langStr}) ${qualityStr}`,
-                url: finalUrl
+                url: finalUrl,
+                headers: headers
             });
         }
 
