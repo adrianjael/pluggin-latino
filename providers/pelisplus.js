@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-03T15:39:39.285Z
+ * Generated: 2026-04-03T16:02:16.409Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -156,14 +156,36 @@ function resolveVidhide(embedUrl) {
     }
   });
 }
-function getTmdbTitle(tmdbId, mediaType) {
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function titleMatch(queryTitle, resultTitle) {
+  const q = normalizeTitle(queryTitle);
+  const r = normalizeTitle(resultTitle);
+  if (!q || !r)
+    return false;
+  if (r === q || r.includes(q) || q.includes(r))
+    return true;
+  const qWords = q.split(" ").filter((w) => w.length > 2);
+  const rWords = r.split(" ");
+  if (qWords.length === 0)
+    return false;
+  return qWords.every((w) => rWords.includes(w));
+}
+function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
       const html = yield fetchText(url);
       const $ = import_cheerio_without_node_native.default.load(html);
       const title = $(".title h2 a").text().trim();
-      return title;
+      const originalTitle = $(".original_title").text().replace("T\xEDtulo original:", "").trim();
+      return {
+        title: title || "",
+        originalTitle: originalTitle || title || ""
+      };
     } catch (error) {
       return null;
     }
@@ -172,22 +194,38 @@ function getTmdbTitle(tmdbId, mediaType) {
 function extractStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
-      const title = yield getTmdbTitle(tmdbId, mediaType);
-      if (!title)
+      const tmdb = yield getTmdbInfo(tmdbId, mediaType);
+      if (!tmdb || !tmdb.title) {
+        console.log(`[PelisPlusHD] No se pudo obtener info de TMDB para ID: ${tmdbId}`);
         return [];
-      const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(title)}`;
-      const searchHtml = yield fetchText(searchUrl);
-      const $search = import_cheerio_without_node_native.default.load(searchHtml);
+      }
+      console.log(`[PelisPlusHD] TMDB Info: Title="${tmdb.title}", Original="${tmdb.originalTitle}"`);
+      const titlesToTry = [tmdb.title];
+      if (tmdb.originalTitle && tmdb.originalTitle !== tmdb.title) {
+        titlesToTry.push(tmdb.originalTitle);
+      }
       let movieUrl = null;
-      $search("a.Posters-link").each((i, el) => {
-        const resultTitle = $search(el).attr("data-title") || "";
-        if (resultTitle.toLowerCase().includes(title.toLowerCase())) {
-          movieUrl = BASE_URL + $search(el).attr("href");
-          return false;
-        }
-      });
-      if (!movieUrl)
+      for (const query of titlesToTry) {
+        console.log(`[PelisPlusHD] Buscando en PelisPlusHD: "${query}"`);
+        const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query)}`;
+        const searchHtml = yield fetchText(searchUrl);
+        const $search = import_cheerio_without_node_native.default.load(searchHtml);
+        $search("a.Posters-link").each((i, el) => {
+          const resultTitle = $search(el).find("p").text().trim() || $search(el).attr("data-title") || "";
+          const matched = titleMatch(query, resultTitle) || titleMatch(tmdb.title, resultTitle);
+          console.log(`[PelisPlusHD] Comparando: B\xFAsqueda="${query}" vs Resultado="${resultTitle}" -> Match: ${matched}`);
+          if (matched) {
+            movieUrl = BASE_URL + $search(el).attr("href");
+            return false;
+          }
+        });
+        if (movieUrl)
+          break;
+      }
+      if (!movieUrl) {
+        console.log(`[PelisPlusHD] No se encontr\xF3 ninguna coincidencia en la web para: ${tmdb.title}`);
         return [];
+      }
       if (mediaType === "tv") {
         movieUrl = movieUrl.replace("/serie/", "/episodio/") + `-${season}x${episode}`;
       }
@@ -197,11 +235,39 @@ function extractStreams(tmdbId, mediaType, season, episode) {
       $page("li.playurl").each((i, el) => {
         const serverUrl = $page(el).attr("data-url");
         const serverName = $page(el).find("a").text().trim();
-        const language = $page(el).attr("data-name");
-        if (serverUrl && language === "Espa\xF1ol Latino") {
+        const language = $page(el).attr("data-name") || "Espa\xF1ol Latino";
+        if (serverUrl && (language.includes("Latino") || language.includes("Espa\xF1ol"))) {
           rawResults.push({ serverUrl, serverName, language });
         }
       });
+      const scripts = $page("script").map((i, el) => $page(el).html()).get();
+      for (const scriptContent of scripts) {
+        if (scriptContent.includes("var options")) {
+          const optionsMatch = scriptContent.match(/var options = {([\s\S]+?)};/);
+          if (optionsMatch) {
+            const optionsRaw = optionsMatch[1];
+            const urlRegex = /"(option\d+)":\s*"([^"]+)"/g;
+            let match;
+            while ((match = urlRegex.exec(optionsRaw)) !== null) {
+              const optId = match[1];
+              const serverUrl = match[2];
+              const serverName = $page(`a[href="#${optId}"]`).text().trim() || "Servidor";
+              if (serverUrl && serverUrl.startsWith("http")) {
+                rawResults.push({
+                  serverUrl,
+                  serverName,
+                  language: "Espa\xF1ol Latino"
+                  // En el nuevo formato a veces no especifica, asumimos el actual
+                });
+              }
+            }
+          }
+        }
+      }
+      if (rawResults.length === 0) {
+        console.log(`[PelisPlusHD] No se encontraron servidores en la p\xE1gina: ${movieUrl}`);
+        return [];
+      }
       const streams = yield Promise.all(rawResults.map((res) => __async(this, null, function* () {
         let finalUrl = res.serverUrl;
         if (finalUrl.includes("streamwish") || finalUrl.includes("strwish") || finalUrl.includes("wishembed")) {
