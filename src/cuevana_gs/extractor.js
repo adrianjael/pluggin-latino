@@ -159,10 +159,12 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     let resolvePromise;
                     if (server === 'voe') {
                         resolvePromise = resolveVoesx(embedUrl);
-                    } else if (server === 'vimeos' || server === 'goodstream') {
-                        // Para Vimeos pasamos el embed directamente, ya que su m3u8 
-                        // es muy protegido. Nuvio lo abrirá en su WebView interno.
+                    } else if (server === 'vimeos') {
+                        // Vimeos funciona con embed directo
                         resolvePromise = Promise.resolve(embedUrl);
+                    } else if (server === 'goodstream') {
+                        // Goodstream da error 403 forbidden
+                        return Promise.resolve(null);
                     } else {
                         resolvePromise = resolveGenericEmbed(embedUrl);
                     }

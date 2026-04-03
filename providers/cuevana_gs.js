@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-03T23:41:39.252Z
+ * Generated: 2026-04-03T23:54:10.607Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -202,8 +202,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           let resolvePromise;
           if (server === "voe") {
             resolvePromise = resolveVoesx(embedUrl);
-          } else if (server === "vimeos" || server === "goodstream") {
+          } else if (server === "vimeos") {
             resolvePromise = Promise.resolve(embedUrl);
+          } else if (server === "goodstream") {
+            return Promise.resolve(null);
           } else {
             resolvePromise = resolveGenericEmbed(embedUrl);
           }

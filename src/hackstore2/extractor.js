@@ -292,7 +292,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (rawUrl.includes('vimeos')) serverName = 'vimeos';
             else if (rawUrl.includes('netu') || rawUrl.includes('waaw')) serverName = 'netu';
             
-            // Vimeos y goodstream se mandan directo
+            // Vimeos se manda directo pero Goodstream falla con 403
+            if (serverName === 'goodstream') return null;
 
             // Resolve
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);

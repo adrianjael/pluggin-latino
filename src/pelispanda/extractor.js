@@ -235,7 +235,9 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (finalUrl.includes('goodstream')) serverName = 'goodstream';
             else if (finalUrl.includes('netu') || finalUrl.includes('waaw')) serverName = 'netu';
             
-            // Vimeos y goodstream se envían directamente porque Nuvio hookea el js
+            // Vimeos se envía directamente porque Nuvio hookea el js
+            // Goodstream se bloquea porque da error 403
+            if (serverName === 'goodstream') return null;
             // Resolvemos protección
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);

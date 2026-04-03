@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-03T23:41:39.313Z
+ * Generated: 2026-04-03T23:54:10.669Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -351,6 +351,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           serverName = "vimeos";
         else if (rawUrl.includes("netu") || rawUrl.includes("waaw"))
           serverName = "netu";
+        if (serverName === "goodstream")
+          return null;
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
