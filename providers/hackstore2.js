@@ -1,10 +1,8 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-03T23:13:15.009Z
+ * Generated: 2026-04-03T23:27:18.268Z
  */
 var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -20,19 +18,6 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -53,13 +38,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/hackstore2/index.js
-var hackstore2_exports = {};
-__export(hackstore2_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(hackstore2_exports);
 
 // src/hackstore2/http.js
 var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -255,6 +233,24 @@ function resolveVimeos(embedUrl) {
     }
   });
 }
+function resolveFilemoon(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
+      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+        const m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i) || unpacked.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/i);
+        if (m3u8)
+          return (m3u8[1] || m3u8[0]).replace(/\\/g, "");
+      }
+      const rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      return rawM3u8 ? rawM3u8[0] : embedUrl;
+    } catch (e) {
+      return embedUrl;
+    }
+  });
+}
 function isGoodMatch(query, result, minScore = 0.4) {
   return calculateSimilarity(query, result) >= minScore;
 }
@@ -366,8 +362,9 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           finalUrl = yield resolveVoesx(finalUrl);
         else if (serverName === "vimeos")
           finalUrl = yield resolveVimeos(finalUrl);
-        const isDirectSource = finalUrl.includes(".m3u8") || finalUrl.includes(".mp4");
-        if (!isDirectSource) {
+        else if (serverName === "filemoon")
+          finalUrl = yield resolveFilemoon(finalUrl);
+        if (!finalUrl.startsWith("http")) {
           return null;
         }
         const qualityStr = player.quality ? player.quality : "HD";
@@ -407,3 +404,4 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
     }
   });
 }
+module.exports = { getStreams };

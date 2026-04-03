@@ -1,12 +1,10 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-03T23:13:14.819Z
+ * Generated: 2026-04-03T23:27:18.214Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -23,19 +21,6 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -56,13 +41,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/cuevana_gs/index.js
-var cuevana_gs_exports = {};
-__export(cuevana_gs_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(cuevana_gs_exports);
 
 // src/cuevana_gs/extractor.js
 var BASE_URL = "https://cuevana.gs";
@@ -156,11 +134,31 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
+function getTmdbTitle(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    try {
+      const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
+      const res = yield fetch(url, { headers: { "User-Agent": BASE_HEADERS["User-Agent"] } });
+      const html = yield res.text();
+      const titleMatch = html.match(/<title>(.*?)(?:\s+&\#8212;|\s+-|\s+\()/);
+      if (titleMatch) {
+        return titleMatch[1].trim();
+      }
+    } catch (e) {
+    }
+    return null;
+  });
+}
 function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
   return __async(this, null, function* () {
     console.log(`[Cuevana.gs] Extracting: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
     try {
-      const query = encodeURIComponent(providedTitle || String(tmdbId));
+      let searchTitle = providedTitle;
+      if (!searchTitle) {
+        searchTitle = yield getTmdbTitle(tmdbId, mediaType);
+        console.log(`[Cuevana.gs] TMDB Fallback Title: ${searchTitle}`);
+      }
+      const query = encodeURIComponent(searchTitle || String(tmdbId));
       const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${query}&postsPerPage=5`;
       const searchRes = yield fetch(searchUrl, { headers: BASE_HEADERS });
       const searchJson = yield searchRes.json();
@@ -208,7 +206,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             resolvePromise = resolveGenericEmbed(embedUrl);
           }
           return resolvePromise.then(function(finalUrl) {
-            if (!finalUrl || !finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
+            if (!finalUrl || !finalUrl.startsWith("http")) {
               return null;
             }
             return {
@@ -250,3 +248,4 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
+module.exports = { getStreams };

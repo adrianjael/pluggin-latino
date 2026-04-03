@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T23:13:15.016Z
+ * Generated: 2026-04-03T23:27:18.275Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -22,10 +22,6 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -42,7 +38,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -63,13 +58,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/pelispanda/index.js
-var pelispanda_exports = {};
-__export(pelispanda_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(pelispanda_exports);
 
 // src/pelispanda/extractor.js
 var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
@@ -347,7 +335,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
-        if (!finalUrl || !finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
+        if (!finalUrl || !finalUrl.startsWith("http")) {
           return null;
         }
         const qualityStr = player.quality ? player.quality : "HD";
@@ -380,3 +368,4 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
     return extractStreams(tmdbId, mediaType, season, episode, title, year);
   });
 }
+module.exports = { getStreams };

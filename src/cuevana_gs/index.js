@@ -1,6 +1,6 @@
 import { extractStreams } from './extractor.js';
 
-export async function getStreams(tmdbId, mediaType, season, episode, title) {
+async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         return await extractStreams(tmdbId, mediaType, season, episode, title);
     } catch (e) {
@@ -8,3 +8,4 @@ export async function getStreams(tmdbId, mediaType, season, episode, title) {
         return [];
     }
 }
+module.exports = { getStreams };

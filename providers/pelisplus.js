@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-03T23:13:15.021Z
+ * Generated: 2026-04-03T23:27:18.285Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -347,7 +347,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           finalUrl = yield resolveVidhide(finalUrl);
         else if (isVoesx)
           finalUrl = yield resolveVoesx(finalUrl);
-        if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
+        if (!finalUrl.startsWith("http")) {
           return null;
         }
         const cleanServerName = res.serverName.replace(/\s*\(.*?\)\s*/g, "").trim();

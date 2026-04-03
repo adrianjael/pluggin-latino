@@ -268,11 +268,9 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (isVidhide) finalUrl = await resolveVidhide(finalUrl);
             else if (isVoesx) finalUrl = await resolveVoesx(finalUrl);
 
-            // FILTRO ESTRICTO MANDATORIO (v1.3.2):
-            // ExoPlayer (el motor de Nuvio) crashea ("ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED")
-            // si le entregamos una vista de página HTML.
-            // Regla de Oro Nuvio: Si no es un directo m3u8/mp4, se borra. Cero tolerancia a errores.
-            if (!finalUrl.includes('.m3u8') && !finalUrl.includes('.mp4')) {
+            // Permitir que Nuvio utilice su reproductor externo/interno para WebView (como Filemoon)
+            // si no logramos sacar el directo m3u8.
+            if (!finalUrl.startsWith('http')) {
                 return null;
             }
 

@@ -79,11 +79,30 @@ async function resolveVoesx(embedUrl) {
     } catch(e) { return null; }
 }
 
+async function getTmdbTitle(tmdbId, mediaType) {
+    try {
+        const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
+        const res = await fetch(url, { headers: { 'User-Agent': BASE_HEADERS['User-Agent'] } });
+        const html = await res.text();
+        const titleMatch = html.match(/<title>(.*?)(?:\s+&\#8212;|\s+-|\s+\()/);
+        if (titleMatch) {
+            return titleMatch[1].trim();
+        }
+    } catch(e) {}
+    return null;
+}
+
 export async function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
     console.log(`[Cuevana.gs] Extracting: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
 
     try {
-        const query = encodeURIComponent(providedTitle || String(tmdbId));
+        let searchTitle = providedTitle;
+        if (!searchTitle) {
+            searchTitle = await getTmdbTitle(tmdbId, mediaType);
+            console.log(`[Cuevana.gs] TMDB Fallback Title: ${searchTitle}`);
+        }
+
+        const query = encodeURIComponent(searchTitle || String(tmdbId));
         const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${query}&postsPerPage=5`;
         const searchRes = await fetch(searchUrl, { headers: BASE_HEADERS });
         const searchJson = await searchRes.json();
@@ -145,7 +164,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     }
 
                     return resolvePromise.then(function(finalUrl) {
-                        if (!finalUrl || (!finalUrl.includes('.m3u8') && !finalUrl.includes('.mp4'))) {
+                        if (!finalUrl || !finalUrl.startsWith('http')) {
                             return null;
                         }
                         return {

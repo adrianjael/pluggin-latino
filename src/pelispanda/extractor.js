@@ -243,7 +243,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
             
-            if (!finalUrl || (!finalUrl.includes('.m3u8') && !finalUrl.includes('.mp4'))) {
+            if (!finalUrl || !finalUrl.startsWith('http')) {
                 return null;
             }
 

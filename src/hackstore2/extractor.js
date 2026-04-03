@@ -148,6 +148,22 @@ async function resolveVimeos(embedUrl) {
     }
 }
 
+async function resolveFilemoon(embedUrl) {
+    try {
+        let body = await fetchHtml(embedUrl, embedUrl);
+        const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+        if (packMatch) {
+            const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+            const m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i) || unpacked.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/i);
+            if (m3u8) return (m3u8[1] || m3u8[0]).replace(/\\/g, '');
+        }
+        const rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        return rawM3u8 ? rawM3u8[0] : embedUrl;
+    } catch (e) {
+        return embedUrl;
+    }
+}
+
 /**
  * Comprueba si un título es una coincidencia aceptable (score > 0.4)
  */
@@ -286,10 +302,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
             else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
+            else if (serverName === 'filemoon') finalUrl = await resolveFilemoon(finalUrl);
             
-            // Filtro Cero Crashes
-            const isDirectSource = finalUrl.includes('.m3u8') || finalUrl.includes('.mp4');
-            if (!isDirectSource) {
+            // Permitimos URLs puras de embeds (filemoon, voe) porque el jugador de Nuvio (o WebView)
+            // puede resolverlas nativamente en algunos casos si falló nuestro extractor directo.
+            if (!finalUrl.startsWith('http')) {
                 return null;
             }
 
