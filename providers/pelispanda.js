@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T18:17:23.506Z
+ * Generated: 2026-04-03T18:24:17.223Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -347,9 +347,9 @@ function extractStreams(tmdbId, mediaType, season, episode) {
         const langStr = player.lang ? player.lang : "Latino";
         let headers = {};
         if (serverName === "vimeos") {
-          headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Referer": "https://vimeos.net/" };
+          headers = { "Referer": rawUrl };
         } else if (serverName === "goodstream") {
-          headers = { "Referer": "https://goodstream.one/" };
+          headers = { "Referer": rawUrl };
         }
         streams.push({
           server: serverName,

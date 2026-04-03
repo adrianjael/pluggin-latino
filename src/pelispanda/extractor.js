@@ -235,9 +235,9 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
 
             let headers = {};
             if (serverName === 'vimeos') {
-                headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Referer": "https://vimeos.net/" };
+                headers = { "Referer": rawUrl };
             } else if (serverName === 'goodstream') {
-                headers = { "Referer": "https://goodstream.one/" };
+                headers = { "Referer": rawUrl };
             }
 
             streams.push({
