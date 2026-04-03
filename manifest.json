@@ -1,0 +1,26 @@
+[
+  {
+    "id": "pelisplus",
+    "name": "PelisPlusHD",
+    "description": "Películas y Series en Español Latino desde PelisPlusHD.la",
+    "version": "1.0.0",
+    "author": "Nuvio Community",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/pelisplus.js",
+    "enabled": true,
+    "logo": "https://www.pelisplushd.la/images/logo/logo5.png",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "m3u8",
+      "mp4"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  }
+]
