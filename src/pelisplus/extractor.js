@@ -235,13 +235,13 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             
             if (isStreamwish) finalUrl = await resolveStreamwish(finalUrl);
             else if (isVidhide) finalUrl = await resolveVidhide(finalUrl);
-            else if (isVoesx) {
-                finalUrl = await resolveVoesx(finalUrl);
-            }
+            else if (isVoesx) finalUrl = await resolveVoesx(finalUrl);
 
-            // FILTRO INTELIGENTE: Si es VidHide o Streamwish pero no extrajo .m3u8, lo descartamos
-            // VoeSX se deja pasar con su URL final (espejo) porque usa ofuscación avanzada
-            if ((isStreamwish || isVidhide) && !finalUrl.includes('.m3u8')) {
+            // FILTRO ESTRICTO MANDATORIO (v1.3.2):
+            // ExoPlayer (el motor de Nuvio) crashea ("ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED")
+            // si le entregamos una vista de página HTML.
+            // Regla de Oro Nuvio: Si no es un directo m3u8/mp4, se borra. Cero tolerancia a errores.
+            if (!finalUrl.includes('.m3u8') && !finalUrl.includes('.mp4')) {
                 return null;
             }
 
