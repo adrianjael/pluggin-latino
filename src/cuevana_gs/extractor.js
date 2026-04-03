@@ -1,12 +1,12 @@
 const BASE_URL = 'https://cuevana.gs';
-const BASE_HEADERS = { 
+const BASE_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     'Referer': BASE_URL,
     'Accept-Language': 'es-ES,es;q=0.9'
 };
 
 function unpackEval(payload, radix, symtab) {
-    return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
+    return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function (match) {
         let result = 0;
         const digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         for (let i = 0; i < match.length; i++) {
@@ -14,6 +14,7 @@ function unpackEval(payload, radix, symtab) {
             if (pos === -1 || pos >= radix) return match;
             result = result * radix + pos;
         }
+
         if (result >= symtab.length) return match;
         return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
     });
@@ -49,7 +50,7 @@ async function resolveGenericEmbed(embedUrl) {
     try {
         const html = await fetchHtml(embedUrl, BASE_URL);
         return extractM3u8FromHtml(html);
-    } catch(e) { return null; }
+    } catch (e) { return null; }
 }
 
 async function resolveVoesx(embedUrl) {
@@ -73,10 +74,10 @@ async function resolveVoesx(embedUrl) {
                 let reversed = shifted.split('').reverse().join('');
                 let data = JSON.parse(decodeBase64(reversed));
                 if (data && data.source) return data.source;
-            } catch(ex) {}
+            } catch (ex) { }
         }
         return extractM3u8FromHtml(html);
-    } catch(e) { return null; }
+    } catch (e) { return null; }
 }
 
 async function getTmdbTitle(tmdbId, mediaType) {
@@ -88,7 +89,7 @@ async function getTmdbTitle(tmdbId, mediaType) {
         if (titleMatch) {
             return titleMatch[1].trim();
         }
-    } catch(e) {}
+    } catch (e) { }
     return null;
 }
 
@@ -115,8 +116,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const posts = searchJson.data.posts;
         const isMovie = mediaType === 'movie';
         const post = posts.find(p => String(p.tmdb_id) === String(tmdbId)) ||
-                     posts.find(p => p.post_type === (isMovie ? 'pelicula' : 'series')) ||
-                     posts[0];
+            posts.find(p => p.post_type === (isMovie ? 'pelicula' : 'series')) ||
+            posts[0];
 
         const postId = post._id;
         console.log(`[Cuevana.gs] Match: "${post.title}" (postId: ${postId})`);
@@ -137,7 +138,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const embeds = playerJson.data.embeds;
         console.log(`[Cuevana.gs] Embeds found: ${embeds.length}`);
 
-        const streamPromises = embeds.map(function(embed) {
+        const streamPromises = embeds.map(function (embed) {
             const proxyUrl = embed.url;
             const lang = embed.lang || 'Latino';
             const quality = embed.quality || 'HD';
@@ -146,12 +147,12 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             try {
                 const urlObj = new URL(proxyUrl);
                 server = (urlObj.searchParams.get('server') || 'unknown').toLowerCase();
-            } catch(e) {}
+            } catch (e) { }
 
             console.log(`[Cuevana.gs] -> Resolving [${server}] ${lang} ${quality}`);
 
             return fetchHtml(proxyUrl, BASE_URL)
-                .then(function(proxyHtml) {
+                .then(function (proxyHtml) {
                     const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
                     if (!iframeMatch) return null;
                     const embedUrl = iframeMatch[1];
@@ -163,7 +164,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                         resolvePromise = resolveGenericEmbed(embedUrl);
                     }
 
-                    return resolvePromise.then(function(finalUrl) {
+                    return resolvePromise.then(function (finalUrl) {
                         if (!finalUrl || !finalUrl.startsWith('http')) {
                             return null;
                         }
@@ -179,11 +180,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                         };
                     });
                 })
-                .catch(function() { return null; });
+                .catch(function () { return null; });
         });
 
         const results = await Promise.all(streamPromises);
-        const streams = results.filter(function(s) { return s !== null; });
+        const streams = results.filter(function (s) { return s !== null; });
         console.log(`[Cuevana.gs] Final streams: ${streams.length}`);
         return streams;
 
