@@ -4,7 +4,7 @@ import { fetchHtml } from './http.js';
  * Desempaqueta código ofuscado con P.A.C.K.E.R (usado por reproductores)
  */
 function unpackEval(payload, radix, symtab) {
-    return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
+    return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function (match) {
         let result = 0;
         const digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         for (let i = 0; i < match.length; i++) {
@@ -21,7 +21,7 @@ function unpackEval(payload, radix, symtab) {
 async function resolveStreamwish(embedUrl) {
     try {
         let body = await fetchHtml(embedUrl, embedUrl);
-        
+
         if (body.includes('Page is loading') || body.length < 2000) {
             const mirrorMatch = body.match(/main\s*:\s*\["([^"]+)"/i) || body.match(/["'](https?:\/\/[^"']+\/e\/[\w-]+)["']/i);
             if (mirrorMatch) {
@@ -33,11 +33,11 @@ async function resolveStreamwish(embedUrl) {
         const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
         if (packMatch) {
             const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-            const m3u8 = unpacked.match(/"?(?:file|hls(?:2|3)?)"?\s*[:=]\s*"?([^"'\s,]+\.m3u8[^"'\s]*)"?/i) || 
-                         unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+            const m3u8 = unpacked.match(/"?(?:file|hls(?:2|3)?)"?\s*[:=]\s*"?([^"'\s,]+\.m3u8[^"'\s]*)"?/i) ||
+                unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
             if (m3u8) return (m3u8[1] || m3u8[0]).replace(/\\/g, '');
         }
-        
+
         const rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
         return rawM3u8 ? rawM3u8[0] : embedUrl;
     } catch (e) {
@@ -48,10 +48,10 @@ async function resolveStreamwish(embedUrl) {
 async function resolveVidhide(embedUrl) {
     try {
         let body = await fetchHtml(embedUrl, embedUrl);
-        
+
         if (body.includes('Loading') || body.length < 2000) {
-             const mirrorMatch = body.match(/["'](https?:\/\/[^"']+\/v\/[\w-]+)["']/i);
-             if (mirrorMatch) body = await fetchHtml(mirrorMatch[1], mirrorMatch[1]);
+            const mirrorMatch = body.match(/["'](https?:\/\/[^"']+\/v\/[\w-]+)["']/i);
+            if (mirrorMatch) body = await fetchHtml(mirrorMatch[1], mirrorMatch[1]);
         }
 
         const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
@@ -70,19 +70,19 @@ async function resolveVidhide(embedUrl) {
 
 // Base64 Decode seguro (para entornos sin atob como Hermes puro)
 function decodeBase64(input) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-  let str = String(input).replace(/=+$/, '');
-  let output = '';
-  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
-    buffer = chars.indexOf(buffer);
-  }
-  return output;
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let str = String(input).replace(/=+$/, '');
+    let output = '';
+    for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+        buffer = chars.indexOf(buffer);
+    }
+    return output;
 }
 
 async function resolveVoesx(embedUrl) {
     try {
         let body = await fetchHtml(embedUrl, embedUrl);
-        
+
         if (body.includes('Redirecting') || body.length < 1000) {
             const redirectMatch = body.match(/window\.location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/i);
             if (redirectMatch) body = await fetchHtml(redirectMatch[1], redirectMatch[1]);
@@ -93,30 +93,30 @@ async function resolveVoesx(embedUrl) {
         if (jsonMatch) {
             try {
                 let encText = JSON.parse(jsonMatch[1].trim())[0];
-                let rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
+                let rot13 = encText.replace(/[a-zA-Z]/g, function (c) {
                     return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
                 });
                 const noise = ['@$', '^^', '~@', '%?', '*~', '!!', '#&'];
                 for (const n of noise) rot13 = rot13.split(n).join('');
-                
+
                 let b64_1 = decodeBase64(rot13);
                 let shifted = "";
-                for(let i=0; i<b64_1.length; i++) shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
-                
+                for (let i = 0; i < b64_1.length; i++) shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+
                 let reversed = shifted.split('').reverse().join('');
                 let b64_2 = decodeBase64(reversed);
-                
+
                 // Limpiar posibles caracteres de escape JSON
                 let data = JSON.parse(b64_2);
                 if (data && data.source) return data.source;
-            } catch(ex) {
+            } catch (ex) {
                 console.log("[HackStore2] Error rompiendo VoeSX:", ex.message);
             }
         }
 
         const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
         if (m3u8) return m3u8[0].replace(/\\/g, '');
-        
+
         return embedUrl;
     } catch (e) {
         return embedUrl;
@@ -128,17 +128,17 @@ async function resolveVimeos(embedUrl) {
         console.log(`[HackStore2] Resolving Vimeos/Goodstream: ${embedUrl}`);
         // Necesitamos el Referer de HackStore2 para evitar bloqueos
         const body = await fetchHtml(embedUrl, "https://hackstore2.com/");
-        
+
         // Buscamos el patrón del master.m3u8 con su token dinámico (JWPlayer)
         // Patrón detectado: https://.../master.m3u8?t=...
         const m3u8Match = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        
+
         if (m3u8Match) {
             const finalUrl = m3u8Match[0].replace(/\\/g, '');
             console.log(`[HackStore2] Direct source found: ${finalUrl}`);
             return finalUrl;
         }
-        
+
         console.log(`[HackStore2] No direct .m3u8 found in vimeos/goodstream embed.`);
         return embedUrl;
     } catch (e) {
@@ -169,13 +169,13 @@ async function getTmdbInfo(tmdbId, mediaType) {
         const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
         const html = await fetchHtml(url, url); // we can reuse fetchHtml since it just returns text
         const $ = cheerio.load(html);
-        
+
         const title = $('.title h2 a').text().trim();
         const originalTitle = $('.original_title').text().replace('Título original:', '').trim();
         const releaseYear = $('.release_date').text().match(/\d{4}/);
-        
-        return { 
-            title: title || '', 
+
+        return {
+            title: title || '',
             originalTitle: originalTitle || title || '',
             year: releaseYear ? releaseYear[0] : null
         };
@@ -218,7 +218,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         // 3. Match closest movie/series title/year
         const normalizedQuery = normalizeTitle(searchTitle);
         let matchedPost = searchData.data.posts.find(p => normalizeTitle(p.title) === normalizedQuery);
-        
+
         if (!matchedPost && searchYear) {
             matchedPost = searchData.data.posts.find(p => p.years && p.years.toString().includes(searchYear));
         }
@@ -244,8 +244,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             }
 
             // Buscar temporada y episodio (con campos correctos: season_number, episode_number)
-            const episodeMatch = episodesData.data.find(e => 
-                e.season_number.toString() === season.toString() && 
+            const episodeMatch = episodesData.data.find(e =>
+                e.season_number.toString() === season.toString() &&
                 e.episode_number.toString() === episode.toString()
             );
 
@@ -262,7 +262,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${finalPostId}`;
         const playerRes = await fetch(playerUrl);
         const playerData = await playerRes.json();
-        
+
         if (!playerData || playerData.error || !playerData.data || !Array.isArray(playerData.data)) {
             console.log("[HackStore2] No players found.");
             return [];
@@ -283,13 +283,13 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (rawUrl.includes('vimeos')) serverName = 'vimeos';
             else if (rawUrl.includes('goodstream')) serverName = 'goodstream';
             else if (rawUrl.includes('netu') || rawUrl.includes('waaw')) serverName = 'netu';
-            
+
             // Resolve
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
             else if (serverName === 'vimeos' || serverName === 'goodstream') finalUrl = await resolveVimeos(finalUrl);
-            
+
             // Filtro Cero Crashes
             const isDirectSource = finalUrl.includes('.m3u8') || finalUrl.includes('.mp4');
             if (!isDirectSource) {
