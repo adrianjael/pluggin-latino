@@ -304,7 +304,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             streams.push({
                 server: serverName,
                 title: `${serverName} (${langStr}) ${qualityStr}`,
-                url: finalUrl
+                url: finalUrl,
+                headers: {
+                    "Referer": rawUrl, // Necesario para Vimeos/Goodstream
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                }
             });
         }
 

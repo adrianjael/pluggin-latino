@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-03T19:58:52.769Z
+ * Generated: 2026-04-03T20:06:04.123Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -353,7 +353,12 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         streams.push({
           server: serverName,
           title: `${serverName} (${langStr}) ${qualityStr}`,
-          url: finalUrl
+          url: finalUrl,
+          headers: {
+            "Referer": rawUrl,
+            // Necesario para Vimeos/Goodstream
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          }
         });
       }
       return streams;
