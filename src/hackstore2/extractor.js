@@ -214,15 +214,15 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             const episodesRes = await fetch(episodesUrl);
             const episodesData = await episodesRes.json();
 
-            if (!episodesData || !Array.isArray(episodesData)) {
+            if (!episodesData || !episodesData.data || !Array.isArray(episodesData.data)) {
                 console.log("[HackStore2] No episodes found for this series.");
                 return [];
             }
 
-            // Buscar temporada y episodio (number)
-            const episodeMatch = episodesData.find(e => 
-                e.season.toString() === season.toString() && 
-                e.number.toString() === episode.toString()
+            // Buscar temporada y episodio (con campos correctos: season_number, episode_number)
+            const episodeMatch = episodesData.data.find(e => 
+                e.season_number.toString() === season.toString() && 
+                e.episode_number.toString() === episode.toString()
             );
 
             if (!episodeMatch) {
@@ -239,7 +239,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const playerRes = await fetch(playerUrl);
         const playerData = await playerRes.json();
         
-        if (!playerData || playerData.error || !playerData.data || !playerData.data.players) {
+        if (!playerData || playerData.error || !playerData.data || !Array.isArray(playerData.data)) {
             console.log("[HackStore2] No players found.");
             return [];
         }
@@ -247,7 +247,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const streams = [];
 
         // 6. Resolve links
-        for (let player of playerData.data.players) {
+        for (let player of playerData.data) {
             let serverName = "Desconocido";
             let rawUrl = player.url || "";
             let finalUrl = rawUrl;

@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-03T19:26:45.787Z
+ * Generated: 2026-04-03T19:29:22.914Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -278,12 +278,12 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         const episodesUrl = `https://hackstore2.com/api/rest/episodes?post_id=${finalPostId}`;
         const episodesRes = yield fetch(episodesUrl);
         const episodesData = yield episodesRes.json();
-        if (!episodesData || !Array.isArray(episodesData)) {
+        if (!episodesData || !episodesData.data || !Array.isArray(episodesData.data)) {
           console.log("[HackStore2] No episodes found for this series.");
           return [];
         }
-        const episodeMatch = episodesData.find(
-          (e) => e.season.toString() === season.toString() && e.number.toString() === episode.toString()
+        const episodeMatch = episodesData.data.find(
+          (e) => e.season_number.toString() === season.toString() && e.episode_number.toString() === episode.toString()
         );
         if (!episodeMatch) {
           console.log(`[HackStore2] Episode S${season}E${episode} not found in this series.`);
@@ -295,12 +295,12 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
       const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${finalPostId}`;
       const playerRes = yield fetch(playerUrl);
       const playerData = yield playerRes.json();
-      if (!playerData || playerData.error || !playerData.data || !playerData.data.players) {
+      if (!playerData || playerData.error || !playerData.data || !Array.isArray(playerData.data)) {
         console.log("[HackStore2] No players found.");
         return [];
       }
       const streams = [];
-      for (let player of playerData.data.players) {
+      for (let player of playerData.data) {
         let serverName = "Desconocido";
         let rawUrl = player.url || "";
         let finalUrl = rawUrl;
