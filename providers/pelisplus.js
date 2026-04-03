@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-03T16:02:16.409Z
+ * Generated: 2026-04-03T16:16:29.692Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -61,18 +61,27 @@ var __async = (__this, __arguments, generator) => {
 
 // src/pelisplus/http.js
 var BASE_URL = "https://www.pelisplushd.la";
-var HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36",
-  "Referer": BASE_URL,
-  "Origin": BASE_URL,
-  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,nextjs/j,nextjs/m,*/*;q=0.8",
-  "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"
+var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var COMMON_HEADERS = {
+  "User-Agent": DEFAULT_UA,
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+  "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+  "Cache-Control": "no-cache",
+  "Pragma": "no-cache",
+  "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+  "Sec-Ch-Ua-Mobile": "?0",
+  "Sec-Ch-Ua-Platform": '"Windows"',
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "none",
+  "Sec-Fetch-User": "?1",
+  "Upgrade-Insecure-Requests": "1"
 };
 function fetchText(_0) {
   return __async(this, arguments, function* (url, options = {}) {
     try {
       const response = yield fetch(url, __spreadValues({
-        headers: __spreadValues(__spreadValues({}, HEADERS), options.headers)
+        headers: __spreadValues(__spreadValues({}, COMMON_HEADERS), options.headers)
       }, options));
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status} for ${url}`);
@@ -87,12 +96,13 @@ function fetchText(_0) {
 function fetchHtml(url, referer) {
   return __async(this, null, function* () {
     try {
+      const headers = __spreadValues({}, COMMON_HEADERS);
+      if (referer) {
+        headers["Referer"] = referer;
+        headers["Sec-Fetch-Site"] = "same-origin";
+      }
       const response = yield fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36",
-          "Referer": referer || BASE_URL,
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-        }
+        headers
       });
       if (!response.ok)
         throw new Error(`HTTP Error: ${response.status}`);
@@ -121,41 +131,6 @@ function unpackEval(payload, radix, symtab) {
     return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
   });
 }
-function resolveStreamwish(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      const body = yield fetchHtml(embedUrl);
-      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[^)]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        const m3u8 = unpacked.match(/"?hls[234]"?\s*[:=]\s*"?([^"'\s,]+\.m3u8[^"'\s]*)"?/i) || unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        if (m3u8)
-          return m3u8[1] || m3u8[0];
-      }
-      const rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-      return rawM3u8 ? rawM3u8[0] : embedUrl;
-    } catch (e) {
-      return embedUrl;
-    }
-  });
-}
-function resolveVidhide(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      const body = yield fetchHtml(embedUrl);
-      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        const m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        if (m3u8)
-          return m3u8[0];
-      }
-      return embedUrl;
-    } catch (e) {
-      return embedUrl;
-    }
-  });
-}
 function normalizeTitle(t) {
   if (!t)
     return "";
@@ -173,6 +148,54 @@ function titleMatch(queryTitle, resultTitle) {
   if (qWords.length === 0)
     return false;
   return qWords.every((w) => rWords.includes(w));
+}
+function resolveStreamwish(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
+      if (body.includes("Page is loading") || body.length < 2e3) {
+        const mirrorMatch = body.match(/main\s*:\s*\["([^"]+)"/i) || body.match(/["'](https?:\/\/[^"']+\/e\/[\w-]+)["']/i);
+        if (mirrorMatch) {
+          const mirrorUrl = mirrorMatch[1].startsWith("http") ? mirrorMatch[1] : `https://${mirrorMatch[1]}/e/${embedUrl.split("/").pop()}`;
+          body = yield fetchHtml(mirrorUrl, mirrorUrl);
+        }
+      }
+      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+        const m3u8 = unpacked.match(/"?(?:file|hls(?:2|3)?)"?\s*[:=]\s*"?([^"'\s,]+\.m3u8[^"'\s]*)"?/i) || unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        if (m3u8)
+          return (m3u8[1] || m3u8[0]).replace(/\\/g, "");
+      }
+      const rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      return rawM3u8 ? rawM3u8[0] : embedUrl;
+    } catch (e) {
+      return embedUrl;
+    }
+  });
+}
+function resolveVidhide(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
+      if (body.includes("Loading") || body.length < 2e3) {
+        const mirrorMatch = body.match(/["'](https?:\/\/[^"']+\/v\/[\w-]+)["']/i);
+        if (mirrorMatch)
+          body = yield fetchHtml(mirrorMatch[1], mirrorMatch[1]);
+      }
+      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+        const m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        if (m3u8)
+          return m3u8[0].replace(/\\/g, "");
+      }
+      const rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      return rawM3u8 ? rawM3u8[0] : embedUrl;
+    } catch (e) {
+      return embedUrl;
+    }
+  });
 }
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
@@ -195,26 +218,20 @@ function extractStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
       const tmdb = yield getTmdbInfo(tmdbId, mediaType);
-      if (!tmdb || !tmdb.title) {
-        console.log(`[PelisPlusHD] No se pudo obtener info de TMDB para ID: ${tmdbId}`);
+      if (!tmdb || !tmdb.title)
         return [];
-      }
-      console.log(`[PelisPlusHD] TMDB Info: Title="${tmdb.title}", Original="${tmdb.originalTitle}"`);
       const titlesToTry = [tmdb.title];
       if (tmdb.originalTitle && tmdb.originalTitle !== tmdb.title) {
         titlesToTry.push(tmdb.originalTitle);
       }
       let movieUrl = null;
       for (const query of titlesToTry) {
-        console.log(`[PelisPlusHD] Buscando en PelisPlusHD: "${query}"`);
         const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query)}`;
         const searchHtml = yield fetchText(searchUrl);
         const $search = import_cheerio_without_node_native.default.load(searchHtml);
         $search("a.Posters-link").each((i, el) => {
           const resultTitle = $search(el).find("p").text().trim() || $search(el).attr("data-title") || "";
-          const matched = titleMatch(query, resultTitle) || titleMatch(tmdb.title, resultTitle);
-          console.log(`[PelisPlusHD] Comparando: B\xFAsqueda="${query}" vs Resultado="${resultTitle}" -> Match: ${matched}`);
-          if (matched) {
+          if (titleMatch(query, resultTitle) || titleMatch(tmdb.title, resultTitle)) {
             movieUrl = BASE_URL + $search(el).attr("href");
             return false;
           }
@@ -222,10 +239,8 @@ function extractStreams(tmdbId, mediaType, season, episode) {
         if (movieUrl)
           break;
       }
-      if (!movieUrl) {
-        console.log(`[PelisPlusHD] No se encontr\xF3 ninguna coincidencia en la web para: ${tmdb.title}`);
+      if (!movieUrl)
         return [];
-      }
       if (mediaType === "tv") {
         movieUrl = movieUrl.replace("/serie/", "/episodio/") + `-${season}x${episode}`;
       }
@@ -242,7 +257,7 @@ function extractStreams(tmdbId, mediaType, season, episode) {
       });
       const scripts = $page("script").map((i, el) => $page(el).html()).get();
       for (const scriptContent of scripts) {
-        if (scriptContent.includes("var options")) {
+        if (scriptContent && scriptContent.includes("var options")) {
           const optionsMatch = scriptContent.match(/var options = {([\s\S]+?)};/);
           if (optionsMatch) {
             const optionsRaw = optionsMatch[1];
@@ -253,28 +268,20 @@ function extractStreams(tmdbId, mediaType, season, episode) {
               const serverUrl = match[2];
               const serverName = $page(`a[href="#${optId}"]`).text().trim() || "Servidor";
               if (serverUrl && serverUrl.startsWith("http")) {
-                rawResults.push({
-                  serverUrl,
-                  serverName,
-                  language: "Espa\xF1ol Latino"
-                  // En el nuevo formato a veces no especifica, asumimos el actual
-                });
+                rawResults.push({ serverUrl, serverName, language: "Espa\xF1ol Latino" });
               }
             }
           }
         }
       }
-      if (rawResults.length === 0) {
-        console.log(`[PelisPlusHD] No se encontraron servidores en la p\xE1gina: ${movieUrl}`);
-        return [];
-      }
       const streams = yield Promise.all(rawResults.map((res) => __async(this, null, function* () {
         let finalUrl = res.serverUrl;
-        if (finalUrl.includes("streamwish") || finalUrl.includes("strwish") || finalUrl.includes("wishembed")) {
+        const isStreamwish = /streamwish|strwish|wishembed|playnixes|niramirus|awish|dwish|fmoon|pstream/i.test(finalUrl);
+        const isVidhide = /vidhide|dintezuvio|callistanise|acek-cdn|vadisov/i.test(finalUrl);
+        if (isStreamwish)
           finalUrl = yield resolveStreamwish(finalUrl);
-        } else if (finalUrl.includes("vidhide") || finalUrl.includes("dintezuvio")) {
+        else if (isVidhide)
           finalUrl = yield resolveVidhide(finalUrl);
-        }
         return {
           name: "PelisPlusHD",
           title: `${res.serverName} (Latino)`,
@@ -282,13 +289,12 @@ function extractStreams(tmdbId, mediaType, season, episode) {
           quality: "HD",
           headers: {
             "Referer": res.serverUrl,
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           }
         };
       })));
       return streams;
     } catch (error) {
-      console.error(`[PelisPlusHD] Extraction error: ${error.message}`);
       return [];
     }
   });
