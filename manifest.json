@@ -72,18 +72,18 @@
       "supportsExternalPlayer": true
     },
     {
-      "id": "tioplus",
-      "name": "TioPlus",
-      "description": "Buscador de películas y series en HD con múltiples servidores (Latino)",
+      "id": "cuevana_gs",
+      "name": "Cuevana.gs",
+      "description": "Películas y series en alta definición (Latino) con servidores estables",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
         "tv"
       ],
-      "filename": "providers/tioplus.js",
+      "filename": "providers/cuevana_gs.js",
       "enabled": true,
-      "logo": "https://tioplus.app/images/logo2.png",
+      "logo": "https://cuevana.gs/favicon.ico",
       "contentLanguage": [
         "es"
       ],
