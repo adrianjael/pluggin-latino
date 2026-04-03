@@ -292,10 +292,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (rawUrl.includes('vimeos')) serverName = 'vimeos';
             else if (rawUrl.includes('netu') || rawUrl.includes('waaw')) serverName = 'netu';
             
-            // FILTRO SOLICITADO: Quitar Goodstream (vía URL o nombre detectado)
-            if (rawUrl.includes('goodstream') || serverName === 'goodstream') {
-                return null;
-            }
+            // Vimeos y goodstream se mandan directo
 
             // Resolve
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);

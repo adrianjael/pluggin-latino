@@ -148,11 +148,6 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 server = (urlObj.searchParams.get('server') || 'unknown').toLowerCase();
             } catch (e) { }
 
-            // FILTRO SOLICITADO: Ignorar servidores problemáticos
-            if (server === 'vimeos' || server === 'goodstream') {
-                return null;
-            }
-
             console.log(`[Cuevana.gs] -> Resolving [${server}] ${lang} ${quality}`);
 
             return fetchHtml(proxyUrl, BASE_URL)
@@ -164,6 +159,10 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     let resolvePromise;
                     if (server === 'voe') {
                         resolvePromise = resolveVoesx(embedUrl);
+                    } else if (server === 'vimeos' || server === 'goodstream') {
+                        // Para Vimeos pasamos el embed directamente, ya que su m3u8 
+                        // es muy protegido. Nuvio lo abrirá en su WebView interno.
+                        resolvePromise = Promise.resolve(embedUrl);
                     } else {
                         resolvePromise = resolveGenericEmbed(embedUrl);
                     }

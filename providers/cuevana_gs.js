@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-03T23:38:02.977Z
+ * Generated: 2026-04-03T23:41:39.252Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -193,9 +193,6 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           server = (urlObj.searchParams.get("server") || "unknown").toLowerCase();
         } catch (e) {
         }
-        if (server === "vimeos" || server === "goodstream") {
-          return null;
-        }
         console.log(`[Cuevana.gs] -> Resolving [${server}] ${lang} ${quality}`);
         return fetchHtml(proxyUrl, BASE_URL).then(function(proxyHtml) {
           const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
@@ -205,6 +202,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           let resolvePromise;
           if (server === "voe") {
             resolvePromise = resolveVoesx(embedUrl);
+          } else if (server === "vimeos" || server === "goodstream") {
+            resolvePromise = Promise.resolve(embedUrl);
           } else {
             resolvePromise = resolveGenericEmbed(embedUrl);
           }

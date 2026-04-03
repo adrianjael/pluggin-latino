@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T23:27:18.275Z
+ * Generated: 2026-04-03T23:41:39.318Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -327,8 +327,6 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           serverName = "goodstream";
         else if (finalUrl.includes("netu") || finalUrl.includes("waaw"))
           serverName = "netu";
-        if (serverName === "vimeos" || serverName === "goodstream")
-          return null;
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
