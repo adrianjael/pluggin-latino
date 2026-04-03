@@ -182,22 +182,24 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
 
-        if (!searchData || !searchData.results || searchData.results.length === 0) {
-             console.log("[PelisPanda] No se encontraron resultados en el sitio.");
-             return [];
-        }
-
-        // 2. Búsqueda de alta precisión: Priorizamos coincidencia por TMDB ID
-        let movieMatch = searchData.results.find(r => r.tmdb_id == tmdbId);
+        const targetType = mediaType === 'movie' ? 'pelicula' : 'serie';
+        
+        // 2. Búsqueda de alta precisión: Priorizamos coincidencia por TMDB ID y Tipo
+        let movieMatch = searchData.results.find(r => r.tmdb_id == tmdbId && r.type === targetType);
         
         if (!movieMatch) {
-            // Fallback 1: Coincidencia exacta de título normalizado
+            // Fallback 1: Coincidencia exacta de título normalizado + Tipo
             const normalizedQuery = normalizeTitle(searchTitle);
-            movieMatch = searchData.results.find(r => normalizeTitle(r.title) === normalizedQuery);
+            movieMatch = searchData.results.find(r => normalizeTitle(r.title) === normalizedQuery && r.type === targetType);
         }
 
         if (!movieMatch) {
-            // Fallback 2: Primer resultado (asumimos que es el más relevante)
+            // Fallback 2: Coincidencia por ID (si el tipo no coincide por alguna razón, ej: anime labeled as serie)
+            movieMatch = searchData.results.find(r => r.tmdb_id == tmdbId);
+        }
+
+        if (!movieMatch) {
+            // Fallback 3: Primer resultado
             movieMatch = searchData.results[0];
         }
 

@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T19:05:53.683Z
+ * Generated: 2026-04-03T19:11:02.845Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -271,14 +271,14 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       const searchUrl = `https://pelispanda.org/wp-json/wpreact/v1/search?query=${encodeURIComponent(searchTitle)}`;
       const searchRes = yield fetch(searchUrl);
       const searchData = yield searchRes.json();
-      if (!searchData || !searchData.results || searchData.results.length === 0) {
-        console.log("[PelisPanda] No se encontraron resultados en el sitio.");
-        return [];
-      }
-      let movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId);
+      const targetType = mediaType === "movie" ? "pelicula" : "serie";
+      let movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId && r.type === targetType);
       if (!movieMatch) {
         const normalizedQuery = normalizeTitle(searchTitle);
-        movieMatch = searchData.results.find((r) => normalizeTitle(r.title) === normalizedQuery);
+        movieMatch = searchData.results.find((r) => normalizeTitle(r.title) === normalizedQuery && r.type === targetType);
+      }
+      if (!movieMatch) {
+        movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId);
       }
       if (!movieMatch) {
         movieMatch = searchData.results[0];

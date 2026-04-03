@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-03T19:05:53.690Z
+ * Generated: 2026-04-03T19:11:02.850Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -267,29 +267,46 @@ function resolveVoesx(embedUrl) {
 function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
   return __async(this, null, function* () {
     try {
+      console.log(`[PelisPlusHD] Estrayendo para: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
       let searchTitle = providedTitle;
       if (!searchTitle) {
         const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
         if (tmdbInfo && tmdbInfo.title)
           searchTitle = tmdbInfo.title;
       }
-      if (!searchTitle)
+      if (!searchTitle) {
+        console.log("[PelisPlusHD] No se pudo obtener el t\xEDtulo para buscar.");
         return [];
+      }
       const titlesToTry = [searchTitle];
       let movieUrl = null;
       for (const query of titlesToTry) {
         const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query)}`;
         const searchHtml = yield fetchText(searchUrl);
         const $search = import_cheerio_without_node_native.default.load(searchHtml);
+        const results = [];
         $search("a.Posters-link").each((i, el) => {
-          const resultTitle = $search(el).find("p").text().trim() || $search(el).attr("data-title") || "";
-          if (titleMatch(query, resultTitle) || providedTitle && titleMatch(providedTitle, resultTitle)) {
-            movieUrl = BASE_URL + $search(el).attr("href");
-            return false;
-          }
+          const el$ = $search(el);
+          const title = el$.find("p").text().trim() || el$.attr("data-title") || "";
+          const href = el$.attr("href") || "";
+          results.push({ title, href });
         });
-        if (movieUrl)
+        const targetType = mediaType === "tv" ? "/serie/" : "/pelicula/";
+        let match = results.find(
+          (r) => normalizeTitle(r.title) === normalizeTitle(query) && r.href.includes(targetType)
+        );
+        if (!match) {
+          match = results.find(
+            (r) => titleMatch(query, r.title) && r.href.includes(targetType)
+          );
+        }
+        if (!match) {
+          match = results.find((r) => titleMatch(query, r.title));
+        }
+        if (match) {
+          movieUrl = BASE_URL + match.href;
           break;
+        }
       }
       if (!movieUrl)
         return [];

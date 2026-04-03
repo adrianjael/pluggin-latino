@@ -188,13 +188,17 @@ async function resolveVoesx(embedUrl) {
  */
 export async function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
     try {
+        console.log(`[PelisPlusHD] Estrayendo para: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
         let searchTitle = providedTitle;
         if (!searchTitle) {
             const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
             if (tmdbInfo && tmdbInfo.title) searchTitle = tmdbInfo.title;
         }
 
-        if (!searchTitle) return [];
+        if (!searchTitle) {
+            console.log("[PelisPlusHD] No se pudo obtener el título para buscar.");
+            return [];
+        }
 
         const titlesToTry = [searchTitle];
         
@@ -204,14 +208,40 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             const searchHtml = await fetchText(searchUrl);
             const $search = cheerio.load(searchHtml);
             
+            const results = [];
             $search('a.Posters-link').each((i, el) => {
-                const resultTitle = $search(el).find('p').text().trim() || $search(el).attr('data-title') || "";
-                if (titleMatch(query, resultTitle) || (providedTitle && titleMatch(providedTitle, resultTitle))) {
-                    movieUrl = BASE_URL + $search(el).attr('href');
-                    return false;
-                }
+                const el$ = $search(el);
+                const title = el$.find('p').text().trim() || el$.attr('data-title') || "";
+                const href = el$.attr('href') || "";
+                results.push({ title, href });
             });
-            if (movieUrl) break;
+
+            // 1. Priorizamos coincidencia exacta y por tipo
+            const targetType = mediaType === 'tv' ? '/serie/' : '/pelicula/';
+            
+            // Intento 1: Título exacto + Tipo exacto
+            let match = results.find(r => 
+                normalizeTitle(r.title) === normalizeTitle(query) && 
+                r.href.includes(targetType)
+            );
+
+            // Intento 2: Título contiene el query + Tipo exacto
+            if (!match) {
+                match = results.find(r => 
+                    titleMatch(query, r.title) && 
+                    r.href.includes(targetType)
+                );
+            }
+
+            // Intento 3: Cualquier coincidencia de título (Fallback último)
+            if (!match) {
+                match = results.find(r => titleMatch(query, r.title));
+            }
+
+            if (match) {
+                movieUrl = BASE_URL + match.href;
+                break;
+            }
         }
 
         if (!movieUrl) return [];
