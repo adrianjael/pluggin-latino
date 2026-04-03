@@ -265,34 +265,25 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         }
 
         const rawResults = [];
-        $page('li.playurl').each((i, el) => {
-            const serverUrl = $page(el).attr('data-url');
-            const serverName = $page(el).find('a').text().trim();
-            const language = $page(el).attr('data-name') || "Español Latino"; 
-            if (serverUrl && (language.includes("Latino") || language.includes("Español"))) {
-                rawResults.push({ serverUrl, serverName, language });
+        $page('#link_url span').each((i, el) => {
+            const serverUrl = $page(el).attr('url');
+            if (serverUrl && serverUrl.startsWith('http')) {
+                let inferredName = "Servidor";
+                if (serverUrl.includes('voe')) inferredName = "Voe";
+                else if (serverUrl.includes('streamtape')) inferredName = "Streamtape";
+                else if (serverUrl.includes('netu') || serverUrl.includes('waaw')) inferredName = "Netu";
+                else if (serverUrl.includes('mixdrop')) inferredName = "Mixdrop";
+                else if (serverUrl.includes('filemoon')) inferredName = "Filemoon";
+                else if (serverUrl.includes('wishembed') || serverUrl.includes('streamwish') || serverUrl.includes('dwish') || serverUrl.includes('awish')) inferredName = "Streamwish";
+                else if (serverUrl.includes('vidhide') || serverUrl.includes('dintezuvio')) inferredName = "Vidhide";
+                
+                rawResults.push({ 
+                    serverUrl, 
+                    serverName: inferredName, 
+                    language: "Latino" 
+                });
             }
         });
-
-        const scripts = $page('script').map((i, el) => $page(el).html()).get();
-        for (const scriptContent of scripts) {
-            if (scriptContent && scriptContent.includes('var options')) {
-                const optionsMatch = scriptContent.match(/var options = {([\s\S]+?)};/);
-                if (optionsMatch) {
-                    const optionsRaw = optionsMatch[1];
-                    const urlRegex = /"(option\d+)":\s*"([^"]+)"/g;
-                    let match;
-                    while ((match = urlRegex.exec(optionsRaw)) !== null) {
-                        const optId = match[1];
-                        const serverUrl = match[2];
-                        const serverName = $page(`a[href="#${optId}"]`).text().trim() || "Servidor";
-                        if (serverUrl && serverUrl.startsWith('http')) {
-                             rawResults.push({ serverUrl, serverName, language: "Español Latino" });
-                        }
-                    }
-                }
-            }
-        }
 
         const streams = await Promise.all(rawResults.map(async (res) => {
             let finalUrl = res.serverUrl;

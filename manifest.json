@@ -30,7 +30,7 @@
       "name": "HackStore2",
       "description": "API Nativa de Peliculas en HD",
       "version": "1.0.0",
-      "author": "Nuvio Community",
+      "author": "AdrianJael",
       "supportedTypes": [
         "movie"
       ],
@@ -52,7 +52,7 @@
       "name": "PelisPanda",
       "description": "Películas y series directo desde pelispanda.org",
       "version": "1.0.0",
-      "author": "Nuvio Community",
+      "author": "AdrianJael",
       "supportedTypes": [
         "movie",
         "tv"
