@@ -119,6 +119,23 @@ async function resolveGoodstream(embedUrl) {
     return null; // Server unstable in Nuvio
 }
 
+/**
+ * Normaliza un título para comparaciones
+ */
+function normalizeTitle(t) {
+    if (!t) return '';
+    return t.toLowerCase()
+        .replace(/[áàäâ]/g, 'a')
+        .replace(/[éèëê]/g, 'e')
+        .replace(/[íìïî]/g, 'i')
+        .replace(/[óòöô]/g, 'o')
+        .replace(/[úùüû]/g, 'u')
+        .replace(/ñ/g, 'n')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 async function getTmdbInfo(tmdbId, mediaType) {
     try {
         const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
@@ -139,30 +156,52 @@ async function getTmdbInfo(tmdbId, mediaType) {
     }
 }
 
-export async function extractStreams(tmdbId, mediaType, season, episode) {
-    console.log(`[PelisPanda] Extracting streams for TMDB ID: ${tmdbId}`);
+export async function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
+    console.log(`[PelisPanda] Extracting streams for TMDB ID: ${tmdbId} (${mediaType})`);
     try {
-        const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
-        if (!tmdbInfo || !tmdbInfo.title) {
-            console.log("[PelisPanda] TMDB Title not found.");
+        let searchTitle = providedTitle;
+        let searchYear = null;
+
+        if (!searchTitle) {
+            const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
+            if (tmdbInfo) {
+                searchTitle = tmdbInfo.title;
+                searchYear = tmdbInfo.year;
+            }
+        }
+
+        if (!searchTitle) {
+            console.log("[PelisPanda] Search title not found (TMDB scrape failed and no title provided).");
             return [];
         }
 
-        const searchTitle = tmdbInfo.title;
         console.log(`[PelisPanda] Buscar en API por: ${searchTitle}`);
         
-        // 1. Buscamos el slug en la API WpReact
+        // 1. Buscamos el contenido en la API WpReact
         const searchUrl = `https://pelispanda.org/wp-json/wpreact/v1/search?query=${encodeURIComponent(searchTitle)}`;
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
 
         if (!searchData || !searchData.results || searchData.results.length === 0) {
-             console.log("[PelisPanda] Pelicula no encontrada en la búsqueda.");
+             console.log("[PelisPanda] No se encontraron resultados en el sitio.");
              return [];
         }
 
-        const movieMatch = searchData.results[0]; // TODO: Filtrar por año si hay colisiones
-        console.log(`[PelisPanda] Slug encontrado: ${movieMatch.slug}`);
+        // 2. Búsqueda de alta precisión: Priorizamos coincidencia por TMDB ID
+        let movieMatch = searchData.results.find(r => r.tmdb_id == tmdbId);
+        
+        if (!movieMatch) {
+            // Fallback 1: Coincidencia exacta de título normalizado
+            const normalizedQuery = normalizeTitle(searchTitle);
+            movieMatch = searchData.results.find(r => normalizeTitle(r.title) === normalizedQuery);
+        }
+
+        if (!movieMatch) {
+            // Fallback 2: Primer resultado (asumimos que es el más relevante)
+            movieMatch = searchData.results[0];
+        }
+
+        console.log(`[PelisPanda] Selección final: ${movieMatch.title} (Slug: ${movieMatch.slug})`);
         
         // El endpoint oculto que devuelve los enlaces en PelisPanda
         const endpointType = mediaType === 'movie' ? 'movie' : 'serie';

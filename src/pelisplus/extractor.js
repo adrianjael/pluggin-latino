@@ -186,16 +186,18 @@ async function resolveVoesx(embedUrl) {
 /**
  * Main extraction function
  */
-export async function extractStreams(tmdbId, mediaType, season, episode) {
+export async function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
     try {
-        const tmdb = await getTmdbInfo(tmdbId, mediaType);
-        if (!tmdb || !tmdb.title) return [];
-
-        const titlesToTry = [tmdb.title];
-        if (tmdb.originalTitle && tmdb.originalTitle !== tmdb.title) {
-            titlesToTry.push(tmdb.originalTitle);
+        let searchTitle = providedTitle;
+        if (!searchTitle) {
+            const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
+            if (tmdbInfo && tmdbInfo.title) searchTitle = tmdbInfo.title;
         }
 
+        if (!searchTitle) return [];
+
+        const titlesToTry = [searchTitle];
+        
         let movieUrl = null;
         for (const query of titlesToTry) {
             const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query)}`;
@@ -204,7 +206,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             
             $search('a.Posters-link').each((i, el) => {
                 const resultTitle = $search(el).find('p').text().trim() || $search(el).attr('data-title') || "";
-                if (titleMatch(query, resultTitle) || titleMatch(tmdb.title, resultTitle)) {
+                if (titleMatch(query, resultTitle) || (providedTitle && titleMatch(providedTitle, resultTitle))) {
                     movieUrl = BASE_URL + $search(el).attr('href');
                     return false;
                 }

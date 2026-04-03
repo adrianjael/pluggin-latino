@@ -1,13 +1,11 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-03T18:59:36.509Z
+ * Generated: 2026-04-03T19:05:53.632Z
  */
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -34,14 +32,6 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
@@ -110,7 +100,6 @@ function fetchHtml(url, referer) {
 }
 
 // src/hackstore2/extractor.js
-var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
 function unpackEval(payload, radix, symtab) {
   return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
     let result = 0;
@@ -224,12 +213,17 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
       const html = yield fetchHtml(url, url);
-      const $ = import_cheerio_without_node_native.default.load(html);
+      const $ = cheerio.load(html);
       const title = $(".title h2 a").text().trim();
       const originalTitle = $(".original_title").text().replace("T\xEDtulo original:", "").trim();
       const releaseYear = $(".release_date").text().match(/\d{4}/);
@@ -243,17 +237,23 @@ function getTmdbInfo(tmdbId, mediaType) {
     }
   });
 }
-function extractStreams(tmdbId, mediaType, season, episode) {
+function extractStreams(tmdbId, mediaType, season, episode, providedTitle, providedYear) {
   return __async(this, null, function* () {
-    console.log(`[HackStore2] Extracting streams for TMDB ID: ${tmdbId}`);
+    console.log(`[HackStore2] Requesting streams for TMDB ID: ${tmdbId} (Title: ${providedTitle || "N/A"})`);
     try {
-      const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-      if (!tmdbInfo || !tmdbInfo.title) {
-        console.log("[HackStore2] TMDB Title not found.");
+      let searchTitle = providedTitle;
+      let searchYear = providedYear;
+      if (!searchTitle) {
+        const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
+        if (tmdbInfo) {
+          searchTitle = tmdbInfo.title;
+          searchYear = tmdbInfo.year;
+        }
+      }
+      if (!searchTitle) {
+        console.log("[HackStore2] Pelicula no encontrada (TMDB Scrape fall\xF3 y no hay t\xEDtulo).");
         return [];
       }
-      const searchTitle = tmdbInfo.title;
-      const searchYear = tmdbInfo.year;
       console.log(`[HackStore2] Searching API for: ${searchTitle}`);
       const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${mediaType === "movie" ? "movies" : "series"}&query=${encodeURIComponent(searchTitle)}`;
       const searchRes = yield fetch(searchUrl);
@@ -262,11 +262,13 @@ function extractStreams(tmdbId, mediaType, season, episode) {
         console.log("[HackStore2] Not found in search results.");
         return [];
       }
-      let matchedPost = searchData.data.posts[0];
-      if (searchYear) {
-        const byYear = searchData.data.posts.find((p) => p.years && p.years.toString().includes(searchYear));
-        if (byYear)
-          matchedPost = byYear;
+      const normalizedQuery = normalizeTitle(searchTitle);
+      let matchedPost = searchData.data.posts.find((p) => normalizeTitle(p.title) === normalizedQuery);
+      if (!matchedPost && searchYear) {
+        matchedPost = searchData.data.posts.find((p) => p.years && p.years.toString().includes(searchYear));
+      }
+      if (!matchedPost) {
+        matchedPost = searchData.data.posts[0];
       }
       console.log(`[HackStore2] Match found: ${matchedPost.title} (ID: ${matchedPost._id})`);
       if (mediaType === "tv") {
@@ -324,11 +326,11 @@ function extractStreams(tmdbId, mediaType, season, episode) {
 }
 
 // src/hackstore2/index.js
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     try {
-      console.log(`[HackStore2] Request: ${mediaType} ${tmdbId}`);
-      const streams = yield extractStreams(tmdbId, mediaType, season, episode);
+      console.log(`[HackStore2] Request: ${mediaType} ${tmdbId} (Title: ${title || "N/A"})`);
+      const streams = yield extractStreams(tmdbId, mediaType, season, episode, title, year);
       if (streams.length === 0) {
         console.log(`[HackStore2] No matches or streams found for ${tmdbId}`);
       }

@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T18:59:36.567Z
+ * Generated: 2026-04-03T19:05:53.683Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -226,6 +226,11 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
@@ -245,26 +250,40 @@ function getTmdbInfo(tmdbId, mediaType) {
     }
   });
 }
-function extractStreams(tmdbId, mediaType, season, episode) {
+function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
   return __async(this, null, function* () {
-    console.log(`[PelisPanda] Extracting streams for TMDB ID: ${tmdbId}`);
+    console.log(`[PelisPanda] Extracting streams for TMDB ID: ${tmdbId} (${mediaType})`);
     try {
-      const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-      if (!tmdbInfo || !tmdbInfo.title) {
-        console.log("[PelisPanda] TMDB Title not found.");
+      let searchTitle = providedTitle;
+      let searchYear = null;
+      if (!searchTitle) {
+        const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
+        if (tmdbInfo) {
+          searchTitle = tmdbInfo.title;
+          searchYear = tmdbInfo.year;
+        }
+      }
+      if (!searchTitle) {
+        console.log("[PelisPanda] Search title not found (TMDB scrape failed and no title provided).");
         return [];
       }
-      const searchTitle = tmdbInfo.title;
       console.log(`[PelisPanda] Buscar en API por: ${searchTitle}`);
       const searchUrl = `https://pelispanda.org/wp-json/wpreact/v1/search?query=${encodeURIComponent(searchTitle)}`;
       const searchRes = yield fetch(searchUrl);
       const searchData = yield searchRes.json();
       if (!searchData || !searchData.results || searchData.results.length === 0) {
-        console.log("[PelisPanda] Pelicula no encontrada en la b\xFAsqueda.");
+        console.log("[PelisPanda] No se encontraron resultados en el sitio.");
         return [];
       }
-      const movieMatch = searchData.results[0];
-      console.log(`[PelisPanda] Slug encontrado: ${movieMatch.slug}`);
+      let movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId);
+      if (!movieMatch) {
+        const normalizedQuery = normalizeTitle(searchTitle);
+        movieMatch = searchData.results.find((r) => normalizeTitle(r.title) === normalizedQuery);
+      }
+      if (!movieMatch) {
+        movieMatch = searchData.results[0];
+      }
+      console.log(`[PelisPanda] Selecci\xF3n final: ${movieMatch.title} (Slug: ${movieMatch.slug})`);
       const endpointType = mediaType === "movie" ? "movie" : "serie";
       const playersUrl = `https://pelispanda.org/wp-json/wpreact/v1/${endpointType}/${movieMatch.slug}/related`;
       const playersRes = yield fetch(playersUrl);
@@ -338,8 +357,8 @@ function extractStreams(tmdbId, mediaType, season, episode) {
 }
 
 // src/pelispanda/index.js
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
-    return extractStreams(tmdbId, mediaType, season, episode);
+    return extractStreams(tmdbId, mediaType, season, episode, title, year);
   });
 }

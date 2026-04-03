@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-03T18:59:36.572Z
+ * Generated: 2026-04-03T19:05:53.690Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -264,16 +264,18 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
-function extractStreams(tmdbId, mediaType, season, episode) {
+function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
   return __async(this, null, function* () {
     try {
-      const tmdb = yield getTmdbInfo(tmdbId, mediaType);
-      if (!tmdb || !tmdb.title)
-        return [];
-      const titlesToTry = [tmdb.title];
-      if (tmdb.originalTitle && tmdb.originalTitle !== tmdb.title) {
-        titlesToTry.push(tmdb.originalTitle);
+      let searchTitle = providedTitle;
+      if (!searchTitle) {
+        const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
+        if (tmdbInfo && tmdbInfo.title)
+          searchTitle = tmdbInfo.title;
       }
+      if (!searchTitle)
+        return [];
+      const titlesToTry = [searchTitle];
       let movieUrl = null;
       for (const query of titlesToTry) {
         const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query)}`;
@@ -281,7 +283,7 @@ function extractStreams(tmdbId, mediaType, season, episode) {
         const $search = import_cheerio_without_node_native.default.load(searchHtml);
         $search("a.Posters-link").each((i, el) => {
           const resultTitle = $search(el).find("p").text().trim() || $search(el).attr("data-title") || "";
-          if (titleMatch(query, resultTitle) || titleMatch(tmdb.title, resultTitle)) {
+          if (titleMatch(query, resultTitle) || providedTitle && titleMatch(providedTitle, resultTitle)) {
             movieUrl = BASE_URL + $search(el).attr("href");
             return false;
           }
@@ -363,11 +365,11 @@ function extractStreams(tmdbId, mediaType, season, episode) {
 }
 
 // src/pelisplus/index.js
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
-      console.log(`[PelisPlusHD] Request: ${mediaType} ${tmdbId}`);
-      const streams = yield extractStreams(tmdbId, mediaType, season, episode);
+      console.log(`[PelisPlusHD] Request: ${mediaType} ${tmdbId} (Title: ${title || "N/A"})`);
+      const streams = yield extractStreams(tmdbId, mediaType, season, episode, title);
       if (streams.length === 0) {
         console.log(`[PelisPlusHD] No matches found for ${tmdbId}`);
       }

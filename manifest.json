@@ -1,5 +1,5 @@
 {
-  "name": "Nuvio Latino Providers",
+  "name": "AdrianJael",
   "version": "1.1.0",
   "scrapers": [
     {
@@ -7,7 +7,7 @@
       "name": "PelisPlusHD",
       "description": "Peliculas y series en espanol latino desde PelisPlusHD.la",
       "version": "1.0.0",
-      "author": "Nuvio Community",
+      "author": "AdrianJael",
       "supportedTypes": [
         "movie",
         "tv"
@@ -54,7 +54,8 @@
       "version": "1.0.0",
       "author": "Nuvio Community",
       "supportedTypes": [
-        "movie"
+        "movie",
+        "tv"
       ],
       "filename": "providers/pelispanda.js",
       "enabled": true,

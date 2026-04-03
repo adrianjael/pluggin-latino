@@ -12,12 +12,12 @@ import { extractStreams } from './extractor.js';
  * @param {number} season - Season number (for TV)
  * @param {number} episode - Episode number (for TV)
  */
-async function getStreams(tmdbId, mediaType, season, episode) {
+async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
-        console.log(`[PelisPlusHD] Request: ${mediaType} ${tmdbId}`);
+        console.log(`[PelisPlusHD] Request: ${mediaType} ${tmdbId} (Title: ${title || 'N/A'})`);
 
         // Call our extraction logic
-        const streams = await extractStreams(tmdbId, mediaType, season, episode);
+        const streams = await extractStreams(tmdbId, mediaType, season, episode, title);
 
         if (streams.length === 0) {
             console.log(`[PelisPlusHD] No matches found for ${tmdbId}`);

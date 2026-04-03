@@ -123,9 +123,23 @@ async function resolveVoesx(embedUrl) {
     }
 }
 
-import cheerio from 'cheerio-without-node-native';
+/**
+ * Normaliza un título para comparaciones
+ */
+function normalizeTitle(t) {
+    if (!t) return '';
+    return t.toLowerCase()
+        .replace(/[áàäâ]/g, 'a')
+        .replace(/[éèëê]/g, 'e')
+        .replace(/[íìïî]/g, 'i')
+        .replace(/[óòöô]/g, 'o')
+        .replace(/[úùüû]/g, 'u')
+        .replace(/ñ/g, 'n')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
 
-// Helper to fetch Title from TMDB
 async function getTmdbInfo(tmdbId, mediaType) {
     try {
         const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
@@ -146,19 +160,24 @@ async function getTmdbInfo(tmdbId, mediaType) {
     }
 }
 
-export async function extractStreams(tmdbId, mediaType, season, episode) {
-    console.log(`[HackStore2] Extracting streams for TMDB ID: ${tmdbId}`);
+export async function extractStreams(tmdbId, mediaType, season, episode, providedTitle, providedYear) {
+    console.log(`[HackStore2] Requesting streams for TMDB ID: ${tmdbId} (Title: ${providedTitle || 'N/A'})`);
     try {
-        // 1. Get exact Title & Year from TMDB
-        const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
-        
-        if (!tmdbInfo || !tmdbInfo.title) {
-            console.log("[HackStore2] TMDB Title not found.");
-            return [];
+        let searchTitle = providedTitle;
+        let searchYear = providedYear;
+
+        if (!searchTitle) {
+            const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
+            if (tmdbInfo) {
+                searchTitle = tmdbInfo.title;
+                searchYear = tmdbInfo.year;
+            }
         }
 
-        const searchTitle = tmdbInfo.title;
-        const searchYear = tmdbInfo.year;
+        if (!searchTitle) {
+            console.log("[HackStore2] Pelicula no encontrada (TMDB Scrape falló y no hay título).");
+            return [];
+        }
 
         // 2. Search API
         console.log(`[HackStore2] Searching API for: ${searchTitle}`);
@@ -172,11 +191,15 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
         }
 
         // 3. Match closest movie title/year
-        // Here we just grab the first one, or filter by year
-        let matchedPost = searchData.data.posts[0];
-        if (searchYear) {
-            const byYear = searchData.data.posts.find(p => p.years && p.years.toString().includes(searchYear));
-            if (byYear) matchedPost = byYear;
+        const normalizedQuery = normalizeTitle(searchTitle);
+        let matchedPost = searchData.data.posts.find(p => normalizeTitle(p.title) === normalizedQuery);
+        
+        if (!matchedPost && searchYear) {
+            matchedPost = searchData.data.posts.find(p => p.years && p.years.toString().includes(searchYear));
+        }
+
+        if (!matchedPost) {
+            matchedPost = searchData.data.posts[0];
         }
 
         console.log(`[HackStore2] Match found: ${matchedPost.title} (ID: ${matchedPost._id})`);
