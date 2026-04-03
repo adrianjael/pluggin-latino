@@ -32,7 +32,8 @@
       "version": "1.0.0",
       "author": "AdrianJael",
       "supportedTypes": [
-        "movie"
+        "movie",
+        "tv"
       ],
       "filename": "providers/hackstore2.js",
       "enabled": true,

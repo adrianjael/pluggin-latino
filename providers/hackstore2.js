@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-03T19:17:45.143Z
+ * Generated: 2026-04-03T19:26:45.787Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -255,7 +255,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         return [];
       }
       console.log(`[HackStore2] Searching API for: ${searchTitle}`);
-      const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${mediaType === "movie" ? "movies" : "series"}&query=${encodeURIComponent(searchTitle)}`;
+      const postType = mediaType === "movie" ? "movies" : "tvshows";
+      const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${postType}&query=${encodeURIComponent(searchTitle)}`;
       const searchRes = yield fetch(searchUrl);
       const searchData = yield searchRes.json();
       if (!searchData || searchData.error || !searchData.data || !searchData.data.posts || searchData.data.posts.length === 0) {
@@ -271,19 +272,35 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         matchedPost = searchData.data.posts[0];
       }
       console.log(`[HackStore2] Match found: ${matchedPost.title} (ID: ${matchedPost._id})`);
+      let finalPostId = matchedPost._id;
       if (mediaType === "tv") {
-        console.log("[HackStore2] TV Shows extracting not yet supported securely, returning []");
-        return [];
+        console.log(`[HackStore2] Fetching episodes for series ID: ${finalPostId}`);
+        const episodesUrl = `https://hackstore2.com/api/rest/episodes?post_id=${finalPostId}`;
+        const episodesRes = yield fetch(episodesUrl);
+        const episodesData = yield episodesRes.json();
+        if (!episodesData || !Array.isArray(episodesData)) {
+          console.log("[HackStore2] No episodes found for this series.");
+          return [];
+        }
+        const episodeMatch = episodesData.find(
+          (e) => e.season.toString() === season.toString() && e.number.toString() === episode.toString()
+        );
+        if (!episodeMatch) {
+          console.log(`[HackStore2] Episode S${season}E${episode} not found in this series.`);
+          return [];
+        }
+        console.log(`[HackStore2] Found episode: ${episodeMatch.title} (ID: ${episodeMatch._id})`);
+        finalPostId = episodeMatch._id;
       }
-      const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${matchedPost._id}`;
+      const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${finalPostId}`;
       const playerRes = yield fetch(playerUrl);
       const playerData = yield playerRes.json();
-      if (!playerData || playerData.error || !playerData.data) {
+      if (!playerData || playerData.error || !playerData.data || !playerData.data.players) {
         console.log("[HackStore2] No players found.");
         return [];
       }
       const streams = [];
-      for (let player of playerData.data) {
+      for (let player of playerData.data.players) {
         let serverName = "Desconocido";
         let rawUrl = player.url || "";
         let finalUrl = rawUrl;
@@ -305,7 +322,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
-        if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
+        const isDirectSource = finalUrl.includes(".m3u8") || finalUrl.includes(".mp4");
+        if (!isDirectSource) {
           console.log(`[HackStore2] Omitiendo servidor ${serverName} porque su URL final no expone el video directo: ${finalUrl}`);
           continue;
         }

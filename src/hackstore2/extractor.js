@@ -181,7 +181,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
 
         // 2. Search API
         console.log(`[HackStore2] Searching API for: ${searchTitle}`);
-        const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${mediaType === 'movie' ? 'movies' : 'series'}&query=${encodeURIComponent(searchTitle)}`;
+        const postType = mediaType === 'movie' ? 'movies' : 'tvshows';
+        const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${postType}&query=${encodeURIComponent(searchTitle)}`;
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
 
@@ -190,7 +191,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             return [];
         }
 
-        // 3. Match closest movie title/year
+        // 3. Match closest movie/series title/year
         const normalizedQuery = normalizeTitle(searchTitle);
         let matchedPost = searchData.data.posts.find(p => normalizeTitle(p.title) === normalizedQuery);
         
@@ -204,19 +205,41 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
 
         console.log(`[HackStore2] Match found: ${matchedPost.title} (ID: ${matchedPost._id})`);
 
-        // 4. If TV Show, we need episode ID... hackstore API for series might differ.
-        // For now, let's establish movies first
+        let finalPostId = matchedPost._id;
+
+        // 4. If TV Show, we need episode ID
         if (mediaType === 'tv') {
-            console.log("[HackStore2] TV Shows extracting not yet supported securely, returning []");
-            return [];
+            console.log(`[HackStore2] Fetching episodes for series ID: ${finalPostId}`);
+            const episodesUrl = `https://hackstore2.com/api/rest/episodes?post_id=${finalPostId}`;
+            const episodesRes = await fetch(episodesUrl);
+            const episodesData = await episodesRes.json();
+
+            if (!episodesData || !Array.isArray(episodesData)) {
+                console.log("[HackStore2] No episodes found for this series.");
+                return [];
+            }
+
+            // Buscar temporada y episodio (number)
+            const episodeMatch = episodesData.find(e => 
+                e.season.toString() === season.toString() && 
+                e.number.toString() === episode.toString()
+            );
+
+            if (!episodeMatch) {
+                console.log(`[HackStore2] Episode S${season}E${episode} not found in this series.`);
+                return [];
+            }
+
+            console.log(`[HackStore2] Found episode: ${episodeMatch.title} (ID: ${episodeMatch._id})`);
+            finalPostId = episodeMatch._id;
         }
 
         // 5. Get Players
-        const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${matchedPost._id}`;
+        const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${finalPostId}`;
         const playerRes = await fetch(playerUrl);
         const playerData = await playerRes.json();
         
-        if (!playerData || playerData.error || !playerData.data) {
+        if (!playerData || playerData.error || !playerData.data || !playerData.data.players) {
             console.log("[HackStore2] No players found.");
             return [];
         }
@@ -224,7 +247,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const streams = [];
 
         // 6. Resolve links
-        for (let player of playerData.data) {
+        for (let player of playerData.data.players) {
             let serverName = "Desconocido";
             let rawUrl = player.url || "";
             let finalUrl = rawUrl;
@@ -243,7 +266,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
             
             // Filtro Cero Crashes
-            if (!finalUrl.includes('.m3u8') && !finalUrl.includes('.mp4')) {
+            const isDirectSource = finalUrl.includes('.m3u8') || finalUrl.includes('.mp4');
+            if (!isDirectSource) {
                 console.log(`[HackStore2] Omitiendo servidor ${serverName} porque su URL final no expone el video directo: ${finalUrl}`);
                 continue;
             }
