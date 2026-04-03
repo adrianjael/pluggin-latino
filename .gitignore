@@ -7,6 +7,7 @@ yarn-error.log*
 # Compilación y builds
 providers/
 !providers/pelisplus.js
+!providers/hackstore2.js
 # (Si quieres que los otros proveedores se ignoren, déjalos así, 
 # pero pelisplus.js DEBE subirse para que la app funcione).
 
