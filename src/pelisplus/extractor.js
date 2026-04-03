@@ -128,17 +128,52 @@ async function getTmdbInfo(tmdbId, mediaType) {
     }
 }
 
+// Base64 Decode seguro (para entornos sin atob como Hermes puro)
+function decodeBase64(input) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  let str = String(input).replace(/=+$/, '');
+  let output = '';
+  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+
 async function resolveVoesx(embedUrl) {
     try {
         let body = await fetchHtml(embedUrl, embedUrl);
         
-        // VoeSX a veces redirige a espejos como jefferycontrolmodel.com
         if (body.includes('Redirecting') || body.length < 1000) {
             const redirectMatch = body.match(/window\.location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/i);
             if (redirectMatch) body = await fetchHtml(redirectMatch[1], redirectMatch[1]);
         }
 
-        // VoeSX suele tener el .m3u8 directo en el HTML o en un script
+        // Nuevo extractor VoeSX (Rompe Ofuscación)
+        const jsonMatch = body.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+        if (jsonMatch) {
+            try {
+                let encText = JSON.parse(jsonMatch[1].trim())[0];
+                let rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
+                    return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
+                });
+                const noise = ['@$', '^^', '~@', '%?', '*~', '!!', '#&'];
+                for (const n of noise) rot13 = rot13.split(n).join('');
+                
+                let b64_1 = decodeBase64(rot13);
+                let shifted = "";
+                for(let i=0; i<b64_1.length; i++) shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+                
+                let reversed = shifted.split('').reverse().join('');
+                let b64_2 = decodeBase64(reversed);
+                
+                // Limpiar posibles caracteres de escape JSON
+                let data = JSON.parse(b64_2);
+                if (data && data.source) return data.source;
+            } catch(ex) {
+                console.log("[PelisPlusHD] Error rompiendo VoeSX:", ex.message);
+            }
+        }
+
         const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
         if (m3u8) return m3u8[0].replace(/\\/g, '');
         
