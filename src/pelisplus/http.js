@@ -43,3 +43,23 @@ export async function fetchJson(url, options = {}) {
     const raw = await fetchText(url, options);
     return JSON.parse(raw);
 }
+
+/**
+ * Obtiene el HTML de una página con headers específicos (útil para resolvers)
+ */
+export async function fetchHtml(url, referer) {
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0 Safari/537.36',
+                'Referer': referer || BASE_URL,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            }
+        });
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        return await response.text();
+    } catch (error) {
+        console.error(`[PelisPlusHD] fetchHtml error: ${error.message}`);
+        return '';
+    }
+}
