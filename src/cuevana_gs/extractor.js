@@ -148,6 +148,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 server = (urlObj.searchParams.get('server') || 'unknown').toLowerCase();
             } catch (e) { }
 
+            // FILTRO SOLICITADO: Ignorar servidores problemáticos
+            if (server === 'vimeos' || server === 'goodstream') {
+                return null;
+            }
+
             console.log(`[Cuevana.gs] -> Resolving [${server}] ${lang} ${quality}`);
 
             return fetchHtml(proxyUrl, BASE_URL)
