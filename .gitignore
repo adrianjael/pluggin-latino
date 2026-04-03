@@ -9,6 +9,7 @@ providers/
 !providers/pelisplus.js
 !providers/hackstore2.js
 !providers/pelispanda.js
+!providers/tioplus.js
 # (Si quieres que los otros proveedores se ignoren, déjalos así, 
 # pero pelisplus.js DEBE subirse para que la app funcione).
 
