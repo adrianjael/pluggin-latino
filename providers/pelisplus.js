@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-03T16:26:08.556Z
+ * Generated: 2026-04-03T16:42:11.941Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -214,6 +214,24 @@ function getTmdbInfo(tmdbId, mediaType) {
     }
   });
 }
+function resolveVoesx(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
+      if (body.includes("Redirecting") || body.length < 1e3) {
+        const redirectMatch = body.match(/window\.location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/i);
+        if (redirectMatch)
+          body = yield fetchHtml(redirectMatch[1], redirectMatch[1]);
+      }
+      const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      if (m3u8)
+        return m3u8[0].replace(/\\/g, "");
+      return embedUrl;
+    } catch (e) {
+      return embedUrl;
+    }
+  });
+}
 function extractStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
@@ -248,7 +266,9 @@ function extractStreams(tmdbId, mediaType, season, episode) {
       const $page = import_cheerio_without_node_native.default.load(pageHtml);
       const pageTitle = $page("title").text() || "";
       const qualityMatch = pageTitle.match(/Online\s+[^-\s]+\s+([^-\s]+)\s+-/i) || pageTitle.match(/\s+([A-Z0-9]+)\s+-/i);
-      const movieQuality = qualityMatch ? qualityMatch[1].trim() : "HD";
+      let movieQuality = qualityMatch ? qualityMatch[1].trim() : "HD";
+      if (movieQuality === "HD" && pageTitle.toLowerCase().includes("online")) {
+      }
       const rawResults = [];
       $page("li.playurl").each((i, el) => {
         const serverUrl = $page(el).attr("data-url");
@@ -281,16 +301,21 @@ function extractStreams(tmdbId, mediaType, season, episode) {
         let finalUrl = res.serverUrl;
         const isStreamwish = /streamwish|strwish|wishembed|playnixes|niramirus|awish|dwish|fmoon|pstream/i.test(finalUrl);
         const isVidhide = /vidhide|dintezuvio|callistanise|acek-cdn|vadisov/i.test(finalUrl);
+        const isVoesx = /voe\.sx|voe-sx|jefferycontrolmodel/i.test(finalUrl);
         if (isStreamwish)
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (isVidhide)
           finalUrl = yield resolveVidhide(finalUrl);
+        else if (isVoesx) {
+          finalUrl = yield resolveVoesx(finalUrl);
+        }
         if ((isStreamwish || isVidhide) && !finalUrl.includes(".m3u8")) {
           return null;
         }
+        const cleanServerName = res.serverName.replace(/\s*\(.*?\)\s*/g, "").trim();
         return {
           name: "PelisPlusHD",
-          title: `${res.serverName} (${res.language.includes("Latino") ? "Latino" : "Espa\xF1ol"}) ${movieQuality}`,
+          title: `${cleanServerName} (${res.language.includes("Latino") ? "Latino" : "Espa\xF1ol"}) ${movieQuality}`,
           url: finalUrl,
           quality: movieQuality,
           headers: {

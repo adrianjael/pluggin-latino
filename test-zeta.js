@@ -1,9 +1,9 @@
 const { getStreams } = require('./providers/pelisplus.js');
 
 async function test() {
-    console.log('--- Probando Filtro Inteligente y Calidad ---');
+    console.log('--- Probando Sin Piedad (1236153) y VoeSX ---');
     try {
-        const streams = await getStreams('1314786', 'movie');
+        const streams = await getStreams('1236153', 'movie');
         console.log('\nResultados filtrados:', streams.length);
         
         streams.forEach((s, i) => {

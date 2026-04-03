@@ -128,6 +128,26 @@ async function getTmdbInfo(tmdbId, mediaType) {
     }
 }
 
+async function resolveVoesx(embedUrl) {
+    try {
+        let body = await fetchHtml(embedUrl, embedUrl);
+        
+        // VoeSX a veces redirige a espejos como jefferycontrolmodel.com
+        if (body.includes('Redirecting') || body.length < 1000) {
+            const redirectMatch = body.match(/window\.location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/i);
+            if (redirectMatch) body = await fetchHtml(redirectMatch[1], redirectMatch[1]);
+        }
+
+        // VoeSX suele tener el .m3u8 directo en el HTML o en un script
+        const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        if (m3u8) return m3u8[0].replace(/\\/g, '');
+        
+        return embedUrl;
+    } catch (e) {
+        return embedUrl;
+    }
+}
+
 /**
  * Main extraction function
  */
@@ -169,7 +189,12 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
         // Extraer calidad del título de la página (Ej: "Ver Zeta (2026) Online Latino HD - Pelisplus")
         const pageTitle = $page('title').text() || "";
         const qualityMatch = pageTitle.match(/Online\s+[^-\s]+\s+([^-\s]+)\s+-/i) || pageTitle.match(/\s+([A-Z0-9]+)\s+-/i);
-        const movieQuality = qualityMatch ? qualityMatch[1].trim() : "HD";
+        let movieQuality = qualityMatch ? qualityMatch[1].trim() : "HD";
+        
+        // Limpiar "HD" duplicado si ya viene en el nombre del servidor (v1.3.1)
+        if (movieQuality === "HD" && pageTitle.toLowerCase().includes("online")) {
+            // Si el título es muy genérico, mantenemos HD pero evitamos repeticiones
+        }
 
         const rawResults = [];
         $page('li.playurl').each((i, el) => {
@@ -206,18 +231,25 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             
             const isStreamwish = /streamwish|strwish|wishembed|playnixes|niramirus|awish|dwish|fmoon|pstream/i.test(finalUrl);
             const isVidhide = /vidhide|dintezuvio|callistanise|acek-cdn|vadisov/i.test(finalUrl);
+            const isVoesx = /voe\.sx|voe-sx|jefferycontrolmodel/i.test(finalUrl);
             
             if (isStreamwish) finalUrl = await resolveStreamwish(finalUrl);
             else if (isVidhide) finalUrl = await resolveVidhide(finalUrl);
+            else if (isVoesx) {
+                finalUrl = await resolveVoesx(finalUrl);
+            }
 
-            // FILTRO INTELIGENTE: Si el resolver falló (no encontró .m3u8), lo descartamos
+            // FILTRO INTELIGENTE: Si es VidHide o Streamwish pero no extrajo .m3u8, lo descartamos
+            // VoeSX se deja pasar con su URL final (espejo) porque usa ofuscación avanzada
             if ((isStreamwish || isVidhide) && !finalUrl.includes('.m3u8')) {
                 return null;
             }
 
+            const cleanServerName = res.serverName.replace(/\s*\(.*?\)\s*/g, '').trim();
+
             return {
                 name: "PelisPlusHD",
-                title: `${res.serverName} (${res.language.includes("Latino") ? "Latino" : "Español"}) ${movieQuality}`,
+                title: `${cleanServerName} (${res.language.includes("Latino") ? "Latino" : "Español"}) ${movieQuality}`,
                 url: finalUrl,
                 quality: movieQuality,
                 headers: {
