@@ -114,7 +114,7 @@ function fetchHtml(url, referer) {
 
 // src/pelispanda/extractor.js
 function unpackEval(payload, radix, symtab) {
-  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
+  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function (match) {
     let result = 0;
     const digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (let i = 0; i < match.length; i++) {
@@ -198,7 +198,7 @@ function resolveVoesx(embedUrl) {
       if (jsonMatch) {
         try {
           let encText = JSON.parse(jsonMatch[1].trim())[0];
-          let rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
+          let rot13 = encText.replace(/[a-zA-Z]/g, function (c) {
             return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
           });
           const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
