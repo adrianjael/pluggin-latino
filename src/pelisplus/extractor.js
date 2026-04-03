@@ -215,7 +215,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
         if (!movieUrl) return [];
 
         if (mediaType === 'tv') {
-            movieUrl = movieUrl.replace('/serie/', '/episodio/') + `-${season}x${episode}`;
+            // El patrón antiguo /episodio/ ya no existe. Ahora es: /serie/{slug}/temporada/{S}/capitulo/{E}
+            movieUrl = movieUrl.replace(/\/$/, '') + `/temporada/${season}/capitulo/${episode}`;
         }
 
         const pageHtml = await fetchText(movieUrl);

@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-03T18:39:21.992Z
+ * Generated: 2026-04-03T18:59:36.572Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -292,7 +292,7 @@ function extractStreams(tmdbId, mediaType, season, episode) {
       if (!movieUrl)
         return [];
       if (mediaType === "tv") {
-        movieUrl = movieUrl.replace("/serie/", "/episodio/") + `-${season}x${episode}`;
+        movieUrl = movieUrl.replace(/\/$/, "") + `/temporada/${season}/capitulo/${episode}`;
       }
       const pageHtml = yield fetchText(movieUrl);
       const $page = import_cheerio_without_node_native.default.load(pageHtml);

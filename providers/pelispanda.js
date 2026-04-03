@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T18:39:21.986Z
+ * Generated: 2026-04-03T18:59:36.567Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -275,8 +275,11 @@ function extractStreams(tmdbId, mediaType, season, episode) {
           embeds = playersData.embeds;
         }
       } else {
-        console.log("[PelisPanda] Series extracting not yet fully mapped");
-        return [];
+        if (playersData && playersData.embeds) {
+          embeds = playersData.embeds.filter(
+            (e) => e.season == season && e.episode == episode
+          );
+        }
       }
       if (embeds.length === 0) {
         console.log("[PelisPanda] No se encontraron reproductores embebidos.");

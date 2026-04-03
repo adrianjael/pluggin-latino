@@ -164,22 +164,24 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
         const movieMatch = searchData.results[0]; // TODO: Filtrar por año si hay colisiones
         console.log(`[PelisPanda] Slug encontrado: ${movieMatch.slug}`);
         
-        const endpointType = mediaType === 'movie' ? 'movie' : 'serie';
-        
         // El endpoint oculto que devuelve los enlaces en PelisPanda
+        const endpointType = mediaType === 'movie' ? 'movie' : 'serie';
         const playersUrl = `https://pelispanda.org/wp-json/wpreact/v1/${endpointType}/${movieMatch.slug}/related`;
         const playersRes = await fetch(playersUrl);
         const playersData = await playersRes.json();
         
-        // Series might have episodes inside the data, let's implement movies first
         let embeds = [];
         if (mediaType === 'movie') {
             if (playersData && playersData.embeds) {
                  embeds = playersData.embeds;
             }
         } else {
-            console.log("[PelisPanda] Series extracting not yet fully mapped");
-            return [];
+            // Para series, buscamos en el mismo array de embeds filtrando por S/E
+            if (playersData && playersData.embeds) {
+                embeds = playersData.embeds.filter(e => 
+                    e.season == season && e.episode == episode
+                );
+            }
         }
         
         if (embeds.length === 0) {
