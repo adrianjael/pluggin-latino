@@ -1,11 +1,11 @@
 {
   "name": "Nuvio Latino Providers",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "scrapers": [
     {
       "id": "pelisplus",
       "name": "PelisPlusHD",
-      "description": "Películas y Series en Español Latino desde PelisPlusHD.la",
+      "description": "Peliculas y series en espanol latino desde PelisPlusHD.la",
       "version": "1.0.0",
       "author": "Nuvio Community",
       "supportedTypes": [
