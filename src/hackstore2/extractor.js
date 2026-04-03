@@ -123,6 +123,30 @@ async function resolveVoesx(embedUrl) {
     }
 }
 
+async function resolveVimeos(embedUrl) {
+    try {
+        console.log(`[HackStore2] Resolving Vimeos/Goodstream: ${embedUrl}`);
+        // Necesitamos el Referer de HackStore2 para evitar bloqueos
+        const body = await fetchHtml(embedUrl, "https://hackstore2.com/");
+        
+        // Buscamos el patrón del master.m3u8 con su token dinámico (JWPlayer)
+        // Patrón detectado: https://.../master.m3u8?t=...
+        const m3u8Match = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        
+        if (m3u8Match) {
+            const finalUrl = m3u8Match[0].replace(/\\/g, '');
+            console.log(`[HackStore2] Direct source found: ${finalUrl}`);
+            return finalUrl;
+        }
+        
+        console.log(`[HackStore2] No direct .m3u8 found in vimeos/goodstream embed.`);
+        return embedUrl;
+    } catch (e) {
+        console.error(`[HackStore2] Error resolving vimeos/goodstream: ${e.message}`);
+        return embedUrl;
+    }
+}
+
 /**
  * Normaliza un título para comparaciones
  */
@@ -264,6 +288,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
+            else if (serverName === 'vimeos' || serverName === 'goodstream') finalUrl = await resolveVimeos(finalUrl);
             
             // Filtro Cero Crashes
             const isDirectSource = finalUrl.includes('.m3u8') || finalUrl.includes('.mp4');
