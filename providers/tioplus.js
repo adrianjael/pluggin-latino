@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-03T20:51:11.246Z
+ * Generated: 2026-04-03T21:19:32.900Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -140,10 +140,16 @@ function resolveTioPlusPlayer(playerId) {
     try {
       const playerUrl = `${BASE_URL}/player/${playerId}`;
       const body = yield fetchHtml(playerUrl, BASE_URL);
-      const redirectMatch = body.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+      let redirectMatch = body.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+      if (!redirectMatch) {
+        redirectMatch = body.match(/url=(https?:\/\/[^"'>]+)/i);
+      }
       if (redirectMatch) {
         let finalUrl = redirectMatch[1].replace(/\\/g, "");
-        console.log(`[TioPlus] Redirect found: ${finalUrl}`);
+        console.log(`[TioPlus] Player Redirect: ${finalUrl}`);
+        if (finalUrl.includes("turbovid") || finalUrl.includes("cdn") || finalUrl.includes(".m3u8")) {
+          return yield resolveDirectOrM3u8(finalUrl);
+        }
         if (finalUrl.includes("vidhide") || finalUrl.includes("vhaue") || finalUrl.includes("dintezuvio")) {
           return yield resolveVidhide(finalUrl);
         } else if (finalUrl.includes("streamwish") || finalUrl.includes("awish") || finalUrl.includes("dwish")) {
@@ -151,9 +157,25 @@ function resolveTioPlusPlayer(playerId) {
         }
         return finalUrl;
       }
+      const iframeMatch = body.match(/<iframe.*?src=["'](https?:\/\/[^"']+)["']/i);
+      if (iframeMatch)
+        return iframeMatch[1];
       return null;
     } catch (e) {
       return null;
+    }
+  });
+}
+function resolveDirectOrM3u8(url) {
+  return __async(this, null, function* () {
+    try {
+      if (url.includes(".m3u8") || url.includes(".mp4"))
+        return url;
+      const body = yield fetchText(url);
+      const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      return m3u8 ? m3u8[0] : url;
+    } catch (e) {
+      return url;
     }
   });
 }
@@ -223,13 +245,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       });
       const targetType = mediaType === "movie" ? "pelicula" : "serie";
       let match = results.find((r) => calculateSimilarity(searchTitle, r.title) > 0.8 && r.type === targetType);
-      if (!match) {
+      if (!match)
         match = results.find((r) => isGoodMatch(searchTitle, r.title, 0.35) && r.type === targetType);
-      }
-      if (!match) {
-        console.log(`[TioPlus] No match found for: ${searchTitle}`);
+      if (!match)
         return [];
-      }
       let contentUrl = match.href.startsWith("http") ? match.href : `${BASE_URL}${match.href}`;
       if (mediaType === "tv") {
         if (!contentUrl.includes("/season/")) {
@@ -237,24 +256,41 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         }
       }
       const pageHtml = yield fetchText(contentUrl);
-      const $page = import_cheerio_without_node_native.default.load(pageHtml);
       const serverItems = [];
-      $page('li[role="presentation"]').each((i, el) => {
-        const dataId = $page(el).attr("data-id");
-        const name = $page(el).find("span").first().text().trim();
-        if (dataId) {
-          serverItems.push({ dataId, name });
+      const dataIdRegex = /data-id=["']([^"']+)["']/g;
+      let idMatch;
+      const processedIds = /* @__PURE__ */ new Set();
+      while ((idMatch = dataIdRegex.exec(pageHtml)) !== null) {
+        const dataId = idMatch[1];
+        if (dataId.length > 20 && !processedIds.has(dataId)) {
+          processedIds.add(dataId);
+          serverItems.push({ dataId, name: "Server" });
         }
-      });
+      }
+      if (serverItems.length === 0) {
+        const nextDataMatch = pageHtml.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+        if (nextDataMatch) {
+          try {
+            const nextData = JSON.parse(nextDataMatch[1]);
+            const players = nextData.props.pageProps.data.players;
+            if (players && Array.isArray(players)) {
+              players.forEach((p) => {
+                if (p.id)
+                  serverItems.push({ dataId: p.id, name: p.name || "Server" });
+              });
+            }
+          } catch (e) {
+          }
+        }
+      }
+      console.log(`[TioPlus] Found ${serverItems.length} potential servers.`);
       const streamPromises = serverItems.map((item) => __async(this, null, function* () {
-        if (item.name.toLowerCase().includes("goodstream"))
-          return null;
         const resolvedUrl = yield resolveTioPlusPlayer(item.dataId);
         if (!resolvedUrl)
           return null;
         return {
           name: "TioPlus",
-          title: `${item.name} (${item.name.includes("-") ? item.name.split("-")[0].trim() : item.name}) - Latino`,
+          title: `${item.name} - Latino HD`,
           url: resolvedUrl,
           quality: "HD",
           headers: {
@@ -266,7 +302,6 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       const playerResults = yield Promise.all(streamPromises);
       return playerResults.filter((s) => s !== null);
     } catch (error) {
-      console.error(`[TioPlus] Global Error: ${error.message}`);
       return [];
     }
   });

@@ -10,12 +10,23 @@ async function resolveTioPlusPlayer(playerId) {
         const playerUrl = `${BASE_URL}/player/${playerId}`;
         const body = await fetchHtml(playerUrl, BASE_URL);
         
-        // Pattern found in research: window.location.href = 'https://vidhideplus.com/v/...'
-        const redirectMatch = body.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+        // Pattern 1: window.location.href = '...'
+        let redirectMatch = body.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+        if (!redirectMatch) {
+            // Pattern 2: meta refresh or similar
+            redirectMatch = body.match(/url=(https?:\/\/[^"'>]+)/i);
+        }
+
         if (redirectMatch) {
             let finalUrl = redirectMatch[1].replace(/\\/g, '');
-            console.log(`[TioPlus] Redirect found: ${finalUrl}`);
+            console.log(`[TioPlus] Player Redirect: ${finalUrl}`);
             
+            // Handle specific known providers
+            if (finalUrl.includes('turbovid') || finalUrl.includes('cdn') || finalUrl.includes('.m3u8')) {
+                return await resolveDirectOrM3u8(finalUrl);
+            }
+            
+            // Standard resolvers
             if (finalUrl.includes('vidhide') || finalUrl.includes('vhaue') || finalUrl.includes('dintezuvio')) {
                 return await resolveVidhide(finalUrl);
             } else if (finalUrl.includes('streamwish') || finalUrl.includes('awish') || finalUrl.includes('dwish')) {
@@ -25,10 +36,23 @@ async function resolveTioPlusPlayer(playerId) {
             return finalUrl;
         }
 
+        // Pattern 3: iframe src in player page
+        const iframeMatch = body.match(/<iframe.*?src=["'](https?:\/\/[^"']+)["']/i);
+        if (iframeMatch) return iframeMatch[1];
+
         return null;
     } catch (e) {
         return null;
     }
+}
+
+async function resolveDirectOrM3u8(url) {
+    try {
+        if (url.includes('.m3u8') || url.includes('.mp4')) return url;
+        const body = await fetchText(url);
+        const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        return m3u8 ? m3u8[0] : url;
+    } catch (e) { return url; }
 }
 
 async function resolveStreamwish(embedUrl) {
@@ -67,7 +91,6 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
             if (tmdbInfo) searchTitle = tmdbInfo.title;
         }
-
         if (!searchTitle) return [];
 
         // 1. Search API
@@ -76,13 +99,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         if (!searchHtml) return [];
         
         const $search = cheerio.load(searchHtml);
-        
         const results = [];
         $search('article.item').each((i, el) => {
             const $el = $search(el);
             const title = $el.find('h2').text().trim();
             const href = $el.find('a.itemA').attr('href');
-            // Normalize type text (site uses "Pelicúla")
             const typeText = $el.find('span.typeItem').text().toLowerCase();
             const type = typeText.includes('pelic') ? 'pelicula' : 'serie';
             results.push({ title, href, type });
@@ -91,15 +112,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         // 2. Matching
         const targetType = mediaType === 'movie' ? 'pelicula' : 'serie';
         let match = results.find(r => calculateSimilarity(searchTitle, r.title) > 0.8 && r.type === targetType);
-        
-        if (!match) {
-            match = results.find(r => isGoodMatch(searchTitle, r.title, 0.35) && r.type === targetType);
-        }
-
-        if (!match) {
-            console.log(`[TioPlus] No match found for: ${searchTitle}`);
-            return [];
-        }
+        if (!match) match = results.find(r => isGoodMatch(searchTitle, r.title, 0.35) && r.type === targetType);
+        if (!match) return [];
 
         // 3. Navigate to content page
         let contentUrl = match.href.startsWith('http') ? match.href : `${BASE_URL}${match.href}`;
@@ -110,27 +124,48 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         }
 
         const pageHtml = await fetchText(contentUrl);
-        const $page = cheerio.load(pageHtml);
-
+        
+        // AGGRESSIVE EXTRACTION: Search for data-id in the entire HTML string
+        // This bypasses issues where cheerio might miss dynamic/hidden elements
         const serverItems = [];
-        $page('li[role="presentation"]').each((i, el) => {
-            const dataId = $page(el).attr('data-id');
-            const name = $page(el).find('span').first().text().trim();
-            if (dataId) {
-                serverItems.push({ dataId, name });
+        const dataIdRegex = /data-id=["']([^"']+)["']/g;
+        let idMatch;
+        const processedIds = new Set();
+        
+        while ((idMatch = dataIdRegex.exec(pageHtml)) !== null) {
+            const dataId = idMatch[1];
+            if (dataId.length > 20 && !processedIds.has(dataId)) { // Valid hashes are long
+                processedIds.add(dataId);
+                serverItems.push({ dataId, name: "Server" });
             }
-        });
+        }
+
+        // Fallback to __NEXT_DATA__ extraction
+        if (serverItems.length === 0) {
+            const nextDataMatch = pageHtml.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+            if (nextDataMatch) {
+                try {
+                    const nextData = JSON.parse(nextDataMatch[1]);
+                    const players = nextData.props.pageProps.data.players;
+                    if (players && Array.isArray(players)) {
+                        players.forEach(p => {
+                            if (p.id) serverItems.push({ dataId: p.id, name: p.name || 'Server' });
+                        });
+                    }
+                } catch (e) {}
+            }
+        }
+
+        console.log(`[TioPlus] Found ${serverItems.length} potential servers.`);
 
         // 4. Resolve servers in Parallel
         const streamPromises = serverItems.map(async (item) => {
-            if (item.name.toLowerCase().includes('goodstream')) return null;
-
             const resolvedUrl = await resolveTioPlusPlayer(item.dataId);
             if (!resolvedUrl) return null;
 
             return {
                 name: "TioPlus",
-                title: `${item.name} (${item.name.includes("-") ? item.name.split("-")[0].trim() : item.name}) - Latino`,
+                title: `${item.name} - Latino HD`,
                 url: resolvedUrl,
                 quality: "HD",
                 headers: {
@@ -144,7 +179,6 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         return playerResults.filter(s => s !== null);
 
     } catch (error) {
-        console.error(`[TioPlus] Global Error: ${error.message}`);
         return [];
     }
 }
