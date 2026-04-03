@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-03T20:06:04.123Z
+ * Generated: 2026-04-03T20:14:02.615Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -318,8 +318,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         console.log("[HackStore2] No players found.");
         return [];
       }
-      const streams = [];
-      for (let player of playerData.data) {
+      const streamPromises = playerData.data.map((player) => __async(this, null, function* () {
         let serverName = "Desconocido";
         let rawUrl = player.url || "";
         let finalUrl = rawUrl;
@@ -331,37 +330,37 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           serverName = "voe";
         else if (rawUrl.includes("vimeos"))
           serverName = "vimeos";
-        else if (rawUrl.includes("goodstream"))
-          serverName = "goodstream";
         else if (rawUrl.includes("netu") || rawUrl.includes("waaw"))
           serverName = "netu";
+        if (rawUrl.includes("goodstream") || serverName === "goodstream") {
+          return null;
+        }
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
-        else if (serverName === "vimeos" || serverName === "goodstream")
+        else if (serverName === "vimeos")
           finalUrl = yield resolveVimeos(finalUrl);
         const isDirectSource = finalUrl.includes(".m3u8") || finalUrl.includes(".mp4");
         if (!isDirectSource) {
-          console.log(`[HackStore2] Omitiendo servidor ${serverName} porque su URL final no expone el video directo: ${finalUrl}`);
-          continue;
+          return null;
         }
         const qualityStr = player.quality ? player.quality : "HD";
         const langStr = player.lang ? player.lang : "Latino";
-        streams.push({
+        return {
           server: serverName,
           title: `${serverName} (${langStr}) ${qualityStr}`,
           url: finalUrl,
           headers: {
             "Referer": rawUrl,
-            // Necesario para Vimeos/Goodstream
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           }
-        });
-      }
-      return streams;
+        };
+      }));
+      const playerResults = yield Promise.all(streamPromises);
+      return playerResults.filter((s) => s !== null);
     } catch (error) {
       console.error(`[HackStore2] Error: ${error.message}`);
       return [];

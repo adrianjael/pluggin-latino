@@ -230,10 +230,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             return [];
         }
 
-        const streams = [];
-
-        // Parseamos los embebidos ocultos
-        for (let player of embeds) {
+        // 3. Resolve links IN PARALLEL (Speed optimization)
+        const streamPromises = embeds.map(async (player) => {
             let serverName = "Desconocido";
             let rawUrl = player.url || "";
             let finalUrl = rawUrl.replace(/\\\//g, '/'); // limpiar slashes de json
@@ -245,10 +243,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (finalUrl.includes('goodstream')) serverName = 'goodstream';
             else if (finalUrl.includes('netu') || finalUrl.includes('waaw')) serverName = 'netu';
             
-            // Resolvemos protección
-            // Filtro Super Estricto de Cero Crasheos Nuvio
-            // Omitimos vimeos y goodstream por errores de IO Bad Status en ExoPlayer
-            if (serverName === 'vimeos' || serverName === 'goodstream') continue;
+            // FILTRO DE SEGURIDAD (Cero Crashes): Omitimos vimeos y goodstream
+            if (serverName === 'vimeos' || serverName === 'goodstream') return null;
 
             // Resolvemos protección
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
@@ -256,15 +252,14 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
             
             if (!finalUrl || (!finalUrl.includes('.m3u8') && !finalUrl.includes('.mp4'))) {
-                console.log(`[PelisPanda] Omitiendo ${serverName} porque no expone directo: ${finalUrl}`);
-                continue;
+                return null;
             }
 
             const qualityStr = player.quality ? player.quality : "HD";
             const langStr = player.lang ? player.lang : "Latino";
             const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-            streams.push({
+            return {
                 name: "PelisPanda",
                 server: serverName,
                 title: `${serverName} (${langStr}) ${qualityStr}`,
@@ -274,10 +269,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     "User-Agent": ua,
                     "Referer": rawUrl
                 }
-            });
-        }
+            };
+        });
 
-        return streams;
+        const playerResults = await Promise.all(streamPromises);
+        return playerResults.filter(s => s !== null);
     } catch (error) {
         console.error(`[PelisPanda] Error crítico: ${error.message}`);
         return [];

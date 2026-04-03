@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T20:06:04.196Z
+ * Generated: 2026-04-03T20:14:02.660Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -304,8 +304,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         console.log("[PelisPanda] No se encontraron reproductores embebidos.");
         return [];
       }
-      const streams = [];
-      for (let player of embeds) {
+      const streamPromises = embeds.map((player) => __async(this, null, function* () {
         let serverName = "Desconocido";
         let rawUrl = player.url || "";
         let finalUrl = rawUrl.replace(/\\\//g, "/");
@@ -322,7 +321,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         else if (finalUrl.includes("netu") || finalUrl.includes("waaw"))
           serverName = "netu";
         if (serverName === "vimeos" || serverName === "goodstream")
-          continue;
+          return null;
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
@@ -330,13 +329,12 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
         if (!finalUrl || !finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
-          console.log(`[PelisPanda] Omitiendo ${serverName} porque no expone directo: ${finalUrl}`);
-          continue;
+          return null;
         }
         const qualityStr = player.quality ? player.quality : "HD";
         const langStr = player.lang ? player.lang : "Latino";
         const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-        streams.push({
+        return {
           name: "PelisPanda",
           server: serverName,
           title: `${serverName} (${langStr}) ${qualityStr}`,
@@ -346,9 +344,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             "User-Agent": ua,
             "Referer": rawUrl
           }
-        });
-      }
-      return streams;
+        };
+      }));
+      const playerResults = yield Promise.all(streamPromises);
+      return playerResults.filter((s) => s !== null);
     } catch (error) {
       console.error(`[PelisPanda] Error cr\xEDtico: ${error.message}`);
       return [];

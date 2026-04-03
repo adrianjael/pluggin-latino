@@ -268,10 +268,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             return [];
         }
 
-        const streams = [];
-
-        // 6. Resolve links
-        for (let player of playerData.data) {
+        // 6. Resolve links IN PARALLEL (Speed optimization)
+        const streamPromises = playerData.data.map(async (player) => {
             let serverName = "Desconocido";
             let rawUrl = player.url || "";
             let finalUrl = rawUrl;
@@ -281,38 +279,42 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (rawUrl.includes('vidhide') || rawUrl.includes('filemoon')) serverName = rawUrl.includes('vidhide') ? 'vidhide' : 'filemoon';
             else if (rawUrl.includes('voe')) serverName = 'voe';
             else if (rawUrl.includes('vimeos')) serverName = 'vimeos';
-            else if (rawUrl.includes('goodstream')) serverName = 'goodstream';
             else if (rawUrl.includes('netu') || rawUrl.includes('waaw')) serverName = 'netu';
+            
+            // FILTRO SOLICITADO: Quitar Goodstream (vía URL o nombre detectado)
+            if (rawUrl.includes('goodstream') || serverName === 'goodstream') {
+                return null;
+            }
 
             // Resolve
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
-            else if (serverName === 'vimeos' || serverName === 'goodstream') finalUrl = await resolveVimeos(finalUrl);
-
+            else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
+            
             // Filtro Cero Crashes
             const isDirectSource = finalUrl.includes('.m3u8') || finalUrl.includes('.mp4');
             if (!isDirectSource) {
-                console.log(`[HackStore2] Omitiendo servidor ${serverName} porque su URL final no expone el video directo: ${finalUrl}`);
-                continue;
+                return null;
             }
 
             // Calidad
             const qualityStr = player.quality ? player.quality : "HD";
             const langStr = player.lang ? player.lang : "Latino";
 
-            streams.push({
+            return {
                 server: serverName,
                 title: `${serverName} (${langStr}) ${qualityStr}`,
                 url: finalUrl,
                 headers: {
-                    "Referer": rawUrl, // Necesario para Vimeos/Goodstream
+                    "Referer": rawUrl,
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
                 }
-            });
-        }
+            };
+        });
 
-        return streams;
+        const playerResults = await Promise.all(streamPromises);
+        return playerResults.filter(s => s !== null);
     } catch (error) {
         console.error(`[HackStore2] Error: ${error.message}`);
         return [];
