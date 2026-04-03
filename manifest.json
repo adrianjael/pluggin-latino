@@ -58,7 +58,7 @@
       ],
       "filename": "providers/pelispanda.js",
       "enabled": true,
-      "logo": "https://pelispanda.org/wp-content/themes/wpreact/assets/svg/logo.svg",
+      "logo": "https://pelispanda.org/wp-content/themes/wpreact/public/image/logo.png",
       "contentLanguage": [
         "es"
       ],

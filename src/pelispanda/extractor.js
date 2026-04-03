@@ -111,6 +111,28 @@ async function resolveVoesx(embedUrl) {
     }
 }
 
+async function resolveVimeos(embedUrl) {
+    try {
+        let body = await fetchHtml(embedUrl, embedUrl);
+        const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+        if (packMatch) {
+            const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+            const m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+            if (m3u8) return m3u8[0].replace(/\\/g, '');
+        }
+        return embedUrl;
+    } catch (e) { return embedUrl; }
+}
+
+async function resolveGoodstream(embedUrl) {
+    try {
+        let body = await fetchHtml(embedUrl, embedUrl);
+        const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        if (m3u8) return m3u8[0].replace(/\\/g, '');
+        return embedUrl;
+    } catch (e) { return embedUrl; }
+}
+
 async function getTmdbInfo(tmdbId, mediaType) {
     try {
         const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
@@ -198,6 +220,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
+            else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
+            else if (serverName === 'goodstream') finalUrl = await resolveGoodstream(finalUrl);
             
             // Filtro Super Estricto de Cero Crasheos Nuvio
             // Rechazamos frames de iframe oscuros

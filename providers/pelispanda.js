@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T17:57:19.360Z
+ * Generated: 2026-04-03T18:09:04.972Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -114,7 +114,7 @@ function fetchHtml(url, referer) {
 
 // src/pelispanda/extractor.js
 function unpackEval(payload, radix, symtab) {
-  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function (match) {
+  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
     let result = 0;
     const digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (let i = 0; i < match.length; i++) {
@@ -198,7 +198,7 @@ function resolveVoesx(embedUrl) {
       if (jsonMatch) {
         try {
           let encText = JSON.parse(jsonMatch[1].trim())[0];
-          let rot13 = encText.replace(/[a-zA-Z]/g, function (c) {
+          let rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
             return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
           });
           const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
@@ -217,6 +217,36 @@ function resolveVoesx(embedUrl) {
           console.log("[PelisPanda] Error rompiendo VoeSX:", ex.message);
         }
       }
+      const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      if (m3u8)
+        return m3u8[0].replace(/\\/g, "");
+      return embedUrl;
+    } catch (e) {
+      return embedUrl;
+    }
+  });
+}
+function resolveVimeos(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
+      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+        const m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        if (m3u8)
+          return m3u8[0].replace(/\\/g, "");
+      }
+      return embedUrl;
+    } catch (e) {
+      return embedUrl;
+    }
+  });
+}
+function resolveGoodstream(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
       const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
       if (m3u8)
         return m3u8[0].replace(/\\/g, "");
@@ -305,6 +335,10 @@ function extractStreams(tmdbId, mediaType, season, episode) {
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
+        else if (serverName === "vimeos")
+          finalUrl = yield resolveVimeos(finalUrl);
+        else if (serverName === "goodstream")
+          finalUrl = yield resolveGoodstream(finalUrl);
         if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
           console.log(`[PelisPanda] Omitiendo ${serverName} porque no expone directo: ${finalUrl}`);
           continue;
