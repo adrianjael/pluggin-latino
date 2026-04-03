@@ -165,8 +165,13 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
 
         const pageHtml = await fetchText(movieUrl);
         const $page = cheerio.load(pageHtml);
+
+        // Extraer calidad del título de la página (Ej: "Ver Zeta (2026) Online Latino HD - Pelisplus")
+        const pageTitle = $page('title').text() || "";
+        const qualityMatch = pageTitle.match(/Online\s+[^-\s]+\s+([^-\s]+)\s+-/i) || pageTitle.match(/\s+([A-Z0-9]+)\s+-/i);
+        const movieQuality = qualityMatch ? qualityMatch[1].trim() : "HD";
+
         const rawResults = [];
-        
         $page('li.playurl').each((i, el) => {
             const serverUrl = $page(el).attr('data-url');
             const serverName = $page(el).find('a').text().trim();
@@ -205,11 +210,16 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             if (isStreamwish) finalUrl = await resolveStreamwish(finalUrl);
             else if (isVidhide) finalUrl = await resolveVidhide(finalUrl);
 
+            // FILTRO INTELIGENTE: Si el resolver falló (no encontró .m3u8), lo descartamos
+            if ((isStreamwish || isVidhide) && !finalUrl.includes('.m3u8')) {
+                return null;
+            }
+
             return {
                 name: "PelisPlusHD",
-                title: `${res.serverName} (Latino)`,
+                title: `${res.serverName} (${res.language.includes("Latino") ? "Latino" : "Español"}) ${movieQuality}`,
                 url: finalUrl,
-                quality: "HD",
+                quality: movieQuality,
                 headers: {
                     "Referer": res.serverUrl,
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -217,7 +227,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             };
         }));
 
-        return streams;
+        // Filtrar nulos (servidores muertos)
+        return streams.filter(s => s !== null);
     } catch (error) {
         return [];
     }
