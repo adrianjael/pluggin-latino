@@ -2,6 +2,7 @@
  * cuevana_gs - Built from src/cuevana_gs/
  * Generated: 2026-04-03T23:27:18.214Z
  */
+
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
@@ -50,7 +51,7 @@ var BASE_HEADERS = {
   "Accept-Language": "es-ES,es;q=0.9"
 };
 function unpackEval(payload, radix, symtab) {
-  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
+  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function (match) {
     let result = 0;
     const digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (let i = 0; i < match.length; i++) {
@@ -183,7 +184,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       }
       const embeds = playerJson.data.embeds;
       console.log(`[Cuevana.gs] Embeds found: ${embeds.length}`);
-      const streamPromises = embeds.map(function(embed) {
+      const streamPromises = embeds.map(function (embed) {
         const proxyUrl = embed.url;
         const lang = embed.lang || "Latino";
         const quality = embed.quality || "HD";
@@ -194,7 +195,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         } catch (e) {
         }
         console.log(`[Cuevana.gs] -> Resolving [${server}] ${lang} ${quality}`);
-        return fetchHtml(proxyUrl, BASE_URL).then(function(proxyHtml) {
+        return fetchHtml(proxyUrl, BASE_URL).then(function (proxyHtml) {
           const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
           if (!iframeMatch)
             return null;
@@ -205,7 +206,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           } else {
             resolvePromise = resolveGenericEmbed(embedUrl);
           }
-          return resolvePromise.then(function(finalUrl) {
+          return resolvePromise.then(function (finalUrl) {
             if (!finalUrl || !finalUrl.startsWith("http")) {
               return null;
             }
@@ -220,12 +221,12 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
               }
             };
           });
-        }).catch(function() {
+        }).catch(function () {
           return null;
         });
       });
       const results = yield Promise.all(streamPromises);
-      const streams = results.filter(function(s) {
+      const streams = results.filter(function (s) {
         return s !== null;
       });
       console.log(`[Cuevana.gs] Final streams: ${streams.length}`);
