@@ -14,7 +14,6 @@ function unpackEval(payload, radix, symtab) {
             if (pos === -1 || pos >= radix) return match;
             result = result * radix + pos;
         }
-
         if (result >= symtab.length) return match;
         return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
     });
