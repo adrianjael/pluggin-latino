@@ -112,25 +112,11 @@ async function resolveVoesx(embedUrl) {
 }
 
 async function resolveVimeos(embedUrl) {
-    try {
-        let body = await fetchHtml(embedUrl, embedUrl);
-        const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-        if (packMatch) {
-            const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-            const m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-            if (m3u8) return m3u8[0].replace(/\\/g, '');
-        }
-        return embedUrl;
-    } catch (e) { return embedUrl; }
+    return null; // Server unstable in Nuvio
 }
 
 async function resolveGoodstream(embedUrl) {
-    try {
-        let body = await fetchHtml(embedUrl, embedUrl);
-        const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        if (m3u8) return m3u8[0].replace(/\\/g, '');
-        return embedUrl;
-    } catch (e) { return embedUrl; }
+    return null; // Server unstable in Nuvio
 }
 
 async function getTmdbInfo(tmdbId, mediaType) {
@@ -217,15 +203,16 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             else if (finalUrl.includes('netu') || finalUrl.includes('waaw')) serverName = 'netu';
             
             // Resolvemos protección
+            // Filtro Super Estricto de Cero Crasheos Nuvio
+            // Omitimos vimeos y goodstream por errores de IO Bad Status en ExoPlayer
+            if (serverName === 'vimeos' || serverName === 'goodstream') continue;
+
+            // Resolvemos protección
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
-            else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
-            else if (serverName === 'goodstream') finalUrl = await resolveGoodstream(finalUrl);
             
-            // Filtro Super Estricto de Cero Crasheos Nuvio
-            // Rechazamos frames de iframe oscuros
-            if (!finalUrl.includes('.m3u8') && !finalUrl.includes('.mp4')) {
+            if (!finalUrl || (!finalUrl.includes('.m3u8') && !finalUrl.includes('.mp4'))) {
                 console.log(`[PelisPanda] Omitiendo ${serverName} porque no expone directo: ${finalUrl}`);
                 continue;
             }
@@ -234,26 +221,16 @@ export async function extractStreams(tmdbId, mediaType, season, episode) {
             const langStr = player.lang ? player.lang : "Latino";
             const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-            let headers = {
-                "User-Agent": ua,
-                "Referer": rawUrl
-            };
-            
-            if (serverName === 'vimeos') {
-                headers["Referer"] = "https://vimeos.net/";
-                headers["Origin"] = "https://vimeos.net";
-            } else if (serverName === 'goodstream') {
-                headers["Referer"] = "https://goodstream.one/";
-                headers["Origin"] = "https://goodstream.one";
-            }
-
             streams.push({
                 name: "PelisPanda",
                 server: serverName,
                 title: `${serverName} (${langStr}) ${qualityStr}`,
                 url: finalUrl,
                 quality: qualityStr,
-                headers: headers
+                headers: {
+                    "User-Agent": ua,
+                    "Referer": rawUrl
+                }
             });
         }
 

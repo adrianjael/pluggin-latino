@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-03T18:33:07.399Z
+ * Generated: 2026-04-03T18:39:21.986Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -226,36 +226,6 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
-function resolveVimeos(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      let body = yield fetchHtml(embedUrl, embedUrl);
-      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        const m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        if (m3u8)
-          return m3u8[0].replace(/\\/g, "");
-      }
-      return embedUrl;
-    } catch (e) {
-      return embedUrl;
-    }
-  });
-}
-function resolveGoodstream(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      let body = yield fetchHtml(embedUrl, embedUrl);
-      const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-      if (m3u8)
-        return m3u8[0].replace(/\\/g, "");
-      return embedUrl;
-    } catch (e) {
-      return embedUrl;
-    }
-  });
-}
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
@@ -329,41 +299,31 @@ function extractStreams(tmdbId, mediaType, season, episode) {
           serverName = "goodstream";
         else if (finalUrl.includes("netu") || finalUrl.includes("waaw"))
           serverName = "netu";
+        if (serverName === "vimeos" || serverName === "goodstream")
+          continue;
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
-        else if (serverName === "vimeos")
-          finalUrl = yield resolveVimeos(finalUrl);
-        else if (serverName === "goodstream")
-          finalUrl = yield resolveGoodstream(finalUrl);
-        if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
+        if (!finalUrl || !finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
           console.log(`[PelisPanda] Omitiendo ${serverName} porque no expone directo: ${finalUrl}`);
           continue;
         }
         const qualityStr = player.quality ? player.quality : "HD";
         const langStr = player.lang ? player.lang : "Latino";
         const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-        let headers = {
-          "User-Agent": ua,
-          "Referer": rawUrl
-        };
-        if (serverName === "vimeos") {
-          headers["Referer"] = "https://vimeos.net/";
-          headers["Origin"] = "https://vimeos.net";
-        } else if (serverName === "goodstream") {
-          headers["Referer"] = "https://goodstream.one/";
-          headers["Origin"] = "https://goodstream.one";
-        }
         streams.push({
           name: "PelisPanda",
           server: serverName,
           title: `${serverName} (${langStr}) ${qualityStr}`,
           url: finalUrl,
           quality: qualityStr,
-          headers
+          headers: {
+            "User-Agent": ua,
+            "Referer": rawUrl
+          }
         });
       }
       return streams;
