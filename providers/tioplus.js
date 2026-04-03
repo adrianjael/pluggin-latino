@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-03T20:40:36.687Z
+ * Generated: 2026-04-03T20:51:11.246Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -140,18 +140,42 @@ function resolveTioPlusPlayer(playerId) {
     try {
       const playerUrl = `${BASE_URL}/player/${playerId}`;
       const body = yield fetchHtml(playerUrl, BASE_URL);
-      const iframeMatch = body.match(/<iframe.*?src=["'](https?:\/\/[^"']+)["']/i);
-      if (iframeMatch)
-        return iframeMatch[1];
-      const scriptMatch = body.match(/window\.location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/i);
-      if (scriptMatch)
-        return scriptMatch[1];
-      const directMatch = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i) || body.match(/https?:\/\/[^"'\s\\]+\.mp4[^"'\s\\]*/i);
-      if (directMatch)
-        return directMatch[0].replace(/\\/g, "");
+      const redirectMatch = body.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+      if (redirectMatch) {
+        let finalUrl = redirectMatch[1].replace(/\\/g, "");
+        console.log(`[TioPlus] Redirect found: ${finalUrl}`);
+        if (finalUrl.includes("vidhide") || finalUrl.includes("vhaue") || finalUrl.includes("dintezuvio")) {
+          return yield resolveVidhide(finalUrl);
+        } else if (finalUrl.includes("streamwish") || finalUrl.includes("awish") || finalUrl.includes("dwish")) {
+          return yield resolveStreamwish(finalUrl);
+        }
+        return finalUrl;
+      }
       return null;
     } catch (e) {
       return null;
+    }
+  });
+}
+function resolveStreamwish(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
+      const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      return m3u8 ? m3u8[0] : embedUrl;
+    } catch (e) {
+      return embedUrl;
+    }
+  });
+}
+function resolveVidhide(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
+      const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      return m3u8 ? m3u8[0] : embedUrl;
+    } catch (e) {
+      return embedUrl;
     }
   });
 }
@@ -185,25 +209,32 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         return [];
       const searchUrl = `${BASE_URL}/api/search/${encodeURIComponent(searchTitle)}`;
       const searchHtml = yield fetchText(searchUrl);
+      if (!searchHtml)
+        return [];
       const $search = import_cheerio_without_node_native.default.load(searchHtml);
       const results = [];
       $search("article.item").each((i, el) => {
         const $el = $search(el);
         const title = $el.find("h2").text().trim();
         const href = $el.find("a.itemA").attr("href");
-        const type = $el.find("span.typeItem").text().toLowerCase();
+        const typeText = $el.find("span.typeItem").text().toLowerCase();
+        const type = typeText.includes("pelic") ? "pelicula" : "serie";
         results.push({ title, href, type });
       });
       const targetType = mediaType === "movie" ? "pelicula" : "serie";
-      let match = results.find((r) => calculateSimilarity(searchTitle, r.title) > 0.9 && r.type.includes(targetType));
+      let match = results.find((r) => calculateSimilarity(searchTitle, r.title) > 0.8 && r.type === targetType);
       if (!match) {
-        match = results.find((r) => isGoodMatch(searchTitle, r.title) && r.type.includes(targetType));
+        match = results.find((r) => isGoodMatch(searchTitle, r.title, 0.35) && r.type === targetType);
       }
-      if (!match)
+      if (!match) {
+        console.log(`[TioPlus] No match found for: ${searchTitle}`);
         return [];
+      }
       let contentUrl = match.href.startsWith("http") ? match.href : `${BASE_URL}${match.href}`;
       if (mediaType === "tv") {
-        contentUrl = `${contentUrl}/season/${season}/episode/${episode}`;
+        if (!contentUrl.includes("/season/")) {
+          contentUrl = contentUrl.replace(/\/$/, "") + `/season/${season}/episode/${episode}`;
+        }
       }
       const pageHtml = yield fetchText(contentUrl);
       const $page = import_cheerio_without_node_native.default.load(pageHtml);
@@ -221,12 +252,9 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         const resolvedUrl = yield resolveTioPlusPlayer(item.dataId);
         if (!resolvedUrl)
           return null;
-        if (!resolvedUrl.includes(".m3u8") && !resolvedUrl.includes(".mp4")) {
-          return null;
-        }
         return {
           name: "TioPlus",
-          title: `${item.name} (Latino) HD`,
+          title: `${item.name} (${item.name.includes("-") ? item.name.split("-")[0].trim() : item.name}) - Latino`,
           url: resolvedUrl,
           quality: "HD",
           headers: {
