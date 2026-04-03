@@ -1,78 +1,49 @@
 const cheerio = require('cheerio');
 const BASE_URL = "https://tioplus.app";
 
-async function testExtraction() {
-    const searchTitle = "Avatar";
-    console.log(`\n🔍 Probando con __NEXT_DATA__ para: ${searchTitle}`);
+async function testObfuscation() {
+    console.log(`\n🔍 TEST DE OFUSCACIÓN: Avatar`);
 
     try {
-        const searchUrl = `${BASE_URL}/api/search/${encodeURIComponent(searchTitle)}`;
-        const searchRes = await fetch(searchUrl, {
+        const pageRes = await fetch(`${BASE_URL}/pelicula/avatar-el-sentido-del-agua/`, {
             headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': BASE_URL }
         });
-        const searchHtml = await searchRes.text();
-        const $search = cheerio.load(searchHtml);
-        
-        const results = [];
-        $search('article.item').each((i, el) => {
-            const $el = $search(el);
-            results.push({
-                title: $el.find('h2').text().trim(),
-                href: $el.find('a.itemA').attr('href')
-            });
-        });
-
-        const match = results.find(r => r.title.includes("sentido del agua"));
-        if (!match) return;
-
-        console.log(`✅ Match: ${match.title} -> ${match.href}`);
-
-        // Get Content Page and Extract __NEXT_DATA__
-        const pageRes = await fetch(match.href, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         const pageHtml = await pageRes.text();
-        const $page = cheerio.load(pageHtml);
         
-        const nextDataScript = $page('script#__NEXT_DATA__').html();
-        if (!nextDataScript) {
-            console.log("❌ No se encontró __NEXT_DATA__");
-            return;
-        }
-
-        const nextData = JSON.parse(nextDataScript);
-        const players = nextData.props.pageProps.data.players;
+        console.log(`\nTamaño HTML: ${pageHtml.length}`);
         
-        if (!players || players.length === 0) {
-            console.log("❌ No hay reproductores en __NEXT_DATA__");
-            return;
-        }
-
-        console.log(`📡 Servidores detectados (JSON): ${players.length}`);
-
-        for (const player of players.slice(0, 3)) {
-            console.log(`\n🔨 Canal: ${player.name} (ID: ${player.id.substring(0, 10)}...)`);
-            const playerUrl = `${BASE_URL}/player/${player.id}`;
-            const playerRes = await fetch(playerUrl, {
-                headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': BASE_URL }
-            });
-            const playerHtml = await playerRes.text();
-            
-            const redirectMatch = playerHtml.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
-            if (redirectMatch) {
-                const finalUrl = redirectMatch[1];
-                console.log(`🔗 Redirección Final: ${finalUrl}`);
+        // Look for the shift-12 cipher script I saw earlier
+        const hasCipher = pageHtml.includes('x-65+26-12') || pageHtml.includes('x-97+26-12');
+        console.log(`¿Tiene script de cifrado?: ${hasCipher}`);
+        
+        if (hasCipher) {
+            console.log("\n--- EXTRACCIÓN DE BLOQUE OFUSCADO ---");
+            // Find the object with keys like m:, JE:, UE:
+            const objMatch = pageHtml.match(/(\{.*?"[a-zA-Z]E":.*?\})\.reduce/);
+            if (objMatch) {
+                const encodedObjStr = objMatch[1];
+                console.log(`Objeto encontrado (fragmento): ${encodedObjStr.substring(0, 100)}...`);
                 
-                // Final fetch for m3u8
-                const embedRes = await fetch(finalUrl, { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': BASE_URL } });
-                const embedHtml = await embedRes.text();
-                const m3u8Match = embedHtml.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i) ||
-                                 embedHtml.match(/https?:\/\/[^"'\s\\]+\.mp4[^"'\s\\]*/i);
-                
-                if (m3u8Match) {
-                    console.log(`✅ ENLACE DIRECTO: ${m3u8Match[0]}`);
-                } else {
-                    console.log(`⚠️ No se encontró m3u8 directo.`);
+                // Decode logic from Turn 39
+                function decodeChar(c, shift = 12) {
+                    let x = c.charCodeAt(0);
+                    if (x >= 65 && x <= 90) return String.fromCharCode((x - 65 + 26 - shift) % 26 + 65);
+                    if (x >= 97 && x <= 122) return String.fromCharCode((x - 97 + 26 - shift) % 26 + 97);
+                    return c;
                 }
+                
+                function decodeBase26(str, shift = 12) {
+                    return str.split('').map(c => decodeChar(c, shift)).join('');
+                }
+                
+                // Try decoding 'tqmpqde' (which I hope is 'headers' or 'players')
+                console.log(`Decodificando 'tqmpqde': ${decodeBase26('tqmpqde')}`);
+                console.log(`Decodificando 'egnefduzs': ${decodeBase26('egnefduzs')}`); // -> 'structure'?
+                console.log(`Decodificando 'fuyqagf': ${decodeBase26('fuyqagf')}`); // -> 'timeout'
             }
+        } else {
+            console.log("\nHTML NO PARECE OFUSCADO (o es distinto).");
+            console.log(pageHtml.substring(0, 1000));
         }
 
     } catch (e) {
@@ -80,4 +51,4 @@ async function testExtraction() {
     }
 }
 
-testExtraction();
+testObfuscation();
