@@ -1,50 +1,29 @@
-[
-  {
-    "id": "template-provider",
-    "name": "Template Provider",
-    "description": "A starter template for creating Nuvio providers.",
-    "version": "1.0.0",
-    "author": "Your Name",
-    "supportedTypes": [
-      "movie",
-      "tv"
-    ],
-    "filename": "providers/template.js",
-    "enabled": false,
-    "logo": "",
-    "contentLanguage": [
-      "en"
-    ],
-    "formats": [
-      "mp4",
-      "mkv"
-    ],
-    "limited": false,
-    "disabledPlatforms": [],
-    "supportsExternalPlayer": true
-  },
-  {
-    "id": "pelisplus",
-    "name": "PelisPlusHD",
-    "description": "Películas y Series en Español Latino desde PelisPlusHD.la",
-    "version": "1.0.0",
-    "author": "Nuvio Community",
-    "supportedTypes": [
-      "movie",
-      "tv"
-    ],
-    "filename": "providers/pelisplus.js",
-    "enabled": true,
-    "logo": "https://www.pelisplushd.la/images/logo/logo5.png",
-    "contentLanguage": [
-      "es"
-    ],
-    "formats": [
-      "m3u8",
-      "mp4"
-    ],
-    "limited": false,
-    "disabledPlatforms": [],
-    "supportsExternalPlayer": true
-  }
-]
+{
+  "name": "Nuvio Latino Providers",
+  "version": "1.0.0",
+  "scrapers": [
+    {
+      "id": "pelisplus",
+      "name": "PelisPlusHD",
+      "description": "Películas y Series en Español Latino desde PelisPlusHD.la",
+      "version": "1.0.0",
+      "author": "Nuvio Community",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/pelisplus.js",
+      "enabled": true,
+      "logo": "https://www.pelisplushd.la/images/logo/logo5.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    }
+  ]
+}
