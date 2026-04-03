@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Compilación y builds
+providers/
+!providers/pelisplus.js
+# (Si quieres que los otros proveedores se ignoren, déjalos así, 
+# pero pelisplus.js DEBE subirse para que la app funcione).
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Temporales y logs
+*.log
+/tmp/
+
+# Entorno
+.env
+.env.local
