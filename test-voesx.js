@@ -1,68 +1,59 @@
-async function runVoe() {
-    console.log("Testeando extractor VoeSX...");
-    const url = "https://jefferycontrolmodel.com/e/vcgbwzgm36yq";
-    
-    // Simulate our fetch (using standard fetch in Node 24)
-    const response = await fetch(url);
-    const html = await response.text();
+// No require node-fetch, using native
 
-    console.log("HTML length:", html.length);
-
-    // 1. Encontrar el <script> JSON u ofuscado
-    // Voe suele poner los datos dentro de un script tag vacío o con window.voe
-    const scriptMatch = html.match(/<script[^>]*>([\s\S]*?)<\/script>/g);
-    let jsonData = null;
-    
-    // Busquemos en el HTML el script application/json o similar
-    // "El reproductor VoeSX incluye un bloque <script type="application/json">"
-    const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
-    let encText = "";
-    if (jsonMatch) {
-       encText = JSON.parse(jsonMatch[1].trim())[0];
-       console.log("Se encontró script application/json:", encText.substring(0, 50) + "...");
-    } else {
-       // Buscar si hay algun patrón de datos
-       const fallbackData = html.match(/'([A-Za-z0-9@\$\^\~%\*\!\#\&]+)'/g);
-       console.log("application/json NO encontrado, otros datos potenciales:", fallbackData ? fallbackData.length : 0);
-    }
-
-    if (!encText) return;
-
-    // 2. ROT13
-    let rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
-        return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
-    });
-
-    // 3. Clean Noise
-    const noise = ['@$', '^^', '~@', '%?', '*~', '!!', '#&'];
-    for (const n of noise) {
-        rot13 = rot13.split(n).join('');
-    }
-
-    // 4. Base64
-    let b64_1;
-    try {
-        b64_1 = atob(rot13);
-    } catch(e) { console.log("atob 1 failed"); return; }
-
-    // 5. Shift ASCII - 3
-    let shifted = "";
-    for(let i=0; i<b64_1.length; i++){
-        shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
-    }
-
-    // 6. Reverse
-    let reversed = shifted.split('').reverse().join('');
-
-    // 7. Base64
-    let b64_2;
-    try {
-        b64_2 = atob(reversed);
-    } catch(e){ console.log("atob 2 failed"); return; }
-
-    // 8. JSON
-    console.log("RESULT:");
-    console.log(b64_2);
+function decodeBase64(input) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  let str = String(input).replace(/=+$/, '');
+  let output = '';
+  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
 }
 
-runVoe();
+async function testVoe() {
+    const embedUrl = "https://voe.sx/e/r34jkcacnkui";
+    console.log("Probando", embedUrl);
+    
+    let res = await fetch(embedUrl);
+    let body = await res.text();
+    
+    if (body.includes('Redirecting') || body.length < 1000) {
+        const redirectMatch = body.match(/window\.location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/i);
+        if (redirectMatch) {
+            console.log("Redirigiendo a", redirectMatch[1]);
+            res = await fetch(redirectMatch[1]);
+            body = await res.text();
+        }
+    }
+
+    const jsonMatch = body.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+    if (jsonMatch) {
+        try {
+            let encText = JSON.parse(jsonMatch[1].trim())[0];
+            let rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
+                return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
+            });
+            const noise = ['@$', '^^', '~@', '%?', '*~', '!!', '#&'];
+            for (const n of noise) rot13 = rot13.split(n).join('');
+            
+            let b64_1 = decodeBase64(rot13);
+            let shifted = "";
+            for(let i=0; i<b64_1.length; i++) shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+            
+            let reversed = shifted.split('').reverse().join('');
+            let b64_2 = decodeBase64(reversed);
+            
+            let data = JSON.parse(b64_2);
+            if (data && data.source) {
+                console.log("M3U8 ENCONTRADO:", data.source);
+            }
+        } catch(ex) {
+            console.log("Error rompiendo VoeSX:", ex.message);
+        }
+    } else {
+        console.log("No JSON found.");
+        const titleMatch = body.match(/<title>([\s\S]*?)<\/title>/i);
+        if (titleMatch) console.log("TITLE:", titleMatch[1].trim());
+    }
+}
+testVoe();

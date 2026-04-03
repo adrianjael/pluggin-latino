@@ -46,6 +46,28 @@
       ],
       "limited": false,
       "supportsExternalPlayer": true
+    },
+    {
+      "id": "pelispanda",
+      "name": "PelisPanda",
+      "description": "Películas y series directo desde pelispanda.org",
+      "version": "1.0.0",
+      "author": "Nuvio Community",
+      "supportedTypes": [
+        "movie"
+      ],
+      "filename": "providers/pelispanda.js",
+      "enabled": true,
+      "logo": "https://pelispanda.org/wp-content/themes/wpreact/assets/svg/logo.svg",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     }
   ]
 }
