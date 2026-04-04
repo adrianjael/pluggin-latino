@@ -20,14 +20,40 @@ function unpackEval(payload, radix, symtab) {
 }
 
 function extractM3u8FromHtml(html) {
-    const packMatch = html.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+    // Intentamos desempaquetar eval (4 o 6 argumentos)
+    const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
     if (packMatch) {
         const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
         const m = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
         if (m) return m[0].replace(/\\/g, '');
     }
+    
+    // Fallback: buscar directamente en el HTML
     const m = html.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-    return m ? m[0] : null;
+    if (m) return m[0].replace(/\\/g, '');
+
+    // Fallback específico para Vimeos: deducir de la imagen del player
+    const vimeosImgMatch = html.match(/img src=["']([^"']+\/(i|thumbs)\/\d+\/\d+\/([a-zA-Z0-9]+)\.jpg)["']/i);
+    if (vimeosImgMatch) {
+        const id = vimeosImgMatch[3];
+        console.log(`[Cuevana.gs] Vimeos Fallback: ID=${id} from image.`);
+        // Intentar buscar tokens en el HTML
+        const tMatch = html.match(/t=([a-zA-Z0-9\-_]+)/);
+        const sMatch = html.match(/s=(\d+)/);
+        const eMatch = html.match(/e=(\d+)/);
+        const vMatch = html.match(/v=(\d+)/);
+        const srvMatch = html.match(/srv=([a-zA-Z0-9]+)/);
+        if (tMatch && sMatch) {
+            // Reconstrucción del enlace p4.vimeos.zip (formato actual)
+            const p1Match = vimeosImgMatch[1].match(/\/(\d+)\/\d+\//);
+            const p2Match = vimeosImgMatch[1].match(/\/(\d+)\//);
+            const p1 = p1Match ? p1Match[1] : "00009";
+            const p2 = p2Match ? p2Match[1] : "02";
+            return `https://p4.vimeos.zip/hls2/${p2}/${p1}/${id}_,n,h,.urlset/master.m3u8?t=${tMatch[1]}&s=${sMatch[1]}&e=${eMatch[1] || '43200'}&v=${vMatch ? vMatch[1] : ''}&srv=${srvMatch ? srvMatch[1] : 's9'}&i=0.3&sp=0&fr=${id}&r=e`;
+        }
+    }
+
+    return null;
 }
 
 function decodeBase64(input) {
@@ -215,8 +241,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     if (server === 'voe') {
                         resolvePromise = resolveVoesx(embedUrl);
                     } else if (server === 'vimeos') {
-                        // Vimeos funciona con embed directo
-                        resolvePromise = Promise.resolve(embedUrl);
+                        // Vimeos ahora se raspa para sacar el .m3u8 directo
+                        resolvePromise = resolveGenericEmbed(embedUrl);
                     } else if (server === 'goodstream') {
                         // Goodstream da error 403 forbidden
                         return Promise.resolve(null);
