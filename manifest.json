@@ -128,7 +128,7 @@
       ],
       "filename": "providers/cinecalidad.js",
       "enabled": true,
-      "logo": "https://www.cinecalidad.vg/wp-content/uploads/2024/11/cropped-cropped-favicon-de-cinecalidad-32x32.png",
+      "logo": "https://raw.githubusercontent.com/rxb3rth/cinecalidad-stremio-addon/refs/heads/main/logo.png",
       "contentLanguage": [
         "es"
       ],
