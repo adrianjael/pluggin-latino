@@ -1,12 +1,10 @@
 /**
- * embed69 - Built from src/embed69/
- * Generated: 2026-04-04T04:18:08.419Z
+ * lamovie - Built from src/lamovie/
+ * Generated: 2026-04-04T04:18:08.434Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
@@ -24,7 +22,6 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -67,17 +64,97 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/embed69/index.js
-var embed69_exports = {};
-__export(embed69_exports, {
+// src/lamovie/index.js
+var lamovie_exports = {};
+__export(lamovie_exports, {
   getStreams: () => getStreams
 });
-module.exports = __toCommonJS(embed69_exports);
+module.exports = __toCommonJS(lamovie_exports);
 var import_axios7 = __toESM(require("axios"));
 
-// src/resolvers/voe.js
+// src/resolvers/goodstream.js
+var import_axios2 = __toESM(require("axios"));
+
+// src/resolvers/quality.js
 var import_axios = __toESM(require("axios"));
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function detectQuality(_0) {
+  return __async(this, arguments, function* (url, headers = {}) {
+    try {
+      if (!url || !url.includes(".m3u8"))
+        return "1080p";
+      const { data } = yield import_axios.default.get(url, {
+        timeout: 5e3,
+        headers: __spreadValues({ "User-Agent": UA }, headers),
+        responseType: "text"
+      });
+      if (!data.includes("#EXT-X-STREAM-INF")) {
+        const match = url.match(/[_-](\d{3,4})p/i);
+        return match ? `${match[1]}p` : "1080p";
+      }
+      let maxRes = 0;
+      const lines = data.split("\n");
+      for (const line of lines) {
+        const match = line.match(/RESOLUTION=\d+x(\d+)/i);
+        if (match) {
+          const res = parseInt(match[1]);
+          if (res > maxRes)
+            maxRes = res;
+        }
+      }
+      if (maxRes > 0) {
+        if (maxRes >= 2160)
+          return "4K";
+        if (maxRes >= 1080)
+          return "1080p";
+        if (maxRes >= 720)
+          return "720p";
+        if (maxRes >= 480)
+          return "480p";
+        return `${maxRes}p`;
+      }
+      return "1080p";
+    } catch (e) {
+      return "1080p";
+    }
+  });
+}
+
+// src/resolvers/goodstream.js
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function resolve(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[GoodStream] Resolviendo: ${embedUrl}`);
+      const response = yield import_axios2.default.get(embedUrl, {
+        headers: {
+          "User-Agent": UA2,
+          "Referer": "https://goodstream.one",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        },
+        timeout: 15e3,
+        maxRedirects: 5
+      });
+      const match = response.data.match(/file:\s*"([^"]+)"/);
+      if (!match) {
+        console.log('[GoodStream] No se encontr\xF3 patr\xF3n file:"..."');
+        return null;
+      }
+      const videoUrl = match[1];
+      const refererHeaders = { "Referer": embedUrl, "Origin": "https://goodstream.one", "User-Agent": UA2 };
+      const quality = yield detectQuality(videoUrl, refererHeaders);
+      console.log(`[GoodStream] URL encontrada (${quality}): ${videoUrl.substring(0, 80)}...`);
+      return { url: videoUrl, quality, headers: refererHeaders };
+    } catch (err) {
+      console.log(`[GoodStream] Error: ${err.message}`);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/voe.js
+var import_axios3 = __toESM(require("axios"));
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 function base64Decode(e) {
   try {
     return typeof atob !== "undefined" ? atob(e) : Buffer.from(e, "base64").toString("utf8");
@@ -111,9 +188,9 @@ function voeDecode(e, t) {
 function getQuality(url, referer) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield import_axios.default.get(url, {
+      const { data } = yield import_axios3.default.get(url, {
         timeout: 5e3,
-        headers: { "User-Agent": UA, "Referer": referer },
+        headers: { "User-Agent": UA3, "Referer": referer },
         responseType: "text"
       });
       if (!data.includes("#EXT-X-STREAM-INF"))
@@ -134,26 +211,26 @@ function getQuality(url, referer) {
     }
   });
 }
-function resolve(url) {
+function resolve2(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[VOE] Resolviendo: ${url}`);
-      let res = yield import_axios.default.get(url, {
+      let res = yield import_axios3.default.get(url, {
         timeout: 15e3,
-        headers: { "User-Agent": UA, "Accept": "text/html,*/*" },
+        headers: { "User-Agent": UA3, "Accept": "text/html,*/*" },
         maxRedirects: 5
       });
       let html = String(res.data || "");
       if (/window\.location\.href\s*=\s*'([^']+)'/i.test(html)) {
         const redirect = html.match(/window\.location\.href\s*=\s*'([^']+)'/i)[1];
-        res = yield import_axios.default.get(redirect, { headers: { "User-Agent": UA, "Referer": url } });
+        res = yield import_axios3.default.get(redirect, { headers: { "User-Agent": UA3, "Referer": url } });
         html = String(res.data || "");
       }
       const match = html.match(/json">\s*\[\s*['"]([^'"]+)['"]\s*\]\s*<\/script>\s*<script[^>]*src=['"]([^'"]+)['"]/i);
       if (match) {
         const encoded = match[1];
         const loader = match[2].startsWith("http") ? match[2] : new URL(match[2], url).href;
-        const loaderRes = yield import_axios.default.get(loader, { headers: { "User-Agent": UA, "Referer": url } });
+        const loaderRes = yield import_axios3.default.get(loader, { headers: { "User-Agent": UA3, "Referer": url } });
         const loaderJs = String(loaderRes.data || "");
         const arrayMatch = loaderJs.match(/(\[(?:'[^']{1,10}'[\s,]*){4,12}\])/i) || loaderJs.match(/(\[(?:"[^"]{1,10}"[,\s]*){4,12}\])/i);
         if (arrayMatch) {
@@ -181,9 +258,9 @@ function resolve(url) {
 }
 
 // src/resolvers/filemoon.js
-var import_axios2 = __toESM(require("axios"));
+var import_axios4 = __toESM(require("axios"));
 var import_crypto_js = __toESM(require("crypto-js"));
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function base64ToWordArray(e) {
   e = e.replace(/-/g, "+").replace(/_/g, "/");
   let t = (4 - e.length % 4) % 4;
@@ -227,7 +304,7 @@ function decryptPayload(key, iv, payload) {
     return null;
   }
 }
-function resolve2(url) {
+function resolve3(url) {
   return __async(this, null, function* () {
     var _a;
     try {
@@ -237,7 +314,7 @@ function resolve2(url) {
         return null;
       const id = idMatch[1];
       const playbackUrl = `https://filemooon.link/api/videos/${id}/embed/playback`;
-      const { data } = yield import_axios2.default.get(playbackUrl, { timeout: 7e3, headers: { "User-Agent": UA2, Referer: url } });
+      const { data } = yield import_axios4.default.get(playbackUrl, { timeout: 7e3, headers: { "User-Agent": UA4, Referer: url } });
       if (data.error)
         return console.log(`[Filemoon] API error: ${data.error}`), null;
       const info = data.playback;
@@ -262,7 +339,7 @@ function resolve2(url) {
         return null;
       const streamUrl = sources[0].url;
       console.log(`[Filemoon] URL encontrada: ${streamUrl.substring(0, 80)}...`);
-      return { url: streamUrl, quality: "1080p", headers: { "User-Agent": UA2, Referer: url, Origin: "https://filemoon.sx" } };
+      return { url: streamUrl, quality: "1080p", headers: { "User-Agent": UA4, Referer: url, Origin: "https://filemoon.sx" } };
     } catch (e) {
       console.log(`[Filemoon] Error: ${e.message}`);
       return null;
@@ -271,8 +348,8 @@ function resolve2(url) {
 }
 
 // src/resolvers/hlswish.js
-var import_axios3 = __toESM(require("axios"));
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var import_axios5 = __toESM(require("axios"));
+var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpack(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const decode = (r) => {
@@ -291,7 +368,7 @@ function unpack(p, a, c, k, e, d) {
   });
 }
 var DOMAIN_MAP = { "hglink.to": "vibuxer.com" };
-function resolve3(url) {
+function resolve4(url) {
   return __async(this, null, function* () {
     try {
       let targetUrl = url;
@@ -303,8 +380,8 @@ function resolve3(url) {
       }
       console.log(`[HLSWish] Resolviendo: ${url}`);
       const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
-      const { data: html } = yield import_axios3.default.get(targetUrl, {
-        headers: { "User-Agent": UA3, Referer: "https://embed69.org/", Origin: "https://embed69.org" },
+      const { data: html } = yield import_axios5.default.get(targetUrl, {
+        headers: { "User-Agent": UA5, Referer: "https://embed69.org/", Origin: "https://embed69.org" },
         timeout: 15e3,
         maxRedirects: 5
       });
@@ -329,7 +406,7 @@ function resolve3(url) {
       }
       if (finalUrl) {
         console.log(`[HLSWish] URL encontrada: ${finalUrl.substring(0, 80)}...`);
-        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA3, Referer: baseOrigin + "/" } };
+        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA5, Referer: baseOrigin + "/" } };
       }
       return null;
     } catch (e) {
@@ -339,331 +416,232 @@ function resolve3(url) {
   });
 }
 
-// src/resolvers/vidhide.js
-var import_axios4 = __toESM(require("axios"));
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
-function unpackVidHide(script) {
-  try {
-    const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
-    if (!match)
-      return null;
-    let [full, p, a, c, k] = match;
-    a = parseInt(a);
-    c = parseInt(c);
-    k = k.split("|");
-    const decode = (l, s) => {
-      const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
-      let res = "";
-      for (; l > 0; ) {
-        res = chars[l % s] + res;
-        l = Math.floor(l / s);
-      }
-      return res || "0";
-    };
-    const unpacked = p.replace(/\b\w+\b/g, (l) => {
-      const s = parseInt(l, 36);
-      return s < k.length && k[s] ? k[s] : decode(s, a);
-    });
-    return unpacked;
-  } catch (e) {
-    return null;
-  }
-}
-function resolve4(url) {
-  return __async(this, null, function* () {
-    try {
-      console.log(`[VidHide] Resolviendo: ${url}`);
-      const { data: html } = yield import_axios4.default.get(url, {
-        timeout: 15e3,
-        maxRedirects: 10,
-        headers: { "User-Agent": UA4, Referer: "https://embed69.org/" }
-      });
-      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
-      if (!packedMatch)
-        return console.log("[VidHide] No se encontr\xF3 bloque eval"), null;
-      const unpacked = unpackVidHide(packedMatch[0]);
-      if (!unpacked)
-        return console.log("[VidHide] No se pudo desempacar"), null;
-      const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
-      if (!hlsMatch)
-        return console.log("[VidHide] No se encontr\xF3 hls2/hls4"), null;
-      let finalUrl = hlsMatch[1];
-      if (!finalUrl.startsWith("http"))
-        finalUrl = new URL(url).origin + finalUrl;
-      console.log(`[VidHide] URL encontrada: ${finalUrl.substring(0, 80)}...`);
-      const origin = new URL(url).origin;
-      return { url: finalUrl, headers: { "User-Agent": UA4, Referer: origin + "/", Origin: origin } };
-    } catch (e) {
-      console.log(`[VidHide] Error: ${e.message}`);
-      return null;
-    }
-  });
-}
-
-// src/resolvers/goodstream.js
+// src/resolvers/vimeos.js
 var import_axios6 = __toESM(require("axios"));
-
-// src/resolvers/quality.js
-var import_axios5 = __toESM(require("axios"));
-var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
-function detectQuality(_0) {
-  return __async(this, arguments, function* (url, headers = {}) {
-    try {
-      if (!url || !url.includes(".m3u8"))
-        return "1080p";
-      const { data } = yield import_axios5.default.get(url, {
-        timeout: 5e3,
-        headers: __spreadValues({ "User-Agent": UA5 }, headers),
-        responseType: "text"
-      });
-      if (!data.includes("#EXT-X-STREAM-INF")) {
-        const match = url.match(/[_-](\d{3,4})p/i);
-        return match ? `${match[1]}p` : "1080p";
-      }
-      let maxRes = 0;
-      const lines = data.split("\n");
-      for (const line of lines) {
-        const match = line.match(/RESOLUTION=\d+x(\d+)/i);
-        if (match) {
-          const res = parseInt(match[1]);
-          if (res > maxRes)
-            maxRes = res;
-        }
-      }
-      if (maxRes > 0) {
-        if (maxRes >= 2160)
-          return "4K";
-        if (maxRes >= 1080)
-          return "1080p";
-        if (maxRes >= 720)
-          return "720p";
-        if (maxRes >= 480)
-          return "480p";
-        return `${maxRes}p`;
-      }
-      return "1080p";
-    } catch (e) {
-      return "1080p";
-    }
-  });
-}
-
-// src/resolvers/goodstream.js
 var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve5(embedUrl) {
   return __async(this, null, function* () {
     try {
-      console.log(`[GoodStream] Resolviendo: ${embedUrl}`);
-      const response = yield import_axios6.default.get(embedUrl, {
+      console.log(`[Vimeos] Resolviendo: ${embedUrl}`);
+      const resp = yield import_axios6.default.get(embedUrl, {
         headers: {
           "User-Agent": UA6,
-          "Referer": "https://goodstream.one",
+          "Referer": "https://vimeos.net/",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         },
         timeout: 15e3,
         maxRedirects: 5
       });
-      const match = response.data.match(/file:\s*"([^"]+)"/);
-      if (!match) {
-        console.log('[GoodStream] No se encontr\xF3 patr\xF3n file:"..."');
-        return null;
+      const data = resp.data;
+      const packMatch = data.match(
+        /eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/
+      );
+      if (packMatch) {
+        const payload = packMatch[1];
+        const radix = parseInt(packMatch[2]);
+        const symtab = packMatch[4].split("|");
+        const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const unbase = (str) => {
+          let result = 0;
+          for (let i = 0; i < str.length; i++)
+            result = result * radix + chars.indexOf(str[i]);
+          return result;
+        };
+        const unpacked = payload.replace(/\b(\w+)\b/g, (match) => {
+          const idx = unbase(match);
+          return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+        });
+        const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
+        if (m3u8Match) {
+          const url = m3u8Match[1];
+          const refererHeaders = { "User-Agent": UA6, "Referer": "https://vimeos.net/" };
+          const quality = yield detectQuality(url, refererHeaders);
+          console.log(`[Vimeos] URL encontrada: ${url.substring(0, 80)}...`);
+          return { url, quality, headers: refererHeaders };
+        }
       }
-      const videoUrl = match[1];
-      const refererHeaders = { "Referer": embedUrl, "Origin": "https://goodstream.one", "User-Agent": UA6 };
-      const quality = yield detectQuality(videoUrl, refererHeaders);
-      console.log(`[GoodStream] URL encontrada (${quality}): ${videoUrl.substring(0, 80)}...`);
-      return { url: videoUrl, quality, headers: refererHeaders };
+      console.log("[Vimeos] No se encontr\xF3 URL");
+      return null;
     } catch (err) {
-      console.log(`[GoodStream] Error: ${err.message}`);
+      console.log(`[Vimeos] Error: ${err.message}`);
       return null;
     }
   });
 }
 
-// src/embed69/index.js
+// src/lamovie/index.js
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-var BASE_URL = "https://embed69.org";
-var RESOLVER_TIMEOUT = 4e3;
-var RESOLVER_MAP = {
-  "voe.sx": resolve,
-  "hglink.to": resolve3,
-  // streamwish
-  "streamwish.com": resolve3,
-  "streamwish.to": resolve3,
-  "wishembed.online": resolve3,
-  "filelions.com": resolve3,
-  "bysedikamoum.com": resolve2,
-  // filemoon alias
-  "filemoon.sx": resolve2,
-  "filemoon.to": resolve2,
-  "moonembed.pro": resolve2,
-  "dintezuvio.com": resolve4,
-  // vidhide
-  "vidhide.com": resolve4,
-  "goodstream.one": resolve5
+var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var HEADERS = { "User-Agent": UA7, "Accept": "application/json" };
+var BASE_URL = "https://la.movie";
+var ANIME_COUNTRIES = ["JP", "CN", "KR"];
+var GENRE_ANIMATION = 16;
+var RESOLVERS = {
+  "goodstream.one": resolve,
+  "hlswish.com": resolve4,
+  "streamwish.com": resolve4,
+  "streamwish.to": resolve4,
+  "strwish.com": resolve4,
+  "voe.sx": resolve2,
+  "filemoon.sx": resolve3,
+  "filemoon.to": resolve3,
+  "vimeos.net": resolve5
 };
-var SERVER_LABELS = {
-  "voe": "VOE",
-  "streamwish": "StreamWish",
-  "filemoon": "Filemoon",
-  "vidhide": "VidHide",
-  "goodstream": "GoodStream"
+var getServerName = (url) => {
+  if (url.includes("goodstream"))
+    return "GoodStream";
+  if (url.includes("hlswish") || url.includes("streamwish"))
+    return "StreamWish";
+  if (url.includes("voe.sx"))
+    return "VOE";
+  if (url.includes("filemoon"))
+    return "Filemoon";
+  if (url.includes("vimeos.net"))
+    return "Vimeos";
+  return "Online";
 };
-var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
-function decodeJwtPayload(token) {
-  try {
-    const parts = token.split(".");
-    if (parts.length < 2)
-      return null;
-    let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    payload += "=".repeat((4 - payload.length % 4) % 4);
-    const decoded = typeof atob !== "undefined" ? atob(payload) : Buffer.from(payload, "base64").toString("utf8");
-    return JSON.parse(decoded);
-  } catch (e) {
-    return null;
-  }
-}
-function parseDataLink(html) {
-  try {
-    const match = html.match(/let\s+dataLink\s*=\s*(\[.+\]);/);
-    if (!match)
-      return null;
-    return JSON.parse(match[1]);
-  } catch (e) {
-    return null;
-  }
-}
-function getResolver(url) {
+var getResolver = (url) => {
   if (!url)
     return null;
-  for (const [pattern, resolver] of Object.entries(RESOLVER_MAP)) {
+  for (const [pattern, resolver] of Object.entries(RESOLVERS)) {
     if (url.includes(pattern))
       return resolver;
   }
   return null;
+};
+function buildSlug(title, year) {
+  const slug = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return year ? `${slug}-${year}` : slug;
 }
-function getImdbId(tmdbId, mediaType) {
+function getCategories(mediaType, genres, originCountries) {
+  if (mediaType === "movie")
+    return ["peliculas"];
+  const isAnimation = (genres || []).includes(GENRE_ANIMATION);
+  if (!isAnimation)
+    return ["series"];
+  const isAnimeCountry = (originCountries || []).some((c) => ANIME_COUNTRIES.includes(c));
+  if (isAnimeCountry)
+    return ["animes"];
+  return ["animes", "series"];
+}
+function getTmdbData(tmdbId, mediaType) {
   return __async(this, null, function* () {
-    const endpoint = mediaType === "movie" ? `https://api.themoviedb.org/3/movie/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
+    var _a;
+    const attempts = [{ lang: "es-MX" }, { lang: "en-US" }];
+    for (const { lang } of attempts) {
+      try {
+        const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=${lang}`;
+        const { data } = yield import_axios7.default.get(url, { timeout: 5e3, headers: HEADERS });
+        const title = mediaType === "movie" ? data.title : data.name;
+        const originalTitle = mediaType === "movie" ? data.original_title : data.original_name;
+        return {
+          title,
+          originalTitle,
+          year: (data.release_date || data.first_air_date || "").substring(0, 4),
+          genres: (data.genres || []).map((g) => g.id),
+          originCountries: data.origin_country || ((_a = data.production_countries) == null ? void 0 : _a.map((c) => c.iso_3166_1)) || []
+        };
+      } catch (e) {
+      }
+    }
+    return null;
+  });
+}
+function getIdBySlug(category, slug) {
+  return __async(this, null, function* () {
+    const url = `${BASE_URL}/${category}/${slug}/`;
     try {
-      const { data } = yield import_axios7.default.get(endpoint, {
-        timeout: 5e3,
-        headers: { "User-Agent": UA7 }
+      const { data: html } = yield import_axios7.default.get(url, {
+        timeout: 8e3,
+        headers: { "User-Agent": UA7, "Accept": "text/html" },
+        validateStatus: (s) => s === 200
       });
-      return data.imdb_id || null;
+      const match = html.match(/rel=['"]shortlink['"]\s+href=['"][^'"]*\?p=(\d+)['"]/);
+      if (match) {
+        console.log(`[LaMovie] \u2713 Slug directo: /${category}/${slug} \u2192 id:${match[1]}`);
+        return { id: match[1] };
+      }
+      return null;
     } catch (e) {
-      console.log(`[Embed69] TMDB error: ${e.message}`);
       return null;
     }
   });
 }
-function buildEmbedUrl(imdbId, mediaType, season, episode) {
-  if (mediaType === "movie")
-    return `${BASE_URL}/f/${imdbId}`;
-  const e = String(episode).padStart(2, "0");
-  return `${BASE_URL}/f/${imdbId}-${parseInt(season)}x${e}`;
+function findBySlug(tmdbInfo, mediaType) {
+  return __async(this, null, function* () {
+    const { title, originalTitle, year, genres, originCountries } = tmdbInfo;
+    const categories = getCategories(mediaType, genres, originCountries);
+    const slugs = [];
+    if (title)
+      slugs.push(buildSlug(title, year));
+    if (originalTitle && originalTitle !== title)
+      slugs.push(buildSlug(originalTitle, year));
+    for (const slug of slugs) {
+      for (const cat of categories) {
+        const result = yield getIdBySlug(cat, slug);
+        if (result)
+          return result;
+      }
+    }
+    return null;
+  });
+}
+function getEpisodeId(seriesId, seasonNum, episodeNum) {
+  return __async(this, null, function* () {
+    var _a;
+    const url = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${seriesId}&season=${seasonNum}&page=1&postsPerPage=50`;
+    try {
+      const { data } = yield import_axios7.default.get(url, { timeout: 12e3, headers: HEADERS });
+      if (!((_a = data == null ? void 0 : data.data) == null ? void 0 : _a.posts))
+        return null;
+      const ep = data.data.posts.find((e) => e.season_number == seasonNum && e.episode_number == episodeNum);
+      return (ep == null ? void 0 : ep._id) || null;
+    } catch (e) {
+      return null;
+    }
+  });
 }
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
+    var _a;
     if (!tmdbId || !mediaType)
       return [];
     const startTime = Date.now();
-    console.log(`[Embed69] Buscando: TMDB ${tmdbId} (${mediaType})${season ? ` S${season}E${episode}` : ""}`);
     try {
-      let getEmbeds = function(section) {
-        const lang = section.video_language || "LAT";
-        const embeds = [];
-        for (const embed of section.sortedEmbeds || []) {
-          if (embed.servername === "download")
-            continue;
-          const payload = decodeJwtPayload(embed.link);
-          if (!payload || !payload.link)
-            continue;
-          const resolver = getResolver(payload.link);
-          if (!resolver) {
-            console.log(`[Embed69] Sin resolver para ${embed.servername}: ${payload.link.substring(0, 60)}`);
-            continue;
-          }
-          embeds.push({ url: payload.link, resolver, lang, servername: embed.servername });
-        }
-        return embeds;
-      };
-      const imdbId = yield getImdbId(tmdbId, mediaType);
-      if (!imdbId) {
-        console.log("[Embed69] No se encontr\xF3 IMDB ID");
+      const tmdbInfo = yield getTmdbData(tmdbId, mediaType);
+      if (!tmdbInfo)
         return [];
-      }
-      console.log(`[Embed69] IMDB ID: ${imdbId}`);
-      const embedUrl = buildEmbedUrl(imdbId, mediaType, season, episode);
-      console.log(`[Embed69] Fetching: ${embedUrl}`);
-      const { data: html } = yield import_axios7.default.get(embedUrl, {
-        timeout: 8e3,
-        headers: {
-          "User-Agent": UA7,
-          "Referer": "https://sololatino.net/",
-          "Accept": "text/html,application/xhtml+xml"
-        }
-      });
-      const dataLink = parseDataLink(html);
-      if (!dataLink || dataLink.length === 0) {
-        console.log("[Embed69] No se encontr\xF3 dataLink en el HTML");
+      const found = yield findBySlug(tmdbInfo, mediaType);
+      if (!found)
         return [];
+      let targetId = found.id;
+      if (mediaType === "tv" && season && episode) {
+        const epId = yield getEpisodeId(targetId, season, episode);
+        if (!epId)
+          return [];
+        targetId = epId;
       }
-      console.log(`[Embed69] ${dataLink.length} idiomas disponibles: ${dataLink.map((d) => d.video_language).join(", ")}`);
-      const byLang = {};
-      for (const section of dataLink) {
-        byLang[section.video_language] = section;
-      }
-      function resolveBatch(embeds) {
-        return __async(this, null, function* () {
-          const results = yield Promise.allSettled(
-            embeds.map(
-              ({ url, resolver, lang, servername }) => Promise.race([
-                resolver(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { lang, servername }) : null),
-                new Promise(
-                  (_, reject) => setTimeout(() => reject(new Error("timeout")), RESOLVER_TIMEOUT)
-                )
-              ])
-            )
-          );
-          return results.filter((r) => {
-            var _a;
-            return r.status === "fulfilled" && ((_a = r.value) == null ? void 0 : _a.url);
-          }).map((r) => r.value);
-        });
-      }
-      const streams = [];
-      for (const lang of LANG_PRIORITY) {
-        const section = byLang[lang];
-        if (!section)
-          continue;
-        const embeds = getEmbeds(section);
-        if (embeds.length === 0)
-          continue;
-        console.log(`[Embed69] Resolviendo ${embeds.length} embeds (${lang})...`);
-        const resolved = yield resolveBatch(embeds);
-        if (resolved.length > 0) {
-          for (const { url, quality, lang: l, servername, headers } of resolved) {
-            const langLabel = l === "LAT" ? "Latino" : l === "ESP" ? "Espa\xF1ol" : "Subtitulado";
-            const serverLabel = SERVER_LABELS[servername] || servername;
-            streams.push({
-              name: "Embed69",
-              title: `${quality || "1080p"} \xB7 ${langLabel} \xB7 ${serverLabel}`,
-              url,
-              quality: quality || "1080p",
-              headers: headers || {}
-            });
-          }
-          console.log(`[Embed69] \u2713 Streams encontrados en ${lang}`);
-          break;
-        }
-      }
-      const elapsed = ((Date.now() - startTime) / 1e3).toFixed(2);
-      console.log(`[Embed69] \u2713 ${streams.length} streams en ${elapsed}s`);
+      const { data } = yield import_axios7.default.get(`${BASE_URL}/wp-api/v1/player?postId=${targetId}&demo=0`, { timeout: 6e3, headers: HEADERS });
+      if (!((_a = data == null ? void 0 : data.data) == null ? void 0 : _a.embeds))
+        return [];
+      const streams = (yield Promise.allSettled(data.data.embeds.map((embed) => __async(this, null, function* () {
+        const resolver = getResolver(embed.url);
+        if (!resolver)
+          return null;
+        const result = yield resolver(embed.url);
+        if (!result || !result.url)
+          return null;
+        return {
+          name: "LaMovie",
+          title: `${result.quality || "1080p"} \xB7 ${getServerName(embed.url)}`,
+          url: result.url,
+          quality: result.quality || "1080p",
+          headers: result.headers || {}
+        };
+      })))).filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
       return streams;
     } catch (e) {
-      console.log(`[Embed69] Error: ${e.message}`);
+      console.log(`[LaMovie] Error: ${e.message}`);
       return [];
     }
   });
