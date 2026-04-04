@@ -15,6 +15,7 @@ providers/*
 !providers/cinecalidad.js
 !providers/lamovie.js
 !providers/seriesmetro.js
+!providers/xupalace.js
 
 # Archivos de sistema
 .DS_Store

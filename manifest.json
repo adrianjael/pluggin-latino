@@ -151,7 +151,7 @@
       ],
       "filename": "providers/lamovie.js",
       "enabled": true,
-      "logo": "https://la.movie/wp-content/uploads/2025/05/ChatGPT-Image-21-may-2025-12_46_09.png",
+      "logo": "https://la.movie/wp-content/uploads/2025/05/cropped-La.movie_-192x192.png",
       "contentLanguage": [
         "es"
       ],
@@ -175,6 +175,29 @@
       "filename": "providers/seriesmetro.js",
       "enabled": true,
       "logo": "https://www3.seriesmetro.net/favicons/apple-touch-icon.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "xupalace",
+      "name": "XuPalace",
+      "description": "Películas y series en alta definición (Latino, Español y Subtitulado)",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/xupalace.js",
+      "enabled": true,
+      "logo": "https://xupalace.org/favicon.ico",
       "contentLanguage": [
         "es"
       ],
