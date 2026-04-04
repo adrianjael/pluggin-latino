@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-04T00:21:22.573Z
+ * Generated: 2026-04-04T00:24:39.078Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -112,7 +112,7 @@ function fetchHtml(_0) {
 function resolveGenericEmbed(embedUrl) {
   return __async(this, null, function* () {
     try {
-      const html = yield fetchHtml(embedUrl, BASE_URL);
+      const html = yield fetchHtml(embedUrl, "https://cuevana.gs/");
       return extractM3u8FromHtml(html);
     } catch (e) {
       return null;
@@ -278,13 +278,15 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             if (!finalUrl || !finalUrl.startsWith("http")) {
               return null;
             }
+            const isVimeos = server.includes("vimeos");
             return {
               name: "Cuevana.gs",
               title: server + " (" + lang + ") " + quality,
               url: finalUrl,
               quality,
               headers: {
-                "Referer": embedUrl,
+                "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
+                "Origin": isVimeos ? "https://vimeos.net" : void 0,
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
               }
             };

@@ -73,7 +73,7 @@ async function fetchHtml(url, referer = BASE_URL) {
 
 async function resolveGenericEmbed(embedUrl) {
     try {
-        const html = await fetchHtml(embedUrl, BASE_URL);
+        const html = await fetchHtml(embedUrl, "https://cuevana.gs/");
         return extractM3u8FromHtml(html);
     } catch (e) { return null; }
 }
@@ -254,13 +254,15 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                         if (!finalUrl || !finalUrl.startsWith('http')) {
                             return null;
                         }
+                        const isVimeos = server.includes('vimeos');
                         return {
                             name: "Cuevana.gs",
                             title: server + " (" + lang + ") " + quality,
                             url: finalUrl,
                             quality: quality,
                             headers: {
-                                "Referer": embedUrl,
+                                "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
+                                "Origin": isVimeos ? "https://vimeos.net" : undefined,
                                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
                             }
                         };
