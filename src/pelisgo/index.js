@@ -2,7 +2,10 @@ import axios from 'axios';
 
 const BASE = 'https://pelisgo.online';
 const TMDB_API_KEY = '439c478a771f35c05022f9feabcca01c';
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+// Server Action ID para cargar reproductores
+const PLAYER_ACTION_ID = '4079b11d214b588c12807d99b549e1851b3ee03082';
 
 const HEADERS = {
     'User-Agent': UA,
@@ -21,36 +24,45 @@ async function getTmdbInfo(tmdbId, mediaType) {
     } catch { return { title: null }; }
 }
 
-async function resolveBuzzheavier(id) {
-    try {
-        const dlUrl = `https://buzzheavier.com/${id}/download`;
-        const { headers } = await axios.get(dlUrl, { 
-            headers: { 'User-Agent': UA, 'HX-Request': 'true', 'Referer': `https://buzzheavier.com/${id}` },
-            maxRedirects: 0,
-            validateStatus: (status) => status >= 200 && status < 400
-        });
-        return headers['hx-redirect'] || null;
-    } catch { return null; }
+function extractMovieId(html) {
+    // Intentar extraer de __NEXT_DATA__
+    const nextMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+    if (nextMatch) {
+        try {
+            const data = JSON.parse(nextMatch[1]);
+            const movie = data.props?.pageProps?.movie || data.props?.pageProps?.serie;
+            if (movie && movie.id) return movie.id;
+        } catch (e) {}
+    }
+    // Fallback: buscar en scripts de hydration o similar
+    const idMatch = html.match(/"id"\s*:\s*"([a-z0-9]{20,})"/);
+    return idMatch ? idMatch[1] : null;
 }
 
-async function resolveOneId(id) {
-    try {
-        const { data } = await axios.get(`${BASE}/api/download/${id}`, { headers: HEADERS });
-        if (!data?.url) return null;
-
-        let finalUrl = data.url;
-        if (finalUrl.includes('buzzheavier.com')) {
-            const bhId = finalUrl.match(/buzzheavier\.com\/([^/?&#]+)/)?.[1];
-            finalUrl = bhId ? await resolveBuzzheavier(bhId) : finalUrl;
+function extractEmbedUrls(componentText) {
+    const urls = [];
+    // Las URLs de iframes en text/x-component suelen venir escapadas
+    const iframeRegex = /src=["'](https?:\\?\/\\?\/[^"']+)["']/g;
+    let m;
+    while ((m = iframeRegex.exec(componentText)) !== null) {
+        let url = m[1].replace(/\\/g, '');
+        if (url.includes('pelisgo.online') || url.includes('filemoon') || url.includes('hqq') || url.includes('embedseek')) {
+            urls.push(url);
         }
+    }
+    // También buscar tokens de desu o filemoon
+    const desuMatch = componentText.match(/https?:\/\/desu\.pelisgo\.online\/embed\/[a-zA-Z0-9_-]+/);
+    if (desuMatch) urls.push(desuMatch[0]);
+    
+    return [...new Set(urls)];
+}
 
-        return finalUrl ? {
-            server: data.server || 'PelisGo',
-            quality: data.quality || '720p',
-            language: data.language || 'LAT',
-            url: finalUrl
-        } : null;
-    } catch { return null; }
+function getHostLabel(url) {
+    if (url.includes('filemoon') || url.includes('magi')) return 'Magi';
+    if (url.includes('desu')) return 'Desu';
+    if (url.includes('hqq') || url.includes('netu')) return 'Netu';
+    if (url.includes('embedseek') || url.includes('seekstreaming')) return 'Seek';
+    return 'Player';
 }
 
 export async function getStreams(tmdbId, mediaType, season, episode) {
@@ -59,27 +71,48 @@ export async function getStreams(tmdbId, mediaType, season, episode) {
         if (!title) return [];
 
         const searchUrl = `${BASE}/search?q=${encodeURIComponent(title)}`;
-        const { data: html } = await axios.get(searchUrl, { headers: HEADERS });
+        const { data: searchHtml } = await axios.get(searchUrl, { headers: HEADERS });
         
-        const slugMatch = html.match(new RegExp(`\\/(movies|series)\\/([a-z0-9\\-]+)`));
+        const slugMatch = searchHtml.match(new RegExp(`\\/(movies|series)\\/([a-z0-9\\-]+)`));
         if (!slugMatch) return [];
 
+        const typeSlug = slugMatch[1];
         const slug = slugMatch[2];
-        const pageUrl = mediaType === 'movie' ? `${BASE}/movies/${slug}` : `${BASE}/series/${slug}/temporada/${season}/episodio/${episode}`;
+        const pageUrl = typeSlug === 'movies' ? `${BASE}/movies/${slug}` : `${BASE}/series/${slug}/temporada/${season}/episodio/${episode}`;
 
         const { data: pageHtml } = await axios.get(pageUrl, { headers: HEADERS });
-        const ids = [...pageHtml.matchAll(/\/download\/([a-z0-9]+)/g)].map(m => m[1]);
+        const movieId = extractMovieId(pageHtml);
+        if (!movieId) return [];
 
-        const streamResults = await Promise.all(ids.map(id => resolveOneId(id)));
-        const finalStreams = streamResults.filter(s => s !== null);
+        // Invocamos la Server Action de Next.js para obtener los reproductores
+        const { data: actionResponse } = await axios.post(pageUrl, JSON.stringify([movieId]), {
+            headers: {
+                ...HEADERS,
+                'Content-Type': 'text/plain;charset=UTF-8',
+                'Accept': 'text/x-component',
+                'Next-Action': PLAYER_ACTION_ID
+            },
+            timeout: 10000
+        });
 
-        return finalStreams.map(s => ({
-            name: 'PelisGo',
-            title: `[${s.language.toUpperCase()}] ${s.server} · ${s.quality}`,
-            url: s.url,
-            quality: s.quality,
-            headers: HEADERS
-        }));
+        const embedUrls = extractEmbedUrls(actionResponse);
+        const streams = [];
+
+        for (const url of embedUrls) {
+            const host = getHostLabel(url);
+            streams.push({
+                name: 'PelisGo',
+                title: `[LAT] ${host} · HD`,
+                url: url,
+                quality: 'HD',
+                headers: {
+                    'User-Agent': UA,
+                    'Referer': `${BASE}/`
+                }
+            });
+        }
+
+        return streams;
 
     } catch (e) {
         console.error('[PelisGo] error:', e.message);

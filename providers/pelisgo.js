@@ -1,13 +1,30 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-04T04:49:41.978Z
+ * Generated: 2026-04-04T05:42:18.025Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -59,7 +76,8 @@ module.exports = __toCommonJS(pelisgo_exports);
 var import_axios = __toESM(require("axios"));
 var BASE = "https://pelisgo.online";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var PLAYER_ACTION_ID = "4079b11d214b588c12807d99b549e1851b3ee03082";
 var HEADERS = {
   "User-Agent": UA,
   "Accept-Language": "es-ES,es;q=0.9",
@@ -79,43 +97,46 @@ function getTmdbInfo(tmdbId, mediaType) {
     }
   });
 }
-function resolveBuzzheavier(id) {
-  return __async(this, null, function* () {
+function extractMovieId(html) {
+  var _a, _b, _c, _d;
+  const nextMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+  if (nextMatch) {
     try {
-      const dlUrl = `https://buzzheavier.com/${id}/download`;
-      const { headers } = yield import_axios.default.get(dlUrl, {
-        headers: { "User-Agent": UA, "HX-Request": "true", "Referer": `https://buzzheavier.com/${id}` },
-        maxRedirects: 0,
-        validateStatus: (status) => status >= 200 && status < 400
-      });
-      return headers["hx-redirect"] || null;
+      const data = JSON.parse(nextMatch[1]);
+      const movie = ((_b = (_a = data.props) == null ? void 0 : _a.pageProps) == null ? void 0 : _b.movie) || ((_d = (_c = data.props) == null ? void 0 : _c.pageProps) == null ? void 0 : _d.serie);
+      if (movie && movie.id)
+        return movie.id;
     } catch (e) {
-      return null;
     }
-  });
+  }
+  const idMatch = html.match(/"id"\s*:\s*"([a-z0-9]{20,})"/);
+  return idMatch ? idMatch[1] : null;
 }
-function resolveOneId(id) {
-  return __async(this, null, function* () {
-    var _a;
-    try {
-      const { data } = yield import_axios.default.get(`${BASE}/api/download/${id}`, { headers: HEADERS });
-      if (!(data == null ? void 0 : data.url))
-        return null;
-      let finalUrl = data.url;
-      if (finalUrl.includes("buzzheavier.com")) {
-        const bhId = (_a = finalUrl.match(/buzzheavier\.com\/([^/?&#]+)/)) == null ? void 0 : _a[1];
-        finalUrl = bhId ? yield resolveBuzzheavier(bhId) : finalUrl;
-      }
-      return finalUrl ? {
-        server: data.server || "PelisGo",
-        quality: data.quality || "720p",
-        language: data.language || "LAT",
-        url: finalUrl
-      } : null;
-    } catch (e) {
-      return null;
+function extractEmbedUrls(componentText) {
+  const urls = [];
+  const iframeRegex = /src=["'](https?:\\?\/\\?\/[^"']+)["']/g;
+  let m;
+  while ((m = iframeRegex.exec(componentText)) !== null) {
+    let url = m[1].replace(/\\/g, "");
+    if (url.includes("pelisgo.online") || url.includes("filemoon") || url.includes("hqq") || url.includes("embedseek")) {
+      urls.push(url);
     }
-  });
+  }
+  const desuMatch = componentText.match(/https?:\/\/desu\.pelisgo\.online\/embed\/[a-zA-Z0-9_-]+/);
+  if (desuMatch)
+    urls.push(desuMatch[0]);
+  return [...new Set(urls)];
+}
+function getHostLabel(url) {
+  if (url.includes("filemoon") || url.includes("magi"))
+    return "Magi";
+  if (url.includes("desu"))
+    return "Desu";
+  if (url.includes("hqq") || url.includes("netu"))
+    return "Netu";
+  if (url.includes("embedseek") || url.includes("seekstreaming"))
+    return "Seek";
+  return "Player";
 }
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
@@ -124,23 +145,41 @@ function getStreams(tmdbId, mediaType, season, episode) {
       if (!title)
         return [];
       const searchUrl = `${BASE}/search?q=${encodeURIComponent(title)}`;
-      const { data: html } = yield import_axios.default.get(searchUrl, { headers: HEADERS });
-      const slugMatch = html.match(new RegExp(`\\/(movies|series)\\/([a-z0-9\\-]+)`));
+      const { data: searchHtml } = yield import_axios.default.get(searchUrl, { headers: HEADERS });
+      const slugMatch = searchHtml.match(new RegExp(`\\/(movies|series)\\/([a-z0-9\\-]+)`));
       if (!slugMatch)
         return [];
+      const typeSlug = slugMatch[1];
       const slug = slugMatch[2];
-      const pageUrl = mediaType === "movie" ? `${BASE}/movies/${slug}` : `${BASE}/series/${slug}/temporada/${season}/episodio/${episode}`;
+      const pageUrl = typeSlug === "movies" ? `${BASE}/movies/${slug}` : `${BASE}/series/${slug}/temporada/${season}/episodio/${episode}`;
       const { data: pageHtml } = yield import_axios.default.get(pageUrl, { headers: HEADERS });
-      const ids = [...pageHtml.matchAll(/\/download\/([a-z0-9]+)/g)].map((m) => m[1]);
-      const streamResults = yield Promise.all(ids.map((id) => resolveOneId(id)));
-      const finalStreams = streamResults.filter((s) => s !== null);
-      return finalStreams.map((s) => ({
-        name: "PelisGo",
-        title: `[${s.language.toUpperCase()}] ${s.server} \xB7 ${s.quality}`,
-        url: s.url,
-        quality: s.quality,
-        headers: HEADERS
-      }));
+      const movieId = extractMovieId(pageHtml);
+      if (!movieId)
+        return [];
+      const { data: actionResponse } = yield import_axios.default.post(pageUrl, JSON.stringify([movieId]), {
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Content-Type": "text/plain;charset=UTF-8",
+          "Accept": "text/x-component",
+          "Next-Action": PLAYER_ACTION_ID
+        }),
+        timeout: 1e4
+      });
+      const embedUrls = extractEmbedUrls(actionResponse);
+      const streams = [];
+      for (const url of embedUrls) {
+        const host = getHostLabel(url);
+        streams.push({
+          name: "PelisGo",
+          title: `[LAT] ${host} \xB7 HD`,
+          url,
+          quality: "HD",
+          headers: {
+            "User-Agent": UA,
+            "Referer": `${BASE}/`
+          }
+        });
+      }
+      return streams;
     } catch (e) {
       console.error("[PelisGo] error:", e.message);
       return [];
