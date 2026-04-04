@@ -33,21 +33,6 @@ function extractM3u8FromHtml(html) {
     return m ? m[0].replace(/\\/g, '') : null;
 }
 
-function extractM3u8FromHtml(html) {
-    let unpacked = "";
-    const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
-    if (packMatch) {
-        try {
-            unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        } catch (e) { }
-    } else {
-        unpacked = html;
-    }
-    unpacked = unpacked.replace(/k:\/\//g, 'https://');
-    const m = unpacked.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
-    return m ? m[0].replace(/\\/g, '') : null;
-}
-
 // Extractors
 async function resolveStreamwish(embedUrl) {
     try {

@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-04T00:40:43.295Z
+ * Generated: 2026-04-04T00:52:32.404Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -116,6 +116,21 @@ function unpackEval(payload, radix, symtab) {
     return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
   });
 }
+function extractM3u8FromHtml(html) {
+  let unpacked = "";
+  const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+  if (packMatch) {
+    try {
+      unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+    } catch (e) {
+    }
+  } else {
+    unpacked = html;
+  }
+  unpacked = unpacked.replace(/k:\/\//g, "https://");
+  const m = unpacked.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
+  return m ? m[0].replace(/\\/g, "") : null;
+}
 function resolveStreamwish(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -219,17 +234,10 @@ function resolveVimeos(embedUrl) {
     try {
       console.log(`[HackStore2] Resolving Vimeos/Goodstream: ${embedUrl}`);
       const body = yield fetchHtml(embedUrl, "https://hackstore2.com/");
-      const m3u8Match = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-      if (m3u8Match) {
-        const finalUrl = m3u8Match[0].replace(/\\/g, "");
-        console.log(`[HackStore2] Direct source found: ${finalUrl}`);
-        return finalUrl;
-      }
-      console.log(`[HackStore2] No direct .m3u8 found in vimeos/goodstream embed.`);
-      return embedUrl;
+      return extractM3u8FromHtml(body);
     } catch (e) {
       console.error(`[HackStore2] Error resolving vimeos/goodstream: ${e.message}`);
-      return embedUrl;
+      return null;
     }
   });
 }
@@ -351,30 +359,29 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           serverName = "vimeos";
         else if (rawUrl.includes("netu") || rawUrl.includes("waaw"))
           serverName = "netu";
-        if (serverName === "goodstream")
-          return null;
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
-        else if (serverName === "vimeos")
+        else if (serverName === "vimeos" || serverName === "goodstream")
           finalUrl = yield resolveVimeos(finalUrl);
         else if (serverName === "filemoon")
           finalUrl = yield resolveFilemoon(finalUrl);
-        if (!finalUrl.startsWith("http")) {
+        if (!finalUrl || !finalUrl.startsWith("http")) {
           return null;
         }
-        const qualityStr = player.quality ? player.quality : "HD";
-        const langStr = player.lang ? player.lang : "Latino";
+        const isVimeos = serverName.includes("vimeos");
+        const isGoodstream = serverName.includes("goodstream");
         return {
           server: serverName,
-          title: `${serverName} (${langStr}) ${qualityStr}`,
+          title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
           url: finalUrl,
           headers: {
-            "Referer": rawUrl,
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            "Referer": isVimeos ? "https://vimeos.net/" : isGoodstream ? "https://goodstream.one/" : rawUrl,
+            "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0,
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
           }
         };
       }));
