@@ -5,22 +5,26 @@ yarn-debug.log*
 yarn-error.log*
 
 # Compilación y builds
-providers/
+# Usamos providers/* para que Git pueda procesar las excepciones (!)
+providers/*
 !providers/pelisplus.js
 !providers/hackstore2.js
 !providers/pelispanda.js
 !providers/embed69.js
 !providers/cuevana_gs.js
-# (Si quieres que los otros proveedores se ignoren, déjalos así, 
-# pero pelisplus.js DEBE subirse para que la app funcione).
 
 # Archivos de sistema
 .DS_Store
 Thumbs.db
 
-# Temporales y logs
+# Temporales, pruebas y depuración
 *.log
 /tmp/
+test_*.js
+check-sites.js
+*.html
+*.webp
+*.png
 
 # Entorno
 .env
