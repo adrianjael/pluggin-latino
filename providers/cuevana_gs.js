@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-04T01:20:35.399Z
+ * Generated: 2026-04-04T01:25:15.924Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -117,24 +117,6 @@ function resolveGenericEmbed(embedUrl) {
   return __async(this, null, function* () {
     try {
       const html = yield fetchHtml(embedUrl, "https://cuevana.gs/");
-      return extractM3u8FromHtml(html);
-    } catch (e) {
-      return null;
-    }
-  });
-}
-function resolveGoodstream(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      const headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": embedUrl,
-        "Origin": new URL(embedUrl).origin,
-        "Accept": "*/*",
-        "Accept-Language": "es-ES,es;q=0.9"
-      };
-      const res = yield fetch(embedUrl, { headers });
-      const html = yield res.text();
       return extractM3u8FromHtml(html);
     } catch (e) {
       return null;
@@ -278,6 +260,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           server = (urlObj.searchParams.get("server") || "unknown").toLowerCase();
         } catch (e) {
         }
+        if (server === "goodstream")
+          return null;
         console.log(`[Cuevana.gs] -> Resolving [${server}] ${lang} ${quality}`);
         return fetchHtml(proxyUrl, BASE_URL).then(function(proxyHtml) {
           const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
@@ -287,35 +271,23 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           let resolvePromise;
           if (server === "voe") {
             resolvePromise = resolveVoesx(embedUrl);
-          } else if (server === "vimeos") {
-            resolvePromise = resolveGenericEmbed(embedUrl);
-          } else if (server === "goodstream") {
-            resolvePromise = resolveGoodstream(embedUrl);
           } else {
             resolvePromise = resolveGenericEmbed(embedUrl);
           }
           return resolvePromise.then(function(finalUrl) {
-            if (!finalUrl || !finalUrl.startsWith("http")) {
+            if (!finalUrl || !finalUrl.startsWith("http"))
               return null;
-            }
             const isVimeos = server.includes("vimeos");
-            const isGoodstream = server.includes("goodstream");
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-            const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
             return {
               name: "Cuevana.gs",
               title: server + " (" + lang + ") " + quality,
               url: finalUrl,
               quality,
               headers: {
-                "User-Agent": isGoodstream ? windowsUA : mobileUA,
+                "User-Agent": mobileUA,
                 "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
-                "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0,
-                "Accept": isGoodstream ? "*/*" : void 0,
-                "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : void 0,
-                "Sec-Fetch-Dest": isGoodstream ? "empty" : void 0,
-                "Sec-Fetch-Mode": isGoodstream ? "cors" : void 0,
-                "Sec-Fetch-Site": isGoodstream ? "cross-site" : void 0
+                "Origin": isVimeos ? "https://vimeos.net" : void 0
               }
             };
           });

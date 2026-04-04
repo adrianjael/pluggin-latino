@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-04T01:20:35.458Z
+ * Generated: 2026-04-04T01:25:15.983Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -366,10 +366,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           serverName = "voe";
         else if (finalUrl.includes("vimeos"))
           serverName = "vimeos";
-        else if (finalUrl.includes("goodstream"))
-          serverName = "goodstream";
         else if (finalUrl.includes("netu") || finalUrl.includes("waaw"))
           serverName = "netu";
+        if (finalUrl.includes("goodstream"))
+          return null;
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
@@ -384,9 +384,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           return null;
         }
         const isVimeos = serverName.includes("vimeos");
-        const isGoodstream = serverName.includes("goodstream");
         const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-        const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
         return {
           name: "PelisPanda",
           server: serverName,
@@ -394,14 +392,9 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           url: finalUrl,
           quality: player.quality || "HD",
           headers: {
-            "User-Agent": isGoodstream ? windowsUA : mobileUA,
+            "User-Agent": mobileUA,
             "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-            "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0,
-            "Accept": isGoodstream ? "*/*" : void 0,
-            "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : void 0,
-            "Sec-Fetch-Dest": isGoodstream ? "empty" : void 0,
-            "Sec-Fetch-Mode": isGoodstream ? "cors" : void 0,
-            "Sec-Fetch-Site": isGoodstream ? "cross-site" : void 0
+            "Origin": isVimeos ? "https://vimeos.net" : void 0
           }
         };
       }));

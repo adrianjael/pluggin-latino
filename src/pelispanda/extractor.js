@@ -265,9 +265,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (finalUrl.includes('vidhide') || finalUrl.includes('filemoon')) serverName = finalUrl.includes('vidhide') ? 'vidhide' : 'filemoon';
             else if (finalUrl.includes('voe')) serverName = 'voe';
             else if (finalUrl.includes('vimeos')) serverName = 'vimeos';
-            else if (finalUrl.includes('goodstream')) serverName = 'goodstream';
             else if (finalUrl.includes('netu') || finalUrl.includes('waaw')) serverName = 'netu';
             
+            // Ocultar Goodstream debido a bloqueos 403 persistentes
+            if (finalUrl.includes('goodstream')) return null;
+
             // Resolve
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
@@ -280,11 +282,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             }
 
             const isVimeos = serverName.includes('vimeos');
-            const isGoodstream = serverName.includes('goodstream');
-            
-            // Fix Híbrido: Vimeos (Pixel 8) / Goodstream (Windows 10)
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-            const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
             return {
                 name: "PelisPanda",
@@ -293,14 +291,9 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 url: finalUrl,
                 quality: player.quality || "HD",
                 headers: {
-                    "User-Agent": isGoodstream ? windowsUA : mobileUA,
+                    "User-Agent": mobileUA,
                     "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-                    "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
-                    "Accept": isGoodstream ? "*/*" : undefined,
-                    "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : undefined,
-                    "Sec-Fetch-Dest": isGoodstream ? "empty" : undefined,
-                    "Sec-Fetch-Mode": isGoodstream ? "cors" : undefined,
-                    "Sec-Fetch-Site": isGoodstream ? "cross-site" : undefined
+                    "Origin": isVimeos ? "https://vimeos.net" : undefined
                 }
             };
         });

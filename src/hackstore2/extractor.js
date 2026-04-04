@@ -150,25 +150,6 @@ async function resolveVimeos(embedUrl) {
     }
 }
 
-async function resolveGoodstream(embedUrl) {
-    try {
-        console.log(`[HackStore2] Resolving Goodstream (User Fix): ${embedUrl}`);
-        const headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": embedUrl,
-            "Origin": new URL(embedUrl).origin,
-            "Accept": "*/*",
-            "Accept-Language": "es-ES,es;q=0.9"
-        };
-        const res = await fetch(embedUrl, { headers });
-        const html = await res.text();
-        return extractM3u8FromHtml(html);
-    } catch (e) {
-        console.error(`[HackStore2] Error resolving goodstream: ${e.message}`);
-        return null;
-    }
-}
-
 async function resolveFilemoon(embedUrl) {
     try {
         let body = await fetchHtml(embedUrl, embedUrl);
@@ -179,9 +160,9 @@ async function resolveFilemoon(embedUrl) {
             if (m3u8) return (m3u8[1] || m3u8[0]).replace(/\\/g, '');
         }
         const rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        return rawM3u8 ? rawM3u8[0] : embedUrl;
+        return rawM3u8 ? rawM3u8[0] : null; // null = no entregar embed roto
     } catch (e) {
-        return embedUrl;
+        return null;
     }
 }
 
@@ -312,13 +293,16 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (rawUrl.includes('voe')) serverName = 'voe';
             else if (rawUrl.includes('vimeos')) serverName = 'vimeos';
             else if (rawUrl.includes('netu') || rawUrl.includes('waaw')) serverName = 'netu';
+            else if (rawUrl.includes('goodstream')) serverName = 'goodstream';
+            
+            // Ocultar Goodstream por errores 403 de Nivel 3
+            if (serverName === 'goodstream') return null;
             
             // Resolve
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
             else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
-            else if (serverName === 'goodstream') finalUrl = await resolveGoodstream(finalUrl);
             else if (serverName === 'filemoon') finalUrl = await resolveFilemoon(finalUrl);
             
             if (!finalUrl || !finalUrl.startsWith('http')) {
@@ -326,25 +310,16 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             }
 
             const isVimeos = serverName.includes('vimeos');
-            const isGoodstream = serverName.includes('goodstream');
-            
-            // Fix Híbrido: Vimeos (Pixel 8) / Goodstream (Windows 10)
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-            const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
             return {
                 server: serverName,
                 title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
                 url: finalUrl,
                 headers: {
-                    "User-Agent": isGoodstream ? windowsUA : mobileUA,
+                    "User-Agent": mobileUA,
                     "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-                    "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
-                    "Accept": isGoodstream ? "*/*" : undefined,
-                    "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : undefined,
-                    "Sec-Fetch-Dest": isGoodstream ? "empty" : undefined,
-                    "Sec-Fetch-Mode": isGoodstream ? "cors" : undefined,
-                    "Sec-Fetch-Site": isGoodstream ? "cross-site" : undefined
+                    "Origin": isVimeos ? "https://vimeos.net" : undefined
                 }
             };
         });

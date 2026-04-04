@@ -21,7 +21,7 @@ function unpackEval(payload, radix, symtab) {
 
 function extractM3u8FromHtml(html) {
     let unpacked = "";
-    // Intentamos desempaquetar eval (soporte para múltiples formatos y radix)
+    // Intentamos desempaquetar eval
     const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
     if (packMatch) {
         try {
@@ -80,21 +80,6 @@ async function fetchHtml(url, referer = BASE_URL) {
 async function resolveGenericEmbed(embedUrl) {
     try {
         const html = await fetchHtml(embedUrl, "https://cuevana.gs/");
-        return extractM3u8FromHtml(html);
-    } catch (e) { return null; }
-}
-
-async function resolveGoodstream(embedUrl) {
-    try {
-        const headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": embedUrl,
-            "Origin": new URL(embedUrl).origin,
-            "Accept": "*/*",
-            "Accept-Language": "es-ES,es;q=0.9"
-        };
-        const res = await fetch(embedUrl, { headers });
-        const html = await res.text();
         return extractM3u8FromHtml(html);
     } catch (e) { return null; }
 }
@@ -250,6 +235,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 server = (urlObj.searchParams.get('server') || 'unknown').toLowerCase();
             } catch (e) { }
 
+            if (server === 'goodstream') return null;
             console.log(`[Cuevana.gs] -> Resolving [${server}] ${lang} ${quality}`);
 
             return fetchHtml(proxyUrl, BASE_URL)
@@ -261,24 +247,15 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     let resolvePromise;
                     if (server === 'voe') {
                         resolvePromise = resolveVoesx(embedUrl);
-                    } else if (server === 'vimeos') {
-                        resolvePromise = resolveGenericEmbed(embedUrl);
-                    } else if (server === 'goodstream') {
-                        resolvePromise = resolveGoodstream(embedUrl);
                     } else {
                         resolvePromise = resolveGenericEmbed(embedUrl);
                     }
 
                     return resolvePromise.then(function (finalUrl) {
-                        if (!finalUrl || !finalUrl.startsWith('http')) {
-                            return null;
-                        }
+                        if (!finalUrl || !finalUrl.startsWith('http')) return null;
+
                         const isVimeos = server.includes('vimeos');
-                        const isGoodstream = server.includes('goodstream');
-                        
-                        // User Fix: Vimeos (Móvil) / Goodstream (Windows 10 + Headers específicos)
                         const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-                        const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
                         return {
                             name: "Cuevana.gs",
@@ -286,14 +263,9 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                             url: finalUrl,
                             quality: quality,
                             headers: {
-                                "User-Agent": isGoodstream ? windowsUA : mobileUA,
+                                "User-Agent": mobileUA,
                                 "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
-                                "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
-                                "Accept": isGoodstream ? "*/*" : undefined,
-                                "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : undefined,
-                                "Sec-Fetch-Dest": isGoodstream ? "empty" : undefined,
-                                "Sec-Fetch-Mode": isGoodstream ? "cors" : undefined,
-                                "Sec-Fetch-Site": isGoodstream ? "cross-site" : undefined
+                                "Origin": isVimeos ? "https://vimeos.net" : undefined
                             }
                         };
                     });
