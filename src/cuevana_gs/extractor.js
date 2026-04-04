@@ -79,47 +79,78 @@ async function resolveVoesx(embedUrl) {
     } catch (e) { return null; }
 }
 
-async function getTmdbTitle(tmdbId, mediaType) {
+async function getTmdbInfo(tmdbId, mediaType) {
     try {
         const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
         const res = await fetch(url, { headers: { 'User-Agent': BASE_HEADERS['User-Agent'] } });
         const html = await res.text();
+        
+        let title = "";
+        let year = "";
+        
         const titleMatch = html.match(/<title>(.*?)(?:\s+&\#8212;|\s+-|\s+\()/);
-        if (titleMatch) {
-            return titleMatch[1].trim();
-        }
+        if (titleMatch) title = titleMatch[1].trim();
+        
+        const yearMatch = html.match(/\((\d{4})\)/);
+        if (yearMatch) year = yearMatch[1];
+        
+        return { title, year };
     } catch (e) { }
-    return null;
+    return { title: null, year: "" };
 }
 
 export async function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
+    const isMovie = mediaType === 'movie';
+    const targetType = isMovie ? 'movies' : 'tvshows';
+    
     console.log(`[Cuevana.gs] Extracting: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
 
     try {
-        let searchTitle = providedTitle;
-        if (!searchTitle) {
-            searchTitle = await getTmdbTitle(tmdbId, mediaType);
-            console.log(`[Cuevana.gs] TMDB Fallback Title: ${searchTitle}`);
+        const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
+        let searchTitle = providedTitle || tmdbInfo.title;
+        const year = tmdbInfo.year;
+
+        async function performSearch(query) {
+            console.log(`[Cuevana.gs] Searching: "${query}"`);
+            const encodedQuery = encodeURIComponent(query);
+            const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${encodedQuery}&postsPerPage=10`;
+            try {
+                const searchRes = await fetch(searchUrl, { headers: BASE_HEADERS });
+                return await searchRes.json();
+            } catch (err) { return { error: true }; }
         }
 
-        const query = encodeURIComponent(searchTitle || String(tmdbId));
-        const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${query}&postsPerPage=5`;
-        const searchRes = await fetch(searchUrl, { headers: BASE_HEADERS });
-        const searchJson = await searchRes.json();
+        let searchJson = await performSearch(`${searchTitle} ${year}`);
+        
+        // Estrategia de búsqueda en cascada
+        if ((searchJson.error || !searchJson.data?.posts?.length) && providedTitle && tmdbInfo.title) {
+            searchJson = await performSearch(`${tmdbInfo.title} ${year}`);
+        }
+        
+        if ((searchJson.error || !searchJson.data?.posts?.length) && tmdbInfo.title) {
+            searchJson = await performSearch(tmdbInfo.title);
+        }
+
+        if (searchJson.error || !searchJson.data?.posts?.length) {
+            searchJson = await performSearch(searchTitle);
+        }
 
         if (searchJson.error || !searchJson.data || !searchJson.data.posts || searchJson.data.posts.length === 0) {
-            console.log(`[Cuevana.gs] No results for: ${providedTitle}`);
+            console.log(`[Cuevana.gs] No results found in any search attempt.`);
             return [];
         }
 
         const posts = searchJson.data.posts;
-        const isMovie = mediaType === 'movie';
-        const post = posts.find(p => String(p.tmdb_id) === String(tmdbId)) ||
-            posts.find(p => p.post_type === (isMovie ? 'pelicula' : 'series')) ||
+
+        // Filtrado inteligente: buscar coincidencia por tipo y luego por título
+        let post = posts.find(p => p.type === targetType && 
+            (p.title.toLowerCase().includes(tmdbInfo.title?.toLowerCase() || searchTitle.toLowerCase()) || 
+             (tmdbInfo.title || searchTitle).toLowerCase().includes(p.title.toLowerCase()))) ||
+            posts.find(p => p.type === targetType) ||
             posts[0];
 
         let postId = post._id;
-        console.log(`[Cuevana.gs] Match: "${post.title}" (postId: ${postId})`);
+        console.log(`[Cuevana.gs] Best match: "${post.title}" (postId: ${postId}) [Type: ${post.type}]`);
 
         // Si es una serie, necesitamos el ID del EPISODIO, no de la serie.
         if (!isMovie && season && episode) {
