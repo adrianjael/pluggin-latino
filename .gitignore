@@ -16,6 +16,10 @@ providers/*
 !providers/lamovie.js
 !providers/seriesmetro.js
 !providers/xupalace.js
+!providers/fuegocine.js
+!providers/playhubmax.js
+!providers/cinemacity.js
+!providers/pelisgo.js
 
 # Archivos de sistema
 .DS_Store

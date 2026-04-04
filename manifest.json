@@ -207,6 +207,98 @@
       ],
       "limited": false,
       "supportsExternalPlayer": true
+    },
+    {
+      "id": "fuegocine",
+      "name": "FuegoCine",
+      "description": "Películas y series con enlaces directos y alta velocidad.",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/fuegocine.js",
+      "enabled": true,
+      "logo": "https://www.fuegocine.com/favicon.ico",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "playhubmax",
+      "name": "PlayHubMax",
+      "description": "API privada con contenido premium en Latino.",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/playhubmax.js",
+      "enabled": true,
+      "logo": "https://i.postimg.cc/59H1DmRk/dooflix.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "cinemacity",
+      "name": "CinemaCity",
+      "description": "Catálogo extenso con servidores directos y subtítulos.",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/cinemacity.js",
+      "enabled": true,
+      "logo": "https://i.postimg.cc/XYjKhS3b/cinemacity.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "pelisgo",
+      "name": "PelisGo",
+      "description": "Descargas directas y streaming de alta fidelidad.",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/pelisgo.js",
+      "enabled": true,
+      "logo": "https://pelisgo.online/favicon.ico",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     }
   ]
 }
