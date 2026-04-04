@@ -207,6 +207,27 @@
       ],
       "limited": false,
       "supportsExternalPlayer": true
+    },
+    {
+      "id": "zoowomaniacos",
+      "name": "Zoowomaniacos",
+      "description": "Películas clásicas y de archivo (OkRu y Archive.org)",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie"
+      ],
+      "filename": "providers/zoowomaniacos.js",
+      "enabled": true,
+      "logo": "https://proyectox.yoyatengoabuela.com/favicon.ico",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     }
   ]
 }
