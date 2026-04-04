@@ -118,28 +118,6 @@
       "supportsExternalPlayer": true
     },
     {
-      "id": "cinecalidad",
-      "name": "CineCalidad",
-      "description": "Películas en HD (Latino) con servidores rápidos como Voe y Filemoon",
-      "version": "1.0.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie"
-      ],
-      "filename": "providers/cinecalidad.js",
-      "enabled": true,
-      "logo": "https://raw.githubusercontent.com/rxb3rth/cinecalidad-stremio-addon/refs/heads/main/logo.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    },
-    {
       "id": "lamovie",
       "name": "LaMovie",
       "description": "Películas, series y anime en HD (Latino) con servidores rápidos",
