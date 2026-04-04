@@ -13,6 +13,7 @@ providers/*
 !providers/embed69.js
 !providers/cuevana_gs.js
 !providers/cinecalidad.js
+!providers/lamovie.js
 
 # Archivos de sistema
 .DS_Store

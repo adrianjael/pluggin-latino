@@ -128,7 +128,30 @@
       ],
       "filename": "providers/cinecalidad.js",
       "enabled": true,
-      "logo": "https://www.cinecalidad.vg/favicon.ico",
+      "logo": "https://www.cinecalidad.vg/wp-content/uploads/2024/11/cropped-cropped-favicon-de-cinecalidad-192x192.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "lamovie",
+      "name": "LaMovie",
+      "description": "Películas, series y anime en HD (Latino) con servidores rápidos",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/lamovie.js",
+      "enabled": true,
+      "logo": "https://la.movie/favicon.ico",
       "contentLanguage": [
         "es"
       ],
