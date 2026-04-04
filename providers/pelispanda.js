@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-04T01:15:22.422Z
+ * Generated: 2026-04-04T01:20:35.458Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -398,7 +398,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
             "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0,
             "Accept": isGoodstream ? "*/*" : void 0,
-            "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : void 0
+            "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : void 0,
+            "Sec-Fetch-Dest": isGoodstream ? "empty" : void 0,
+            "Sec-Fetch-Mode": isGoodstream ? "cors" : void 0,
+            "Sec-Fetch-Site": isGoodstream ? "cross-site" : void 0
           }
         };
       }));

@@ -297,7 +297,10 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
                     "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
                     "Accept": isGoodstream ? "*/*" : undefined,
-                    "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : undefined
+                    "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : undefined,
+                    "Sec-Fetch-Dest": isGoodstream ? "empty" : undefined,
+                    "Sec-Fetch-Mode": isGoodstream ? "cors" : undefined,
+                    "Sec-Fetch-Site": isGoodstream ? "cross-site" : undefined
                 }
             };
         });
