@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-04T01:25:15.977Z
+ * Generated: 2026-04-04T01:30:34.588Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -351,8 +351,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         let finalUrl = rawUrl;
         if (rawUrl.includes("hlswish") || rawUrl.includes("streamwish"))
           serverName = "streamwish";
-        else if (rawUrl.includes("vidhide") || rawUrl.includes("filemoon"))
-          serverName = rawUrl.includes("vidhide") ? "vidhide" : "filemoon";
+        else if (rawUrl.includes("vidhide"))
+          serverName = "vidhide";
+        else if (rawUrl.includes("filemoon"))
+          serverName = "filemoon";
         else if (rawUrl.includes("voe"))
           serverName = "voe";
         else if (rawUrl.includes("vimeos"))
@@ -361,7 +363,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           serverName = "netu";
         else if (rawUrl.includes("goodstream"))
           serverName = "goodstream";
-        if (serverName === "goodstream")
+        if (serverName === "goodstream" || serverName === "filemoon")
           return null;
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);

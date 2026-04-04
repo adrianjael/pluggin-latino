@@ -289,14 +289,15 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
 
             // Map server name
             if (rawUrl.includes('hlswish') || rawUrl.includes('streamwish')) serverName = 'streamwish';
-            else if (rawUrl.includes('vidhide') || rawUrl.includes('filemoon')) serverName = rawUrl.includes('vidhide') ? 'vidhide' : 'filemoon';
+            else if (rawUrl.includes('vidhide')) serverName = 'vidhide';
+            else if (rawUrl.includes('filemoon')) serverName = 'filemoon';
             else if (rawUrl.includes('voe')) serverName = 'voe';
             else if (rawUrl.includes('vimeos')) serverName = 'vimeos';
             else if (rawUrl.includes('netu') || rawUrl.includes('waaw')) serverName = 'netu';
             else if (rawUrl.includes('goodstream')) serverName = 'goodstream';
             
-            // Ocultar Goodstream por errores 403 de Nivel 3
-            if (serverName === 'goodstream') return null;
+            // Ocultar servidores con protección Nivel 3 (SPA/Cloudflare)
+            if (serverName === 'goodstream' || serverName === 'filemoon') return null;
             
             // Resolve
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
