@@ -7,6 +7,7 @@ import { resolve as resolveVoe } from '../resolvers/voe.js';
 import { resolve as resolveFilemoon } from '../resolvers/filemoon.js';
 import { resolve as resolveHlswish } from '../resolvers/hlswish.js';
 import { resolve as resolveVidhide } from '../resolvers/vidhide.js';
+import { resolve as resolveGoodstream } from '../resolvers/goodstream.js';
 
 // ============================================================================
 // CONFIGURACIÓN
@@ -30,6 +31,7 @@ const RESOLVER_MAP = {
   'moonembed.pro':    resolveFilemoon,
   'dintezuvio.com':   resolveVidhide,   // vidhide
   'vidhide.com':      resolveVidhide,
+  'goodstream.one':   resolveGoodstream,
 };
 
 const SERVER_LABELS = {
@@ -37,6 +39,7 @@ const SERVER_LABELS = {
   'streamwish': 'StreamWish',
   'filemoon':   'Filemoon',
   'vidhide':    'VidHide',
+  'goodstream': 'GoodStream',
 };
 
 // Prioridad de idioma (menor índice = mayor prioridad)
@@ -53,7 +56,13 @@ function decodeJwtPayload(token) {
     if (parts.length < 2) return null;
     let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     payload += '='.repeat((4 - payload.length % 4) % 4);
-    return JSON.parse(atob(payload));
+    
+    // Compatibilidad universal para atob
+    const decoded = typeof atob !== 'undefined' 
+        ? atob(payload) 
+        : Buffer.from(payload, 'base64').toString('utf8');
+        
+    return JSON.parse(decoded);
   } catch {
     return null;
   }
