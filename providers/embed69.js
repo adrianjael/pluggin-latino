@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-04T01:58:31.170Z
+ * Generated: 2026-04-04T03:52:09.085Z
  */
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
@@ -199,26 +199,27 @@ function resolveEmbed69(imdbId, season, episode) {
 function getImdbId(tmdbId, mediaType, title) {
   return __async(this, null, function* () {
     var _a;
-    const tmdbKey = "";
-    if (tmdbKey) {
-      const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${tmdbKey}`;
-      try {
-        const res = yield fetch(url);
-        const data = yield res.json();
-        if (data.imdb_id)
-          return data.imdb_id;
-      } catch (e) {
+    console.log(`[Embed69] Resolving ID for: TMDB=${tmdbId} | Title=${title}`);
+    try {
+      const url = `https://vidsrc.me/api/ep?tmdb=${tmdbId}${mediaType === "tv" ? "&s=1&e=1" : ""}`;
+      const res = yield fetch(url);
+      const data = yield res.json();
+      if (data && data.imdb_id) {
+        return data.imdb_id;
       }
+    } catch (e) {
+      console.log("[Embed69] vidsrc resolver failed:", e.message);
     }
     if (mediaType === "tv" && title) {
       try {
-        const searchUrl = `https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(title)}&embed=externals`;
+        const searchUrl = `https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(title)}`;
         const res = yield fetch(searchUrl);
         const data = yield res.json();
-        if ((_a = data == null ? void 0 : data.externals) == null ? void 0 : _a.imdb)
+        if ((_a = data == null ? void 0 : data.externals) == null ? void 0 : _a.imdb) {
           return data.externals.imdb.startsWith("tt") ? data.externals.imdb : `tt${data.externals.imdb}`;
+        }
       } catch (e) {
-        console.log("[Embed69] TVMaze lookup failed:", e.message);
+        console.log("[Embed69] TVMaze fallback failed:", e.message);
       }
     }
     return null;

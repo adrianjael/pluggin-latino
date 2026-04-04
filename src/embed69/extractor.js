@@ -185,31 +185,34 @@ async function resolveEmbed69(imdbId, season, episode) {
 // ─── IMDB ID Resolver from TMDB ─────────────────────────────────
 
 async function getImdbId(tmdbId, mediaType, title) {
-    // 1. Intentar vía TMDB (requiere API Key, pero la dejamos por si acaso)
-    const tmdbKey = ''; // << Si tuvieras una, iría aquí
-    if (tmdbKey) {
-        const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${tmdbKey}`;
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.imdb_id) return data.imdb_id;
-        } catch (e) {}
+    console.log(`[Embed69] Resolving ID for: TMDB=${tmdbId} | Title=${title}`);
+    
+    // Método 1: vidsrc.me API (Excelente resolver de TMDB -> IMDB para series/movies)
+    try {
+        const url = `https://vidsrc.me/api/ep?tmdb=${tmdbId}${mediaType === 'tv' ? '&s=1&e=1' : ''}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data && data.imdb_id) {
+            return data.imdb_id;
+        }
+    } catch (e) {
+        console.log('[Embed69] vidsrc resolver failed:', e.message);
     }
 
-    // 2. Fallback para SERIES: TVMaze (Gratuito y sin Key)
+    // Método 2 Fallback: TVMaze para Series (si el anterior falla)
     if (mediaType === 'tv' && title) {
         try {
-            const searchUrl = `https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(title)}&embed=externals`;
+            const searchUrl = `https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(title)}`;
             const res = await fetch(searchUrl);
             const data = await res.json();
-            if (data?.externals?.imdb) return data.externals.imdb.startsWith('tt') ? data.externals.imdb : `tt${data.externals.imdb}`;
+            if (data?.externals?.imdb) {
+                return data.externals.imdb.startsWith('tt') ? data.externals.imdb : `tt${data.externals.imdb}`;
+            }
         } catch (e) {
-            console.log('[Embed69] TVMaze lookup failed:', e.message);
+            console.log('[Embed69] TVMaze fallback failed:', e.message);
         }
     }
 
-    // 3. Fallback General: Búsqueda directa en Embed.su u otro resolver público
-    // Por ahora, si es serie y tenemos título, TVMaze es muy fiable.
     return null;
 }
 
