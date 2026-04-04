@@ -20,16 +20,22 @@ function unpackEval(payload, radix, symtab) {
 }
 
 function extractM3u8FromHtml(html) {
-    // Intentamos desempaquetar eval (4 o 6 argumentos)
-    const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+    let unpacked = "";
+    // Intentamos desempaquetar eval (soporte para múltiples formatos y radix)
+    const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
     if (packMatch) {
-        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        const m = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        if (m) return m[0].replace(/\\/g, '');
+        try {
+            unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+        } catch (e) { }
+    } else {
+        unpacked = html;
     }
     
-    // Fallback: buscar directamente en el HTML
-    const m = html.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+    // Normalizar la cadena desempaquetada (Vimeos usa k:// para https://)
+    unpacked = unpacked.replace(/k:\/\//g, 'https://');
+    
+    // Buscamos patrones típicos de streams (m3u8, master, index, urlset)
+    const m = unpacked.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
     if (m) return m[0].replace(/\\/g, '');
 
     // Fallback específico para Vimeos: deducir de la imagen del player
@@ -40,7 +46,7 @@ function extractM3u8FromHtml(html) {
         // Intentar buscar tokens en el HTML
         const tMatch = html.match(/t=([a-zA-Z0-9\-_]+)/);
         const sMatch = html.match(/s=(\d+)/);
-        const eMatch = html.match(/e=(\d+)/);
+        const eMatch = html.match(/e=([a-zA-Z0-9\-_]+)/);
         const vMatch = html.match(/v=(\d+)/);
         const srvMatch = html.match(/srv=([a-zA-Z0-9]+)/);
         if (tMatch && sMatch) {
@@ -240,12 +246,9 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     let resolvePromise;
                     if (server === 'voe') {
                         resolvePromise = resolveVoesx(embedUrl);
-                    } else if (server === 'vimeos') {
-                        // Vimeos ahora se raspa para sacar el .m3u8 directo
+                    } else if (server === 'vimeos' || server === 'goodstream') {
+                        // Vimeos y Goodstream ahora se raspan para extraer el .m3u8 nativo
                         resolvePromise = resolveGenericEmbed(embedUrl);
-                    } else if (server === 'goodstream') {
-                        // Goodstream da error 403 forbidden
-                        return Promise.resolve(null);
                     } else {
                         resolvePromise = resolveGenericEmbed(embedUrl);
                     }
@@ -255,14 +258,15 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                             return null;
                         }
                         const isVimeos = server.includes('vimeos');
+                        const isGoodstream = server.includes('goodstream');
                         return {
                             name: "Cuevana.gs",
                             title: server + " (" + lang + ") " + quality,
                             url: finalUrl,
                             quality: quality,
                             headers: {
-                                "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
-                                "Origin": isVimeos ? "https://vimeos.net" : undefined,
+                                "Referer": isVimeos ? "https://vimeos.net/" : (isGoodstream ? "https://goodstream.one/" : embedUrl),
+                                "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
                                 "User-Agent": BASE_HEADERS["User-Agent"]
                             }
                         };

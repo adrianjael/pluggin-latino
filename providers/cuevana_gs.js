@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-04T00:31:49.504Z
+ * Generated: 2026-04-04T00:40:43.250Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -65,14 +65,18 @@ function unpackEval(payload, radix, symtab) {
   });
 }
 function extractM3u8FromHtml(html) {
-  const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+  let unpacked = "";
+  const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
   if (packMatch) {
-    const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-    const m2 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-    if (m2)
-      return m2[0].replace(/\\/g, "");
+    try {
+      unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+    } catch (e) {
+    }
+  } else {
+    unpacked = html;
   }
-  const m = html.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+  unpacked = unpacked.replace(/k:\/\//g, "https://");
+  const m = unpacked.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
   if (m)
     return m[0].replace(/\\/g, "");
   const vimeosImgMatch = html.match(/img src=["']([^"']+\/(i|thumbs)\/\d+\/\d+\/([a-zA-Z0-9]+)\.jpg)["']/i);
@@ -81,7 +85,7 @@ function extractM3u8FromHtml(html) {
     console.log(`[Cuevana.gs] Vimeos Fallback: ID=${id} from image.`);
     const tMatch = html.match(/t=([a-zA-Z0-9\-_]+)/);
     const sMatch = html.match(/s=(\d+)/);
-    const eMatch = html.match(/e=(\d+)/);
+    const eMatch = html.match(/e=([a-zA-Z0-9\-_]+)/);
     const vMatch = html.match(/v=(\d+)/);
     const srvMatch = html.match(/srv=([a-zA-Z0-9]+)/);
     if (tMatch && sMatch) {
@@ -265,10 +269,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           let resolvePromise;
           if (server === "voe") {
             resolvePromise = resolveVoesx(embedUrl);
-          } else if (server === "vimeos") {
+          } else if (server === "vimeos" || server === "goodstream") {
             resolvePromise = resolveGenericEmbed(embedUrl);
-          } else if (server === "goodstream") {
-            return Promise.resolve(null);
           } else {
             resolvePromise = resolveGenericEmbed(embedUrl);
           }
@@ -277,14 +279,15 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
               return null;
             }
             const isVimeos = server.includes("vimeos");
+            const isGoodstream = server.includes("goodstream");
             return {
               name: "Cuevana.gs",
               title: server + " (" + lang + ") " + quality,
               url: finalUrl,
               quality,
               headers: {
-                "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
-                "Origin": isVimeos ? "https://vimeos.net" : void 0,
+                "Referer": isVimeos ? "https://vimeos.net/" : isGoodstream ? "https://goodstream.one/" : embedUrl,
+                "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0,
                 "User-Agent": BASE_HEADERS["User-Agent"]
               }
             };
