@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-04T01:05:45.124Z
+ * Generated: 2026-04-04T01:15:22.422Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -259,6 +259,24 @@ function resolveVimeos(embedUrl) {
     }
   });
 }
+function resolveGoodstream(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      const headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": embedUrl,
+        "Origin": new URL(embedUrl).origin,
+        "Accept": "*/*",
+        "Accept-Language": "es-ES,es;q=0.9"
+      };
+      const res = yield fetch(embedUrl, { headers });
+      const html = yield res.text();
+      return extractM3u8FromHtml(html);
+    } catch (e) {
+      return null;
+    }
+  });
+}
 function isGoodMatch(query, result, minScore = 0.4) {
   return calculateSimilarity(query, result) >= minScore;
 }
@@ -358,14 +376,17 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
-        else if (serverName === "vimeos" || serverName === "goodstream")
+        else if (serverName === "vimeos")
           finalUrl = yield resolveVimeos(finalUrl);
+        else if (serverName === "goodstream")
+          finalUrl = yield resolveGoodstream(finalUrl);
         if (!finalUrl || !finalUrl.startsWith("http")) {
           return null;
         }
         const isVimeos = serverName.includes("vimeos");
         const isGoodstream = serverName.includes("goodstream");
         const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+        const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
         return {
           name: "PelisPanda",
           server: serverName,
@@ -373,9 +394,11 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           url: finalUrl,
           quality: player.quality || "HD",
           headers: {
-            "User-Agent": mobileUA,
+            "User-Agent": isGoodstream ? windowsUA : mobileUA,
             "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-            "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0
+            "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0,
+            "Accept": isGoodstream ? "*/*" : void 0,
+            "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : void 0
           }
         };
       }));

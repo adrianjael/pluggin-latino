@@ -84,6 +84,21 @@ async function resolveGenericEmbed(embedUrl) {
     } catch (e) { return null; }
 }
 
+async function resolveGoodstream(embedUrl) {
+    try {
+        const headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": embedUrl,
+            "Origin": new URL(embedUrl).origin,
+            "Accept": "*/*",
+            "Accept-Language": "es-ES,es;q=0.9"
+        };
+        const res = await fetch(embedUrl, { headers });
+        const html = await res.text();
+        return extractM3u8FromHtml(html);
+    } catch (e) { return null; }
+}
+
 async function resolveVoesx(embedUrl) {
     try {
         const html = await fetchHtml(embedUrl, embedUrl);
@@ -246,9 +261,10 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                     let resolvePromise;
                     if (server === 'voe') {
                         resolvePromise = resolveVoesx(embedUrl);
-                    } else if (server === 'vimeos' || server === 'goodstream') {
-                        // Vimeos y Goodstream ahora se raspan para extraer el .m3u8 nativo
+                    } else if (server === 'vimeos') {
                         resolvePromise = resolveGenericEmbed(embedUrl);
+                    } else if (server === 'goodstream') {
+                        resolvePromise = resolveGoodstream(embedUrl);
                     } else {
                         resolvePromise = resolveGenericEmbed(embedUrl);
                     }
@@ -260,15 +276,19 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                         const isVimeos = server.includes('vimeos');
                         const isGoodstream = server.includes('goodstream');
                         const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+                        const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+                        
                         return {
                             name: "Cuevana.gs",
                             title: server + " (" + lang + ") " + quality,
                             url: finalUrl,
                             quality: quality,
                             headers: {
+                                "User-Agent": isGoodstream ? windowsUA : mobileUA,
                                 "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
                                 "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
-                                "User-Agent": mobileUA
+                                "Accept": isGoodstream ? "*/*" : undefined,
+                                "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : undefined
                             }
                         };
                     });

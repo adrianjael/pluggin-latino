@@ -136,6 +136,23 @@ async function resolveVimeos(embedUrl) {
     }
 }
 
+async function resolveGoodstream(embedUrl) {
+    try {
+        const headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": embedUrl,
+            "Origin": new URL(embedUrl).origin,
+            "Accept": "*/*",
+            "Accept-Language": "es-ES,es;q=0.9"
+        };
+        const res = await fetch(embedUrl, { headers });
+        const html = await res.text();
+        return extractM3u8FromHtml(html);
+    } catch (e) {
+        return null;
+    }
+}
+
 /**
  * Comprueba si un título es una coincidencia aceptable (score > 0.4)
  */
@@ -255,7 +272,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
-            else if (serverName === 'vimeos' || serverName === 'goodstream') finalUrl = await resolveVimeos(finalUrl);
+            else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
+            else if (serverName === 'goodstream') finalUrl = await resolveGoodstream(finalUrl);
             
             if (!finalUrl || !finalUrl.startsWith('http')) {
                 return null;
@@ -263,7 +281,10 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
 
             const isVimeos = serverName.includes('vimeos');
             const isGoodstream = serverName.includes('goodstream');
+            
+            // Fix Híbrido: Vimeos (Pixel 8) / Goodstream (Windows 10)
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+            const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
             return {
                 name: "PelisPanda",
@@ -272,9 +293,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 url: finalUrl,
                 quality: player.quality || "HD",
                 headers: {
-                    "User-Agent": mobileUA,
+                    "User-Agent": isGoodstream ? windowsUA : mobileUA,
                     "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-                    "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined)
+                    "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
+                    "Accept": isGoodstream ? "*/*" : undefined,
+                    "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : undefined
                 }
             };
         });

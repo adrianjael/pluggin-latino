@@ -141,11 +141,30 @@ async function resolveVoesx(embedUrl) {
 
 async function resolveVimeos(embedUrl) {
     try {
-        console.log(`[HackStore2] Resolving Vimeos/Goodstream: ${embedUrl}`);
+        console.log(`[HackStore2] Resolving Vimeos: ${embedUrl}`);
         const body = await fetchHtml(embedUrl, "https://hackstore2.com/");
         return extractM3u8FromHtml(body);
     } catch (e) {
-        console.error(`[HackStore2] Error resolving vimeos/goodstream: ${e.message}`);
+        console.error(`[HackStore2] Error resolving vimeos: ${e.message}`);
+        return null;
+    }
+}
+
+async function resolveGoodstream(embedUrl) {
+    try {
+        console.log(`[HackStore2] Resolving Goodstream (User Fix): ${embedUrl}`);
+        const headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": embedUrl,
+            "Origin": new URL(embedUrl).origin,
+            "Accept": "*/*",
+            "Accept-Language": "es-ES,es;q=0.9"
+        };
+        const res = await fetch(embedUrl, { headers });
+        const html = await res.text();
+        return extractM3u8FromHtml(html);
+    } catch (e) {
+        console.error(`[HackStore2] Error resolving goodstream: ${e.message}`);
         return null;
     }
 }
@@ -298,7 +317,8 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
-            else if (serverName === 'vimeos' || serverName === 'goodstream') finalUrl = await resolveVimeos(finalUrl);
+            else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
+            else if (serverName === 'goodstream') finalUrl = await resolveGoodstream(finalUrl);
             else if (serverName === 'filemoon') finalUrl = await resolveFilemoon(finalUrl);
             
             if (!finalUrl || !finalUrl.startsWith('http')) {
@@ -307,15 +327,21 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
 
             const isVimeos = serverName.includes('vimeos');
             const isGoodstream = serverName.includes('goodstream');
+            
+            // Fix Híbrido: Vimeos (Pixel 8) / Goodstream (Windows 10)
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+            const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
             return {
                 server: serverName,
                 title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
                 url: finalUrl,
                 headers: {
+                    "User-Agent": isGoodstream ? windowsUA : mobileUA,
                     "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
                     "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
-                    "User-Agent": mobileUA
+                    "Accept": isGoodstream ? "*/*" : undefined,
+                    "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : undefined
                 }
             };
         });

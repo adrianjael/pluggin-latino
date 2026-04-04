@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-04T01:05:45.046Z
+ * Generated: 2026-04-04T01:15:22.304Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -117,6 +117,24 @@ function resolveGenericEmbed(embedUrl) {
   return __async(this, null, function* () {
     try {
       const html = yield fetchHtml(embedUrl, "https://cuevana.gs/");
+      return extractM3u8FromHtml(html);
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function resolveGoodstream(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      const headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": embedUrl,
+        "Origin": new URL(embedUrl).origin,
+        "Accept": "*/*",
+        "Accept-Language": "es-ES,es;q=0.9"
+      };
+      const res = yield fetch(embedUrl, { headers });
+      const html = yield res.text();
       return extractM3u8FromHtml(html);
     } catch (e) {
       return null;
@@ -269,8 +287,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           let resolvePromise;
           if (server === "voe") {
             resolvePromise = resolveVoesx(embedUrl);
-          } else if (server === "vimeos" || server === "goodstream") {
+          } else if (server === "vimeos") {
             resolvePromise = resolveGenericEmbed(embedUrl);
+          } else if (server === "goodstream") {
+            resolvePromise = resolveGoodstream(embedUrl);
           } else {
             resolvePromise = resolveGenericEmbed(embedUrl);
           }
@@ -281,15 +301,18 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             const isVimeos = server.includes("vimeos");
             const isGoodstream = server.includes("goodstream");
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+            const windowsUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
             return {
               name: "Cuevana.gs",
               title: server + " (" + lang + ") " + quality,
               url: finalUrl,
               quality,
               headers: {
+                "User-Agent": isGoodstream ? windowsUA : mobileUA,
                 "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
                 "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0,
-                "User-Agent": mobileUA
+                "Accept": isGoodstream ? "*/*" : void 0,
+                "Accept-Language": isGoodstream ? "es-ES,es;q=0.9" : void 0
               }
             };
           });
