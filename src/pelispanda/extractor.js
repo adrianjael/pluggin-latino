@@ -263,7 +263,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
 
             const isVimeos = serverName.includes('vimeos');
             const isGoodstream = serverName.includes('goodstream');
-            const mobileUA = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36";
+            const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
 
             return {
                 name: "PelisPanda",
@@ -273,7 +273,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 quality: player.quality || "HD",
                 headers: {
                     "User-Agent": mobileUA,
-                    "Referer": isVimeos ? "https://vimeos.net/" : (isGoodstream ? "https://goodstream.one/" : rawUrl),
+                    "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
                     "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined)
                 }
             };

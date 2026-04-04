@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-04T00:52:32.410Z
+ * Generated: 2026-04-04T01:05:45.124Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -365,7 +365,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         }
         const isVimeos = serverName.includes("vimeos");
         const isGoodstream = serverName.includes("goodstream");
-        const mobileUA = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36";
+        const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
         return {
           name: "PelisPanda",
           server: serverName,
@@ -374,7 +374,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           quality: player.quality || "HD",
           headers: {
             "User-Agent": mobileUA,
-            "Referer": isVimeos ? "https://vimeos.net/" : isGoodstream ? "https://goodstream.one/" : rawUrl,
+            "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
             "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0
           }
         };

@@ -259,15 +259,16 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                         }
                         const isVimeos = server.includes('vimeos');
                         const isGoodstream = server.includes('goodstream');
+                        const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
                         return {
                             name: "Cuevana.gs",
                             title: server + " (" + lang + ") " + quality,
                             url: finalUrl,
                             quality: quality,
                             headers: {
-                                "Referer": isVimeos ? "https://vimeos.net/" : (isGoodstream ? "https://goodstream.one/" : embedUrl),
+                                "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
                                 "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined),
-                                "User-Agent": BASE_HEADERS["User-Agent"]
+                                "User-Agent": mobileUA
                             }
                         };
                     });
