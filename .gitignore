@@ -15,7 +15,6 @@ providers/*
 !providers/cinecalidad.js
 !providers/lamovie.js
 !providers/seriesmetro.js
-!providers/xupalace.js
 !providers/zoowomaniacos.js
 
 # Archivos de sistema
