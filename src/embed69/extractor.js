@@ -184,38 +184,50 @@ async function resolveEmbed69(imdbId, season, episode) {
 
 // ─── IMDB ID Resolver from TMDB ─────────────────────────────────
 
-async function getImdbId(tmdbId, mediaType) {
-    // TMDB External IDs endpoint
-    const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids`;
-    try {
-        const res = await fetch(url, {
-            headers: {
-                'User-Agent': EMBED69_UA,
-                'Accept': 'application/json'
-            }
-        });
-        const data = await res.json();
-        return data.imdb_id || null;
-    } catch (e) {
-        console.log('[Embed69] Error fetching IMDB ID:', e.message);
-        return null;
+async function getImdbId(tmdbId, mediaType, title) {
+    // 1. Intentar vía TMDB (requiere API Key, pero la dejamos por si acaso)
+    const tmdbKey = ''; // << Si tuvieras una, iría aquí
+    if (tmdbKey) {
+        const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${tmdbKey}`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.imdb_id) return data.imdb_id;
+        } catch (e) {}
     }
+
+    // 2. Fallback para SERIES: TVMaze (Gratuito y sin Key)
+    if (mediaType === 'tv' && title) {
+        try {
+            const searchUrl = `https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(title)}&embed=externals`;
+            const res = await fetch(searchUrl);
+            const data = await res.json();
+            if (data?.externals?.imdb) return data.externals.imdb.startsWith('tt') ? data.externals.imdb : `tt${data.externals.imdb}`;
+        } catch (e) {
+            console.log('[Embed69] TVMaze lookup failed:', e.message);
+        }
+    }
+
+    // 3. Fallback General: Búsqueda directa en Embed.su u otro resolver público
+    // Por ahora, si es serie y tenemos título, TVMaze es muy fiable.
+    return null;
 }
 
 // ─── Main Export ─────────────────────────────────────────────────
 
-export async function extractStreams(tmdbId, mediaType, season, episode) {
-    console.log(`[Embed69] Extracting: TMDB=${tmdbId} (${mediaType}) S${season}E${episode}`);
+export async function extractStreams(tmdbId, mediaType, season, episode, title) {
+    console.log(`[Embed69] Extracting: Title="${title}" | TMDB=${tmdbId} (${mediaType}) S${season}E${episode}`);
 
     try {
-        // 1. Obtener IMDB ID desde TMDB
+        // 1. Obtener IMDB ID
         const apiType = mediaType === 'movie' ? 'movie' : 'tv';
-        const imdbId = await getImdbId(tmdbId, apiType);
+        const imdbId = await getImdbId(tmdbId, apiType, title);
 
         if (!imdbId) {
-            console.log('[Embed69] No IMDB ID found for TMDB ID:', tmdbId);
+            console.log(`[Embed69] No IMDB ID found for ${title || tmdbId}`);
             return [];
         }
+
 
         console.log(`[Embed69] IMDB ID: ${imdbId}`);
 

@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-04T01:46:10.622Z
+ * Generated: 2026-04-04T01:58:31.170Z
  */
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
@@ -196,32 +196,42 @@ function resolveEmbed69(imdbId, season, episode) {
     return embedList;
   });
 }
-function getImdbId(tmdbId, mediaType) {
+function getImdbId(tmdbId, mediaType, title) {
   return __async(this, null, function* () {
-    const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids`;
-    try {
-      const res = yield fetch(url, {
-        headers: {
-          "User-Agent": EMBED69_UA,
-          "Accept": "application/json"
-        }
-      });
-      const data = yield res.json();
-      return data.imdb_id || null;
-    } catch (e) {
-      console.log("[Embed69] Error fetching IMDB ID:", e.message);
-      return null;
+    var _a;
+    const tmdbKey = "";
+    if (tmdbKey) {
+      const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${tmdbKey}`;
+      try {
+        const res = yield fetch(url);
+        const data = yield res.json();
+        if (data.imdb_id)
+          return data.imdb_id;
+      } catch (e) {
+      }
     }
+    if (mediaType === "tv" && title) {
+      try {
+        const searchUrl = `https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(title)}&embed=externals`;
+        const res = yield fetch(searchUrl);
+        const data = yield res.json();
+        if ((_a = data == null ? void 0 : data.externals) == null ? void 0 : _a.imdb)
+          return data.externals.imdb.startsWith("tt") ? data.externals.imdb : `tt${data.externals.imdb}`;
+      } catch (e) {
+        console.log("[Embed69] TVMaze lookup failed:", e.message);
+      }
+    }
+    return null;
   });
 }
-function extractStreams(tmdbId, mediaType, season, episode) {
+function extractStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
-    console.log(`[Embed69] Extracting: TMDB=${tmdbId} (${mediaType}) S${season}E${episode}`);
+    console.log(`[Embed69] Extracting: Title="${title}" | TMDB=${tmdbId} (${mediaType}) S${season}E${episode}`);
     try {
       const apiType = mediaType === "movie" ? "movie" : "tv";
-      const imdbId = yield getImdbId(tmdbId, apiType);
+      const imdbId = yield getImdbId(tmdbId, apiType, title);
       if (!imdbId) {
-        console.log("[Embed69] No IMDB ID found for TMDB ID:", tmdbId);
+        console.log(`[Embed69] No IMDB ID found for ${title || tmdbId}`);
         return [];
       }
       console.log(`[Embed69] IMDB ID: ${imdbId}`);
