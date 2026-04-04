@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-03T23:54:10.607Z
+ * Generated: 2026-04-04T00:04:20.857Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -169,16 +169,35 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       const posts = searchJson.data.posts;
       const isMovie = mediaType === "movie";
       const post = posts.find((p) => String(p.tmdb_id) === String(tmdbId)) || posts.find((p) => p.post_type === (isMovie ? "pelicula" : "series")) || posts[0];
-      const postId = post._id;
+      let postId = post._id;
       console.log(`[Cuevana.gs] Match: "${post.title}" (postId: ${postId})`);
-      let playerUrl = `${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`;
       if (!isMovie && season && episode) {
-        playerUrl += `&season=${season}&episode=${episode}`;
+        console.log(`[Cuevana.gs] TV Mode: Resolving postId for S${season}E${episode}...`);
+        try {
+          const episodesUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${postId}&season=${season}&postsPerPage=100`;
+          const epRes = yield fetch(episodesUrl, { headers: BASE_HEADERS });
+          const epJson = yield epRes.json();
+          if (!epJson.error && epJson.data && epJson.data.posts) {
+            const episodes = epJson.data.posts;
+            const epMatch = episodes.find((e) => parseInt(e.episode_number) === parseInt(episode));
+            if (epMatch) {
+              postId = epMatch._id;
+              console.log(`[Cuevana.gs] Episode postId resolved via API: ${postId}`);
+            } else {
+              console.log(`[Cuevana.gs] No episode match found in API for E${episode}.`);
+            }
+          } else {
+            console.log(`[Cuevana.gs] Error in episodes API response or empty results.`);
+          }
+        } catch (err) {
+          console.error(`[Cuevana.gs] Error resolving episodes via API: ${err.message}`);
+        }
       }
+      let playerUrl = `${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`;
       const playerRes = yield fetch(playerUrl, { headers: BASE_HEADERS });
       const playerJson = yield playerRes.json();
       if (playerJson.error || !playerJson.data || !playerJson.data.embeds || playerJson.data.embeds.length === 0) {
-        console.log("[Cuevana.gs] No embeds found.");
+        console.log(`[Cuevana.gs] No embeds found for postId: ${postId}`);
         return [];
       }
       const embeds = playerJson.data.embeds;
