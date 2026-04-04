@@ -1,6 +1,6 @@
 const BASE_URL = 'https://cuevana.gs';
 const BASE_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
     'Referer': BASE_URL,
     'Accept-Language': 'es-ES,es;q=0.9'
 };
@@ -169,9 +169,9 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const posts = searchJson.data.posts;
 
         // Filtrado inteligente: buscar coincidencia por tipo y luego por título
+        const normalizedTarget = (tmdbInfo.title || searchTitle).toLowerCase().replace(/[^a-z0-9]/g, '');
         let post = posts.find(p => p.type === targetType && 
-            (p.title.toLowerCase().includes(tmdbInfo.title?.toLowerCase() || searchTitle.toLowerCase()) || 
-             (tmdbInfo.title || searchTitle).toLowerCase().includes(p.title.toLowerCase()))) ||
+            p.title.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedTarget)) ||
             posts.find(p => p.type === targetType) ||
             posts[0];
 
@@ -263,7 +263,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                             headers: {
                                 "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
                                 "Origin": isVimeos ? "https://vimeos.net" : undefined,
-                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                                "User-Agent": BASE_HEADERS["User-Agent"]
                             }
                         };
                     });
