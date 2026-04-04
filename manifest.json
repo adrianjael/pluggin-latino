@@ -93,6 +93,29 @@
       ],
       "limited": false,
       "supportsExternalPlayer": true
+    },
+    {
+      "id": "embed69",
+      "name": "Embed69",
+      "description": "Películas y series (Latino) via embed69.org usando IMDB IDs directos",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/embed69.js",
+      "enabled": true,
+      "logo": "https://embed69.org/favicon.ico",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     }
   ]
 }
