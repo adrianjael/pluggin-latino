@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-04T05:42:18.025Z
+ * Generated: 2026-04-04T05:55:17.659Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -99,7 +99,7 @@ function getTmdbInfo(tmdbId, mediaType) {
 }
 function extractMovieId(html) {
   var _a, _b, _c, _d;
-  const nextMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+  const nextMatch = html.match(new RegExp('<script id="__NEXT_DATA__"[^>]*>(.*?)<\\/script>', "s"));
   if (nextMatch) {
     try {
       const data = JSON.parse(nextMatch[1]);
@@ -109,8 +109,11 @@ function extractMovieId(html) {
     } catch (e) {
     }
   }
-  const idMatch = html.match(/"id"\s*:\s*"([a-z0-9]{20,})"/);
-  return idMatch ? idMatch[1] : null;
+  const idMatch = html.match(/"id"\s*:\s*"(cmn[a-z0-9]{15,})"/i);
+  if (idMatch)
+    return idMatch[1];
+  const stateMatch = html.match(/movie["']\s*:\s*\{\s*["']id["']\s*:\s*["'](cmn[a-z0-9]{15,})["']/i);
+  return stateMatch ? stateMatch[1] : null;
 }
 function extractEmbedUrls(componentText) {
   const urls = [];
@@ -118,7 +121,7 @@ function extractEmbedUrls(componentText) {
   let m;
   while ((m = iframeRegex.exec(componentText)) !== null) {
     let url = m[1].replace(/\\/g, "");
-    if (url.includes("pelisgo.online") || url.includes("filemoon") || url.includes("hqq") || url.includes("embedseek")) {
+    if (url.includes("pelisgo.online") || url.includes("filemoon") || url.includes("hqq") || url.includes("embedseek") || url.includes("desu")) {
       urls.push(url);
     }
   }
@@ -126,6 +129,21 @@ function extractEmbedUrls(componentText) {
   if (desuMatch)
     urls.push(desuMatch[0]);
   return [...new Set(urls)];
+}
+function resolveDirectVideo(embedUrl, pageUrl) {
+  return __async(this, null, function* () {
+    try {
+      if (embedUrl.includes("filemoon.sx") || embedUrl.includes("magi")) {
+        const { data: html } = yield import_axios.default.get(embedUrl, { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": pageUrl }) });
+        const m3u8Match = html.match(/file["']\s*:\s*["'](https?:\/\/.*?\.m3u8.*?)["']/);
+        if (m3u8Match)
+          return m3u8Match[1];
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  });
 }
 function getHostLabel(url) {
   if (url.includes("filemoon") || url.includes("magi"))
@@ -136,7 +154,7 @@ function getHostLabel(url) {
     return "Netu";
   if (url.includes("embedseek") || url.includes("seekstreaming"))
     return "Seek";
-  return "Player";
+  return "Streaming";
 }
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
@@ -154,29 +172,30 @@ function getStreams(tmdbId, mediaType, season, episode) {
       const pageUrl = typeSlug === "movies" ? `${BASE}/movies/${slug}` : `${BASE}/series/${slug}/temporada/${season}/episodio/${episode}`;
       const { data: pageHtml } = yield import_axios.default.get(pageUrl, { headers: HEADERS });
       const movieId = extractMovieId(pageHtml);
-      if (!movieId)
+      if (!movieId) {
+        console.log("[PelisGo] No se encontr\xF3 el MovieID para:", title);
         return [];
+      }
       const { data: actionResponse } = yield import_axios.default.post(pageUrl, JSON.stringify([movieId]), {
         headers: __spreadProps(__spreadValues({}, HEADERS), {
           "Content-Type": "text/plain;charset=UTF-8",
           "Accept": "text/x-component",
-          "Next-Action": PLAYER_ACTION_ID
+          "Next-Action": PLAYER_ACTION_ID,
+          "Referer": pageUrl
         }),
-        timeout: 1e4
+        timeout: 8e3
       });
       const embedUrls = extractEmbedUrls(actionResponse);
       const streams = [];
       for (const url of embedUrls) {
         const host = getHostLabel(url);
+        const directUrl = yield resolveDirectVideo(url, pageUrl);
         streams.push({
           name: "PelisGo",
-          title: `[LAT] ${host} \xB7 HD`,
-          url,
+          title: `[LAT] ${host} (Streaming)`,
+          url: directUrl || url,
           quality: "HD",
-          headers: {
-            "User-Agent": UA,
-            "Referer": `${BASE}/`
-          }
+          headers: { "User-Agent": UA, "Referer": `${BASE}/` }
         });
       }
       return streams;
