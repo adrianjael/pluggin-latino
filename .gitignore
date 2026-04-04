@@ -12,6 +12,7 @@ providers/*
 !providers/pelispanda.js
 !providers/embed69.js
 !providers/cuevana_gs.js
+!providers/cinecalidad.js
 
 # Archivos de sistema
 .DS_Store
