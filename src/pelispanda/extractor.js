@@ -19,6 +19,21 @@ function unpackEval(payload, radix, symtab) {
     });
 }
 
+function extractM3u8FromHtml(html) {
+    let unpacked = "";
+    const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+    if (packMatch) {
+        try {
+            unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+        } catch (e) { }
+    } else {
+        unpacked = html;
+    }
+    unpacked = unpacked.replace(/k:\/\//g, 'https://');
+    const m = unpacked.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
+    return m ? m[0].replace(/\\/g, '') : null;
+}
+
 // Extractors Base (Compartidos)
 async function resolveStreamwish(embedUrl) {
     try {
@@ -113,11 +128,12 @@ async function resolveVoesx(embedUrl) {
 }
 
 async function resolveVimeos(embedUrl) {
-    return null; // Server unstable in Nuvio
-}
-
-async function resolveGoodstream(embedUrl) {
-    return null; // Server unstable in Nuvio
+    try {
+        const body = await fetchHtml(embedUrl, "https://pelispanda.org/");
+        return extractM3u8FromHtml(body);
+    } catch (e) {
+        return null;
+    }
 }
 
 /**
@@ -235,31 +251,30 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (finalUrl.includes('goodstream')) serverName = 'goodstream';
             else if (finalUrl.includes('netu') || finalUrl.includes('waaw')) serverName = 'netu';
             
-            // Vimeos se envía directamente porque Nuvio hookea el js
-            // Goodstream se bloquea porque da error 403
-            if (serverName === 'goodstream') return null;
-            // Resolvemos protección
+            // Resolve
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
+            else if (serverName === 'vimeos' || serverName === 'goodstream') finalUrl = await resolveVimeos(finalUrl);
             
             if (!finalUrl || !finalUrl.startsWith('http')) {
                 return null;
             }
 
-            const qualityStr = player.quality ? player.quality : "HD";
-            const langStr = player.lang ? player.lang : "Latino";
-            const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+            const isVimeos = serverName.includes('vimeos');
+            const isGoodstream = serverName.includes('goodstream');
+            const mobileUA = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36";
 
             return {
                 name: "PelisPanda",
                 server: serverName,
-                title: `${serverName} (${langStr}) ${qualityStr}`,
+                title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
                 url: finalUrl,
-                quality: qualityStr,
+                quality: player.quality || "HD",
                 headers: {
-                    "User-Agent": ua,
-                    "Referer": rawUrl
+                    "User-Agent": mobileUA,
+                    "Referer": isVimeos ? "https://vimeos.net/" : (isGoodstream ? "https://goodstream.one/" : rawUrl),
+                    "Origin": isVimeos ? "https://vimeos.net" : (isGoodstream ? "https://goodstream.one" : undefined)
                 }
             };
         });

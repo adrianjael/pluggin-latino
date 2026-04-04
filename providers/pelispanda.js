@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-04T00:40:43.301Z
+ * Generated: 2026-04-04T00:52:08.952Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -136,6 +136,21 @@ function unpackEval(payload, radix, symtab) {
     return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
   });
 }
+function extractM3u8FromHtml(html) {
+  let unpacked = "";
+  const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+  if (packMatch) {
+    try {
+      unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+    } catch (e) {
+    }
+  } else {
+    unpacked = html;
+  }
+  unpacked = unpacked.replace(/k:\/\//g, "https://");
+  const m = unpacked.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
+  return m ? m[0].replace(/\\/g, "") : null;
+}
 function resolveStreamwish(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -234,6 +249,16 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
+function resolveVimeos(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      const body = yield fetchHtml(embedUrl, "https://pelispanda.org/");
+      return extractM3u8FromHtml(body);
+    } catch (e) {
+      return null;
+    }
+  });
+}
 function isGoodMatch(query, result, minScore = 0.4) {
   return calculateSimilarity(query, result) >= minScore;
 }
@@ -327,29 +352,30 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           serverName = "goodstream";
         else if (finalUrl.includes("netu") || finalUrl.includes("waaw"))
           serverName = "netu";
-        if (serverName === "goodstream")
-          return null;
         if (serverName === "streamwish")
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
+        else if (serverName === "vimeos" || serverName === "goodstream")
+          finalUrl = yield resolveVimeos(finalUrl);
         if (!finalUrl || !finalUrl.startsWith("http")) {
           return null;
         }
-        const qualityStr = player.quality ? player.quality : "HD";
-        const langStr = player.lang ? player.lang : "Latino";
-        const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+        const isVimeos = serverName.includes("vimeos");
+        const isGoodstream = serverName.includes("goodstream");
+        const mobileUA = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36";
         return {
           name: "PelisPanda",
           server: serverName,
-          title: `${serverName} (${langStr}) ${qualityStr}`,
+          title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
           url: finalUrl,
-          quality: qualityStr,
+          quality: player.quality || "HD",
           headers: {
-            "User-Agent": ua,
-            "Referer": rawUrl
+            "User-Agent": mobileUA,
+            "Referer": isVimeos ? "https://vimeos.net/" : isGoodstream ? "https://goodstream.one/" : rawUrl,
+            "Origin": isVimeos ? "https://vimeos.net" : isGoodstream ? "https://goodstream.one" : void 0
           }
         };
       }));
