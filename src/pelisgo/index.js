@@ -1,14 +1,16 @@
 /**
- * PelisGo Provider for Nuvio (Premium Restoration)
- * Búsqueda inteligente por TMDB API y Descargas MP4 Directas.
+ * PelisGo Provider for Nuvio (V2.5 Hybrid Premium)
+ * Magi (Online) + Pixeldrain/BuzzHeavier (Downloads).
  */
 
 const BASE = 'https://pelisgo.online';
 const TMDB_KEY = '2dca580c2a14b55200e784d157207b4d';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
+const PLAYER_ACTION_ID = '4079b11d214b588c12807d99b549e1851b3ee03082';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-const TARGET_SERVERS = ['buzzheavier', 'google drive', 'googledrive', 'pixeldrain'];
+// Eliminado "google drive" por inestabilidad
+const TARGET_SERVERS = ['buzzheavier', 'pixeldrain'];
 
 async function fetchJson(url, headers = {}) {
     const res = await fetch(url, { headers: { 'User-Agent': UA, ...headers } });
@@ -38,55 +40,31 @@ async function getTmdbInfo(tmdbId, mediaType) {
 }
 
 /**
- * Realiza la búsqueda en PelisGo usando cabeceras completas
+ * Realiza la búsqueda en PelisGo
  */
 async function pelisgoSearch(query, type) {
     const url = `${BASE}/search?q=${encodeURIComponent(query)}`;
     try {
         const html = await fetchText(url, { 'Referer': `${BASE}/` });
-        
-        // Regex ultra-permisiva para capturar cualquier enlace a película o serie
         const re = /href="(\/(movies|series)\/([a-z0-9\-]+))"/gi;
         const results = [];
         const seen = new Set();
         let m;
-        
         while ((m = re.exec(html)) !== null) {
             const fullPath = m[1];
             const itemType = m[2];
             const slug = m[3];
-            
             if (fullPath.includes('/temporada/') || fullPath.includes('/episodio/')) continue;
-            
-            // Prioridad al tipo solicitado
             const isMatch = (type === 'movie' && itemType === 'movies') || (type === 'tv' && itemType === 'series');
             if (isMatch && !seen.has(slug)) {
                 seen.add(slug);
                 results.push(fullPath);
             }
         }
-        
         return results;
     } catch (e) {
         return [];
     }
-}
-
-/**
- * Extrae IDs de descarga de una página
- */
-function extractDownloadIds(html) {
-    const re = /\/download\/([a-z0-9]+)/g;
-    const ids = [];
-    const seen = {};
-    let m;
-    while ((m = re.exec(html)) !== null) {
-        if (!seen[m[1]]) {
-            seen[m[1]] = true;
-            ids.push(m[1]);
-        }
-    }
-    return ids;
 }
 
 /**
@@ -121,7 +99,6 @@ async function resolveOneId(id) {
     try {
         const data = await fetchJson(`${BASE}/api/download/${id}`, { 'Accept': 'application/json' });
         if (!data || !data.url) return null;
-        
         const serverName = (data.server || '').toLowerCase();
         const isTarget = TARGET_SERVERS.some(s => serverName.includes(s));
         if (!isTarget) return null;
@@ -132,9 +109,6 @@ async function resolveOneId(id) {
         } else if (serverName.includes('pixeldrain')) {
             const pid = data.url.match(/pixeldrain\.com\/u\/([^?&#/]+)/)?.[1];
             if (pid) finalUrl = `https://pixeldrain.com/api/file/${pid}?download`;
-        } else if (serverName.includes('google drive') || serverName.includes('googledrive')) {
-            const gid = data.url.match(/\/d\/([^/?&#]+)/)?.[1] || data.url.match(/[?&]id=([^&]+)/)?.[1];
-            if (gid) finalUrl = `https://drive.usercontent.google.com/download?id=${gid}&export=download&confirm=t`;
         }
 
         if (!finalUrl) return null;
@@ -151,6 +125,39 @@ async function resolveOneId(id) {
 }
 
 /**
+ * Obtiene Reproductores Online (Magi) vía Next-Action
+ */
+async function getOnlineStreams(movieId, pageUrl) {
+    const streams = [];
+    try {
+        const res = await fetch(pageUrl, {
+            method: 'POST',
+            headers: {
+                'User-Agent': UA,
+                'Content-Type': 'text/plain;charset=UTF-8',
+                'Next-Action': PLAYER_ACTION_ID,
+                'Referer': pageUrl
+            },
+            body: JSON.stringify([movieId])
+        });
+        const text = await res.text();
+        const iframeRegex = /https?:\/\/(?:filemoon\.sx|f75s\.com)\/e\/[a-zA-Z0-9?=_&%-]+/g;
+        const magiLinks = [...new Set(text.match(iframeRegex) || [])];
+        
+        for (const url of magiLinks) {
+            streams.push({
+                name: 'PelisGo [Magi]',
+                title: 'Magi (Filemoon) · Online',
+                url: url.replace(/\\/g, ''),
+                quality: 'HD',
+                headers: { 'User-Agent': UA, 'Referer': 'https://f75s.com/' }
+            });
+        }
+    } catch (e) {}
+    return streams;
+}
+
+/**
  * Función principal requerida por Nuvio
  */
 async function getStreams(tmdbId, mediaType, season, episode, title) {
@@ -158,21 +165,14 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         const resolvedType = mediaType === 'tv' || mediaType === 'series' ? 'tv' : 'movie';
         console.log(`[PelisGo] Request: "${title}" (${resolvedType})`);
 
-        // 1. Búsqueda en PelisGo (Prioridad al título enviado por Nuvio)
+        // 1. Identificar Slug
         let paths = await pelisgoSearch(title, resolvedType);
-        
-        // Si falla, intentamos con info de TMDB
         if (paths.length === 0 && tmdbId) {
             const info = await getTmdbInfo(tmdbId, resolvedType);
             if (info.originalTitle && info.originalTitle !== title) {
-                console.log(`[PelisGo] Fallback searching: ${info.originalTitle}`);
                 paths = await pelisgoSearch(info.originalTitle, resolvedType);
             }
-            if (paths.length === 0 && info.title && info.title !== title) {
-                paths = await pelisgoSearch(info.title, resolvedType);
-            }
         }
-        
         if (paths.length === 0) return [];
 
         const slug = paths[0].split('/')[2];
@@ -180,32 +180,49 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
             ? `${BASE}/movies/${slug}`
             : `${BASE}/series/${slug}/temporada/${season || 1}/episodio/${episode || 1}`;
 
-        console.log(`[PelisGo] Resolved Page: ${pageUrl}`);
-
-        // 3. Extraer IDs y resolver Descargas
+        // 2. Carga de Página y Extración Balanceada
         const html = await fetchText(pageUrl);
-        const ids = extractDownloadIds(html);
         
-        const results = await Promise.all(ids.map(id => resolveOneId(id)));
-        const validLinks = results.filter(r => r !== null);
-
-        // 4. Formatear para Nuvio
-        return validLinks.map(link => {
+        // A. Obtener descargas (Pixeldrain, BuzzHeavier)
+        const downloadIds = (/\/[a-z0-9\-]+/gi.exec(html) && (function(h) {
+             const re = /\/download\/([a-z0-9]+)/g;
+             const ids = []; let m;
+             while ((m = re.exec(h)) !== null) ids.push(m[1]);
+             return [...new Set(ids)];
+        })(html)) || [];
+        
+        const downloadResults = await Promise.all(downloadIds.map(id => resolveOneId(id)));
+        const downloadStreams = downloadResults.filter(r => r !== null).map(link => {
             const langLabel = link.language ? `[${link.language.toUpperCase()}] ` : '';
             return {
                 name: 'PelisGo',
                 title: `${langLabel}${link.server} · ${link.quality}`,
                 url: link.url,
                 quality: link.quality,
-                headers: {
-                    'User-Agent': UA,
-                    'Referer': `${BASE}/`
-                }
+                headers: { 'User-Agent': UA, 'Referer': `${BASE}/` }
             };
         });
 
+        // B. Obtener reproductores online (Magi/Filemoon)
+        let onlineStreams = [];
+        const nextMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s);
+        if (nextMatch) {
+            try {
+                const data = JSON.parse(nextMatch[1]);
+                const movie = data.props?.pageProps?.movie || data.props?.pageProps?.movieData || data.props?.pageProps?.serie || data.props?.pageProps?.serieData;
+                if (movie && movie.id) {
+                    onlineStreams = await getOnlineStreams(movie.id, pageUrl);
+                }
+            } catch (e) {}
+        }
+
+        // 3. Unificar y Retornar
+        const allStreams = [...onlineStreams, ...downloadStreams];
+        console.log(`[PelisGo] Done: ${allStreams.length} stream(s) found.`);
+        return allStreams;
+
     } catch (e) {
-        console.error(`[PelisGo] Error: ${e.message}`);
+        console.error(`[PelisGo] Fatal Error: ${e.message}`);
         return [];
     }
 }
