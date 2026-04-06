@@ -15,9 +15,40 @@ const COMMON_HEADERS = {
     "User-Agent": UA,
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
-    "Cache-Control": "no-cache",
-    "Pragma": "no-cache"
+    "Cache-Control": "no-cache"
 };
+
+/**
+ * JS Unpacker (p,a,c,k,e,d)
+ */
+function unpack(p, a, c, k, e, d) {
+    while (c--) if (k[c]) p = p.replace(new RegExp('\\b' + c.toString(a) + '\\b', 'g'), k[c]);
+    return p;
+}
+
+/**
+ * VOE Decoder (8-step logic)
+ */
+function voeDecode(str) {
+    try {
+        // 1. ROT13
+        let r13 = str.replace(/[a-zA-Z]/g, c => String.fromCharCode((c <= 'Z' ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
+        // 2. Pattern Replace
+        let pat = r13.replace(/@\$/g, 'p').replace(/\^\^/g, 'q').replace(/~@/g, 'r').replace(/!!/g, 's').replace(/\*\*/g, 't');
+        // 3. Clear _
+        let clr = pat.replace(/_/g, '');
+        // 4. Base64 Decode
+        let b64_1 = atob(clr);
+        // 5. CharShift -3
+        let shift = "";
+        for (let i = 0; i < b64_1.length; i++) shift += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+        // 6. Reverse
+        let rev = shift.split('').reverse().join('');
+        // 7. Base64 Decode Final
+        let final = atob(rev);
+        return JSON.parse(final);
+    } catch (e) { return null; }
+}
 
 async function fetchText(url, referer = BASE) {
     try {
@@ -109,6 +140,33 @@ async function resolveBuzzheavier(url) {
     } catch (e) { return null; }
 }
 
+async function resolveFilemoon(url) {
+    try {
+        const html = await fetchText(url, BASE);
+        const packed = html.match(/eval\(function\(p,a,c,k,e,d\).*\)/);
+        if (!packed) return null;
+        
+        // Extraer argumentos del pack
+        const argsRe = /\}\('(.*)',\s*(\d+),\s*(\d+),\s*'(.*)'\.split\('\|'\)/;
+        const parts = packed[0].match(argsRe);
+        if (!parts) return null;
+        
+        const unpacked = unpack(parts[1], parseInt(parts[2]), parseInt(parts[3]), parts[4].split('|'), 0, {});
+        const linkMatch = unpacked.match(/file:"(.*?)"/);
+        return linkMatch ? linkMatch[1] : null;
+    } catch (e) { return null; }
+}
+
+async function resolveVoe(url) {
+    try {
+        const html = await fetchText(url, BASE);
+        const sourceMatch = html.match(/const\s+sources\s*=\s*['"](.*?)['"]/);
+        if (!sourceMatch) return null;
+        const data = voeDecode(sourceMatch[1]);
+        return data?.hls || data?.video || null;
+    } catch (e) { return null; }
+}
+
 async function resolveOneId(id) {
     try {
         const data = await fetchJson(`${BASE}/api/download/${id}`);
@@ -156,31 +214,50 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         const html = await fetchText(pageUrl);
         if (!html) return [];
         
-        // 1. ONLINE (Magi, Desu, Netu) - Extracción Directa
-        const onlineStreams = [];
+        // 1. ONLINE (Magi, VOE, Desu, Netu) - Extracción Directa
+        const onlinePromises = [];
         const domainPatterns = [
-            { domain: 'filemoon.sx', name: 'Magi (Filemoon)' },
-            { domain: 'f75s.com', name: 'Magi (Filemoon)' },
+            { domain: 'filemoon.sx', name: 'Magi (Filemoon)', resolver: resolveFilemoon },
+            { domain: 'f75s.com', name: 'Magi (Filemoon)', resolver: resolveFilemoon },
+            { domain: 'voe.sx', name: 'VOE', resolver: resolveVoe },
             { domain: 'desu.pelisgo.online', name: 'Desu' },
-            { domain: 'hqq.ac', name: 'Netu' },
-            { domain: 'embedseek.com', name: 'SeekStreaming' }
+            { domain: 'hqq.ac', name: 'Netu' }
         ];
 
         domainPatterns.forEach(p => {
-            // Buscamos cualquier URL que contenga el dominio en formato normal o escapado
             const regex = new RegExp(`https?:[\\/\\/\\\\]+[^\\s"'<>\\\\]*${p.domain.replace(/\./g, '\\.')}[^\\s"'<>\\\\]+`, 'gi');
             const matches = html.match(regex) || [];
             [...new Set(matches)].forEach(url => {
-                const cleanUrl = url.replace(/\\/g, ''); // Limpiar barras invertidas
-                onlineStreams.push({ 
-                    name: 'PelisGo', 
-                    title: `[Online] \xB7 ${p.name}`, 
-                    url: cleanUrl, 
-                    quality: '1080p', 
-                    headers: { 'User-Agent': UA, 'Referer': BASE } 
-                });
+                const cleanUrl = url.replace(/\\/g, '');
+                if (p.resolver) {
+                    onlinePromises.push((async () => {
+                        const direct = await p.resolver(cleanUrl);
+                        if (direct) {
+                            return { 
+                                name: 'PelisGo', 
+                                title: `[Directo] \xB7 ${p.name}`, 
+                                url: direct, 
+                                quality: '1080p', 
+                                isM3U8: direct.includes('.m3u8'),
+                                headers: { 'User-Agent': UA, 'Referer': cleanUrl } 
+                            };
+                        }
+                        return null;
+                    })());
+                } else {
+                    onlinePromises.push(Promise.resolve({ 
+                        name: 'PelisGo', 
+                        title: `[Web] \xB7 ${p.name}`, 
+                        url: cleanUrl, 
+                        quality: '1080p', 
+                        headers: { 'User-Agent': UA, 'Referer': BASE } 
+                    }));
+                }
             });
         });
+
+        const onlineResults = await Promise.all(onlinePromises);
+        const onlineStreams = onlineResults.filter(r => r !== null);
 
         // 2. DESCARGAS (Pixeldrain, BuzzHeavier)
         const downloadIds = (function(h) {
