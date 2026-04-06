@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-06T17:23:40.095Z
+ * Generated: 2026-04-06T17:24:21.198Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -161,8 +161,11 @@ function decryptByse(playback) {
 function resolve2(url) {
   return __async(this, null, function* () {
     try {
-      const id = url.split("/").pop().split("?")[0];
-      console.log(`[Filemoon] Resolviendo Maestro (v3.0): ${id}`);
+      const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
+      if (!idMatch)
+        return null;
+      const id = idMatch[1];
+      console.log(`[Filemoon] Resolviendo Maestro (v3.0.1): ${id}`);
       try {
         const hostname = new URL(url).hostname;
         const apiUrl = `https://${hostname}/api/videos/${id}`;

@@ -59,8 +59,10 @@ async function decryptByse(playback) {
  */
 export async function resolve(url) {
     try {
-        const id = url.split('/').pop().split('?')[0];
-        console.log(`[Filemoon] Resolviendo Maestro (v3.0): ${id}`);
+        const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
+        if (!idMatch) return null;
+        const id = idMatch[1];
+        console.log(`[Filemoon] Resolviendo Maestro (v3.0.1): ${id}`);
         
         // Estrategia 1: API de Byse (Cifrada)
         try {
