@@ -1,6 +1,7 @@
 /**
- * PelisGo Provider for Nuvio (V1.6.4 - Smart Search Edition)
- * Reingeniería basada en 'videoLinks' de Next.js y Resolución Inteligente de Títulos por TMDB.
+ * PelisGo Provider for Nuvio (V1.6.6 - Buzz & Pixel Edition)
+ * Reingeniería basada en 'videoLinks' y 'downloadLinks' de Next.js.
+ * Resolución Instantánea para Buzzheavier y Pixeldrain.
  */
 
 const BASE = "https://pelisgo.online";
@@ -26,7 +27,7 @@ function cleanTitle(str) {
 }
 
 /**
- * Obtiene el título en español de TMDB (si el de Nuvio falla o es en inglés).
+ * Obtiene el título en español de TMDB.
  */
 async function getSpanishTitle(tmdbId, type) {
     try {
@@ -54,8 +55,20 @@ async function fetchText(url, referer = BASE) {
     } catch (e) { return ""; }
 }
 
+/**
+ * Resuelve IDs de descarga de PelisGo a URLs directas de servidor (Buzz/Pixel).
+ */
+async function resolvePelisGoDownload(id) {
+    try {
+        const res = await fetch(`https://pelisgo.online/api/download/${id}`, {
+            headers: COMMON_HEADERS
+        });
+        const data = await res.json();
+        return data.url || null;
+    } catch (e) { return null; }
+}
+
 async function pelisgoSearch(query, type) {
-    // Normalizar la búsqueda para mayor éxito
     const searchStr = cleanTitle(query);
     const url = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
     const html = await fetchText(url);
@@ -93,61 +106,84 @@ async function resolveFilemoon(url) {
 }
 
 /**
- * Motor Maestro: Extracción de videoLinks Master JSON
+ * Motor Maestro: Escaneo de videoLinks y downloadLinks (Buzz/Pixel)
  */
 async function getOnlineStreams(rawHtml) {
     const streams = [];
+    const seenUrls = new Set();
+
+    // 1. Procesar videoLinks (Streaming Tradicional)
     try {
         const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
-        if (!videoLinksMatch) return [];
+        if (videoLinksMatch) {
+            const rawLinksJson = videoLinksMatch[1];
+            const urlRegex = /url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[\\"' ]+/gi;
+            let m;
+            while ((m = urlRegex.exec(rawLinksJson)) !== null) {
+                let cleanUrl = m[1].replace(/\\/g, '');
+                if (seenUrls.has(cleanUrl)) continue;
+                seenUrls.add(cleanUrl);
 
-        const rawLinksJson = videoLinksMatch[1];
-        const urlRegex = /url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[\\"' ]+/gi;
-        let m;
-        const seenUrls = new Set();
+                let label = "PelisGo";
+                let direct = null;
 
-        while ((m = urlRegex.exec(rawLinksJson)) !== null) {
-            let cleanUrl = m[1].replace(/\\/g, '');
-            if (seenUrls.has(cleanUrl)) continue;
-            seenUrls.add(cleanUrl);
-
-            let label = "PelisGo";
-            let direct = null;
-
-            if (cleanUrl.includes('filemoon') || cleanUrl.includes('f75s.com')) {
-                label = "Magi (Filemoon)";
-                direct = await resolveFilemoon(cleanUrl);
-            } else if (cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
-                label = "SeekStreaming";
-                if (cleanUrl.includes('#')) {
-                    const id = cleanUrl.split('#')[1];
-                    cleanUrl = `https://seekstreaming.com/embed/${id}`;
+                if (cleanUrl.includes('filemoon') || cleanUrl.includes('f75s.com')) {
+                    label = "Magi (Filemoon)";
+                    direct = await resolveFilemoon(cleanUrl);
+                } else if (cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
+                    label = "SeekStreaming";
+                } else if (cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu')) {
+                    label = "Netu";
+                } else if (cleanUrl.includes('desu')) {
+                    label = "Desu";
                 }
-            } else if (cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu')) {
-                label = "Netu";
-            } else if (cleanUrl.includes('desu')) {
-                label = "Desu";
-            }
 
-            if (direct) {
-                streams.push({ name: 'PelisGo', title: `[Directo] \xB7 ${label}`, url: direct, quality: '1080p', isM3U8: true });
-            } else {
-                streams.push({ name: 'PelisGo', title: `[Web] \xB7 ${label}`, url: cleanUrl, quality: '1080p' });
+                if (direct) {
+                    streams.push({ name: 'PelisGo', title: `[Directo] \xB7 ${label}`, url: direct, quality: '1080p', isM3U8: true });
+                } else {
+                    streams.push({ name: 'PelisGo', title: `[Web] \xB7 ${label}`, url: cleanUrl, quality: '1080p' });
+                }
             }
         }
-        return streams;
-    } catch (e) { return []; }
+    } catch (e) {}
+
+    // 2. Procesar downloadLinks (Servidores Premium: Buzzheavier y Pixeldrain)
+    try {
+        const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
+        if (downloadLinksMatch) {
+            const rawDownloadsJson = downloadLinksMatch[1];
+            // Buscamos ID y Nombre del servidor
+            const downloadRegex = /\{[^{}]*?id[\\"' ]+:[\\"' ]+([a-z0-9]+)[\\"' ]+[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?\}/gi;
+            let m;
+            while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
+                const downloadId = m[1];
+                const serverName = m[2];
+
+                if (serverName === 'Buzzheavier' || serverName === 'Pixeldrain') {
+                    const directUrl = await resolvePelisGoDownload(downloadId);
+                    if (directUrl && !seenUrls.has(directUrl)) {
+                        seenUrls.add(directUrl);
+                        streams.push({ 
+                            name: 'PelisGo', 
+                            title: `[F-Direct] \xB7 ${serverName}`, 
+                            url: directUrl, 
+                            quality: '1080p' 
+                        });
+                    }
+                }
+            }
+        }
+    } catch (e) {}
+
+    return streams;
 }
 
 async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         const type = (mediaType === 'tv' || mediaType === 'series') ? 'tv' : 'movie';
-        console.log(`[PelisGo v1.6.4] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
+        console.log(`[PelisGo v1.6.6] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
 
-        // 1. Intentar búsqueda con el título original (Nuvio)
         let paths = await pelisgoSearch(title, type);
-
-        // 2. Si falla, intentar resolver el título oficial por TMDB (Traducción automática)
         if (paths.length === 0 && tmdbId) {
             console.log(`[PelisGo] Reintentando con título oficial de TMDB...`);
             const tmdbType = type === 'tv' ? 'tv' : 'movie';
@@ -169,7 +205,7 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         if (!html) return [];
 
         const onlineStreams = await getOnlineStreams(html);
-        console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found.`);
+        console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (including Buzz/Pixel).`);
         return onlineStreams;
     } catch (e) { return []; }
 }

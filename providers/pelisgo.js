@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T07:14:05.003Z
+ * Generated: 2026-04-06T15:59:38.579Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -85,6 +85,19 @@ function fetchText(_0) {
     }
   });
 }
+function resolvePelisGoDownload(id) {
+  return __async(this, null, function* () {
+    try {
+      const res = yield fetch(`https://pelisgo.online/api/download/${id}`, {
+        headers: COMMON_HEADERS
+      });
+      const data = yield res.json();
+      return data.url || null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
 function pelisgoSearch(query, type) {
   return __async(this, null, function* () {
     const searchStr = cleanTitle(query);
@@ -129,52 +142,72 @@ function resolveFilemoon(url) {
 function getOnlineStreams(rawHtml) {
   return __async(this, null, function* () {
     const streams = [];
+    const seenUrls = /* @__PURE__ */ new Set();
     try {
       const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
-      if (!videoLinksMatch)
-        return [];
-      const rawLinksJson = videoLinksMatch[1];
-      const urlRegex = /url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[\\"' ]+/gi;
-      let m;
-      const seenUrls = /* @__PURE__ */ new Set();
-      while ((m = urlRegex.exec(rawLinksJson)) !== null) {
-        let cleanUrl = m[1].replace(/\\/g, "");
-        if (seenUrls.has(cleanUrl))
-          continue;
-        seenUrls.add(cleanUrl);
-        let label = "PelisGo";
-        let direct = null;
-        if (cleanUrl.includes("filemoon") || cleanUrl.includes("f75s.com")) {
-          label = "Magi (Filemoon)";
-          direct = yield resolveFilemoon(cleanUrl);
-        } else if (cleanUrl.includes("seekstreaming") || cleanUrl.includes("embedseek")) {
-          label = "SeekStreaming";
-          if (cleanUrl.includes("#")) {
-            const id = cleanUrl.split("#")[1];
-            cleanUrl = `https://seekstreaming.com/embed/${id}`;
+      if (videoLinksMatch) {
+        const rawLinksJson = videoLinksMatch[1];
+        const urlRegex = /url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[\\"' ]+/gi;
+        let m;
+        while ((m = urlRegex.exec(rawLinksJson)) !== null) {
+          let cleanUrl = m[1].replace(/\\/g, "");
+          if (seenUrls.has(cleanUrl))
+            continue;
+          seenUrls.add(cleanUrl);
+          let label = "PelisGo";
+          let direct = null;
+          if (cleanUrl.includes("filemoon") || cleanUrl.includes("f75s.com")) {
+            label = "Magi (Filemoon)";
+            direct = yield resolveFilemoon(cleanUrl);
+          } else if (cleanUrl.includes("seekstreaming") || cleanUrl.includes("embedseek")) {
+            label = "SeekStreaming";
+          } else if (cleanUrl.includes("hqq.ac") || cleanUrl.includes("netu")) {
+            label = "Netu";
+          } else if (cleanUrl.includes("desu")) {
+            label = "Desu";
           }
-        } else if (cleanUrl.includes("hqq.ac") || cleanUrl.includes("netu")) {
-          label = "Netu";
-        } else if (cleanUrl.includes("desu")) {
-          label = "Desu";
-        }
-        if (direct) {
-          streams.push({ name: "PelisGo", title: `[Directo] \xB7 ${label}`, url: direct, quality: "1080p", isM3U8: true });
-        } else {
-          streams.push({ name: "PelisGo", title: `[Web] \xB7 ${label}`, url: cleanUrl, quality: "1080p" });
+          if (direct) {
+            streams.push({ name: "PelisGo", title: `[Directo] \xB7 ${label}`, url: direct, quality: "1080p", isM3U8: true });
+          } else {
+            streams.push({ name: "PelisGo", title: `[Web] \xB7 ${label}`, url: cleanUrl, quality: "1080p" });
+          }
         }
       }
-      return streams;
     } catch (e) {
-      return [];
     }
+    try {
+      const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
+      if (downloadLinksMatch) {
+        const rawDownloadsJson = downloadLinksMatch[1];
+        const downloadRegex = /\{[^{}]*?id[\\"' ]+:[\\"' ]+([a-z0-9]+)[\\"' ]+[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?\}/gi;
+        let m;
+        while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
+          const downloadId = m[1];
+          const serverName = m[2];
+          if (serverName === "Buzzheavier" || serverName === "Pixeldrain") {
+            const directUrl = yield resolvePelisGoDownload(downloadId);
+            if (directUrl && !seenUrls.has(directUrl)) {
+              seenUrls.add(directUrl);
+              streams.push({
+                name: "PelisGo",
+                title: `[F-Direct] \xB7 ${serverName}`,
+                url: directUrl,
+                quality: "1080p"
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+    }
+    return streams;
   });
 }
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
       const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      console.log(`[PelisGo v1.6.4] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
+      console.log(`[PelisGo v1.6.6] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
       let paths = yield pelisgoSearch(title, type);
       if (paths.length === 0 && tmdbId) {
         console.log(`[PelisGo] Reintentando con t\xEDtulo oficial de TMDB...`);
@@ -193,7 +226,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       if (!html)
         return [];
       const onlineStreams = yield getOnlineStreams(html);
-      console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found.`);
+      console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (including Buzz/Pixel).`);
       return onlineStreams;
     } catch (e) {
       return [];
