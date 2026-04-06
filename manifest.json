@@ -327,7 +327,7 @@
       "id": "zonaleros",
       "name": "ZonaLeRoS",
       "description": "Películas y series en alta calidad (4K, 1080p, 720p) con enlaces directos.",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
