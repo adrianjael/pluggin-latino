@@ -1,34 +1,29 @@
 const zonaleros = require('./providers/zonaleros.js');
 
-async function debugDirect() {
-    // Usamos una URL directa que el usuario nos dio como ejemplo
-    const directUrl = "https://www.zona-leros.com/peliculas/avatar-fuego-y-cenizas-hd";
-    console.log(`[TEST] Forzando extracción directa de: ${directUrl}`);
-    
+async function debugFullProcess() {
+    const title = "Avatar";
+    console.log(`[DEBUG] Iniciando proceso completo para: "${title}"`);
+
     try {
-        // Obtenemos los streams directamente de la URL
-        const res = await fetch(directUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                "Referer": "https://www.zona-leros.com"
-            }
-        });
-        const html = await res.text();
+        // Paso 1: Intentar getStreams (Búsqueda + Extracción)
+        console.log("\n--- PASO 1: BÚSQUEDA Y EXTRACCIÓN ---");
+        const streams = await zonaleros.getStreams("dummy", "movie", 0, 0, title);
         
-        if (html.includes('cf-browser-verification')) {
-            console.error("❌ Bloqueado por Cloudflare en consola.");
-            console.log("💡 El código está diseñado para Nuvio (donde el usuario resuelve el reto).");
-            return;
+        console.log(`\n[RESULTADO] Servidores encontrados: ${streams.length}`);
+        
+        if (streams.length > 0) {
+            streams.forEach((s, i) => {
+                console.log(`[${i+1}] ${s.title}`);
+                console.log(`    Link Final: ${s.url}`);
+            });
+        } else {
+            console.log("❌ No se encontraron servidores. Esto suele indicar bloqueo de Cloudflare en la búsqueda o en el anomizador.");
+            console.log("💡 Nota: En Nuvio, asegúrate de haber resuelto el captcha de 'Un momento...' antes de abrir la película.");
         }
 
-        // Si no está bloqueado, probamos el extractor
-        const streams = await zonaleros.getStreams("dummy", "movie", 0, 0, "Avatar: Fuego y cenizas");
-        console.log(`✅ Resultados Finales: ${streams.length} servidores.`);
-        streams.forEach(s => console.log(`   - ${s.title}: ${s.url}`));
-
     } catch (e) {
-        console.error("❌ Error en el test:", e.message);
+        console.error("❌ ERROR CRÍTICO EN EL TEST:", e.message);
     }
 }
 
-debugDirect();
+debugFullProcess();
