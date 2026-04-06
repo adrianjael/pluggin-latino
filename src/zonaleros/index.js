@@ -1,7 +1,7 @@
 /**
  * ZonaLeRoS Provider for Nuvio
  * Reingeniería basada en scraping de search.php y modales de calidad.
- */
+ **/
 
 import { extractSearchResults, extractMetadata } from './extractor.js';
 
@@ -24,15 +24,15 @@ const HEADERS = {
 async function resolveAnomizador(url) {
     if (!url.includes('anomizador.zona-leros.com')) return url;
     try {
-        const res = await fetch(url, { 
-            method: 'GET', 
+        const res = await fetch(url, {
+            method: 'GET',
             redirect: 'follow',
             headers: { "User-Agent": UA, "Referer": BASE }
         });
         return res.url;
-    } catch (e) { 
+    } catch (e) {
         console.error("Anomizador Error:", e);
-        return url; 
+        return url;
     }
 }
 
@@ -41,12 +41,12 @@ export async function search(query) {
         const searchUrl = `${BASE}/search?q=${encodeURIComponent(query)}`;
         const res = await fetch(searchUrl, { headers: HEADERS });
         const html = await res.text();
-        
+
         if (html.includes('cf-browser-verification')) {
             console.error("ZonaLeros: Bloqueado por Cloudflare");
             return [];
         }
-        
+
         return extractSearchResults(html);
     } catch (e) {
         console.error("Zonaleros Search Error:", e);
@@ -59,14 +59,14 @@ export async function getStreams(itemUrl) {
         const res = await fetch(itemUrl, { headers: HEADERS });
         const html = await res.text();
         const metadata = extractMetadata(html);
-        
+
         const streams = [];
         for (let serverUrl of metadata.servers) {
             // Limpieza de URL si viene con comillas o escapes
             serverUrl = serverUrl.replace(/\\/g, "").replace(/['"]/g, "");
-            
+
             const realUrl = await resolveAnomizador(serverUrl);
-            
+
             // Detectar nombre del servidor basado en la URL real
             let label = "Desconocido";
             const lowUrl = realUrl.toLowerCase();
@@ -76,7 +76,7 @@ export async function getStreams(itemUrl) {
             else if (lowUrl.includes('mega')) label = "MEGA (Descarga)";
             else if (lowUrl.includes('1fichier')) label = "1Fichier (Descarga)";
             else if (lowUrl.includes('mediafire')) label = "Mediafire (Descarga)";
-            
+
             if (realUrl) {
                 streams.push({
                     name: "ZonaLeRoS",
@@ -87,7 +87,7 @@ export async function getStreams(itemUrl) {
                 });
             }
         }
-        
+
         return streams;
     } catch (e) {
         console.error("Zonaleros Streams Error:", e);
