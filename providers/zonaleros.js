@@ -1,6 +1,6 @@
 /**
  * zonaleros - Built from src/zonaleros/
- * Generated: 2026-04-06T23:06:24.214Z
+ * Generated: 2026-04-06T23:07:34.309Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
