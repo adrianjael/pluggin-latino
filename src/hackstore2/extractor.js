@@ -1,5 +1,6 @@
 import { fetchHtml } from './http.js';
 import { normalizeTitle, calculateSimilarity } from '../utils/string.js';
+import { resolve as resolveVimeos } from '../resolvers/vimeos.js';
 
 /**
  * Desempaqueta código ofuscado con P.A.C.K.E.R (usado por reproductores)
@@ -139,13 +140,10 @@ async function resolveVoesx(embedUrl) {
     }
 }
 
-async function resolveVimeos(embedUrl) {
+async function resolveVimeosLocal(embedUrl) {
     try {
-        console.log(`[HackStore2] Resolving Vimeos: ${embedUrl}`);
-        const body = await fetchHtml(embedUrl, "https://hackstore2.com/");
-        return extractM3u8FromHtml(body);
+        return await resolveVimeos(embedUrl);
     } catch (e) {
-        console.error(`[HackStore2] Error resolving vimeos: ${e.message}`);
         return null;
     }
 }
@@ -225,19 +223,27 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         }
 
         // 3. Match closest movie/series title/year
-        let matchedPost = searchData.data.posts.find(p => calculateSimilarity(searchTitle, p.title) > 0.9);
+        const checkSequel = (query, target) => {
+            const getNum = (s) => (s.match(/\b(\d+|I|II|III|IV|V)\b$/i) || [null, ""])[1];
+            const qNum = getNum(query);
+            const tNum = getNum(target);
+            return qNum === tNum;
+        };
 
-        if (!matchedPost) {
-            // Intento 2: Similitud aceptable (Fuzzy)
-            matchedPost = searchData.data.posts.find(p => isGoodMatch(searchTitle, p.title));
-        }
+        let matchedPost = searchData.data.posts.find(p => 
+            calculateSimilarity(searchTitle, p.title) > 0.85 && checkSequel(searchTitle, p.title)
+        );
 
         if (!matchedPost && searchYear) {
-            matchedPost = searchData.data.posts.find(p => p.years && p.years.toString().includes(searchYear));
+            matchedPost = searchData.data.posts.find(p => 
+                isGoodMatch(searchTitle, p.title) && 
+                p.years && p.years.toString().includes(searchYear)
+            );
         }
 
         if (!matchedPost) {
-            matchedPost = searchData.data.posts[0];
+            console.log(`[HackStore2] No strict match found for "${searchTitle}" (${searchYear || 'Any Year'}). Skipping...`);
+            return [];
         }
 
         console.log(`[HackStore2] Match found: ${matchedPost.title} (ID: ${matchedPost._id})`);
@@ -303,7 +309,14 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
-            else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
+            else if (serverName === 'vimeos') {
+                const r = await resolveVimeos(finalUrl);
+                if (r) {
+                    finalUrl = r.url;
+                    direct = true;
+                    vimeosRes = r;
+                }
+            }
             else if (serverName === 'filemoon') finalUrl = await resolveFilemoon(finalUrl);
             
             if (!finalUrl || !finalUrl.startsWith('http')) {
@@ -313,14 +326,17 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             const isVimeos = serverName.includes('vimeos');
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
 
+            const titlePrefix = direct ? "[Directo]" : "[Web]";
+
             return {
                 server: serverName,
-                title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
+                title: `${titlePrefix} \xB7 ${serverName} (${player.lang || "Latino"})`,
                 url: finalUrl,
-                headers: {
+                quality: (vimeosRes && vimeosRes.quality) || player.quality || "HD",
+                isM3U8: direct,
+                headers: (vimeosRes && vimeosRes.headers) || {
                     "User-Agent": mobileUA,
-                    "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-                    "Origin": isVimeos ? "https://vimeos.net" : undefined
+                    "Referer": rawUrl
                 }
             };
         });

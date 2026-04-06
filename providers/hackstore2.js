@@ -1,9 +1,13 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-06T18:11:35.402Z
+ * Generated: 2026-04-06T18:16:03.215Z
  */
+var __create = Object.create;
 var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -18,8 +22,24 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -34,7 +54,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve2(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -100,6 +120,94 @@ function calculateSimilarity(title1, title2) {
   return intersection.size / union.size;
 }
 
+// src/resolvers/vimeos.js
+var import_axios2 = __toESM(require("axios"));
+
+// src/resolvers/quality.js
+var import_axios = __toESM(require("axios"));
+
+// src/resolvers/vimeos.js
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+function resolve(embedUrl) {
+  return __async(this, null, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    try {
+      console.log(`[Vimeos] Resolviendo Universal (v2.0): ${embedUrl}`);
+      const resp = yield import_axios2.default.get(embedUrl, {
+        headers: {
+          "User-Agent": UA,
+          "Referer": "https://vimeos.net/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        },
+        timeout: 1e4
+      });
+      const html = resp.data;
+      const vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i) || embedUrl.match(/\/(\d{7,10})/);
+      if (vimeoIdMatch) {
+        const vimeoId = vimeoIdMatch[1];
+        console.log(`[Vimeos] ID Vimeo detectado: ${vimeoId}. Consultado API Config...`);
+        try {
+          const configRes = yield import_axios2.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
+            headers: { "User-Agent": UA, "Referer": embedUrl }
+          });
+          const config = configRes.data;
+          const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
+          if (hlsUrl) {
+            console.log(`[Vimeos] \u2713 HLS Directo encontrado.`);
+            return {
+              url: hlsUrl,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+          const progressive = (_g = (_f = config.request) == null ? void 0 : _f.files) == null ? void 0 : _g.progressive;
+          if (progressive && progressive.length > 0) {
+            const best = progressive.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0))[0];
+            console.log(`[Vimeos] \u2713 MP4 Directo encontrado (${best.quality}).`);
+            return {
+              url: best.url,
+              quality: best.quality ? `${best.quality}p` : "1080p",
+              headers: { "User-Agent": UA, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+        } catch (apiErr) {
+          console.log(`[Vimeos] API Config Fall\xF3: ${apiErr.message}`);
+        }
+      }
+      const packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        console.log(`[Vimeos] Usando Fallback Unpacker...`);
+        const payload = packMatch[1];
+        const radix = parseInt(packMatch[2]);
+        const symtab = packMatch[4].split("|");
+        const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const unbase = (str) => {
+          let result = 0;
+          for (let i = 0; i < str.length; i++)
+            result = result * radix + chars.indexOf(str[i]);
+          return result;
+        };
+        const unpacked = payload.replace(/\b(\w+)\b/g, (match) => {
+          const idx = unbase(match);
+          return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+        });
+        const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
+        if (m3u8Match) {
+          const url = m3u8Match[1];
+          const finalHeaders = { "User-Agent": UA, "Referer": "https://vimeos.net/" };
+          return { url, quality: "1080p", isM3U8: true, headers: finalHeaders };
+        }
+      }
+      console.log("[Vimeos] No se encontr\xF3 video directo.");
+      return null;
+    } catch (err) {
+      console.log(`[Vimeos] Error cr\xEDtico: ${err.message}`);
+      return null;
+    }
+  });
+}
+
 // src/hackstore2/extractor.js
 function unpackEval(payload, radix, symtab) {
   return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
@@ -115,21 +223,6 @@ function unpackEval(payload, radix, symtab) {
       return match;
     return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
   });
-}
-function extractM3u8FromHtml(html) {
-  let unpacked = "";
-  const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
-  if (packMatch) {
-    try {
-      unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-    } catch (e) {
-    }
-  } else {
-    unpacked = html;
-  }
-  unpacked = unpacked.replace(/k:\/\//g, "https://");
-  const m = unpacked.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
-  return m ? m[0].replace(/\\/g, "") : null;
 }
 function resolveStreamwish(embedUrl) {
   return __async(this, null, function* () {
@@ -229,18 +322,6 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
-function resolveVimeos(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      console.log(`[HackStore2] Resolving Vimeos: ${embedUrl}`);
-      const body = yield fetchHtml(embedUrl, "https://hackstore2.com/");
-      return extractM3u8FromHtml(body);
-    } catch (e) {
-      console.error(`[HackStore2] Error resolving vimeos: ${e.message}`);
-      return null;
-    }
-  });
-}
 function resolveFilemoon(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -307,15 +388,23 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         console.log("[HackStore2] Not found in search results.");
         return [];
       }
-      let matchedPost = searchData.data.posts.find((p) => calculateSimilarity(searchTitle, p.title) > 0.9);
-      if (!matchedPost) {
-        matchedPost = searchData.data.posts.find((p) => isGoodMatch(searchTitle, p.title));
-      }
+      const checkSequel = (query, target) => {
+        const getNum = (s) => (s.match(/\b(\d+|I|II|III|IV|V)\b$/i) || [null, ""])[1];
+        const qNum = getNum(query);
+        const tNum = getNum(target);
+        return qNum === tNum;
+      };
+      let matchedPost = searchData.data.posts.find(
+        (p) => calculateSimilarity(searchTitle, p.title) > 0.85 && checkSequel(searchTitle, p.title)
+      );
       if (!matchedPost && searchYear) {
-        matchedPost = searchData.data.posts.find((p) => p.years && p.years.toString().includes(searchYear));
+        matchedPost = searchData.data.posts.find(
+          (p) => isGoodMatch(searchTitle, p.title) && p.years && p.years.toString().includes(searchYear)
+        );
       }
       if (!matchedPost) {
-        matchedPost = searchData.data.posts[0];
+        console.log(`[HackStore2] No strict match found for "${searchTitle}" (${searchYear || "Any Year"}). Skipping...`);
+        return [];
       }
       console.log(`[HackStore2] Match found: ${matchedPost.title} (ID: ${matchedPost._id})`);
       let finalPostId = matchedPost._id;
@@ -371,23 +460,30 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
-        else if (serverName === "vimeos")
-          finalUrl = yield resolveVimeos(finalUrl);
-        else if (serverName === "filemoon")
+        else if (serverName === "vimeos") {
+          const r = yield resolve(finalUrl);
+          if (r) {
+            finalUrl = r.url;
+            direct = true;
+            vimeosRes = r;
+          }
+        } else if (serverName === "filemoon")
           finalUrl = yield resolveFilemoon(finalUrl);
         if (!finalUrl || !finalUrl.startsWith("http")) {
           return null;
         }
         const isVimeos = serverName.includes("vimeos");
         const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+        const titlePrefix = direct ? "[Directo]" : "[Web]";
         return {
           server: serverName,
-          title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
+          title: `${titlePrefix} \xB7 ${serverName} (${player.lang || "Latino"})`,
           url: finalUrl,
-          headers: {
+          quality: vimeosRes && vimeosRes.quality || player.quality || "HD",
+          isM3U8: direct,
+          headers: vimeosRes && vimeosRes.headers || {
             "User-Agent": mobileUA,
-            "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-            "Origin": isVimeos ? "https://vimeos.net" : void 0
+            "Referer": rawUrl
           }
         };
       }));
