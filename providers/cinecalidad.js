@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-06T17:58:54.071Z
+ * Generated: 2026-04-06T18:11:35.328Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -425,25 +425,57 @@ function resolve4(url) {
 
 // src/resolvers/vimeos.js
 var import_axios4 = __toESM(require("axios"));
-var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function resolve5(embedUrl) {
   return __async(this, null, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
     try {
-      console.log(`[Vimeos] Resolviendo: ${embedUrl}`);
+      console.log(`[Vimeos] Resolviendo Universal (v2.0): ${embedUrl}`);
       const resp = yield import_axios4.default.get(embedUrl, {
         headers: {
           "User-Agent": UA6,
           "Referer": "https://vimeos.net/",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         },
-        timeout: 15e3,
-        maxRedirects: 5
+        timeout: 1e4
       });
-      const data = resp.data;
-      const packMatch = data.match(
-        /eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/
-      );
+      const html = resp.data;
+      const vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i) || embedUrl.match(/\/(\d{7,10})/);
+      if (vimeoIdMatch) {
+        const vimeoId = vimeoIdMatch[1];
+        console.log(`[Vimeos] ID Vimeo detectado: ${vimeoId}. Consultado API Config...`);
+        try {
+          const configRes = yield import_axios4.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
+            headers: { "User-Agent": UA6, "Referer": embedUrl }
+          });
+          const config = configRes.data;
+          const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
+          if (hlsUrl) {
+            console.log(`[Vimeos] \u2713 HLS Directo encontrado.`);
+            return {
+              url: hlsUrl,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA6, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+          const progressive = (_g = (_f = config.request) == null ? void 0 : _f.files) == null ? void 0 : _g.progressive;
+          if (progressive && progressive.length > 0) {
+            const best = progressive.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0))[0];
+            console.log(`[Vimeos] \u2713 MP4 Directo encontrado (${best.quality}).`);
+            return {
+              url: best.url,
+              quality: best.quality ? `${best.quality}p` : "1080p",
+              headers: { "User-Agent": UA6, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+        } catch (apiErr) {
+          console.log(`[Vimeos] API Config Fall\xF3: ${apiErr.message}`);
+        }
+      }
+      const packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
       if (packMatch) {
+        console.log(`[Vimeos] Usando Fallback Unpacker...`);
         const payload = packMatch[1];
         const radix = parseInt(packMatch[2]);
         const symtab = packMatch[4].split("|");
@@ -461,16 +493,14 @@ function resolve5(embedUrl) {
         const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
         if (m3u8Match) {
           const url = m3u8Match[1];
-          const refererHeaders = { "User-Agent": UA6, "Referer": "https://vimeos.net/" };
-          const quality = yield detectQuality(url, refererHeaders);
-          console.log(`[Vimeos] URL encontrada: ${url.substring(0, 80)}...`);
-          return { url, quality, headers: refererHeaders };
+          const finalHeaders = { "User-Agent": UA6, "Referer": "https://vimeos.net/" };
+          return { url, quality: "1080p", isM3U8: true, headers: finalHeaders };
         }
       }
-      console.log("[Vimeos] No se encontr\xF3 URL");
+      console.log("[Vimeos] No se encontr\xF3 video directo.");
       return null;
     } catch (err) {
-      console.log(`[Vimeos] Error: ${err.message}`);
+      console.log(`[Vimeos] Error cr\xEDtico: ${err.message}`);
       return null;
     }
   });

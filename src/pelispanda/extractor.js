@@ -1,6 +1,7 @@
 import cheerio from 'cheerio-without-node-native';
 import { fetchHtml } from '../pelisplus/http.js';
 import { normalizeTitle, calculateSimilarity } from '../utils/string.js';
+import { resolve as resolveVimeos } from '../resolvers/vimeos.js';
 
 /**
  * Desempaqueta código ofuscado con P.A.C.K.E.R (usado por reproductores)
@@ -127,10 +128,10 @@ async function resolveVoesx(embedUrl) {
     }
 }
 
-async function resolveVimeos(embedUrl) {
+async function resolveVimeosLocal(embedUrl) {
     try {
-        const body = await fetchHtml(embedUrl, "https://pelispanda.org/");
-        return extractM3u8FromHtml(body);
+        const result = await resolveVimeos(embedUrl);
+        return result;
     } catch (e) {
         return null;
     }
@@ -274,7 +275,15 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             if (serverName === 'streamwish') finalUrl = await resolveStreamwish(finalUrl);
             else if (serverName === 'vidhide') finalUrl = await resolveVidhide(finalUrl);
             else if (serverName === 'voe') finalUrl = await resolveVoesx(finalUrl);
-            else if (serverName === 'vimeos') finalUrl = await resolveVimeos(finalUrl);
+            else if (serverName === 'vimeos') {
+                const r = await resolveVimeos(finalUrl);
+                if (r) {
+                    finalUrl = r.url;
+                    direct = true;
+                    vimeosHeaders = r.headers;
+                    vimeosQuality = r.quality;
+                }
+            }
             else if (serverName === 'goodstream') finalUrl = await resolveGoodstream(finalUrl);
             
             if (!finalUrl || !finalUrl.startsWith('http')) {
@@ -284,16 +293,18 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             const isVimeos = serverName.includes('vimeos');
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
 
+            const titlePrefix = direct ? "[Directo]" : "[Web]";
+
             return {
                 name: "PelisPanda",
                 server: serverName,
-                title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
+                title: `${titlePrefix} \xB7 ${serverName} (${player.lang || "Latino"})`,
                 url: finalUrl,
-                quality: player.quality || "HD",
-                headers: {
+                quality: vimeosQuality || player.quality || "HD",
+                isM3U8: direct,
+                headers: vimeosHeaders || {
                     "User-Agent": mobileUA,
-                    "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-                    "Origin": isVimeos ? "https://vimeos.net" : undefined
+                    "Referer": rawUrl
                 }
             };
         });

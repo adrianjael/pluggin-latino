@@ -1,5 +1,6 @@
 import { resolve as resolveVoe } from '../resolvers/voe.js';
 import { resolve as resolveFilemoon } from '../resolvers/filemoon.js';
+import { resolve as resolveVimeos } from '../resolvers/vimeos.js';
 
 const BASE_URL = 'https://cuevana.gs';
 const BASE_HEADERS = {
@@ -24,7 +25,11 @@ async function resolveEmbed(embedUrl, server) {
         }
         if (server.includes('filemoon') || server.includes('f75s')) {
             const r = await resolveFilemoon(embedUrl);
-            return r ? r.url : null;
+            return r ? r : null;
+        }
+        if (server === 'vimeos') {
+            const r = await resolveVimeos(embedUrl);
+            return r ? r : null;
         }
         
         // Fallback para otros servidores que puedan tener m3u8 directo en el HTML
@@ -139,18 +144,25 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 if (!iframeMatch) return null;
                 const embedUrl = iframeMatch[1];
 
-                const finalUrl = await resolveEmbed(embedUrl, server);
+                const result = await resolveEmbed(embedUrl, server);
+                if (!result) return null;
+
+                const finalUrl = typeof result === 'string' ? result : result.url;
+                const direct = typeof result === 'object' && !!result.url;
+
                 if (!finalUrl || !finalUrl.startsWith('http')) return null;
 
                 const isVimeos = server.includes('vimeos');
+                const titlePrefix = direct ? "[Directo]" : "[Web]";
                 const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
 
                 return {
                     name: "Cuevana.gs",
-                    title: `${server} (${lang}) ${quality}`,
+                    title: `${titlePrefix} \xB7 ${server} (${lang})`,
                     url: finalUrl,
-                    quality: quality,
-                    headers: {
+                    quality: (typeof result === 'object' && result.quality) || quality,
+                    isM3U8: (typeof result === 'object' && result.isM3U8) || false,
+                    headers: (typeof result === 'object' && result.headers) || {
                         "User-Agent": mobileUA,
                         "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
                         "Origin": isVimeos ? "https://vimeos.net" : undefined

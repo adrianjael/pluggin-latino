@@ -6,6 +6,7 @@
 
 import { resolve as resolveFilemoon } from '../resolvers/filemoon.js';
 import { resolve as resolveVoe } from '../resolvers/voe.js';
+import { resolve as resolveVimeos } from '../resolvers/vimeos.js';
 
 const BASE = "https://pelisgo.online";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -116,6 +117,13 @@ async function getOnlineStreams(rawHtml) {
                     label = "VOE";
                     const r = await resolveVoe(cleanUrl);
                     if (r) direct = r.url;
+                } else if (cleanUrl.includes('vimeos.net')) {
+                    label = "Vimeos";
+                    const r = await resolveVimeos(cleanUrl);
+                    if (r) {
+                        direct = r.url;
+                        vimeosHeaders = r.headers;
+                    }
                 } else if (cleanUrl.includes('desu') || cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu')) {
                     continue; // Omitir Desu y Netu (Inestables)
                 } else if (cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
@@ -123,7 +131,15 @@ async function getOnlineStreams(rawHtml) {
                 }
 
                 if (direct) {
-                    streams.push({ name: 'PelisGo', title: `[Directo] \xB7 ${label}`, url: direct, quality: '1080p', isM3U8: true });
+                    const headers = (label === "Vimeos" && typeof vimeosHeaders !== 'undefined') ? vimeosHeaders : { 'User-Agent': UA, 'Referer': BASE };
+                    streams.push({ 
+                        name: 'PelisGo', 
+                        title: `[Directo] \xB7 ${label}`, 
+                        url: direct, 
+                        quality: '1080p', 
+                        isM3U8: true,
+                        headers
+                    });
                 } else {
                     const headers = (label === "Netu") 
                         ? { 'Referer': 'https://pelisgo.online/', 'Origin': 'https://pelisgo.online' }

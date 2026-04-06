@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-06T17:58:54.181Z
+ * Generated: 2026-04-06T18:11:35.433Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -39,7 +39,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -54,7 +54,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve2(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -118,6 +118,94 @@ function calculateSimilarity(title1, title2) {
   const intersection = new Set([...words1].filter((w) => words2.has(w)));
   const union = /* @__PURE__ */ new Set([...words1, ...words2]);
   return intersection.size / union.size;
+}
+
+// src/resolvers/vimeos.js
+var import_axios2 = __toESM(require("axios"));
+
+// src/resolvers/quality.js
+var import_axios = __toESM(require("axios"));
+
+// src/resolvers/vimeos.js
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+function resolve(embedUrl) {
+  return __async(this, null, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    try {
+      console.log(`[Vimeos] Resolviendo Universal (v2.0): ${embedUrl}`);
+      const resp = yield import_axios2.default.get(embedUrl, {
+        headers: {
+          "User-Agent": UA,
+          "Referer": "https://vimeos.net/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        },
+        timeout: 1e4
+      });
+      const html = resp.data;
+      const vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i) || embedUrl.match(/\/(\d{7,10})/);
+      if (vimeoIdMatch) {
+        const vimeoId = vimeoIdMatch[1];
+        console.log(`[Vimeos] ID Vimeo detectado: ${vimeoId}. Consultado API Config...`);
+        try {
+          const configRes = yield import_axios2.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
+            headers: { "User-Agent": UA, "Referer": embedUrl }
+          });
+          const config = configRes.data;
+          const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
+          if (hlsUrl) {
+            console.log(`[Vimeos] \u2713 HLS Directo encontrado.`);
+            return {
+              url: hlsUrl,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+          const progressive = (_g = (_f = config.request) == null ? void 0 : _f.files) == null ? void 0 : _g.progressive;
+          if (progressive && progressive.length > 0) {
+            const best = progressive.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0))[0];
+            console.log(`[Vimeos] \u2713 MP4 Directo encontrado (${best.quality}).`);
+            return {
+              url: best.url,
+              quality: best.quality ? `${best.quality}p` : "1080p",
+              headers: { "User-Agent": UA, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+        } catch (apiErr) {
+          console.log(`[Vimeos] API Config Fall\xF3: ${apiErr.message}`);
+        }
+      }
+      const packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        console.log(`[Vimeos] Usando Fallback Unpacker...`);
+        const payload = packMatch[1];
+        const radix = parseInt(packMatch[2]);
+        const symtab = packMatch[4].split("|");
+        const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const unbase = (str) => {
+          let result = 0;
+          for (let i = 0; i < str.length; i++)
+            result = result * radix + chars.indexOf(str[i]);
+          return result;
+        };
+        const unpacked = payload.replace(/\b(\w+)\b/g, (match) => {
+          const idx = unbase(match);
+          return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+        });
+        const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
+        if (m3u8Match) {
+          const url = m3u8Match[1];
+          const finalHeaders = { "User-Agent": UA, "Referer": "https://vimeos.net/" };
+          return { url, quality: "1080p", isM3U8: true, headers: finalHeaders };
+        }
+      }
+      console.log("[Vimeos] No se encontr\xF3 video directo.");
+      return null;
+    } catch (err) {
+      console.log(`[Vimeos] Error cr\xEDtico: ${err.message}`);
+      return null;
+    }
+  });
 }
 
 // src/pelispanda/extractor.js
@@ -249,16 +337,6 @@ function resolveVoesx(embedUrl) {
     }
   });
 }
-function resolveVimeos(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      const body = yield fetchHtml(embedUrl, "https://pelispanda.org/");
-      return extractM3u8FromHtml(body);
-    } catch (e) {
-      return null;
-    }
-  });
-}
 function resolveGoodstream(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -376,25 +454,32 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           finalUrl = yield resolveVidhide(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
-        else if (serverName === "vimeos")
-          finalUrl = yield resolveVimeos(finalUrl);
-        else if (serverName === "goodstream")
+        else if (serverName === "vimeos") {
+          const r = yield resolve(finalUrl);
+          if (r) {
+            finalUrl = r.url;
+            direct = true;
+            vimeosHeaders = r.headers;
+            vimeosQuality = r.quality;
+          }
+        } else if (serverName === "goodstream")
           finalUrl = yield resolveGoodstream(finalUrl);
         if (!finalUrl || !finalUrl.startsWith("http")) {
           return null;
         }
         const isVimeos = serverName.includes("vimeos");
         const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+        const titlePrefix = direct ? "[Directo]" : "[Web]";
         return {
           name: "PelisPanda",
           server: serverName,
-          title: `${serverName} (${player.lang || "Latino"}) ${player.quality || "HD"}`,
+          title: `${titlePrefix} \xB7 ${serverName} (${player.lang || "Latino"})`,
           url: finalUrl,
-          quality: player.quality || "HD",
-          headers: {
+          quality: vimeosQuality || player.quality || "HD",
+          isM3U8: direct,
+          headers: vimeosHeaders || {
             "User-Agent": mobileUA,
-            "Referer": isVimeos ? "https://vimeos.net/" : rawUrl,
-            "Origin": isVimeos ? "https://vimeos.net" : void 0
+            "Referer": rawUrl
           }
         };
       }));
