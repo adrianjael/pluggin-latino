@@ -1,6 +1,6 @@
 /**
  * zonaleros - Built from src/zonaleros/
- * Generated: 2026-04-06T22:56:52.128Z
+ * Generated: 2026-04-06T23:01:31.585Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -97,12 +97,7 @@ var BASE = "https://www.zona-leros.com";
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var HEADERS = {
   "User-Agent": UA,
-  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-  "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
-  "Cache-Control": "no-cache",
-  "Pragma": "no-cache",
-  "Referer": BASE,
-  "Upgrade-Insecure-Requests": "1"
+  "Referer": BASE
 };
 function resolveAnomizador(url) {
   return __async(this, null, function* () {
