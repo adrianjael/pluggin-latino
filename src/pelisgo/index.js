@@ -220,7 +220,6 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
             { domain: 'filemoon.sx', name: 'Magi (Filemoon)', resolver: resolveFilemoon },
             { domain: 'f75s.com', name: 'Magi (Filemoon)', resolver: resolveFilemoon },
             { domain: 'voe.sx', name: 'VOE', resolver: resolveVoe },
-            { domain: 'desu.pelisgo.online', name: 'Desu' },
             { domain: 'hqq.ac', name: 'Netu' }
         ];
 
