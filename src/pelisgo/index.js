@@ -127,7 +127,17 @@ async function getOnlineStreams(rawHtml) {
                 if (direct) {
                     streams.push({ name: 'PelisGo', title: `[Directo] \xB7 ${label}`, url: direct, quality: '1080p', isM3U8: true });
                 } else {
-                    streams.push({ name: 'PelisGo', title: `[Web] \xB7 ${label}`, url: cleanUrl, quality: '1080p' });
+                    const headers = (label === "Netu") 
+                        ? { 'Referer': 'https://pelisgo.online/', 'Origin': 'https://pelisgo.online' }
+                        : { 'User-Agent': UA, 'Referer': BASE };
+                        
+                    streams.push({ 
+                        name: 'PelisGo', 
+                        title: `[Web] \xB7 ${label}`, 
+                        url: cleanUrl, 
+                        quality: '1080p',
+                        headers
+                    });
                 }
             }
         }
