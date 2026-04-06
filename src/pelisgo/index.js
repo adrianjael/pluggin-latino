@@ -1,10 +1,11 @@
-﻿/**
- * PelisGo Provider for Nuvio (V1.6.3 - Master JSON Edition)
- * Reingeniería basada en la extracción de 'videoLinks' desde el payload __next_f de Next.js.
+/**
+ * PelisGo Provider for Nuvio (V1.6.4 - Smart Search Edition)
+ * Reingeniería basada en 'videoLinks' de Next.js y Resolución Inteligente de Títulos por TMDB.
  */
 
 const BASE = "https://pelisgo.online";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const TMDB_KEY = "2dca580c2a14b55200e784d157207b4d"; // TMDB API Key para traducciones
 
 const COMMON_HEADERS = {
     "User-Agent": UA,
@@ -12,6 +13,29 @@ const COMMON_HEADERS = {
     "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
     "Cache-Control": "no-cache"
 };
+
+/**
+ * Normaliza títulos: elimina tildes y caracteres disruptivos.
+ */
+function cleanTitle(str) {
+    if (!str) return "";
+    return str.normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") // Quitar tildes
+              .replace(/[^\w\s\-]/gi, '')      // Solo alfanuméricos
+              .toLowerCase().trim();
+}
+
+/**
+ * Obtiene el título en español de TMDB (si el de Nuvio falla o es en inglés).
+ */
+async function getSpanishTitle(tmdbId, type) {
+    try {
+        const url = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_KEY}&language=es-MX`;
+        const res = await fetch(url);
+        const data = await res.json();
+        return data.title || data.name || null;
+    } catch (e) { return null; }
+}
 
 /**
  * JS Unpacker (p,a,c,k,e,d)
@@ -30,11 +54,13 @@ async function fetchText(url, referer = BASE) {
     } catch (e) { return ""; }
 }
 
-
 async function pelisgoSearch(query, type) {
-    const url = `${BASE}/search?q=${encodeURIComponent(query)}`;
+    // Normalizar la búsqueda para mayor éxito
+    const searchStr = cleanTitle(query);
+    const url = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
     const html = await fetchText(url);
     if (!html) return [];
+    
     const re = /href="(\/(movies|series)\/([a-z0-9\-]+))"/gi;
     const results = [];
     const seen = new Set();
@@ -72,7 +98,6 @@ async function resolveFilemoon(url) {
 async function getOnlineStreams(rawHtml) {
     const streams = [];
     try {
-        // Encontrar el bloque de videoLinks (manejando escapes de Next.js)
         const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
         if (!videoLinksMatch) return [];
 
@@ -94,7 +119,6 @@ async function getOnlineStreams(rawHtml) {
                 direct = await resolveFilemoon(cleanUrl);
             } else if (cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
                 label = "SeekStreaming";
-                // Corregir URL si es del tipo prueba.embedseek.com/#ID
                 if (cleanUrl.includes('#')) {
                     const id = cleanUrl.split('#')[1];
                     cleanUrl = `https://seekstreaming.com/embed/${id}`;
@@ -118,9 +142,22 @@ async function getOnlineStreams(rawHtml) {
 async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         const type = (mediaType === 'tv' || mediaType === 'series') ? 'tv' : 'movie';
-        console.log(`[PelisGo v1.6.3] Master Scann: "${title}" (${type})`);
+        console.log(`[PelisGo v1.6.4] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
 
+        // 1. Intentar búsqueda con el título original (Nuvio)
         let paths = await pelisgoSearch(title, type);
+
+        // 2. Si falla, intentar resolver el título oficial por TMDB (Traducción automática)
+        if (paths.length === 0 && tmdbId) {
+            console.log(`[PelisGo] Reintentando con título oficial de TMDB...`);
+            const tmdbType = type === 'tv' ? 'tv' : 'movie';
+            const officialTitle = await getSpanishTitle(tmdbId, tmdbType);
+            if (officialTitle && officialTitle !== title) {
+                console.log(`[PelisGo] Nombre detectado: "${officialTitle}"`);
+                paths = await pelisgoSearch(officialTitle, type);
+            }
+        }
+
         if (paths.length === 0) return [];
 
         const slug = paths[0].split('/')[paths[0].split('/').length - 1];
@@ -131,14 +168,13 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         const html = await fetchText(pageUrl);
         if (!html) return [];
 
-        // Obtener Streams Online directamente del JSON inyectado
         const onlineStreams = await getOnlineStreams(html);
-
         console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found.`);
         return onlineStreams;
     } catch (e) { return []; }
 }
 
 module.exports = { getStreams };
+
 
 

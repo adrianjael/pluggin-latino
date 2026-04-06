@@ -1,10 +1,11 @@
-﻿/**
- * PelisGo Provider for Nuvio (V1.6.3 - Master JSON Edition)
+/**
+ * PelisGo Provider for Nuvio (V1.6.4 - Smart Search Edition)
  * Reingeniería basada en la extracción de 'videoLinks' desde el payload __next_f de Next.js.
  */
 
 const BASE = "https://pelisgo.online";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 const COMMON_HEADERS = {
     "User-Agent": UA,
@@ -13,8 +14,30 @@ const COMMON_HEADERS = {
     "Cache-Control": "no-cache"
 };
 
+/**
+ * Normaliza títulos: elimina tildes y caracteres disruptivos.
+ */
+function cleanTitle(str) {
+    if (!str) return "";
+    return str.normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") // Quitar tildes
+              .replace(/[^\w\s\-]/gi, '')      // Solo alfanuméricos
+              .toLowerCase().trim();
+}
 
-/*
+/**
+ * Obtiene el título en español de TMDB.
+ */
+async function getSpanishTitle(tmdbId, type) {
+    try {
+        const url = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_KEY}&language=es-MX`;
+        const res = await fetch(url);
+        const data = await res.json();
+        return data.title || data.name || null;
+    } catch (e) { return null; }
+}
+
+/**
  * JS Unpacker (p,a,c,k,e,d)
  */
 function unpack(p, a, c, k, e, d) {
@@ -32,7 +55,8 @@ async function fetchText(url, referer = BASE) {
 }
 
 async function pelisgoSearch(query, type) {
-    const url = `${BASE}/search?q=${encodeURIComponent(query)}`;
+    const searchStr = cleanTitle(query);
+    const url = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
     const html = await fetchText(url);
     if (!html) return [];
     const re = /href="(\/(movies|series)\/([a-z0-9\-]+))"/gi;
@@ -117,7 +141,18 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         const type = (mediaType === 'tv' || mediaType === 'series') ? 'tv' : 'movie';
 
+        // Intentar búsqueda original
         let paths = await pelisgoSearch(title, type);
+
+        // Fallback: Traducir por TMDB ID
+        if (paths.length === 0 && tmdbId) {
+            const tmdbType = type === 'tv' ? 'tv' : 'movie';
+            const officialTitle = await getSpanishTitle(tmdbId, tmdbType);
+            if (officialTitle && officialTitle !== title) {
+                paths = await pelisgoSearch(officialTitle, type);
+            }
+        }
+
         if (paths.length === 0) return [];
 
         const slug = paths[0].split('/')[paths[0].split('/').length - 1];
@@ -133,4 +168,5 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
 }
 
 module.exports = { getStreams };
+
 
