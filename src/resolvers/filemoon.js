@@ -1,11 +1,14 @@
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
+/**
+ * Base64Url Decode compatible con Hermes/Node
+ */
 function base64UrlDecode(input) {
     let s = input.replace(/-/g, '+').replace(/_/g, '/');
     while (s.length % 4) s += '=';
-    return typeof Buffer !== 'undefined' 
-        ? Buffer.from(s, 'base64') 
-        : new Uint8Array(atob(s).split('').map(c => c.charCodeAt(0)));
+    if (typeof Buffer !== 'undefined') return Buffer.from(s, 'base64');
+    const bin = atob(s);
+    return new Uint8Array(bin.split('').map(c => c.charCodeAt(0)));
 }
 
 /**
@@ -16,37 +19,34 @@ function unpack(p, a, c, k, e, d) {
     return p;
 }
 
+import { decryptGCM } from '../utils/aes-gcm.js';
+
 /**
  * Descifra el payload AES-256-GCM de la API Byse
  */
 async function decryptByse(playback) {
     try {
-        const keyParts = playback.key_parts;
-        const keyBytes = [];
-        for (const part of keyParts) {
-            const decoded = base64UrlDecode(part);
-            decoded.forEach(b => keyBytes.push(b));
+        const keyArr = [];
+        for (const p of playback.key_parts) {
+            base64UrlDecode(p).forEach(b => keyArr.push(b));
         }
-        
-        const key = new Uint8Array(keyBytes);
+        const key = new Uint8Array(keyArr);
         const iv = base64UrlDecode(playback.iv);
-        const fullPayload = base64UrlDecode(playback.payload);
+        const ciphertextWithTag = base64UrlDecode(playback.payload);
         
-        // AES-GCM: Ultimos 16 bytes son el authTag
-        const ciphertext = fullPayload.slice(0, -16);
-        const tag = fullPayload.slice(-16);
-
-        // Nuvio environment usually supports SubtleCrypto
+        // Estrategia A: Subtle (Node/Browser) - Rapida
         if (typeof crypto !== 'undefined' && crypto.subtle) {
-            const cryptoKey = await crypto.subtle.importKey('raw', key, 'AES-GCM', false, ['decrypt']);
-            const decrypted = await crypto.subtle.decrypt(
-                { name: 'AES-GCM', iv: iv, tagLength: 128 },
-                cryptoKey,
-                fullPayload // SubtleCrypto espera [ciphertext + tag]
-            );
-            return JSON.parse(new TextDecoder().decode(decrypted));
+            try {
+                const cryptoKey = await crypto.subtle.importKey('raw', key, 'AES-GCM', false, ['decrypt']);
+                const decryptedArr = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, cryptoKey, ciphertextWithTag);
+                return JSON.parse(new TextDecoder().decode(decryptedArr));
+            } catch (e) { console.log("[Byse] Subtle fail"); }
         }
-        return null;
+
+        // Estrategia B: Pure JS (Hermes/App) - Compatible
+        console.log("[Byse] Usando motor Pure-JS para Hermes...");
+        const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
+        return decryptedStr ? JSON.parse(decryptedStr) : null;
     } catch (e) {
         console.error(`[Byse Decrypt] Error: ${e.message}`);
         return null;
@@ -55,20 +55,18 @@ async function decryptByse(playback) {
 
 /**
  * Resuelve un enlace de Filemoon al streaming .m3u8 directo.
- * Version 3.0: Soporte completo Byse API (AES-GCM) + Fallback Unpacker.
+ * Version 4.0: Universal (SubtleCrypto Detection + Robust ID).
  */
 export async function resolve(url) {
     try {
         const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
         if (!idMatch) return null;
         const id = idMatch[1];
-        console.log(`[Filemoon] Resolviendo Maestro (v3.0.1): ${id}`);
+        console.log(`[Filemoon] Resolviendo Universal (v4.0): ${id}`);
         
-        // Estrategia 1: API de Byse (Cifrada)
         try {
             const hostname = new URL(url).hostname;
-            const apiUrl = `https://${hostname}/api/videos/${id}`;
-            const apiRes = await fetch(apiUrl, {
+            const apiRes = await fetch(`https://${hostname}/api/videos/${id}`, {
                 headers: { 'User-Agent': UA, 'Referer': url }
             });
             const data = await apiRes.json();
@@ -77,7 +75,6 @@ export async function resolve(url) {
                 const decrypted = await decryptByse(data.playback);
                 if (decrypted && decrypted.sources) {
                     const best = decrypted.sources[0];
-                    console.log(`[Filemoon] -> m3u8 via API: ${best.url.substring(0, 50)}...`);
                     return {
                         url: best.url,
                         quality: best.height ? `${best.height}p` : '1080p',
@@ -87,29 +84,18 @@ export async function resolve(url) {
                 }
             }
         } catch (apiErr) {
-            console.log(`[Filemoon] API Strategy failed: ${apiErr.message}`);
+            console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
         }
 
-        // Estrategia 2: Fallback Unpacker (Legacy/SEO Mode)
-        console.log("[Filemoon] Fallback a motor Unpacker...");
-        const res = await fetch(url, {
-            headers: { 'User-Agent': UA, 'Referer': url }
-        });
+        // Fallback Unpacker
+        const res = await fetch(url, { headers: { 'User-Agent': UA, 'Referer': url } });
         const html = await res.text();
-
         const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
         
         for (const match of evalMatches) {
             const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split('|'), 0, {});
-            const fileMatch = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
-            if (fileMatch) {
-                return {
-                    url: fileMatch[1],
-                    quality: '1080p',
-                    isM3U8: true,
-                    headers: { 'User-Agent': UA, 'Referer': url }
-                };
-            }
+            const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
+            if (fm) return { url: fm[1], quality: '1080p', isM3U8: true, headers: { 'User-Agent': UA, 'Referer': url } };
         }
         
         return null;

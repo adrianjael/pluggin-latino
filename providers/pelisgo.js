@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T17:24:21.242Z
+ * Generated: 2026-04-06T17:32:52.294Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -39,13 +39,43 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
+// src/utils/aes-gcm.js
+var CryptoJS = require("crypto-js");
+function decryptGCM(key, iv, ciphertextWithTag) {
+  try {
+    const tagSize = 16;
+    const ciphertext = ciphertextWithTag.slice(0, -tagSize);
+    const keyWA = CryptoJS.lib.WordArray.create(key);
+    const ivCounter = new Uint8Array(16);
+    ivCounter.set(iv, 0);
+    ivCounter[15] = 2;
+    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
+    const decrypted = CryptoJS.AES.decrypt(
+      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
+      keyWA,
+      {
+        iv: ivWA,
+        mode: CryptoJS.mode.CTR,
+        padding: CryptoJS.pad.NoPadding
+      }
+    );
+    return decrypted.toString(CryptoJS.enc.Utf8);
+  } catch (e) {
+    console.error("[PureJS-GCM] Error Decrypting:", e.message);
+    return null;
+  }
+}
+
 // src/resolvers/filemoon.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function base64UrlDecode(input) {
   let s = input.replace(/-/g, "+").replace(/_/g, "/");
   while (s.length % 4)
     s += "=";
-  return typeof Buffer !== "undefined" ? Buffer.from(s, "base64") : new Uint8Array(atob(s).split("").map((c) => c.charCodeAt(0)));
+  if (typeof Buffer !== "undefined")
+    return Buffer.from(s, "base64");
+  const bin = atob(s);
+  return new Uint8Array(bin.split("").map((c) => c.charCodeAt(0)));
 }
 function unpack(p, a, c, k, e, d) {
   while (c--)
@@ -56,28 +86,25 @@ function unpack(p, a, c, k, e, d) {
 function decryptByse(playback) {
   return __async(this, null, function* () {
     try {
-      const keyParts = playback.key_parts;
-      const keyBytes = [];
-      for (const part of keyParts) {
-        const decoded = base64UrlDecode(part);
-        decoded.forEach((b) => keyBytes.push(b));
+      const keyArr = [];
+      for (const p of playback.key_parts) {
+        base64UrlDecode(p).forEach((b) => keyArr.push(b));
       }
-      const key = new Uint8Array(keyBytes);
+      const key = new Uint8Array(keyArr);
       const iv = base64UrlDecode(playback.iv);
-      const fullPayload = base64UrlDecode(playback.payload);
-      const ciphertext = fullPayload.slice(0, -16);
-      const tag = fullPayload.slice(-16);
+      const ciphertextWithTag = base64UrlDecode(playback.payload);
       if (typeof crypto !== "undefined" && crypto.subtle) {
-        const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
-        const decrypted = yield crypto.subtle.decrypt(
-          { name: "AES-GCM", iv, tagLength: 128 },
-          cryptoKey,
-          fullPayload
-          // SubtleCrypto espera [ciphertext + tag]
-        );
-        return JSON.parse(new TextDecoder().decode(decrypted));
+        try {
+          const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
+          const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
+          return JSON.parse(new TextDecoder().decode(decryptedArr));
+        } catch (e) {
+          console.log("[Byse] Subtle fail");
+        }
       }
-      return null;
+      console.log("[Byse] Usando motor Pure-JS para Hermes...");
+      const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
+      return decryptedStr ? JSON.parse(decryptedStr) : null;
     } catch (e) {
       console.error(`[Byse Decrypt] Error: ${e.message}`);
       return null;
@@ -91,11 +118,10 @@ function resolve(url) {
       if (!idMatch)
         return null;
       const id = idMatch[1];
-      console.log(`[Filemoon] Resolviendo Maestro (v3.0.1): ${id}`);
+      console.log(`[Filemoon] Resolviendo Universal (v4.0): ${id}`);
       try {
         const hostname = new URL(url).hostname;
-        const apiUrl = `https://${hostname}/api/videos/${id}`;
-        const apiRes = yield fetch(apiUrl, {
+        const apiRes = yield fetch(`https://${hostname}/api/videos/${id}`, {
           headers: { "User-Agent": UA, "Referer": url }
         });
         const data = yield apiRes.json();
@@ -103,7 +129,6 @@ function resolve(url) {
           const decrypted = yield decryptByse(data.playback);
           if (decrypted && decrypted.sources) {
             const best = decrypted.sources[0];
-            console.log(`[Filemoon] -> m3u8 via API: ${best.url.substring(0, 50)}...`);
             return {
               url: best.url,
               quality: best.height ? `${best.height}p` : "1080p",
@@ -113,25 +138,16 @@ function resolve(url) {
           }
         }
       } catch (apiErr) {
-        console.log(`[Filemoon] API Strategy failed: ${apiErr.message}`);
+        console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
       }
-      console.log("[Filemoon] Fallback a motor Unpacker...");
-      const res = yield fetch(url, {
-        headers: { "User-Agent": UA, "Referer": url }
-      });
+      const res = yield fetch(url, { headers: { "User-Agent": UA, "Referer": url } });
       const html = yield res.text();
       const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
       for (const match of evalMatches) {
         const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
-        const fileMatch = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
-        if (fileMatch) {
-          return {
-            url: fileMatch[1],
-            quality: "1080p",
-            isM3U8: true,
-            headers: { "User-Agent": UA, "Referer": url }
-          };
-        }
+        const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
+        if (fm)
+          return { url: fm[1], quality: "1080p", isM3U8: true, headers: { "User-Agent": UA, "Referer": url } };
       }
       return null;
     } catch (e) {
