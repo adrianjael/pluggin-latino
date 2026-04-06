@@ -1,7 +1,7 @@
 /**
- * PelisGo Provider for Nuvio (V1.6.7 - Ultra Direct Edition)
+ * PelisGo Provider for Nuvio (V1.6.8 - The Redirection Edition)
  * Reingeniería basada en 'videoLinks' y 'downloadLinks' de Next.js.
- * Resolución Instantánea para Buzzheavier y Pixeldrain.
+ * Motor Híbrido: Resolución de enlaces directos e internos (/download/ID).
  */
 
 const BASE = "https://pelisgo.online";
@@ -59,6 +59,7 @@ async function fetchText(url, referer = BASE) {
  * Resuelve IDs de descarga de PelisGo a URLs directas de servidor (Buzz/Pixel).
  */
 async function resolvePelisGoDownload(id) {
+    if (!id) return null;
     try {
         const res = await fetch(`https://pelisgo.online/api/download/${id}`, {
             headers: COMMON_HEADERS
@@ -107,6 +108,7 @@ async function resolveFilemoon(url) {
 
 /**
  * Motor Maestro: Escaneo de videoLinks y downloadLinks (Buzz/Pixel)
+ * Version 1.6.8: Soporte Hibrido (URLs Directas o Rutas /download/ID).
  */
 async function getOnlineStreams(rawHtml) {
     const streams = [];
@@ -152,14 +154,25 @@ async function getOnlineStreams(rawHtml) {
         const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
         if (downloadLinksMatch) {
             const rawDownloadsJson = downloadLinksMatch[1];
-            // Regex mejorado: captura servidores y URLs con escapes de barra \/
+            // Regex hibrido: Captura server y url/path
             const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^"'\s]+)[^}]*?\}/gi;
             let m;
             while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
                 const serverName = m[1];
-                let directUrl = m[2].replace(/\\/g, ''); // Limpiar escapes \/
+                let maybeUrl = m[2].replace(/\\/g, '');
 
                 if (serverName === 'Buzzheavier' || serverName === 'Pixeldrain') {
+                    let directUrl = null;
+                    
+                    // Si es una ruta interna /download/, resolverla
+                    if (maybeUrl.includes('/download/')) {
+                        const downloadId = maybeUrl.split('/').pop().replace(/[^\w]/g, '');
+                        directUrl = await resolvePelisGoDownload(downloadId);
+                    } else if (maybeUrl.includes('http')) {
+                        // Si ya es una URL directa (Buzzheavier.com / Pixeldrain.com)
+                        directUrl = maybeUrl;
+                    }
+
                     if (directUrl && !seenUrls.has(directUrl)) {
                         seenUrls.add(directUrl);
                         streams.push({ 
@@ -180,7 +193,7 @@ async function getOnlineStreams(rawHtml) {
 async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         const type = (mediaType === 'tv' || mediaType === 'series') ? 'tv' : 'movie';
-        console.log(`[PelisGo v1.6.7] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
+        console.log(`[PelisGo v1.6.8] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
 
         let paths = await pelisgoSearch(title, type);
         if (paths.length === 0 && tmdbId) {
@@ -204,7 +217,7 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         if (!html) return [];
 
         const onlineStreams = await getOnlineStreams(html);
-        console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (including Buzz/Pixel).`);
+        console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (Buzz/Pixel hybrid).`);
         return onlineStreams;
     } catch (e) { return []; }
 }
