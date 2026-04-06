@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T16:13:40.201Z
+ * Generated: 2026-04-06T16:14:44.346Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -178,32 +178,26 @@ function getOnlineStreams(rawHtml) {
     } catch (e) {
     }
     try {
-      const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
-      if (downloadLinksMatch) {
-        const rawDownloadsJson = downloadLinksMatch[1];
-        const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^"'\s]+)[^}]*?\}/gi;
-        let m;
-        while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
-          const serverName = m[1];
-          let maybeUrl = m[2].replace(/\\/g, "");
-          if (serverName === "Buzzheavier" || serverName === "Pixeldrain") {
-            let directUrl = null;
-            if (maybeUrl.includes("/download/")) {
-              const downloadId = maybeUrl.split("/").pop().replace(/[^\w]/g, "");
-              directUrl = yield resolvePelisGoDownload(downloadId);
-            } else if (maybeUrl.includes("http")) {
-              directUrl = maybeUrl;
-            }
-            if (directUrl && !seenUrls.has(directUrl)) {
-              seenUrls.add(directUrl);
-              streams.push({
-                name: "PelisGo",
-                title: `[F-Direct] \xB7 ${serverName}`,
-                url: directUrl,
-                quality: "1080p"
-              });
-            }
-          }
+      const globalRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+(Buzzheavier|Pixeldrain)[^{}]*?url[\\"' ]+:[\\"' ]+([^"'\s]+)[^}]*?\}/gi;
+      let m;
+      while ((m = globalRegex.exec(rawHtml)) !== null) {
+        const serverName = m[1];
+        let maybeUrl = m[2].replace(/\\/g, "");
+        let directUrl = null;
+        if (maybeUrl.includes("/download/")) {
+          const downloadId = maybeUrl.split("/").pop().replace(/[^\w]/g, "");
+          directUrl = yield resolvePelisGoDownload(downloadId);
+        } else if (maybeUrl.includes("http")) {
+          directUrl = maybeUrl;
+        }
+        if (directUrl && !seenUrls.has(directUrl)) {
+          seenUrls.add(directUrl);
+          streams.push({
+            name: "PelisGo",
+            title: `[F-Direct] \xB7 ${serverName}`,
+            url: directUrl,
+            quality: "1080p"
+          });
         }
       }
     } catch (e) {
@@ -215,7 +209,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
       const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      console.log(`[PelisGo v1.6.8] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
+      console.log(`[PelisGo v1.6.9] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
       let paths = yield pelisgoSearch(title, type);
       if (paths.length === 0 && tmdbId) {
         console.log(`[PelisGo] Reintentando con t\xEDtulo oficial de TMDB...`);
@@ -234,7 +228,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       if (!html)
         return [];
       const onlineStreams = yield getOnlineStreams(html);
-      console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (Buzz/Pixel hybrid).`);
+      console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (Buzz/Pixel Global Scan).`);
       return onlineStreams;
     } catch (e) {
       return [];
