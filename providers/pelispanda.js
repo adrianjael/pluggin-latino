@@ -199,6 +199,24 @@ function resolveVidhide(embedUrl) {
     }
   });
 }
+function resolveFilemoon(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      let body = yield fetchHtml(embedUrl, embedUrl);
+      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+        const linkMatch = unpacked.match(/file:"(.*?)"/);
+        if (linkMatch)
+          return linkMatch[1];
+      }
+      const rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+      return rawM3u8 ? rawM3u8[0] : embedUrl;
+    } catch (e) {
+      return embedUrl;
+    }
+  });
+}
 function decodeBase64(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   let str = String(input).replace(/=+$/, "");
@@ -374,6 +392,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           finalUrl = yield resolveStreamwish(finalUrl);
         else if (serverName === "vidhide")
           finalUrl = yield resolveVidhide(finalUrl);
+        else if (serverName === "filemoon")
+          finalUrl = yield resolveFilemoon(finalUrl);
         else if (serverName === "voe")
           finalUrl = yield resolveVoesx(finalUrl);
         else if (serverName === "vimeos")

@@ -123,6 +123,23 @@ function resolveGenericEmbed(embedUrl) {
     }
   });
 }
+
+function resolveFilemoon(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      const resp = yield fetch(embedUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36', 'Referer': embedUrl } });
+      const body = yield resp.text();
+      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
+        const linkMatch = unpacked.match(/file:"(.*?)"/);
+        if (linkMatch) return linkMatch[1];
+      }
+      const rawM3u8 = body.match(/https?://[^"\s\\]+\.m3u8[^"\s\\]*/i);
+      return rawM3u8 ? rawM3u8[0].replace(/\\/g, "") : embedUrl;
+    } catch (e) { return embedUrl; }
+  });
+}
 function resolveVoesx(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -269,7 +286,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             return null;
           const embedUrl = iframeMatch[1];
           let resolvePromise;
-          if (server === "voe") {
+          if (server === "filemoon") resolvePromise = resolveFilemoon(embedUrl); else if (server === "voe") {
             resolvePromise = resolveVoesx(embedUrl);
           } else {
             resolvePromise = resolveGenericEmbed(embedUrl);
