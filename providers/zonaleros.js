@@ -1,6 +1,6 @@
 /**
  * zonaleros - Built from src/zonaleros/
- * Generated: 2026-04-06T23:01:31.585Z
+ * Generated: 2026-04-06T23:06:24.214Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -50,20 +50,28 @@ module.exports = __toCommonJS(zonaleros_exports);
 // src/zonaleros/extractor.js
 function extractSearchResults(html) {
   const results = [];
-  const itemRegex = /<article class="Anime alt B">[\s\S]*?<a href="([^"]+)"[^>]*>[\s\S]*?<img src="([^"]+)"[\s\S]*?<h3 class="Title"[^>]*>([\s\S]*?)<\/h3>/g;
-  let match;
-  while ((match = itemRegex.exec(html)) !== null) {
-    let [_, url, poster, title] = match;
-    if (url.startsWith("/"))
-      url = `https://www.zona-leros.com${url}`;
-    const type = url.includes("/series/") ? "series" : "movie";
-    if (url.includes("/peliculas/") || url.includes("/series/")) {
-      results.push({
-        title: title.replace(/<[^>]+>/g, "").trim(),
-        url,
-        poster,
-        type
-      });
+  const articleRegex = /<article class="Anime alt B">([\s\S]*?)<\/article>/g;
+  let artMatch;
+  while ((artMatch = articleRegex.exec(html)) !== null) {
+    const content = artMatch[1];
+    const urlMatch = content.match(/href="([^"]+)"/);
+    const imgMatch = content.match(/src="([^"]+)"/);
+    const titleMatch = content.match(/<h3 class="Title"[^>]*>([\s\S]*?)<\/h3>/);
+    if (urlMatch && titleMatch) {
+      let url = urlMatch[1];
+      if (url.startsWith("/"))
+        url = `https://www.zona-leros.com${url}`;
+      const title = titleMatch[1].replace(/<[^>]+>/g, "").trim();
+      const poster = imgMatch ? imgMatch[1] : "";
+      const type = url.includes("/series/") ? "series" : "movie";
+      if (url.includes("/peliculas/") || url.includes("/series/")) {
+        results.push({
+          title,
+          url,
+          poster,
+          type
+        });
+      }
     }
   }
   return results;

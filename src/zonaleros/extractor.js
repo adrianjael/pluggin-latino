@@ -13,28 +13,35 @@ export function extractSearchResults(html) {
     // Si estamos en un entorno sin DOM nativo, usaremos regex.
     // Basado en otros proveedores, asumiremos que se cuenta con un parser o regex simple.
 
-    // Regex más flexible para capturar el enlace y el título
-    // Buscamos cualquier enlace que contenga /peliculas/ o /series/
-    const itemRegex = /<article class="Anime alt B">[\s\S]*?<a href="([^"]+)"[^>]*>[\s\S]*?<img src="([^"]+)"[\s\S]*?<h3 class="Title"[^>]*>([\s\S]*?)<\/h3>/g;
-
-    let match;
-    while ((match = itemRegex.exec(html)) !== null) {
-        let [_, url, poster, title] = match;
-
-        // Asegurar URL absoluta
-        if (url.startsWith('/')) url = `https://www.zona-leros.com${url}`;
-
-        // Determinar tipo por la URL
-        const type = url.includes('/series/') ? 'series' : 'movie';
-
-        // Solo agregar si es película o serie (ignorar juegos)
-        if (url.includes('/peliculas/') || url.includes('/series/')) {
-            results.push({
-                title: title.replace(/<[^>]+>/g, '').trim(),
-                url: url,
-                poster: poster,
-                type: type
-            });
+    // Regex ultra-flexible para capturar los datos de películas/series en ZonaLeRoS
+    // Buscamos el bloque de artículo y extraemos la URL, la imagen (si existe) y el título
+    const articleRegex = /<article class="Anime alt B">([\s\S]*?)<\/article>/g;
+    
+    let artMatch;
+    while ((artMatch = articleRegex.exec(html)) !== null) {
+        const content = artMatch[1];
+        
+        const urlMatch = content.match(/href="([^"]+)"/);
+        const imgMatch = content.match(/src="([^"]+)"/);
+        const titleMatch = content.match(/<h3 class="Title"[^>]*>([\s\S]*?)<\/h3>/);
+        
+        if (urlMatch && titleMatch) {
+            let url = urlMatch[1];
+            if (url.startsWith('/')) url = `https://www.zona-leros.com${url}`;
+            
+            const title = titleMatch[1].replace(/<[^>]+>/g, '').trim();
+            const poster = imgMatch ? imgMatch[1] : "";
+            const type = url.includes('/series/') ? 'series' : 'movie';
+            
+            // Solo agregar películas o series
+            if (url.includes('/peliculas/') || url.includes('/series/')) {
+                results.push({
+                    title,
+                    url,
+                    poster,
+                    type
+                });
+            }
         }
     }
 
