@@ -127,35 +127,6 @@ async function resolveOneId(id) {
 /**
  * Obtiene Reproductores Online (Magi) vía Next-Action
  */
-async function getOnlineStreams(movieId, pageUrl) {
-    const streams = [];
-    try {
-        const res = await fetch(pageUrl, {
-            method: 'POST',
-            headers: {
-                'User-Agent': UA,
-                'Content-Type': 'text/plain;charset=UTF-8',
-                'Next-Action': PLAYER_ACTION_ID,
-                'Referer': pageUrl
-            },
-            body: JSON.stringify([movieId])
-        });
-        const text = await res.text();
-        const iframeRegex = /https?:\/\/(?:filemoon\.sx|f75s\.com)\/e\/[a-zA-Z0-9?=_&%-]+/g;
-        const magiLinks = [...new Set(text.match(iframeRegex) || [])];
-        
-        for (const url of magiLinks) {
-            streams.push({
-                name: 'PelisGo [Magi]',
-                title: 'Magi (Filemoon) · Online',
-                url: url.replace(/\\/g, ''),
-                quality: 'HD',
-                headers: { 'User-Agent': UA, 'Referer': 'https://f75s.com/' }
-            });
-        }
-    } catch (e) {}
-    return streams;
-}
 
 /**
  * Función principal requerida por Nuvio
@@ -203,17 +174,33 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
             };
         });
 
-        // B. Obtener reproductores online (Magi/Filemoon)
-        let onlineStreams = [];
-        const nextMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s);
-        if (nextMatch) {
-            try {
-                const data = JSON.parse(nextMatch[1]);
-                const movie = data.props?.pageProps?.movie || data.props?.pageProps?.movieData || data.props?.pageProps?.serie || data.props?.pageProps?.serieData;
-                if (movie && movie.id) {
-                    onlineStreams = await getOnlineStreams(movie.id, pageUrl);
-                }
-            } catch (e) {}
+        // B. Obtener reproductores online (Magi, Desu, etc.) de los datos RSC/JSON
+        const onlineStreams = [];
+        try {
+            // Buscamos cualquier URL que sepamos que es un reproductor
+            // Incluimos: filemoon, f75s, desu.pelisgo, hqq.ac (netu), seekstreaming
+            const urlPatterns = [
+                { regex: /https?:\/\/(?:filemoon\.sx|f75s\.com)\/e\/[a-z0-9]+/gi, server: 'Magi (Filemoon)' },
+                { regex: /https?:\/\/desu\.pelisgo\.online\/embed\/[a-z0-9]+/gi, server: 'Desu' },
+                { regex: /https?:\/\/hqq\.ac\/e\/[a-z0-9]+/gi, server: 'Netu' },
+                { regex: /https?:\/\/[a-z0-9.]+\.embedseek\.com\/#[a-z0-9]+/gi, server: 'SeekStreaming' }
+            ];
+
+            urlPatterns.forEach(p => {
+                const matches = html.match(p.regex) || [];
+                [...new Set(matches)].forEach(url => {
+                    const cleanUrl = url.replace(/\\u0026/g, '&').replace(/\\/g, '');
+                    onlineStreams.push({
+                        name: 'PelisGo',
+                        title: `[Online] · ${p.server}`,
+                        url: cleanUrl,
+                        quality: '1080p',
+                        headers: { 'User-Agent': UA, 'Referer': BASE }
+                    });
+                });
+            });
+        } catch (e) {
+            console.error(`[PelisGo] Online Extraction Error: ${e.message}`);
         }
 
         // 3. Unificar y Retornar
