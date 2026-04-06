@@ -1,6 +1,6 @@
 /**
  * zonaleros - Built from src/zonaleros/
- * Generated: 2026-04-06T22:49:37.296Z
+ * Generated: 2026-04-06T22:56:52.128Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -43,8 +43,7 @@ var __async = (__this, __arguments, generator) => {
 // src/zonaleros/index.js
 var zonaleros_exports = {};
 __export(zonaleros_exports, {
-  getStreams: () => getStreams,
-  search: () => search
+  getStreams: () => getStreams
 });
 module.exports = __toCommonJS(zonaleros_exports);
 
@@ -125,22 +124,24 @@ function resolveAnomizador(url) {
 function cleanTitle(str) {
   if (!str)
     return "";
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim();
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, " ").replace(/\s+/g, " ").toLowerCase().trim();
 }
-function search(query) {
+function zonalerosSearch(query) {
   return __async(this, null, function* () {
+    const searchStr = cleanTitle(query);
+    if (!searchStr)
+      return [];
+    const url = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
     try {
-      const searchStr = cleanTitle(query);
-      const searchUrl = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
-      const res = yield fetch(searchUrl, { headers: HEADERS });
+      const res = yield fetch(url, { headers: HEADERS });
       const html = yield res.text();
-      if (html.includes("cf-browser-verification")) {
-        console.error("ZonaLeros: Bloqueado por Cloudflare");
+      if (html.includes("cf-browser-verification") || html.includes("Checking your browser")) {
+        console.error("[ZonaLeRoS] Bloqueo de Cloudflare detectado en la b\xFAsqueda.");
         return [];
       }
       return extractSearchResults(html);
     } catch (e) {
-      console.error("Zonaleros Search Error:", e);
+      console.error(`[ZonaLeRoS] Fallo en b\xFAsqueda: ${e.message}`);
       return [];
     }
   });
@@ -148,30 +149,41 @@ function search(query) {
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
-      console.log(`[ZonaLeRoS] Buscando streams para: "${title}" (${mediaType})`);
-      let results = yield search(title);
-      if (results.length === 0) {
-        const simpleTitle = title.replace(/\(\d{4}\)/g, "").trim();
-        if (simpleTitle !== title) {
-          console.log(`[ZonaLeRoS] Reintentando b\xFAsqueda con: "${simpleTitle}"`);
-          results = yield search(simpleTitle);
-        }
+      console.log(`[ZonaLeRoS] Iniciando extracci\xF3n: "${title}" (${mediaType})`);
+      let results = [];
+      const yearMatch = title.match(/\((\d{4})\)/);
+      const year = yearMatch ? yearMatch[1] : "";
+      const pureTitle = title.replace(/\(\d{4}\)/g, "").trim();
+      if (year) {
+        console.log(`[ZonaLeRoS] Capa A: Buscando "${pureTitle} ${year}"`);
+        results = yield zonalerosSearch(`${pureTitle} ${year}`);
       }
       if (results.length === 0) {
-        console.warn(`[ZonaLeRoS] No se encontraron resultados para: ${title}`);
+        console.log(`[ZonaLeRoS] Capa B: Buscando "${pureTitle}"`);
+        results = yield zonalerosSearch(pureTitle);
+      }
+      if (results.length === 0 && pureTitle !== title) {
+        console.log(`[ZonaLeRoS] Capa C: Buscando "${title}"`);
+        results = yield zonalerosSearch(title);
+      }
+      if (results.length === 0) {
+        console.warn(`[ZonaLeRoS] No se encontraron coincidencias en ZonaLeRoS para: ${title}`);
         return [];
       }
       const targetType = mediaType === "tv" || mediaType === "series" ? "series" : "movie";
-      const bestMatch = results.find((r) => r.type === targetType) || results[0];
-      const res = yield fetch(bestMatch.url, { headers: HEADERS });
-      const html = yield res.text();
-      const metadata = extractMetadata(html);
+      let match = results.find((r) => r.type === targetType && cleanTitle(r.title).includes(cleanTitle(pureTitle))) || results.find((r) => r.type === targetType) || results[0];
+      console.log(`[ZonaLeRoS] Seleccionando: "${match.title}" -> ${match.url}`);
+      const itemRes = yield fetch(match.url, { headers: HEADERS });
+      const itemHtml = yield itemRes.text();
+      const meta = extractMetadata(itemHtml);
       const streams = [];
-      for (let serverUrl of metadata.servers) {
+      for (let serverUrl of meta.servers) {
         serverUrl = serverUrl.replace(/\\/g, "").replace(/['"]/g, "");
         const realUrl = yield resolveAnomizador(serverUrl);
-        let label = "Desconocido";
+        if (!realUrl)
+          continue;
         const lowUrl = realUrl.toLowerCase();
+        let label = "Desconocido";
         if (lowUrl.includes("voe"))
           label = "VOE";
         else if (lowUrl.includes("streamtape"))
@@ -181,22 +193,20 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         else if (lowUrl.includes("mega"))
           label = "MEGA (Descarga)";
         else if (lowUrl.includes("1fichier"))
-          label = "1Fichier (Descarga)";
+          label = "1Fichier";
         else if (lowUrl.includes("mediafire"))
-          label = "Mediafire (Descarga)";
-        if (realUrl) {
-          streams.push({
-            name: "ZonaLeRoS",
-            title: `[Directo] \xB7 ${label}`,
-            url: realUrl,
-            quality: "HD",
-            isM3U8: lowUrl.includes(".m3u8")
-          });
-        }
+          label = "Mediafire";
+        streams.push({
+          name: "ZonaLeRoS",
+          title: `[Directo] \xB7 ${label}`,
+          url: realUrl,
+          quality: "HD",
+          isM3U8: lowUrl.includes(".m3u8")
+        });
       }
       return streams;
     } catch (e) {
-      console.error("Zonaleros Streams Error:", e);
+      console.error(`[ZonaLeRoS] Error Global: ${e.message}`);
       return [];
     }
   });

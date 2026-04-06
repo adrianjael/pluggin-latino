@@ -43,17 +43,6 @@ function cleanTitle(str) {
     if (!str) return "";
     return str.normalize("NFD")
               .replace(/[\u0300-\u036f]/g, "") // Quitar tildes
-              .replace(/[^\w\s\-]/gi, '')      // Solo alfanuméricos
-              .toLowerCase().trim();
-}
-
-/**
- * Normaliza títulos: elimina tildes y caracteres disruptivos.
- */
-function cleanTitle(str) {
-    if (!str) return "";
-    return str.normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "") // Quitar tildes
               .replace(/[^\w\s\-]/gi, ' ')      // Solo alfanuméricos y espacios
               .replace(/\s+/g, ' ')            // Colapsar espacios
               .toLowerCase().trim();
