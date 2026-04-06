@@ -3,6 +3,29 @@
   "version": "1.2.0",
   "scrapers": [
     {
+      "id": "pelisgo",
+      "name": "PelisGo",
+      "description": "Descargas directas y streaming de alta fidelidad.",
+      "version": "1.2.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/pelisgo.js",
+      "enabled": true,
+      "logo": "https://pelisgo.online/icon.webp",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
       "id": "pelisplus",
       "name": "PelisPlusHD",
       "description": "Películas y series en espanol latino desde PelisPlusHD.la",
@@ -267,29 +290,6 @@
       "filename": "providers/cinemacity.js",
       "enabled": true,
       "logo": "https://i.postimg.cc/XYjKhS3b/cinemacity.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    },
-    {
-      "id": "pelisgo",
-      "name": "PelisGo",
-      "description": "Descargas directas y streaming de alta fidelidad.",
-      "version": "1.2.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/pelisgo.js",
-      "enabled": true,
-      "logo": "https://pelisgo.online/icon.webp",
       "contentLanguage": [
         "es"
       ],
