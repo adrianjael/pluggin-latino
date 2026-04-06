@@ -124,10 +124,8 @@ async function getOnlineStreams(rawHtml) {
                         direct = r.url;
                         vimeosHeaders = r.headers;
                     }
-                } else if (cleanUrl.includes('desu') || cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu')) {
-                    continue; // Omitir Desu y Netu (Inestables)
-                } else if (cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
-                    label = "SeekStreaming";
+                } else if (cleanUrl.includes('desu') || cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu') || cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
+                    continue; // Omitir servidores inestables o con exceso de publicidad
                 }
 
                 if (direct) {
