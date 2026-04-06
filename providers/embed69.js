@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-06T17:32:52.256Z
+ * Generated: 2026-04-06T17:37:19.718Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -240,7 +240,11 @@ function resolve2(url) {
               url: best.url,
               quality: best.height ? `${best.height}p` : "1080p",
               isM3U8: true,
-              headers: { "User-Agent": UA2, "Referer": url }
+              headers: {
+                "User-Agent": UA2,
+                "Referer": "https://arbitrarydecisions.com/",
+                "Origin": "https://arbitrarydecisions.com"
+              }
             };
           }
         }
@@ -254,7 +258,16 @@ function resolve2(url) {
         const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
         const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
         if (fm)
-          return { url: fm[1], quality: "1080p", isM3U8: true, headers: { "User-Agent": UA2, "Referer": url } };
+          return {
+            url: fm[1],
+            quality: "1080p",
+            isM3U8: true,
+            headers: {
+              "User-Agent": UA2,
+              "Referer": "https://arbitrarydecisions.com/",
+              "Origin": "https://arbitrarydecisions.com"
+            }
+          };
       }
       return null;
     } catch (e) {

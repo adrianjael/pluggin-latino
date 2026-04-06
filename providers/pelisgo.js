@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T17:32:52.294Z
+ * Generated: 2026-04-06T17:37:19.746Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -133,7 +133,11 @@ function resolve(url) {
               url: best.url,
               quality: best.height ? `${best.height}p` : "1080p",
               isM3U8: true,
-              headers: { "User-Agent": UA, "Referer": url }
+              headers: {
+                "User-Agent": UA,
+                "Referer": "https://arbitrarydecisions.com/",
+                "Origin": "https://arbitrarydecisions.com"
+              }
             };
           }
         }
@@ -147,7 +151,16 @@ function resolve(url) {
         const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
         const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
         if (fm)
-          return { url: fm[1], quality: "1080p", isM3U8: true, headers: { "User-Agent": UA, "Referer": url } };
+          return {
+            url: fm[1],
+            quality: "1080p",
+            isM3U8: true,
+            headers: {
+              "User-Agent": UA,
+              "Referer": "https://arbitrarydecisions.com/",
+              "Origin": "https://arbitrarydecisions.com"
+            }
+          };
       }
       return null;
     } catch (e) {

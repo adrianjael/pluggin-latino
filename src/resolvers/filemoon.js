@@ -79,7 +79,11 @@ export async function resolve(url) {
                         url: best.url,
                         quality: best.height ? `${best.height}p` : '1080p',
                         isM3U8: true,
-                        headers: { 'User-Agent': UA, 'Referer': url }
+                        headers: {
+                            'User-Agent': UA,
+                            'Referer': 'https://arbitrarydecisions.com/',
+                            'Origin': 'https://arbitrarydecisions.com'
+                        }
                     };
                 }
             }
@@ -95,7 +99,16 @@ export async function resolve(url) {
         for (const match of evalMatches) {
             const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split('|'), 0, {});
             const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
-            if (fm) return { url: fm[1], quality: '1080p', isM3U8: true, headers: { 'User-Agent': UA, 'Referer': url } };
+            if (fm) return { 
+                url: fm[1], 
+                quality: '1080p', 
+                isM3U8: true, 
+                headers: { 
+                    'User-Agent': UA, 
+                    'Referer': 'https://arbitrarydecisions.com/',
+                    'Origin': 'https://arbitrarydecisions.com'
+                } 
+            };
         }
         
         return null;
