@@ -1,7 +1,7 @@
-/**
+﻿/**
  * PelisGo Provider for Nuvio (V4.2 Stability-First)
  * Replicando la estructura HTTP de PelisPlus para evitar bloqueos.
- * Restauración: Búsqueda Normalizada + TMDB + Magi/Filemoon + v1.4.1.
+ * RestauraciÃ³n: BÃºsqueda Normalizada + TMDB + Magi/Filemoon + v1.4.4.
  */
 
 const BASE = "https://pelisgo.online";
@@ -10,7 +10,7 @@ const TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TARGET_SERVERS = ["buzzheavier", "pixeldrain"]; // Google Drive eliminado permanentemente
 
-// Cabeceras estándar para evitar detecciones de bot
+// Cabeceras estÃ¡ndar para evitar detecciones de bot
 const COMMON_HEADERS = {
     "User-Agent": UA,
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -70,14 +70,14 @@ async function fetchJson(url, headers = {}) {
 }
 
 /**
- * Normaliza títulos para comparación y búsqueda
+ * Normaliza tÃ­tulos para comparaciÃ³n y bÃºsqueda
  */
 function normalizeTitle(t) {
     if (!t) return "";
     return t.toLowerCase()
-        .replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e")
-        .replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o")
-        .replace(/[úùüû]/g, "u").replace(/ñ/g, "n")
+        .replace(/[Ã¡Ã Ã¤Ã¢]/g, "a").replace(/[Ã©Ã¨Ã«Ãª]/g, "e")
+        .replace(/[Ã­Ã¬Ã¯Ã®]/g, "i").replace(/[Ã³Ã²Ã¶Ã´]/g, "o")
+        .replace(/[ÃºÃ¹Ã¼Ã»]/g, "u").replace(/Ã±/g, "n")
         .replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 
@@ -98,17 +98,38 @@ async function getTmdbInfo(tmdbId, mediaType) {
 }
 
 /**
- * Motor de búsqueda robusto
+ * Motor de bÃºsqueda robusto e hÃ­brido
  */
 async function pelisgoSearch(query, type) {
     const url = `${BASE}/search?q=${encodeURIComponent(query)}`;
     const html = await fetchText(url);
     if (!html) return [];
 
-    const re = /href="(\/(movies|series)\/([a-z0-9\-]+))"/gi;
     const results = [];
     const seen = new Set();
-    const cleanQuery = normalizeTitle(query);
+    const resolvedType = (type === 'movie' || type === 'movies') ? 'movies' : 'series';
+
+    // 1. Intento por __NEXT_DATA__ (JSON Nativo) - MÃ¡s confiable
+    try {
+        const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+        if (nextDataMatch) {
+            const data = JSON.parse(nextDataMatch[1]);
+            const items = data?.props?.pageProps?.data?.results || data?.props?.pageProps?.items || [];
+            items.forEach(item => {
+                const slug = item.slug || item.id;
+                const itemType = (item.type || '').includes('movie') ? 'movies' : 'series';
+                if (slug && itemType === resolvedType && !seen.has(slug)) {
+                    seen.add(slug);
+                    results.push(`/${itemType}/${slug}`);
+                }
+            });
+        }
+    } catch (e) {
+        console.log(`[PelisGo] Error parseando NextData: ${e.message}`);
+    }
+
+    // 2. Intento por Regex Flexible (Fallback de HTML)
+    const re = /href=["']?(\/(movies|series)\/([a-z0-9\-]+))["']?/gi;
     let m;
     while ((m = re.exec(html)) !== null) {
         const fullPath = m[1];
@@ -121,6 +142,8 @@ async function pelisgoSearch(query, type) {
             results.push(fullPath);
         }
     }
+    
+    console.log(`[PelisGo Search] "${query}" -> ${results.length} results found.`);
     return results;
 }
 
@@ -185,17 +208,17 @@ async function resolveOneId(id) {
 }
 
 /**
- * Función principal requerida por Nuvio
+ * FunciÃ³n principal requerida por Nuvio
  */
 async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         const resolvedType = (mediaType === 'tv' || mediaType === 'series') ? 'tv' : 'movie';
-        console.log(`[PelisGo v1.4.1] Scann: "${title}" (${resolvedType})`);
+        console.log(`[PelisGo v1.4.4] Scann: "${title}" (${resolvedType})`);
 
-        // Intento 1: Búsqueda Normal
+        // Intento 1: BÃºsqueda Normal
         let paths = await pelisgoSearch(title, resolvedType);
         
-        // Intento 2: Búsqueda Inteligente (Título Original) si falla el 1
+        // Intento 2: BÃºsqueda Inteligente (TÃ­tulo Original) si falla el 1
         if (paths.length === 0 && tmdbId) {
             const info = await getTmdbInfo(tmdbId, resolvedType);
             if (info.originalTitle && normalizeTitle(info.originalTitle) !== normalizeTitle(title)) {
@@ -214,7 +237,7 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         const html = await fetchText(pageUrl);
         if (!html) return [];
         
-        // 1. ONLINE (Magi, VOE, Desu, Netu) - Extracción Directa
+        // 1. ONLINE (Magi, VOE, Netu) - ExtracciÃ³n Directa
         const onlinePromises = [];
         const domainPatterns = [
             { domain: 'filemoon.sx', name: 'Magi (Filemoon)', resolver: resolveFilemoon },

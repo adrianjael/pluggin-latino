@@ -1,4 +1,4 @@
-/**
+﻿/**
  * xupalace - Built from src/xupalace/
  * Generated: 2026-04-04T05:55:17.693Z
  */
