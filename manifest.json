@@ -280,7 +280,7 @@
     {
       "id": "cinemacity",
       "name": "CinemaCity",
-      "description": "CatÃƒÂ¡logo extenso con servidores directos y subtítulos.",
+      "description": "Catálogo extenso con servidores directos y subtítulos.",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -290,6 +290,52 @@
       "filename": "providers/cinemacity.js",
       "enabled": true,
       "logo": "https://i.postimg.cc/XYjKhS3b/cinemacity.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "pelisflix",
+      "name": "PelisFlix",
+      "description": "Películas y series en HD vía pelisflix1.click.",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/pelisflix.js",
+      "enabled": true,
+      "logo": "https://s.pelisflix1.click/flix/imgs/HD-min.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "zonaleros",
+      "name": "ZonaLeRoS",
+      "description": "Películas y series en alta calidad (4K, 1080p, 720p) con enlaces directos.",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/zonaleros.js",
+      "enabled": true,
+      "logo": "https://www.zona-leros.com/image/logo.png",
       "contentLanguage": [
         "es"
       ],
