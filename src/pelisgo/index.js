@@ -1,5 +1,5 @@
 /**
- * PelisGo Provider for Nuvio (V1.6.6 - Buzz & Pixel Edition)
+ * PelisGo Provider for Nuvio (V1.6.7 - Ultra Direct Edition)
  * Reingeniería basada en 'videoLinks' y 'downloadLinks' de Next.js.
  * Resolución Instantánea para Buzzheavier y Pixeldrain.
  */
@@ -152,12 +152,12 @@ async function getOnlineStreams(rawHtml) {
         const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
         if (downloadLinksMatch) {
             const rawDownloadsJson = downloadLinksMatch[1];
-            // Regex ultra-flexible para capturar servidor y URL incluso con escapes
-            const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[^}]*?\}/gi;
+            // Regex mejorado: captura servidores y URLs con escapes de barra \/
+            const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^"'\s]+)[^}]*?\}/gi;
             let m;
             while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
                 const serverName = m[1];
-                let directUrl = m[2].replace(/\\/g, '');
+                let directUrl = m[2].replace(/\\/g, ''); // Limpiar escapes \/
 
                 if (serverName === 'Buzzheavier' || serverName === 'Pixeldrain') {
                     if (directUrl && !seenUrls.has(directUrl)) {
@@ -180,7 +180,7 @@ async function getOnlineStreams(rawHtml) {
 async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         const type = (mediaType === 'tv' || mediaType === 'series') ? 'tv' : 'movie';
-        console.log(`[PelisGo v1.6.6] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
+        console.log(`[PelisGo v1.6.7] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
 
         let paths = await pelisgoSearch(title, type);
         if (paths.length === 0 && tmdbId) {
@@ -210,6 +210,3 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
 }
 
 module.exports = { getStreams };
-
-
-

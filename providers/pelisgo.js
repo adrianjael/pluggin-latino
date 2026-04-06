@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T16:07:38.336Z
+ * Generated: 2026-04-06T16:09:59.145Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -166,7 +166,7 @@ function getOnlineStreams(rawHtml) {
       const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
       if (downloadLinksMatch) {
         const rawDownloadsJson = downloadLinksMatch[1];
-        const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[^}]*?\}/gi;
+        const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^"'\s]+)[^}]*?\}/gi;
         let m;
         while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
           const serverName = m[1];
@@ -193,7 +193,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
       const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      console.log(`[PelisGo v1.6.6] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
+      console.log(`[PelisGo v1.6.7] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
       let paths = yield pelisgoSearch(title, type);
       if (paths.length === 0 && tmdbId) {
         console.log(`[PelisGo] Reintentando con t\xEDtulo oficial de TMDB...`);
