@@ -1,4 +1,4 @@
-/**
+﻿/**
  * pelispanda - Built from src/pelispanda/
  * Generated: 2026-04-04T05:55:17.668Z
  */
@@ -101,7 +101,7 @@ function fetchHtml(url, referer) {
 function normalizeTitle(t) {
   if (!t)
     return "";
-  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  return t.toLowerCase().replace(/[Ã¡Ã Ã¤Ã¢]/g, "a").replace(/[Ã©Ã¨Ã«Ãª]/g, "e").replace(/[Ã­Ã¬Ã¯Ã®]/g, "i").replace(/[Ã³Ã²Ã¶Ã´]/g, "o").replace(/[ÃºÃ¹Ã¼Ã»]/g, "u").replace(/Ã±/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 function calculateSimilarity(title1, title2) {
   const norm1 = normalizeTitle(title1);

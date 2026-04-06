@@ -1,4 +1,4 @@
-/**
+﻿/**
  * cuevana_gs - Built from src/cuevana_gs/
  * Generated: 2026-04-04T05:55:17.626Z
  */
@@ -135,7 +135,7 @@ function resolveFilemoon(embedUrl) {
         const linkMatch = unpacked.match(/file:"(.*?)"/);
         if (linkMatch) return linkMatch[1];
       }
-      const rawM3u8 = body.match(/https?://[^"\s\\]+\.m3u8[^"\s\\]*/i);
+      const rawM3u8 = body.match(/https?:\/\/[^"\s\\]+\.m3u8[^"\s\\]*/i);
       return rawM3u8 ? rawM3u8[0].replace(/\\/g, "") : embedUrl;
     } catch (e) { return embedUrl; }
   });

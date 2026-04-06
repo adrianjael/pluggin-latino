@@ -1,4 +1,4 @@
-/**
+﻿/**
  * pelisplus - Built from src/pelisplus/
  * Generated: 2026-04-04T05:55:17.675Z
  */
@@ -101,7 +101,7 @@ var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-n
 function normalizeTitle(t) {
   if (!t)
     return "";
-  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  return t.toLowerCase().replace(/[Ã¡Ã Ã¤Ã¢]/g, "a").replace(/[Ã©Ã¨Ã«Ãª]/g, "e").replace(/[Ã­Ã¬Ã¯Ã®]/g, "i").replace(/[Ã³Ã²Ã¶Ã´]/g, "o").replace(/[ÃºÃ¹Ã¼Ã»]/g, "u").replace(/Ã±/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 function calculateSimilarity(title1, title2) {
   const norm1 = normalizeTitle(title1);
@@ -225,7 +225,7 @@ function resolveFilemoon(embedUrl) {
         const linkMatch = unpacked.match(/file:"(.*?)"/);
         if (linkMatch) return linkMatch[1];
       }
-      const rawM3u8 = body.match(/https?://[^"\s\\]+\.m3u8[^"\s\\]*/i);
+      const rawM3u8 = body.match(/https?:\/\/[^"\s\\]+\.m3u8[^"\s\\]*/i);
       return rawM3u8 ? rawM3u8[0].replace(/\\/g, "") : embedUrl;
     } catch (e) { return embedUrl; }
   });

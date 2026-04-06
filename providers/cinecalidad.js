@@ -1,4 +1,4 @@
-/**
+﻿/**
  * cinecalidad - Built from src/cinecalidad/
  * Generated: 2026-04-04T05:55:17.555Z
  */
