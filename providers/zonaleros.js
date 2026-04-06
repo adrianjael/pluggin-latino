@@ -1,6 +1,6 @@
 /**
  * zonaleros - Built from src/zonaleros/
- * Generated: 2026-04-06T22:47:05.798Z
+ * Generated: 2026-04-06T22:49:37.296Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -51,16 +51,21 @@ module.exports = __toCommonJS(zonaleros_exports);
 // src/zonaleros/extractor.js
 function extractSearchResults(html) {
   const results = [];
-  const itemRegex = /<article class="Anime alt B">[\s\S]*?<a href="(https:\/\/www\.zona-leros\.com\/(peliculas|series)\/[^"]+)"[^>]*>[\s\S]*?<img src="([^"]+)"[\s\S]*?<h3 class="Title"[^>]*>([\s\S]*?)<\/h3>/g;
+  const itemRegex = /<article class="Anime alt B">[\s\S]*?<a href="([^"]+)"[^>]*>[\s\S]*?<img src="([^"]+)"[\s\S]*?<h3 class="Title"[^>]*>([\s\S]*?)<\/h3>/g;
   let match;
   while ((match = itemRegex.exec(html)) !== null) {
-    const [_, url, type, poster, title] = match;
-    results.push({
-      title: title.replace(/<[^>]+>/g, "").trim(),
-      url,
-      poster,
-      type: type === "peliculas" ? "movie" : "series"
-    });
+    let [_, url, poster, title] = match;
+    if (url.startsWith("/"))
+      url = `https://www.zona-leros.com${url}`;
+    const type = url.includes("/series/") ? "series" : "movie";
+    if (url.includes("/peliculas/") || url.includes("/series/")) {
+      results.push({
+        title: title.replace(/<[^>]+>/g, "").trim(),
+        url,
+        poster,
+        type
+      });
+    }
   }
   return results;
 }
@@ -117,10 +122,16 @@ function resolveAnomizador(url) {
     }
   });
 }
+function cleanTitle(str) {
+  if (!str)
+    return "";
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim();
+}
 function search(query) {
   return __async(this, null, function* () {
     try {
-      const searchUrl = `${BASE}/search?q=${encodeURIComponent(query)}`;
+      const searchStr = cleanTitle(query);
+      const searchUrl = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
       const res = yield fetch(searchUrl, { headers: HEADERS });
       const html = yield res.text();
       if (html.includes("cf-browser-verification")) {
@@ -138,7 +149,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
       console.log(`[ZonaLeRoS] Buscando streams para: "${title}" (${mediaType})`);
-      const results = yield search(title);
+      let results = yield search(title);
+      if (results.length === 0) {
+        const simpleTitle = title.replace(/\(\d{4}\)/g, "").trim();
+        if (simpleTitle !== title) {
+          console.log(`[ZonaLeRoS] Reintentando b\xFAsqueda con: "${simpleTitle}"`);
+          results = yield search(simpleTitle);
+        }
+      }
       if (results.length === 0) {
         console.warn(`[ZonaLeRoS] No se encontraron resultados para: ${title}`);
         return [];

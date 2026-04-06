@@ -36,9 +36,21 @@ async function resolveAnomizador(url) {
     }
 }
 
+/**
+ * Normaliza títulos: elimina tildes y caracteres disruptivos.
+ */
+function cleanTitle(str) {
+    if (!str) return "";
+    return str.normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") // Quitar tildes
+              .replace(/[^\w\s\-]/gi, '')      // Solo alfanuméricos
+              .toLowerCase().trim();
+}
+
 export async function search(query) {
     try {
-        const searchUrl = `${BASE}/search?q=${encodeURIComponent(query)}`;
+        const searchStr = cleanTitle(query);
+        const searchUrl = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
         const res = await fetch(searchUrl, { headers: HEADERS });
         const html = await res.text();
 
@@ -58,19 +70,28 @@ export async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         console.log(`[ZonaLeRoS] Buscando streams para: "${title}" (${mediaType})`);
 
-        // 1. Buscar en ZonaLeRoS usando el título (query)
-        const results = await search(title);
+        // 1. Buscar en ZonaLeRoS usando el título (limpio)
+        let results = await search(title);
+        
+        // 2. Si no hay resultados, intentar quitando el año (ej: "Avatar (2009)" -> "Avatar")
+        if (results.length === 0) {
+            const simpleTitle = title.replace(/\(\d{4}\)/g, '').trim();
+            if (simpleTitle !== title) {
+                console.log(`[ZonaLeRoS] Reintentando búsqueda con: "${simpleTitle}"`);
+                results = await search(simpleTitle);
+            }
+        }
         
         if (results.length === 0) {
             console.warn(`[ZonaLeRoS] No se encontraron resultados para: ${title}`);
             return [];
         }
 
-        // 2. Filtrar por tipo (Película o Serie)
+        // 3. Filtrar por tipo (Película o Serie)
         const targetType = (mediaType === 'tv' || mediaType === 'series') ? 'series' : 'movie';
         const bestMatch = results.find(r => r.type === targetType) || results[0];
 
-        // 3. Obtener la página del contenido
+        // 4. Obtener la página del contenido
         const res = await fetch(bestMatch.url, { headers: HEADERS });
         const html = await res.text();
         const metadata = extractMetadata(html);

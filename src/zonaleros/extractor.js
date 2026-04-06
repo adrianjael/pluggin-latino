@@ -13,19 +13,29 @@ export function extractSearchResults(html) {
     // Si estamos en un entorno sin DOM nativo, usaremos regex.
     // Basado en otros proveedores, asumiremos que se cuenta con un parser o regex simple.
 
-    // Regex para capturar artículos de películas y series
-    // <article class="Anime alt B"> ... <a href="url"> ... <img src="poster"> ... <h3 class="Title">titulo</h3> ...
-    const itemRegex = /<article class="Anime alt B">[\s\S]*?<a href="(https:\/\/www\.zona-leros\.com\/(peliculas|series)\/[^"]+)"[^>]*>[\s\S]*?<img src="([^"]+)"[\s\S]*?<h3 class="Title"[^>]*>([\s\S]*?)<\/h3>/g;
+    // Regex más flexible para capturar el enlace y el título
+    // Buscamos cualquier enlace que contenga /peliculas/ o /series/
+    const itemRegex = /<article class="Anime alt B">[\s\S]*?<a href="([^"]+)"[^>]*>[\s\S]*?<img src="([^"]+)"[\s\S]*?<h3 class="Title"[^>]*>([\s\S]*?)<\/h3>/g;
 
     let match;
     while ((match = itemRegex.exec(html)) !== null) {
-        const [_, url, type, poster, title] = match;
-        results.push({
-            title: title.replace(/<[^>]+>/g, '').trim(),
-            url: url,
-            poster: poster,
-            type: type === 'peliculas' ? 'movie' : 'series'
-        });
+        let [_, url, poster, title] = match;
+
+        // Asegurar URL absoluta
+        if (url.startsWith('/')) url = `https://www.zona-leros.com${url}`;
+
+        // Determinar tipo por la URL
+        const type = url.includes('/series/') ? 'series' : 'movie';
+
+        // Solo agregar si es película o serie (ignorar juegos)
+        if (url.includes('/peliculas/') || url.includes('/series/')) {
+            results.push({
+                title: title.replace(/<[^>]+>/g, '').trim(),
+                url: url,
+                poster: poster,
+                type: type
+            });
+        }
     }
 
     return results;
