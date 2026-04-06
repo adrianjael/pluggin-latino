@@ -21,7 +21,7 @@ async function resolveEmbed(embedUrl, server) {
     try {
         if (server === 'voe') {
             const r = await resolveVoe(embedUrl);
-            return r ? r.url : null;
+            return r ? r : null;
         }
         if (server.includes('filemoon') || server.includes('f75s')) {
             const r = await resolveFilemoon(embedUrl);

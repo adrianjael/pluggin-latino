@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-06T18:16:03.188Z
+ * Generated: 2026-04-06T18:17:26.899Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -370,7 +370,7 @@ function resolveEmbed(embedUrl, server) {
     try {
       if (server === "voe") {
         const r = yield resolve(embedUrl);
-        return r ? r.url : null;
+        return r ? r : null;
       }
       if (server.includes("filemoon") || server.includes("f75s")) {
         const r = yield resolve2(embedUrl);
