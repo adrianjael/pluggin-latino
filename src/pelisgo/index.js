@@ -152,7 +152,7 @@ async function getOnlineStreams(rawHtml) {
         const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
         if (downloadLinksMatch) {
             const rawDownloadsJson = downloadLinksMatch[1];
-            // Buscamos ID, Nombre del servidor y URL directa
+            // Regex ultra-flexible para capturar servidor y URL incluso con escapes
             const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[^}]*?\}/gi;
             let m;
             while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
