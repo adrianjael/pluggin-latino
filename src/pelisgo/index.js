@@ -98,38 +98,17 @@ async function getTmdbInfo(tmdbId, mediaType) {
 }
 
 /**
- * Motor de búsqueda robusto e híbrido
+ * Motor de búsqueda robusto
  */
 async function pelisgoSearch(query, type) {
     const url = `${BASE}/search?q=${encodeURIComponent(query)}`;
     const html = await fetchText(url);
     if (!html) return [];
 
+    const re = /href="(\/(movies|series)\/([a-z0-9\-]+))"/gi;
     const results = [];
     const seen = new Set();
-    const resolvedType = (type === 'movie' || type === 'movies') ? 'movies' : 'series';
-
-    // 1. Intento por __NEXT_DATA__ (JSON Nativo) - Más confiable
-    try {
-        const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
-        if (nextDataMatch) {
-            const data = JSON.parse(nextDataMatch[1]);
-            const items = data?.props?.pageProps?.data?.results || data?.props?.pageProps?.items || [];
-            items.forEach(item => {
-                const slug = item.slug || item.id;
-                const itemType = (item.type || '').includes('movie') ? 'movies' : 'series';
-                if (slug && itemType === resolvedType && !seen.has(slug)) {
-                    seen.add(slug);
-                    results.push(`/${itemType}/${slug}`);
-                }
-            });
-        }
-    } catch (e) {
-        console.log(`[PelisGo] Error parseando NextData: ${e.message}`);
-    }
-
-    // 2. Intento por Regex Flexible (Fallback de HTML)
-    const re = /href=["']?(\/(movies|series)\/([a-z0-9\-]+))["']?/gi;
+    const cleanQuery = normalizeTitle(query);
     let m;
     while ((m = re.exec(html)) !== null) {
         const fullPath = m[1];
@@ -142,8 +121,6 @@ async function pelisgoSearch(query, type) {
             results.push(fullPath);
         }
     }
-    
-    console.log(`[PelisGo Search] "${query}" -> ${results.length} results found.`);
     return results;
 }
 
