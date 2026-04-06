@@ -116,12 +116,10 @@ async function getOnlineStreams(rawHtml) {
                     label = "VOE";
                     const r = await resolveVoe(cleanUrl);
                     if (r) direct = r.url;
-                } else if (cleanUrl.includes('desu')) {
-                    continue; // Omitir Desu (No sirve)
+                } else if (cleanUrl.includes('desu') || cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu')) {
+                    continue; // Omitir Desu y Netu (Inestables)
                 } else if (cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
                     label = "SeekStreaming";
-                } else if (cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu')) {
-                    label = "Netu";
                 }
 
                 if (direct) {

@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T17:46:41.335Z
+ * Generated: 2026-04-06T17:58:54.174Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -346,12 +346,10 @@ function getOnlineStreams(rawHtml) {
             const r = yield resolve2(cleanUrl);
             if (r)
               direct = r.url;
-          } else if (cleanUrl.includes("desu")) {
+          } else if (cleanUrl.includes("desu") || cleanUrl.includes("hqq.ac") || cleanUrl.includes("netu")) {
             continue;
           } else if (cleanUrl.includes("seekstreaming") || cleanUrl.includes("embedseek")) {
             label = "SeekStreaming";
-          } else if (cleanUrl.includes("hqq.ac") || cleanUrl.includes("netu")) {
-            label = "Netu";
           }
           if (direct) {
             streams.push({ name: "PelisGo", title: `[Directo] \xB7 ${label}`, url: direct, quality: "1080p", isM3U8: true });
