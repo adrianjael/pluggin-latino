@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-06T17:03:52.074Z
+ * Generated: 2026-04-06T17:23:40.105Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -147,52 +147,99 @@ function resolve(url) {
 }
 
 // src/resolvers/filemoon.js
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+function base64UrlDecode(input) {
+  let s = input.replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4)
+    s += "=";
+  return typeof Buffer !== "undefined" ? Buffer.from(s, "base64") : new Uint8Array(atob(s).split("").map((c) => c.charCodeAt(0)));
+}
 function unpack(p, a, c, k, e, d) {
   while (c--)
     if (k[c])
       p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
   return p;
 }
+function decryptByse(playback) {
+  return __async(this, null, function* () {
+    try {
+      const keyParts = playback.key_parts;
+      const keyBytes = [];
+      for (const part of keyParts) {
+        const decoded = base64UrlDecode(part);
+        decoded.forEach((b) => keyBytes.push(b));
+      }
+      const key = new Uint8Array(keyBytes);
+      const iv = base64UrlDecode(playback.iv);
+      const fullPayload = base64UrlDecode(playback.payload);
+      const ciphertext = fullPayload.slice(0, -16);
+      const tag = fullPayload.slice(-16);
+      if (typeof crypto !== "undefined" && crypto.subtle) {
+        const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
+        const decrypted = yield crypto.subtle.decrypt(
+          { name: "AES-GCM", iv, tagLength: 128 },
+          cryptoKey,
+          fullPayload
+          // SubtleCrypto espera [ciphertext + tag]
+        );
+        return JSON.parse(new TextDecoder().decode(decrypted));
+      }
+      return null;
+    } catch (e) {
+      console.error(`[Byse Decrypt] Error: ${e.message}`);
+      return null;
+    }
+  });
+}
 function resolve2(url) {
   return __async(this, null, function* () {
     try {
-      console.log(`[Filemoon] Resolviendo Directo (v2.1): ${url}`);
-      const res = yield fetch(url, {
-        headers: {
-          "User-Agent": UA2,
-          "Referer": url,
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+      const id = url.split("/").pop().split("?")[0];
+      console.log(`[Filemoon] Resolviendo Maestro (v3.0): ${id}`);
+      try {
+        const hostname = new URL(url).hostname;
+        const apiUrl = `https://${hostname}/api/videos/${id}`;
+        const apiRes = yield fetch(apiUrl, {
+          headers: { "User-Agent": UA2, "Referer": url }
+        });
+        const data = yield apiRes.json();
+        if (data.playback) {
+          const decrypted = yield decryptByse(data.playback);
+          if (decrypted && decrypted.sources) {
+            const best = decrypted.sources[0];
+            console.log(`[Filemoon] -> m3u8 via API: ${best.url.substring(0, 50)}...`);
+            return {
+              url: best.url,
+              quality: best.height ? `${best.height}p` : "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA2, "Referer": url }
+            };
+          }
         }
+      } catch (apiErr) {
+        console.log(`[Filemoon] API Strategy failed: ${apiErr.message}`);
+      }
+      console.log("[Filemoon] Fallback a motor Unpacker...");
+      const res = yield fetch(url, {
+        headers: { "User-Agent": UA2, "Referer": url }
       });
       const html = yield res.text();
       const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
       for (const match of evalMatches) {
-        const p = match[1];
-        const a = parseInt(match[2]);
-        const c = parseInt(match[3]);
-        const k = match[4].split("|");
-        const unpacked = unpack(p, a, c, k, 0, {});
+        const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
         const fileMatch = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
         if (fileMatch) {
-          const streamUrl = fileMatch[1];
-          console.log(`[Filemoon] -> m3u8 encontrado: ${streamUrl.substring(0, 60)}...`);
           return {
-            url: streamUrl,
+            url: fileMatch[1],
             quality: "1080p",
             isM3U8: true,
-            headers: {
-              "User-Agent": UA2,
-              "Referer": url,
-              "Origin": "https://filemoon.sx"
-            }
+            headers: { "User-Agent": UA2, "Referer": url }
           };
         }
       }
-      console.log("[Filemoon] No se encontro el bloque packed con el video.");
       return null;
     } catch (e) {
-      console.error(`[Filemoon] Error en resolutor: ${e.message}`);
+      console.error(`[Filemoon] Error Global: ${e.message}`);
       return null;
     }
   });
