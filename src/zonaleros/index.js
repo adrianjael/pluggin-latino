@@ -47,83 +47,117 @@ function cleanTitle(str) {
               .toLowerCase().trim();
 }
 
-export async function search(query) {
-    try {
-        const searchStr = cleanTitle(query);
-        const searchUrl = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
-        const res = await fetch(searchUrl, { headers: HEADERS });
-        const html = await res.text();
+/**
+ * Normaliza títulos: elimina tildes y caracteres disruptivos.
+ */
+function cleanTitle(str) {
+    if (!str) return "";
+    return str.normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") // Quitar tildes
+              .replace(/[^\w\s\-]/gi, ' ')      // Solo alfanuméricos y espacios
+              .replace(/\s+/g, ' ')            // Colapsar espacios
+              .toLowerCase().trim();
+}
 
-        if (html.includes('cf-browser-verification')) {
-            console.error("ZonaLeros: Bloqueado por Cloudflare");
+/**
+ * Petición de búsqueda interna a ZonaLeRoS.
+ * Devuelve [] si es bloqueado por Cloudflare o fallo de red.
+ */
+async function zonalerosSearch(query) {
+    const searchStr = cleanTitle(query);
+    if (!searchStr) return [];
+    
+    const url = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
+    try {
+        const res = await fetch(url, { headers: HEADERS });
+        const html = await res.text();
+        
+        if (html.includes('cf-browser-verification') || html.includes('Checking your browser')) {
+            console.error("[ZonaLeRoS] Bloqueo de Cloudflare detectado en la búsqueda.");
             return [];
         }
-
+        
         return extractSearchResults(html);
     } catch (e) {
-        console.error("Zonaleros Search Error:", e);
+        console.error(`[ZonaLeRoS] Fallo en búsqueda: ${e.message}`);
         return [];
     }
 }
 
 export async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
-        console.log(`[ZonaLeRoS] Buscando streams para: "${title}" (${mediaType})`);
+        console.log(`[ZonaLeRoS] Iniciando extracción: "${title}" (${mediaType})`);
 
-        // 1. Buscar en ZonaLeRoS usando el título (limpio)
-        let results = await search(title);
-        
-        // 2. Si no hay resultados, intentar quitando el año (ej: "Avatar (2009)" -> "Avatar")
-        if (results.length === 0) {
-            const simpleTitle = title.replace(/\(\d{4}\)/g, '').trim();
-            if (simpleTitle !== title) {
-                console.log(`[ZonaLeRoS] Reintentando búsqueda con: "${simpleTitle}"`);
-                results = await search(simpleTitle);
-            }
+        // 1. Estrategia de Búsqueda de 3 Capas
+        let results = [];
+        const yearMatch = title.match(/\((\d{4})\)/);
+        const year = yearMatch ? yearMatch[1] : "";
+        const pureTitle = title.replace(/\(\d{4}\)/g, '').trim();
+
+        // Capa A: Título + Año (Ej: "Avatar 2009")
+        if (year) {
+            console.log(`[ZonaLeRoS] Capa A: Buscando "${pureTitle} ${year}"`);
+            results = await zonalerosSearch(`${pureTitle} ${year}`);
         }
-        
+
+        // Capa B: Título Puro (Ej: "Avatar")
         if (results.length === 0) {
-            console.warn(`[ZonaLeRoS] No se encontraron resultados para: ${title}`);
+            console.log(`[ZonaLeRoS] Capa B: Buscando "${pureTitle}"`);
+            results = await zonalerosSearch(pureTitle);
+        }
+
+        // Capa C: Título Original Completo (por si acaso)
+        if (results.length === 0 && pureTitle !== title) {
+            console.log(`[ZonaLeRoS] Capa C: Buscando "${title}"`);
+            results = await zonalerosSearch(title);
+        }
+
+        if (results.length === 0) {
+            console.warn(`[ZonaLeRoS] No se encontraron coincidencias en ZonaLeRoS para: ${title}`);
             return [];
         }
 
-        // 3. Filtrar por tipo (Película o Serie)
+        // 2. Selección del Mejor Resultado
+        // Priorizamos el que coincida con el tipo (movie/series)
         const targetType = (mediaType === 'tv' || mediaType === 'series') ? 'series' : 'movie';
-        const bestMatch = results.find(r => r.type === targetType) || results[0];
+        let match = results.find(r => r.type === targetType && cleanTitle(r.title).includes(cleanTitle(pureTitle))) 
+                 || results.find(r => r.type === targetType)
+                 || results[0];
 
-        // 4. Obtener la página del contenido
-        const res = await fetch(bestMatch.url, { headers: HEADERS });
-        const html = await res.text();
-        const metadata = extractMetadata(html);
+        console.log(`[ZonaLeRoS] Seleccionando: "${match.title}" -> ${match.url}`);
+
+        // 3. Obtener la página y extraer metadata (anomizadores)
+        const itemRes = await fetch(match.url, { headers: HEADERS });
+        const itemHtml = await itemRes.text();
+        const meta = extractMetadata(itemHtml);
 
         const streams = [];
-        for (let serverUrl of metadata.servers) {
+        for (let serverUrl of meta.servers) {
             serverUrl = serverUrl.replace(/\\/g, "").replace(/['"]/g, "");
             const realUrl = await resolveAnomizador(serverUrl);
+            if (!realUrl) continue;
 
-            let label = "Desconocido";
             const lowUrl = realUrl.toLowerCase();
+            let label = "Desconocido";
             if (lowUrl.includes('voe')) label = "VOE";
             else if (lowUrl.includes('streamtape')) label = "Streamtape";
             else if (lowUrl.includes('byse')) label = "Byse (Dual)";
             else if (lowUrl.includes('mega')) label = "MEGA (Descarga)";
-            else if (lowUrl.includes('1fichier')) label = "1Fichier (Descarga)";
-            else if (lowUrl.includes('mediafire')) label = "Mediafire (Descarga)";
-
-            if (realUrl) {
-                streams.push({
-                    name: "ZonaLeRoS",
-                    title: `[Directo] \xB7 ${label}`,
-                    url: realUrl,
-                    quality: 'HD',
-                    isM3U8: lowUrl.includes('.m3u8')
-                });
-            }
+            else if (lowUrl.includes('1fichier')) label = "1Fichier";
+            else if (lowUrl.includes('mediafire')) label = "Mediafire";
+            
+            streams.push({
+                name: "ZonaLeRoS",
+                title: `[Directo] \xB7 ${label}`,
+                url: realUrl,
+                quality: 'HD',
+                isM3U8: lowUrl.includes('.m3u8')
+            });
         }
 
         return streams;
     } catch (e) {
-        console.error("Zonaleros Streams Error:", e);
+        console.error(`[ZonaLeRoS] Error Global: ${e.message}`);
         return [];
     }
 }
