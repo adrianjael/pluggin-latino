@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T16:14:44.346Z
+ * Generated: 2026-04-06T16:31:08.664Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -19,7 +19,7 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve3, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -34,17 +34,140 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve3(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
 
+// src/resolvers/filemoon.js
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function unpack(p, a, c, k, e, d) {
+  while (c--)
+    if (k[c])
+      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
+  return p;
+}
+function resolve(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[Filemoon] Resolviendo Directo: ${url}`);
+      const res = yield fetch(url, {
+        headers: {
+          "User-Agent": UA,
+          "Referer": "https://pelisgo.online/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+        }
+      });
+      const html = yield res.text();
+      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+      if (packedMatch) {
+        const p = packedMatch[1];
+        const a = parseInt(packedMatch[2]);
+        const c = parseInt(packedMatch[3]);
+        const k = packedMatch[4].split("|");
+        const unpacked = unpack(p, a, c, k, 0, {});
+        const fileMatch = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
+        if (fileMatch) {
+          const streamUrl = fileMatch[1];
+          console.log(`[Filemoon] -> m3u8 encontrado: ${streamUrl.substring(0, 60)}...`);
+          return {
+            url: streamUrl,
+            quality: "1080p",
+            isM3U8: true,
+            headers: {
+              "User-Agent": UA,
+              "Referer": url,
+              "Origin": "https://filemoon.sx"
+            }
+          };
+        }
+      }
+      console.log("[Filemoon] No se encontro el bloque packed o el m3u8.");
+      return null;
+    } catch (e) {
+      console.error(`[Filemoon] Error en resolutor: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/voe.js
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function decodeBase64(input) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  let str = String(input).replace(/=+$/, "");
+  let output = "";
+  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+function resolve2(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[VOE] Resolviendo Directo: ${url}`);
+      const res = yield fetch(url, { headers: { "User-Agent": UA2 } });
+      let html = yield res.text();
+      if (html.includes("Redirecting") || html.length < 1500) {
+        const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+        if (rm) {
+          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA2 } });
+          html = yield res2.text();
+        }
+      }
+      const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[1].trim());
+          let encText = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (typeof encText !== "string")
+            return null;
+          let rot13 = encText.replace(/[a-zA-Z]/g, (c) => String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
+          const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+          for (const n of noise)
+            rot13 = rot13.split(n).join("");
+          let b64_1 = decodeBase64(rot13);
+          let shifted = "";
+          for (let i = 0; i < b64_1.length; i++)
+            shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+          let reversed = shifted.split("").reverse().join("");
+          let data = JSON.parse(decodeBase64(reversed));
+          if (data && data.source) {
+            console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
+            return {
+              url: data.source,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA2, "Referer": url }
+            };
+          }
+        } catch (ex) {
+          console.error("[VOE] Decryption failed:", ex.message);
+        }
+      }
+      const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+      if (m3u8Match) {
+        return {
+          url: m3u8Match[1],
+          quality: "1080p",
+          isM3U8: true,
+          headers: { "User-Agent": UA2, "Referer": url }
+        };
+      }
+      return null;
+    } catch (e) {
+      console.error(`[VOE] Error resolviedo: ${e.message}`);
+      return null;
+    }
+  });
+}
+
 // src/pelisgo/index.js
 var BASE = "https://pelisgo.online";
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
 var COMMON_HEADERS = {
-  "User-Agent": UA,
+  "User-Agent": UA3,
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
   "Cache-Control": "no-cache"
@@ -65,12 +188,6 @@ function getSpanishTitle(tmdbId, type) {
       return null;
     }
   });
-}
-function unpack(p, a, c, k, e, d) {
-  while (c--)
-    if (k[c])
-      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
-  return p;
 }
 function fetchText(_0) {
   return __async(this, arguments, function* (url, referer = BASE) {
@@ -123,24 +240,6 @@ function pelisgoSearch(query, type) {
     return results;
   });
 }
-function resolveFilemoon(url) {
-  return __async(this, null, function* () {
-    try {
-      const html = yield fetchText(url, BASE);
-      const packed = html.match(/eval\(function\(p,a,c,k,e,d\).*\)/);
-      if (!packed)
-        return null;
-      const parts = packed[0].match(/\}\('(.*)',\s*(\d+),\s*(\d+),\s*'(.*)'\.split\('\|'\)/);
-      if (!parts)
-        return null;
-      const unpacked = unpack(parts[1], parseInt(parts[2]), parseInt(parts[3]), parts[4].split("|"), 0, {});
-      const linkMatch = unpacked.match(/file:"(.*?)"/);
-      return linkMatch ? linkMatch[1] : null;
-    } catch (e) {
-      return null;
-    }
-  });
-}
 function getOnlineStreams(rawHtml) {
   return __async(this, null, function* () {
     const streams = [];
@@ -160,13 +259,20 @@ function getOnlineStreams(rawHtml) {
           let direct = null;
           if (cleanUrl.includes("filemoon") || cleanUrl.includes("f75s.com")) {
             label = "Magi (Filemoon)";
-            direct = yield resolveFilemoon(cleanUrl);
+            const r = yield resolve(cleanUrl);
+            if (r)
+              direct = r.url;
+          } else if (cleanUrl.includes("voe.sx")) {
+            label = "VOE";
+            const r = yield resolve2(cleanUrl);
+            if (r)
+              direct = r.url;
+          } else if (cleanUrl.includes("desu")) {
+            label = "Desu";
           } else if (cleanUrl.includes("seekstreaming") || cleanUrl.includes("embedseek")) {
             label = "SeekStreaming";
           } else if (cleanUrl.includes("hqq.ac") || cleanUrl.includes("netu")) {
             label = "Netu";
-          } else if (cleanUrl.includes("desu")) {
-            label = "Desu";
           }
           if (direct) {
             streams.push({ name: "PelisGo", title: `[Directo] \xB7 ${label}`, url: direct, quality: "1080p", isM3U8: true });
@@ -209,7 +315,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
       const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      console.log(`[PelisGo v1.6.9] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
+      console.log(`[PelisGo v1.7.0] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
       let paths = yield pelisgoSearch(title, type);
       if (paths.length === 0 && tmdbId) {
         console.log(`[PelisGo] Reintentando con t\xEDtulo oficial de TMDB...`);
@@ -228,7 +334,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       if (!html)
         return [];
       const onlineStreams = yield getOnlineStreams(html);
-      console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (Buzz/Pixel Global Scan).`);
+      console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (Direct Video Edition).`);
       return onlineStreams;
     } catch (e) {
       return [];

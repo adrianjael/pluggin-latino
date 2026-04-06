@@ -1,101 +1,81 @@
-import axios from 'axios';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-
-function base64Decode(e) {
-    try {
-        return typeof atob !== 'undefined' ? atob(e) : Buffer.from(e, 'base64').toString('utf8');
-    } catch {
-        return null;
+function decodeBase64(input) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let str = String(input).replace(/=+$/, '');
+    let output = '';
+    for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+        buffer = chars.indexOf(buffer);
     }
+    return output;
 }
 
-function voeDecode(e, t) {
-    try {
-        let i = t.replace(/^\[|\]$/g, "").split("','").map((c) => c.replace(/^'+|'+$/g, "")).map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), o = "";
-        for (let c of e) {
-            let u = c.charCodeAt(0);
-            u > 64 && u < 91 ? u = (u - 52) % 26 + 65 : u > 96 && u < 123 && (u = (u - 84) % 26 + 97), o += String.fromCharCode(u);
-        }
-        for (let c of i) o = o.replace(new RegExp(c, "g"), "_");
-        o = o.split("_").join("");
-        let r = base64Decode(o);
-        if (!r) return null;
-        let a = "";
-        for (let c = 0; c < r.length; c++) a += String.fromCharCode((r.charCodeAt(c) - 3 + 256) % 256);
-        let l = a.split("").reverse().join(""), s = base64Decode(l);
-        return s ? JSON.parse(s) : null;
-    } catch (n) {
-        console.log("[VOE] voeDecode error:", n.message);
-        return null;
-    }
-}
-
-async function getQuality(url, referer) {
-    try {
-        const { data } = await axios.get(url, {
-            timeout: 5000,
-            headers: { 'User-Agent': UA, 'Referer': referer },
-            responseType: 'text'
-        });
-        if (!data.includes("#EXT-X-STREAM-INF")) return "1080p";
-        let maxRes = 0;
-        const lines = data.split('\n');
-        for (const line of lines) {
-            const match = line.match(/RESOLUTION=\d+x(\d+)/);
-            if (match) {
-                const res = parseInt(match[1]);
-                if (res > maxRes) maxRes = res;
-            }
-        }
-        return maxRes > 0 ? `${maxRes}p` : "1080p";
-    } catch {
-        return "1080p";
-    }
-}
-
+/**
+ * Resuelve un enlace de VOE al streaming .m3u8 directo.
+ */
 export async function resolve(url) {
     try {
-        console.log(`[VOE] Resolviendo: ${url}`);
-        let res = await axios.get(url, {
-            timeout: 15000,
-            headers: { 'User-Agent': UA, 'Accept': 'text/html,*/*' },
-            maxRedirects: 5
-        });
-        let html = String(res.data || "");
+        console.log(`[VOE] Resolviendo Directo: ${url}`);
+        
+        const res = await fetch(url, { headers: { 'User-Agent': UA } });
+        let html = await res.text();
 
-        if (/window\.location\.href\s*=\s*'([^']+)'/i.test(html)) {
-            const redirect = html.match(/window\.location\.href\s*=\s*'([^']+)'/i)[1];
-            res = await axios.get(redirect, { headers: { 'User-Agent': UA, 'Referer': url } });
-            html = String(res.data || "");
-        }
-
-        const match = html.match(/json">\s*\[\s*['"]([^'"]+)['"]\s*\]\s*<\/script>\s*<script[^>]*src=['"]([^'"]+)['"]/i);
-        if (match) {
-            const encoded = match[1];
-            const loader = match[2].startsWith("http") ? match[2] : new URL(match[2], url).href;
-            const loaderRes = await axios.get(loader, { headers: { 'User-Agent': UA, 'Referer': url } });
-            const loaderJs = String(loaderRes.data || "");
-            const arrayMatch = loaderJs.match(/(\[(?:'[^']{1,10}'[\s,]*){4,12}\])/i) || loaderJs.match(/(\[(?:"[^"]{1,10}"[,\s]*){4,12}\])/i);
-            if (arrayMatch) {
-                const decoded = voeDecode(encoded, arrayMatch[1]);
-                if (decoded && (decoded.source || decoded.direct_access_url)) {
-                    const finalUrl = decoded.source || decoded.direct_access_url;
-                    return { url: finalUrl, quality: await getQuality(finalUrl, url), headers: { Referer: url } };
-                }
+        // Manejar redirecciones internas de VOE
+        if (html.includes('Redirecting') || html.length < 1500) {
+            const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+            if (rm) {
+                const res2 = await fetch(rm[1], { headers: { 'User-Agent': UA } });
+                html = await res2.text();
             }
         }
 
-        // Fallback
-        const sources = [...html.matchAll(/(?:mp4|hls)["']\s*:\s*["']([^"']+)["']/gi)];
-        for (const s of sources) {
-            let src = s[1];
-            if (src.startsWith("aHR0")) src = base64Decode(src);
-            if (src) return { url: src, quality: await getQuality(src, url), headers: { Referer: url } };
+        const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+        if (jsonMatch) {
+            try {
+                const parsed = JSON.parse(jsonMatch[1].trim());
+                let encText = Array.isArray(parsed) ? parsed[0] : parsed;
+                if (typeof encText !== 'string') return null;
+
+                // VOE Obfuscation: ROT13 + Noise + Base64 + Shift + Reverse
+                let rot13 = encText.replace(/[a-zA-Z]/g, c =>
+                    String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
+                
+                const noise = ['@$', '^^', '~@', '%?', '*~', '!!', '#&'];
+                for (const n of noise) rot13 = rot13.split(n).join('');
+                
+                let b64_1 = decodeBase64(rot13);
+                let shifted = "";
+                for (let i = 0; i < b64_1.length; i++) shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+                
+                let reversed = shifted.split('').reverse().join('');
+                let data = JSON.parse(decodeBase64(reversed));
+                
+                if (data && data.source) {
+                    console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
+                    return {
+                        url: data.source,
+                        quality: '1080p',
+                        isM3U8: true,
+                        headers: { 'User-Agent': UA, 'Referer': url }
+                    };
+                }
+            } catch (ex) { console.error("[VOE] Decryption failed:", ex.message); }
         }
+
+        // Fallback: buscar m3u8 directamente en el HTML
+        const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+        if (m3u8Match) {
+            return {
+                url: m3u8Match[1],
+                quality: '1080p',
+                isM3U8: true,
+                headers: { 'User-Agent': UA, 'Referer': url }
+            };
+        }
+
         return null;
     } catch (e) {
-        console.log(`[VOE] Error: ${e.message}`);
+        console.error(`[VOE] Error resolviedo: ${e.message}`);
         return null;
     }
 }

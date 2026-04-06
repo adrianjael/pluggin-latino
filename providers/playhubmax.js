@@ -1,6 +1,6 @@
-﻿/**
+/**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-04T05:55:17.682Z
+ * Generated: 2026-04-06T16:31:08.683Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;

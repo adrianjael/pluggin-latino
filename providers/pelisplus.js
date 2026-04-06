@@ -1,6 +1,6 @@
-﻿/**
+/**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-04T05:55:17.675Z
+ * Generated: 2026-04-06T16:31:08.676Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -101,7 +101,7 @@ var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-n
 function normalizeTitle(t) {
   if (!t)
     return "";
-  return t.toLowerCase().replace(/[Ã¡Ã Ã¤Ã¢]/g, "a").replace(/[Ã©Ã¨Ã«Ãª]/g, "e").replace(/[Ã­Ã¬Ã¯Ã®]/g, "i").replace(/[Ã³Ã²Ã¶Ã´]/g, "o").replace(/[ÃºÃ¹Ã¼Ã»]/g, "u").replace(/Ã±/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 function calculateSimilarity(title1, title2) {
   const norm1 = normalizeTitle(title1);
@@ -212,23 +212,6 @@ function decodeBase64(input) {
     buffer = chars.indexOf(buffer);
   }
   return output;
-}
-
-function resolveFilemoon(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      const resp = yield fetch(embedUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36', 'Referer': embedUrl } });
-      const body = yield resp.text();
-      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        const linkMatch = unpacked.match(/file:"(.*?)"/);
-        if (linkMatch) return linkMatch[1];
-      }
-      const rawM3u8 = body.match(/https?:\/\/[^"\s\\]+\.m3u8[^"\s\\]*/i);
-      return rawM3u8 ? rawM3u8[0].replace(/\\/g, "") : embedUrl;
-    } catch (e) { return embedUrl; }
-  });
 }
 function resolveVoesx(embedUrl) {
   return __async(this, null, function* () {

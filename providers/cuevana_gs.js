@@ -1,6 +1,6 @@
-﻿/**
+/**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-04T05:55:17.626Z
+ * Generated: 2026-04-06T16:31:08.628Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -22,7 +22,7 @@ var __spreadValues = (a, b) => {
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve3, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -37,67 +37,13 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve3(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
 
-// src/cuevana_gs/extractor.js
-var BASE_URL = "https://cuevana.gs";
-var BASE_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
-  "Referer": BASE_URL,
-  "Accept-Language": "es-ES,es;q=0.9"
-};
-function unpackEval(payload, radix, symtab) {
-  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
-    let result = 0;
-    const digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    for (let i = 0; i < match.length; i++) {
-      let pos = digits.indexOf(match[i]);
-      if (pos === -1 || pos >= radix)
-        return match;
-      result = result * radix + pos;
-    }
-    if (result >= symtab.length)
-      return match;
-    return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
-  });
-}
-function extractM3u8FromHtml(html) {
-  let unpacked = "";
-  const packMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
-  if (packMatch) {
-    try {
-      unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-    } catch (e) {
-    }
-  } else {
-    unpacked = html;
-  }
-  unpacked = unpacked.replace(/k:\/\//g, "https://");
-  const m = unpacked.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
-  if (m)
-    return m[0].replace(/\\/g, "");
-  const vimeosImgMatch = html.match(/img src=["']([^"']+\/(i|thumbs)\/\d+\/\d+\/([a-zA-Z0-9]+)\.jpg)["']/i);
-  if (vimeosImgMatch) {
-    const id = vimeosImgMatch[3];
-    console.log(`[Cuevana.gs] Vimeos Fallback: ID=${id} from image.`);
-    const tMatch = html.match(/t=([a-zA-Z0-9\-_]+)/);
-    const sMatch = html.match(/s=(\d+)/);
-    const eMatch = html.match(/e=([a-zA-Z0-9\-_]+)/);
-    const vMatch = html.match(/v=(\d+)/);
-    const srvMatch = html.match(/srv=([a-zA-Z0-9]+)/);
-    if (tMatch && sMatch) {
-      const p1Match = vimeosImgMatch[1].match(/\/(\d+)\/\d+\//);
-      const p2Match = vimeosImgMatch[1].match(/\/(\d+)\//);
-      const p1 = p1Match ? p1Match[1] : "00009";
-      const p2 = p2Match ? p2Match[1] : "02";
-      return `https://p4.vimeos.zip/hls2/${p2}/${p1}/${id}_,n,h,.urlset/master.m3u8?t=${tMatch[1]}&s=${sMatch[1]}&e=${eMatch[1] || "43200"}&v=${vMatch ? vMatch[1] : ""}&srv=${srvMatch ? srvMatch[1] : "s9"}&i=0.3&sp=0&fr=${id}&r=e`;
-    }
-  }
-  return null;
-}
+// src/resolvers/voe.js
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function decodeBase64(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   let str = String(input).replace(/=+$/, "");
@@ -107,52 +53,26 @@ function decodeBase64(input) {
   }
   return output;
 }
-function fetchHtml(_0) {
-  return __async(this, arguments, function* (url, referer = BASE_URL) {
-    const res = yield fetch(url, { headers: __spreadProps(__spreadValues({}, BASE_HEADERS), { Referer: referer }) });
-    return res.text();
-  });
-}
-function resolveGenericEmbed(embedUrl) {
+function resolve(url) {
   return __async(this, null, function* () {
     try {
-      const html = yield fetchHtml(embedUrl, "https://cuevana.gs/");
-      return extractM3u8FromHtml(html);
-    } catch (e) {
-      return null;
-    }
-  });
-}
-
-function resolveFilemoon(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      const resp = yield fetch(embedUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36', 'Referer': embedUrl } });
-      const body = yield resp.text();
-      const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        const unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        const linkMatch = unpacked.match(/file:"(.*?)"/);
-        if (linkMatch) return linkMatch[1];
-      }
-      const rawM3u8 = body.match(/https?:\/\/[^"\s\\]+\.m3u8[^"\s\\]*/i);
-      return rawM3u8 ? rawM3u8[0].replace(/\\/g, "") : embedUrl;
-    } catch (e) { return embedUrl; }
-  });
-}
-function resolveVoesx(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      const html = yield fetchHtml(embedUrl, embedUrl);
-      if (html.includes("Redirecting") || html.length < 1e3) {
+      console.log(`[VOE] Resolviendo Directo: ${url}`);
+      const res = yield fetch(url, { headers: { "User-Agent": UA } });
+      let html = yield res.text();
+      if (html.includes("Redirecting") || html.length < 1500) {
         const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
-        if (rm)
-          return resolveVoesx(rm[1]);
+        if (rm) {
+          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA } });
+          html = yield res2.text();
+        }
       }
       const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
       if (jsonMatch) {
         try {
-          let encText = JSON.parse(jsonMatch[1].trim())[0];
+          const parsed = JSON.parse(jsonMatch[1].trim());
+          let encText = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (typeof encText !== "string")
+            return null;
           let rot13 = encText.replace(/[a-zA-Z]/g, (c) => String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
           const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
           for (const n of noise)
@@ -163,12 +83,115 @@ function resolveVoesx(embedUrl) {
             shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
           let reversed = shifted.split("").reverse().join("");
           let data = JSON.parse(decodeBase64(reversed));
-          if (data && data.source)
-            return data.source;
+          if (data && data.source) {
+            console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
+            return {
+              url: data.source,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA, "Referer": url }
+            };
+          }
         } catch (ex) {
+          console.error("[VOE] Decryption failed:", ex.message);
         }
       }
-      return extractM3u8FromHtml(html);
+      const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+      if (m3u8Match) {
+        return {
+          url: m3u8Match[1],
+          quality: "1080p",
+          isM3U8: true,
+          headers: { "User-Agent": UA, "Referer": url }
+        };
+      }
+      return null;
+    } catch (e) {
+      console.error(`[VOE] Error resolviedo: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/filemoon.js
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function unpack(p, a, c, k, e, d) {
+  while (c--)
+    if (k[c])
+      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
+  return p;
+}
+function resolve2(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[Filemoon] Resolviendo Directo: ${url}`);
+      const res = yield fetch(url, {
+        headers: {
+          "User-Agent": UA2,
+          "Referer": "https://pelisgo.online/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+        }
+      });
+      const html = yield res.text();
+      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+      if (packedMatch) {
+        const p = packedMatch[1];
+        const a = parseInt(packedMatch[2]);
+        const c = parseInt(packedMatch[3]);
+        const k = packedMatch[4].split("|");
+        const unpacked = unpack(p, a, c, k, 0, {});
+        const fileMatch = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
+        if (fileMatch) {
+          const streamUrl = fileMatch[1];
+          console.log(`[Filemoon] -> m3u8 encontrado: ${streamUrl.substring(0, 60)}...`);
+          return {
+            url: streamUrl,
+            quality: "1080p",
+            isM3U8: true,
+            headers: {
+              "User-Agent": UA2,
+              "Referer": url,
+              "Origin": "https://filemoon.sx"
+            }
+          };
+        }
+      }
+      console.log("[Filemoon] No se encontro el bloque packed o el m3u8.");
+      return null;
+    } catch (e) {
+      console.error(`[Filemoon] Error en resolutor: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/cuevana_gs/extractor.js
+var BASE_URL = "https://cuevana.gs";
+var BASE_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+  "Referer": BASE_URL,
+  "Accept-Language": "es-ES,es;q=0.9"
+};
+function fetchHtml(_0) {
+  return __async(this, arguments, function* (url, referer = BASE_URL) {
+    const res = yield fetch(url, { headers: __spreadProps(__spreadValues({}, BASE_HEADERS), { Referer: referer }) });
+    return res.text();
+  });
+}
+function resolveEmbed(embedUrl, server) {
+  return __async(this, null, function* () {
+    try {
+      if (server === "voe") {
+        const r = yield resolve(embedUrl);
+        return r ? r.url : null;
+      }
+      if (server.includes("filemoon") || server.includes("f75s")) {
+        const r = yield resolve2(embedUrl);
+        return r ? r.url : null;
+      }
+      const html = yield fetchHtml(embedUrl, embedUrl);
+      const m = html.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
+      return m ? m[0].replace(/\\/g, "") : null;
     } catch (e) {
       return null;
     }
@@ -199,7 +222,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
     var _a, _b, _c, _d, _e, _f;
     const isMovie = mediaType === "movie";
     const targetType = isMovie ? "movies" : "tvshows";
-    console.log(`[Cuevana.gs] Extracting: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
+    console.log(`[Cuevana.gs v2.0] Extracting: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
     try {
       const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
       let searchTitle = providedTitle || tmdbInfo.title;
@@ -228,77 +251,60 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         searchJson = yield performSearch(searchTitle);
       }
       if (searchJson.error || !searchJson.data || !searchJson.data.posts || searchJson.data.posts.length === 0) {
-        console.log(`[Cuevana.gs] No results found in any search attempt.`);
+        console.log(`[Cuevana.gs] No results found.`);
         return [];
       }
       const posts = searchJson.data.posts;
       const normalizedTarget = (tmdbInfo.title || searchTitle).toLowerCase().replace(/[^a-z0-9]/g, "");
       let post = posts.find((p) => p.type === targetType && p.title.toLowerCase().replace(/[^a-z0-9]/g, "").includes(normalizedTarget)) || posts.find((p) => p.type === targetType) || posts[0];
       let postId = post._id;
-      console.log(`[Cuevana.gs] Best match: "${post.title}" (postId: ${postId}) [Type: ${post.type}]`);
       if (!isMovie && season && episode) {
-        console.log(`[Cuevana.gs] TV Mode: Resolving postId for S${season}E${episode}...`);
         try {
           const episodesUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${postId}&season=${season}&postsPerPage=100`;
           const epRes = yield fetch(episodesUrl, { headers: BASE_HEADERS });
           const epJson = yield epRes.json();
           if (!epJson.error && epJson.data && epJson.data.posts) {
-            const episodes = epJson.data.posts;
-            const epMatch = episodes.find((e) => parseInt(e.episode_number) === parseInt(episode));
-            if (epMatch) {
+            const epMatch = epJson.data.posts.find((e) => parseInt(e.episode_number) === parseInt(episode));
+            if (epMatch)
               postId = epMatch._id;
-              console.log(`[Cuevana.gs] Episode postId resolved via API: ${postId}`);
-            } else {
-              console.log(`[Cuevana.gs] No episode match found in API for E${episode}.`);
-            }
-          } else {
-            console.log(`[Cuevana.gs] Error in episodes API response or empty results.`);
           }
         } catch (err) {
-          console.error(`[Cuevana.gs] Error resolving episodes via API: ${err.message}`);
         }
       }
       let playerUrl = `${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`;
       const playerRes = yield fetch(playerUrl, { headers: BASE_HEADERS });
       const playerJson = yield playerRes.json();
       if (playerJson.error || !playerJson.data || !playerJson.data.embeds || playerJson.data.embeds.length === 0) {
-        console.log(`[Cuevana.gs] No embeds found for postId: ${postId}`);
         return [];
       }
       const embeds = playerJson.data.embeds;
-      console.log(`[Cuevana.gs] Embeds found: ${embeds.length}`);
       const streamPromises = embeds.map(function(embed) {
-        const proxyUrl = embed.url;
-        const lang = embed.lang || "Latino";
-        const quality = embed.quality || "HD";
-        let server = "unknown";
-        try {
-          const urlObj = new URL(proxyUrl);
-          server = (urlObj.searchParams.get("server") || "unknown").toLowerCase();
-        } catch (e) {
-        }
-        if (server === "goodstream")
-          return null;
-        console.log(`[Cuevana.gs] -> Resolving [${server}] ${lang} ${quality}`);
-        return fetchHtml(proxyUrl, BASE_URL).then(function(proxyHtml) {
-          const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
-          if (!iframeMatch)
-            return null;
-          const embedUrl = iframeMatch[1];
-          let resolvePromise;
-          if (server === "filemoon") resolvePromise = resolveFilemoon(embedUrl); else if (server === "voe") {
-            resolvePromise = resolveVoesx(embedUrl);
-          } else {
-            resolvePromise = resolveGenericEmbed(embedUrl);
+        return __async(this, null, function* () {
+          const proxyUrl = embed.url;
+          const lang = embed.lang || "Latino";
+          const quality = embed.quality || "HD";
+          let server = "unknown";
+          try {
+            const urlObj = new URL(proxyUrl);
+            server = (urlObj.searchParams.get("server") || "unknown").toLowerCase();
+          } catch (e) {
           }
-          return resolvePromise.then(function(finalUrl) {
+          if (server === "goodstream")
+            return null;
+          try {
+            const proxyHtml = yield fetchHtml(proxyUrl, BASE_URL);
+            const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+            if (!iframeMatch)
+              return null;
+            const embedUrl = iframeMatch[1];
+            const finalUrl = yield resolveEmbed(embedUrl, server);
             if (!finalUrl || !finalUrl.startsWith("http"))
               return null;
             const isVimeos = server.includes("vimeos");
             const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
             return {
               name: "Cuevana.gs",
-              title: server + " (" + lang + ") " + quality,
+              title: `${server} (${lang}) ${quality}`,
               url: finalUrl,
               quality,
               headers: {
@@ -307,17 +313,13 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
                 "Origin": isVimeos ? "https://vimeos.net" : void 0
               }
             };
-          });
-        }).catch(function() {
-          return null;
+          } catch (e) {
+            return null;
+          }
         });
       });
       const results = yield Promise.all(streamPromises);
-      const streams = results.filter(function(s) {
-        return s !== null;
-      });
-      console.log(`[Cuevana.gs] Final streams: ${streams.length}`);
-      return streams;
+      return results.filter((s) => s !== null);
     } catch (error) {
       console.error(`[Cuevana.gs] Global Error: ${error.message}`);
       return [];

@@ -1,8 +1,11 @@
 /**
- * PelisGo Provider for Nuvio (V1.6.9 - Global Scan Edition)
+ * PelisGo Provider for Nuvio (V1.7.0 - Direct Video Edition)
  * Reingeniería basada en escaneo global de fragmentos Next.js.
- * Motor: Captura universal de Buzzheavier y Pixeldrain (Directo/Interno).
+ * Motor: Extracción directa de video (.m3u8) para todos los servidores.
  */
+
+import { resolve as resolveFilemoon } from '../resolvers/filemoon.js';
+import { resolve as resolveVoe } from '../resolvers/voe.js';
 
 const BASE = "https://pelisgo.online";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -36,14 +39,6 @@ async function getSpanishTitle(tmdbId, type) {
         const data = await res.json();
         return data.title || data.name || null;
     } catch (e) { return null; }
-}
-
-/**
- * JS Unpacker (p,a,c,k,e,d)
- */
-function unpack(p, a, c, k, e, d) {
-    while (c--) if (k[c]) p = p.replace(new RegExp('\\b' + c.toString(a) + '\\b', 'g'), k[c]);
-    return p;
 }
 
 async function fetchText(url, referer = BASE) {
@@ -91,30 +86,14 @@ async function pelisgoSearch(query, type) {
 }
 
 /**
- * Resolutores Online (Magi/Filemoon)
- */
-async function resolveFilemoon(url) {
-    try {
-        const html = await fetchText(url, BASE);
-        const packed = html.match(/eval\(function\(p,a,c,k,e,d\).*\)/);
-        if (!packed) return null;
-        const parts = packed[0].match(/\}\('(.*)',\s*(\d+),\s*(\d+),\s*'(.*)'\.split\('\|'\)/);
-        if (!parts) return null;
-        const unpacked = unpack(parts[1], parseInt(parts[2]), parseInt(parts[3]), parts[4].split('|'), 0, {});
-        const linkMatch = unpacked.match(/file:"(.*?)"/);
-        return linkMatch ? linkMatch[1] : null;
-    } catch (e) { return null; }
-}
-
-/**
  * Motor Maestro: Escaneo de videoLinks y Escaneo Global de Descargas
- * Version 1.6.9: Escaneo universal 360 grados de todo el HTML.
+ * Version 1.7.0: Soporte nativo para m3u8 directo (Nuvio Playback).
  */
 async function getOnlineStreams(rawHtml) {
     const streams = [];
     const seenUrls = new Set();
 
-    // 1. Procesar videoLinks (Streaming Tradicional) - Buscamos en el bloque inyectado
+    // 1. Procesar videoLinks (Streaming Tradicional)
     try {
         const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
         if (videoLinksMatch) {
@@ -131,13 +110,18 @@ async function getOnlineStreams(rawHtml) {
 
                 if (cleanUrl.includes('filemoon') || cleanUrl.includes('f75s.com')) {
                     label = "Magi (Filemoon)";
-                    direct = await resolveFilemoon(cleanUrl);
+                    const r = await resolveFilemoon(cleanUrl);
+                    if (r) direct = r.url;
+                } else if (cleanUrl.includes('voe.sx')) {
+                    label = "VOE";
+                    const r = await resolveVoe(cleanUrl);
+                    if (r) direct = r.url;
+                } else if (cleanUrl.includes('desu')) {
+                    label = "Desu";
                 } else if (cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
                     label = "SeekStreaming";
                 } else if (cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu')) {
                     label = "Netu";
-                } else if (cleanUrl.includes('desu')) {
-                    label = "Desu";
                 }
 
                 if (direct) {
@@ -150,9 +134,7 @@ async function getOnlineStreams(rawHtml) {
     } catch (e) {}
 
     // 2. Escaneo Global (Buscamos Buzzheavier y Pixeldrain en TODO el HTML)
-    // Esto es mas robusto que buscar por contenedor 'downloadLinks'
     try {
-        // Regex para capturar cualquier bloque que parezca un objeto de servidor premium
         const globalRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+(Buzzheavier|Pixeldrain)[^{}]*?url[\\"' ]+:[\\"' ]+([^"'\s]+)[^}]*?\}/gi;
         let m;
         while ((m = globalRegex.exec(rawHtml)) !== null) {
@@ -185,7 +167,7 @@ async function getOnlineStreams(rawHtml) {
 async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         const type = (mediaType === 'tv' || mediaType === 'series') ? 'tv' : 'movie';
-        console.log(`[PelisGo v1.6.9] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
+        console.log(`[PelisGo v1.7.0] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
 
         let paths = await pelisgoSearch(title, type);
         if (paths.length === 0 && tmdbId) {
@@ -209,7 +191,7 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         if (!html) return [];
 
         const onlineStreams = await getOnlineStreams(html);
-        console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (Buzz/Pixel Global Scan).`);
+        console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (Direct Video Edition).`);
         return onlineStreams;
     } catch (e) { return []; }
 }
