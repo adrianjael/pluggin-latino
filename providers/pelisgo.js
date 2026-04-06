@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T15:59:38.579Z
+ * Generated: 2026-04-06T16:06:50.361Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -85,19 +85,6 @@ function fetchText(_0) {
     }
   });
 }
-function resolvePelisGoDownload(id) {
-  return __async(this, null, function* () {
-    try {
-      const res = yield fetch(`https://pelisgo.online/api/download/${id}`, {
-        headers: COMMON_HEADERS
-      });
-      const data = yield res.json();
-      return data.url || null;
-    } catch (e) {
-      return null;
-    }
-  });
-}
 function pelisgoSearch(query, type) {
   return __async(this, null, function* () {
     const searchStr = cleanTitle(query);
@@ -179,13 +166,12 @@ function getOnlineStreams(rawHtml) {
       const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
       if (downloadLinksMatch) {
         const rawDownloadsJson = downloadLinksMatch[1];
-        const downloadRegex = /\{[^{}]*?id[\\"' ]+:[\\"' ]+([a-z0-9]+)[\\"' ]+[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?\}/gi;
+        const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[^}]*?\}/gi;
         let m;
         while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
-          const downloadId = m[1];
-          const serverName = m[2];
+          const serverName = m[1];
+          let directUrl = m[2].replace(/\\/g, "");
           if (serverName === "Buzzheavier" || serverName === "Pixeldrain") {
-            const directUrl = yield resolvePelisGoDownload(downloadId);
             if (directUrl && !seenUrls.has(directUrl)) {
               seenUrls.add(directUrl);
               streams.push({

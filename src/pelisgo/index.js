@@ -152,15 +152,14 @@ async function getOnlineStreams(rawHtml) {
         const downloadLinksMatch = rawHtml.match(/downloadLinks[\\"' ]+:\[(.*?)\]/);
         if (downloadLinksMatch) {
             const rawDownloadsJson = downloadLinksMatch[1];
-            // Buscamos ID y Nombre del servidor
-            const downloadRegex = /\{[^{}]*?id[\\"' ]+:[\\"' ]+([a-z0-9]+)[\\"' ]+[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?\}/gi;
+            // Buscamos ID, Nombre del servidor y URL directa
+            const downloadRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([a-zA-Z]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[^}]*?\}/gi;
             let m;
             while ((m = downloadRegex.exec(rawDownloadsJson)) !== null) {
-                const downloadId = m[1];
-                const serverName = m[2];
+                const serverName = m[1];
+                let directUrl = m[2].replace(/\\/g, '');
 
                 if (serverName === 'Buzzheavier' || serverName === 'Pixeldrain') {
-                    const directUrl = await resolvePelisGoDownload(downloadId);
                     if (directUrl && !seenUrls.has(directUrl)) {
                         seenUrls.add(directUrl);
                         streams.push({ 
