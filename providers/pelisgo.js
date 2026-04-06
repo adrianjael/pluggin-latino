@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T03:07:34.074Z
+ * Generated: 2026-04-06T03:12:54.628Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -42,37 +42,63 @@ var __async = (__this, __arguments, generator) => {
 // src/pelisgo/index.js
 var BASE = "https://pelisgo.online";
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
+var TMDB_BASE = "https://api.themoviedb.org/3";
 var TARGET_SERVERS = ["buzzheavier", "pixeldrain"];
-function fetchText(_0) {
-  return __async(this, arguments, function* (url, extraHeaders = {}) {
+function fetchJson(_0) {
+  return __async(this, arguments, function* (url, headers = {}) {
     try {
-      const res = yield fetch(url, {
-        headers: __spreadValues({ "User-Agent": UA, "Referer": BASE }, extraHeaders)
-      });
+      const res = yield fetch(url, { headers: __spreadValues({ "User-Agent": UA }, headers) });
+      return yield res.json();
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function fetchText(_0) {
+  return __async(this, arguments, function* (url, headers = {}) {
+    try {
+      const res = yield fetch(url, { headers: __spreadValues({ "User-Agent": UA }, headers) });
       return yield res.text();
     } catch (e) {
       return "";
     }
   });
 }
-function pelisgoSearch(title, type) {
+function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
-    const url = `${BASE}/search?q=${encodeURIComponent(title)}`;
-    const html = yield fetchText(url);
-    const re = /\/(movies|series)\/([a-z0-9\-]+)/g;
-    const paths = [];
+    const type = mediaType === "movie" ? "movie" : "tv";
+    const url = `${TMDB_BASE}/${type}/${tmdbId}?api_key=${TMDB_KEY}&language=es-ES`;
+    const data = yield fetchJson(url);
+    if (!data)
+      return { title: null, originalTitle: null };
+    return {
+      title: type === "movie" ? data.title : data.name,
+      originalTitle: type === "movie" ? data.original_title : data.original_name
+    };
+  });
+}
+function pelisgoSearch(query, type) {
+  return __async(this, null, function* () {
+    const url = `${BASE}/search?q=${encodeURIComponent(query)}`;
+    const html = yield fetchText(url, { "Referer": `${BASE}/` });
+    const re = /href="(\/(movies|series)\/([a-z0-9\-]+))"/gi;
+    const results = [];
     const seen = /* @__PURE__ */ new Set();
     let m;
     while ((m = re.exec(html)) !== null) {
-      const path = m[0];
-      if (path.includes("/temporada/") || path.includes("/episodio/"))
+      const fullPath = m[1];
+      const itemType = m[2];
+      const slug = m[3];
+      if (fullPath.includes("/temporada/") || fullPath.includes("/episodio/"))
         continue;
-      if (!seen.has(path)) {
-        seen.add(path);
-        paths.push(path);
+      const isMatch = type === "movie" && itemType === "movies" || type === "tv" && itemType === "series";
+      if (isMatch && !seen.has(slug)) {
+        seen.add(slug);
+        results.push(fullPath);
       }
     }
-    return type === "movie" ? paths.filter((p) => p.startsWith("/movies/")) : paths.filter((p) => p.startsWith("/series/"));
+    return results;
   });
 }
 function resolveBuzzheavier(url) {
@@ -100,8 +126,7 @@ function resolvePixeldrain(url) {
 function resolveOneId(id) {
   return __async(this, null, function* () {
     try {
-      const res = yield fetch(`${BASE}/api/download/${id}`, { headers: { "User-Agent": UA, "Referer": BASE, "Accept": "application/json" } });
-      const data = yield res.json();
+      const data = yield fetchJson(`${BASE}/api/download/${id}`, { "Accept": "application/json" });
       if (!(data == null ? void 0 : data.url))
         return null;
       const serverLower = (data.server || "").toLowerCase();
@@ -122,8 +147,15 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
       const resolvedType = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      console.log(`[PelisGo] v3.5 Request: "${title}" (${resolvedType})`);
+      console.log(`[PelisGo] v3.9 Request: "${title}" (${resolvedType})`);
       let paths = yield pelisgoSearch(title, resolvedType);
+      if (paths.length === 0 && tmdbId) {
+        const info = yield getTmdbInfo(tmdbId, resolvedType);
+        if (info.originalTitle && info.originalTitle !== title) {
+          console.log(`[PelisGo] Re-intentando con: ${info.originalTitle}`);
+          paths = yield pelisgoSearch(info.originalTitle, resolvedType);
+        }
+      }
       if (paths.length === 0)
         return [];
       const slug = paths[0].split("/")[2];
@@ -169,10 +201,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         };
       });
       const allStreams = [...onlineStreams, ...downloadStreams];
-      console.log(`[PelisGo] Done: ${allStreams.length} stream(s) found.`);
+      console.log(`[PelisGo] \xC9xito: ${allStreams.length} stream(s) encontrados.`);
       return allStreams;
     } catch (e) {
-      console.error(`[PelisGo] Error: ${e.message}`);
+      console.error(`[PelisGo] Error Fatal: ${e.message}`);
       return [];
     }
   });

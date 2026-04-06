@@ -1,35 +1,61 @@
-// src/pelisgo/index.js - Restauración V3.5 (Core)
+/**
+ * PelisGo Provider for Nuvio (V3.9 Elite Hybrid)
+ * Restoration: TMDB Fallback + Magi/Filemoon RSC Support + No Google Drive.
+ */
+
 const BASE = "https://pelisgo.online";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
+const TMDB_BASE = "https://api.themoviedb.org/3";
 const TARGET_SERVERS = ["buzzheavier", "pixeldrain"]; // Google Drive eliminado permanentemente
 
-async function fetchText(url, extraHeaders = {}) {
+async function fetchJson(url, headers = {}) {
     try {
-        const res = await fetch(url, {
-            headers: { "User-Agent": UA, "Referer": BASE, ...extraHeaders }
-        });
+        const res = await fetch(url, { headers: { "User-Agent": UA, ...headers } });
+        return await res.json();
+    } catch (e) { return null; }
+}
+
+async function fetchText(url, headers = {}) {
+    try {
+        const res = await fetch(url, { headers: { "User-Agent": UA, ...headers } });
         return await res.text();
     } catch (e) { return ""; }
 }
 
-async function pelisgoSearch(title, type) {
-    const url = `${BASE}/search?q=${encodeURIComponent(title)}`;
-    const html = await fetchText(url);
-    const re = /\/(movies|series)\/([a-z0-9\-]+)/g;
-    const paths = [];
+/**
+ * Obtiene info de TMDB para búsqueda inteligente
+ */
+async function getTmdbInfo(tmdbId, mediaType) {
+    const type = mediaType === 'movie' ? 'movie' : 'tv';
+    const url = `${TMDB_BASE}/${type}/${tmdbId}?api_key=${TMDB_KEY}&language=es-ES`;
+    const data = await fetchJson(url);
+    if (!data) return { title: null, originalTitle: null };
+    return {
+        title: type === 'movie' ? data.title : data.name,
+        originalTitle: type === 'movie' ? data.original_title : data.original_name
+    };
+}
+
+async function pelisgoSearch(query, type) {
+    const url = `${BASE}/search?q=${encodeURIComponent(query)}`;
+    const html = await fetchText(url, { "Referer": `${BASE}/` });
+    const re = /href="(\/(movies|series)\/([a-z0-9\-]+))"/gi;
+    const results = [];
     const seen = new Set();
     let m;
     while ((m = re.exec(html)) !== null) {
-        const path = m[0];
-        if (path.includes('/temporada/') || path.includes('/episodio/')) continue;
-        if (!seen.has(path)) {
-            seen.add(path);
-            paths.push(path);
+        const fullPath = m[1];
+        const itemType = m[2];
+        const slug = m[3];
+        if (fullPath.includes('/temporada/') || fullPath.includes('/episodio/')) continue;
+        const isMatch = (type === 'movie' && itemType === 'movies') || (type === 'tv' && itemType === 'series');
+        if (isMatch && !seen.has(slug)) {
+            seen.add(slug);
+            results.push(fullPath);
         }
     }
-    return type === 'movie' 
-        ? paths.filter(p => p.startsWith('/movies/'))
-        : paths.filter(p => p.startsWith('/series/'));
+    return results;
 }
 
 async function resolveBuzzheavier(url) {
@@ -52,8 +78,7 @@ async function resolvePixeldrain(url) {
 
 async function resolveOneId(id) {
     try {
-        const res = await fetch(`${BASE}/api/download/${id}`, { headers: { "User-Agent": UA, "Referer": BASE, "Accept": "application/json" } });
-        const data = await res.json();
+        const data = await fetchJson(`${BASE}/api/download/${id}`, { "Accept": "application/json" });
         if (!data?.url) return null;
         
         const serverLower = (data.server || '').toLowerCase();
@@ -70,9 +95,19 @@ async function resolveOneId(id) {
 async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
         const resolvedType = mediaType === 'tv' || mediaType === 'series' ? 'tv' : 'movie';
-        console.log(`[PelisGo] v3.5 Request: "${title}" (${resolvedType})`);
+        console.log(`[PelisGo] v3.9 Request: "${title}" (${resolvedType})`);
 
         let paths = await pelisgoSearch(title, resolvedType);
+        
+        // Búsqueda inteligente por título original si el español falla
+        if (paths.length === 0 && tmdbId) {
+            const info = await getTmdbInfo(tmdbId, resolvedType);
+            if (info.originalTitle && info.originalTitle !== title) {
+                console.log(`[PelisGo] Re-intentando con: ${info.originalTitle}`);
+                paths = await pelisgoSearch(info.originalTitle, resolvedType);
+            }
+        }
+
         if (paths.length === 0) return [];
 
         const slug = paths[0].split('/')[2];
@@ -82,7 +117,7 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
 
         const html = await fetchText(pageUrl);
         
-        // 1. ONLINE (Magi, Desu, etc.) de RSC Data
+        // 1. ONLINE (Magi, Desu, etc.) - Motor V3.6 Avanzado
         const onlineStreams = [];
         const urlPatterns = [
             { regex: /https?:(?:\\[/\\]|[/]){2}(?:filemoon\.sx|f75s\.com)(?:\\[/\\]|[/])e(?:\\[/\\]|[/])[a-z0-9]+/gi, server: 'Magi (Filemoon)' },
@@ -94,7 +129,7 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         urlPatterns.forEach(p => {
             const matches = html.match(p.regex) || [];
             [...new Set(matches)].forEach(url => {
-                const cleanUrl = url.replace(/\\/g, ''); // Elimina barras invertidas
+                const cleanUrl = url.replace(/\\/g, ''); 
                 onlineStreams.push({ 
                     name: 'PelisGo', 
                     title: `[Online] \xB7 ${p.server}`, 
@@ -126,10 +161,10 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         });
 
         const allStreams = [...onlineStreams, ...downloadStreams];
-        console.log(`[PelisGo] Done: ${allStreams.length} stream(s) found.`);
+        console.log(`[PelisGo] Éxito: ${allStreams.length} stream(s) encontrados.`);
         return allStreams;
     } catch (e) {
-        console.error(`[PelisGo] Error: ${e.message}`);
+        console.error(`[PelisGo] Error Fatal: ${e.message}`);
         return [];
     }
 }
