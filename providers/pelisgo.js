@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T17:37:19.746Z
+ * Generated: 2026-04-06T17:39:28.601Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -347,7 +347,7 @@ function getOnlineStreams(rawHtml) {
             if (r)
               direct = r.url;
           } else if (cleanUrl.includes("desu")) {
-            label = "Desu";
+            continue;
           } else if (cleanUrl.includes("seekstreaming") || cleanUrl.includes("embedseek")) {
             label = "SeekStreaming";
           } else if (cleanUrl.includes("hqq.ac") || cleanUrl.includes("netu")) {

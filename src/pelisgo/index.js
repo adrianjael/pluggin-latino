@@ -117,7 +117,7 @@ async function getOnlineStreams(rawHtml) {
                     const r = await resolveVoe(cleanUrl);
                     if (r) direct = r.url;
                 } else if (cleanUrl.includes('desu')) {
-                    label = "Desu";
+                    continue; // Omitir Desu (No sirve)
                 } else if (cleanUrl.includes('seekstreaming') || cleanUrl.includes('embedseek')) {
                     label = "SeekStreaming";
                 } else if (cleanUrl.includes('hqq.ac') || cleanUrl.includes('netu')) {
