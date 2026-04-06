@@ -1,6 +1,6 @@
 /**
  * zonaleros - Built from src/zonaleros/
- * Generated: 2026-04-06T22:43:41.798Z
+ * Generated: 2026-04-06T22:47:05.798Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -43,7 +43,6 @@ var __async = (__this, __arguments, generator) => {
 // src/zonaleros/index.js
 var zonaleros_exports = {};
 __export(zonaleros_exports, {
-  default: () => zonaleros_default,
   getStreams: () => getStreams,
   search: () => search
 });
@@ -135,10 +134,18 @@ function search(query) {
     }
   });
 }
-function getStreams(itemUrl) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
-      const res = yield fetch(itemUrl, { headers: HEADERS });
+      console.log(`[ZonaLeRoS] Buscando streams para: "${title}" (${mediaType})`);
+      const results = yield search(title);
+      if (results.length === 0) {
+        console.warn(`[ZonaLeRoS] No se encontraron resultados para: ${title}`);
+        return [];
+      }
+      const targetType = mediaType === "tv" || mediaType === "series" ? "series" : "movie";
+      const bestMatch = results.find((r) => r.type === targetType) || results[0];
+      const res = yield fetch(bestMatch.url, { headers: HEADERS });
       const html = yield res.text();
       const metadata = extractMetadata(html);
       const streams = [];
@@ -176,7 +183,6 @@ function getStreams(itemUrl) {
     }
   });
 }
-var zonaleros_default = {
-  search,
-  getStreams
-};
+if (typeof module !== "undefined") {
+  module.exports = { getStreams };
+}

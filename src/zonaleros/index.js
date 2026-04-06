@@ -54,20 +54,32 @@ export async function search(query) {
     }
 }
 
-export async function getStreams(itemUrl) {
+export async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
-        const res = await fetch(itemUrl, { headers: HEADERS });
+        console.log(`[ZonaLeRoS] Buscando streams para: "${title}" (${mediaType})`);
+
+        // 1. Buscar en ZonaLeRoS usando el título (query)
+        const results = await search(title);
+        
+        if (results.length === 0) {
+            console.warn(`[ZonaLeRoS] No se encontraron resultados para: ${title}`);
+            return [];
+        }
+
+        // 2. Filtrar por tipo (Película o Serie)
+        const targetType = (mediaType === 'tv' || mediaType === 'series') ? 'series' : 'movie';
+        const bestMatch = results.find(r => r.type === targetType) || results[0];
+
+        // 3. Obtener la página del contenido
+        const res = await fetch(bestMatch.url, { headers: HEADERS });
         const html = await res.text();
         const metadata = extractMetadata(html);
 
         const streams = [];
         for (let serverUrl of metadata.servers) {
-            // Limpieza de URL si viene con comillas o escapes
             serverUrl = serverUrl.replace(/\\/g, "").replace(/['"]/g, "");
-
             const realUrl = await resolveAnomizador(serverUrl);
 
-            // Detectar nombre del servidor basado en la URL real
             let label = "Desconocido";
             const lowUrl = realUrl.toLowerCase();
             if (lowUrl.includes('voe')) label = "VOE";
@@ -95,7 +107,7 @@ export async function getStreams(itemUrl) {
     }
 }
 
-export default {
-    search,
-    getStreams
-};
+if (typeof module !== 'undefined') {
+    module.exports = { getStreams };
+}
+
