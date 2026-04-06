@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-06T16:31:08.635Z
+ * Generated: 2026-04-06T17:03:52.074Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -157,21 +157,21 @@ function unpack(p, a, c, k, e, d) {
 function resolve2(url) {
   return __async(this, null, function* () {
     try {
-      console.log(`[Filemoon] Resolviendo Directo: ${url}`);
+      console.log(`[Filemoon] Resolviendo Directo (v2.1): ${url}`);
       const res = yield fetch(url, {
         headers: {
           "User-Agent": UA2,
-          "Referer": "https://pelisgo.online/",
+          "Referer": url,
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
         }
       });
       const html = yield res.text();
-      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
-      if (packedMatch) {
-        const p = packedMatch[1];
-        const a = parseInt(packedMatch[2]);
-        const c = parseInt(packedMatch[3]);
-        const k = packedMatch[4].split("|");
+      const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
+      for (const match of evalMatches) {
+        const p = match[1];
+        const a = parseInt(match[2]);
+        const c = parseInt(match[3]);
+        const k = match[4].split("|");
         const unpacked = unpack(p, a, c, k, 0, {});
         const fileMatch = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
         if (fileMatch) {
@@ -189,7 +189,7 @@ function resolve2(url) {
           };
         }
       }
-      console.log("[Filemoon] No se encontro el bloque packed o el m3u8.");
+      console.log("[Filemoon] No se encontro el bloque packed con el video.");
       return null;
     } catch (e) {
       console.error(`[Filemoon] Error en resolutor: ${e.message}`);

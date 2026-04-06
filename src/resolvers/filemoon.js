@@ -13,29 +13,30 @@ function unpack(p, a, c, k, e, d) {
  */
 export async function resolve(url) {
     try {
-        console.log(`[Filemoon] Resolviendo Directo: ${url}`);
+        console.log(`[Filemoon] Resolviendo Directo (v2.1): ${url}`);
         
+        // El Referer DEBE ser la propia URL del embed para que Filemoon nos de el JS real
         const res = await fetch(url, {
             headers: {
                 'User-Agent': UA,
-                'Referer': 'https://pelisgo.online/',
+                'Referer': url,
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
             }
         });
         const html = await res.text();
 
-        // Buscar el bloque empaquetado eval(function(p,a,c,k,e,d)...)
-        const packedMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+        // Escaneo global de todos los bloques eval(...)
+        const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
         
-        if (packedMatch) {
-            const p = packedMatch[1];
-            const a = parseInt(packedMatch[2]);
-            const c = parseInt(packedMatch[3]);
-            const k = packedMatch[4].split('|');
+        for (const match of evalMatches) {
+            const p = match[1];
+            const a = parseInt(match[2]);
+            const c = parseInt(match[3]);
+            const k = match[4].split('|');
             
             const unpacked = unpack(p, a, c, k, 0, {});
             
-            // Extraer el archivo de video (.m3u8) del JS desempaquetado
+            // Buscamos la URL del video en este bloque desempaquetado
             const fileMatch = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
             if (fileMatch) {
                 const streamUrl = fileMatch[1];
@@ -54,7 +55,7 @@ export async function resolve(url) {
             }
         }
         
-        console.log("[Filemoon] No se encontro el bloque packed o el m3u8.");
+        console.log("[Filemoon] No se encontro el bloque packed con el video.");
         return null;
     } catch (e) {
         console.error(`[Filemoon] Error en resolutor: ${e.message}`);
