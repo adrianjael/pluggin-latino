@@ -14,15 +14,15 @@
       ],
       "filename": "providers/pelisplus.js",
       "enabled": true,
+      "logo": "https://www.pelisplushd.la/images/logo/logo5.png",
       "contentLanguage": [
         "es"
       ],
       "formats": [
-        "mp4",
-        "m3u8"
+        "m3u8",
+        "mp4"
       ],
       "limited": false,
-      "disabledPlatforms": [],
       "supportsExternalPlayer": true
     }
   ]
