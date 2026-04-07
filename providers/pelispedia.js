@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T17:29:40.828Z
+ * Generated: 2026-04-07T17:36:46.932Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -104,23 +104,26 @@ function extractStreams(url) {
         priority: 1
       });
     }
-    const knownServers = ["Voe", "Filemoon", "Streamwish", "Vidhide", "Wishembed"];
-    const iframeRe = /https?:\/\/(voe\.sx|filemoon\.sx|streamwish\.to|vidhide\.com|hglink\.to|audinifer\.com)\/([ae]\/)?([a-z0-9]+)/gi;
+    const knownServers = ["Voe", "Filemoon", "Streamwish", "Vidhide", "Uqload"];
+    const iframeRe = /https?:\/\/(voe\.sx|filemoon\.sx|bysedikamoum\.com|streamwish\.to|vidhide\.com|minochinos\.com|hglink\.to|audinifer\.com|uqload\.is|uqload\.com)\/([ae]\/)?([a-z0-9]+)/gi;
     while ((m = iframeRe.exec(html)) !== null) {
+      const url2 = m[0];
       const domain = m[1].toLowerCase();
       let name = "Desconocido";
       if (domain.includes("voe"))
         name = "Voe";
-      else if (domain.includes("filemoon"))
+      else if (domain.includes("filemoon") || domain.includes("bysedikamoum"))
         name = "Filemoon";
       else if (domain.includes("streamwish") || domain.includes("hglink") || domain.includes("audinifer"))
         name = "Streamwish";
-      else if (domain.includes("vidhide"))
+      else if (domain.includes("vidhide") || domain.includes("minochinos"))
         name = "Vidhide";
-      if (!streams.find((s) => s.url === m[0])) {
+      else if (domain.includes("uqload"))
+        name = "Uqload";
+      if (!streams.find((s) => s.url === url2)) {
         streams.push({
           server: name,
-          url: m[0],
+          url: url2,
           priority: 2
         });
       }
