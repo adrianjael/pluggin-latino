@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-07T22:35:13.694Z
+ * Generated: 2026-04-07T22:50:19.987Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -45,6 +45,9 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
+// src/hackstore2/extractor.js
+var import_axios6 = __toESM(require("axios"));
+
 // src/utils/string.js
 function normalizeTitle(t) {
   if (!t)
@@ -73,6 +76,7 @@ function calculateSimilarity(title1, title2) {
 }
 
 // src/resolvers/voe.js
+var import_axios = __toESM(require("axios"));
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function decodeBase64(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -87,12 +91,12 @@ function resolve(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[VOE] Resolviendo Directo: ${url}`);
-      const res = yield fetch(url, { headers: { "User-Agent": UA } });
+      const res = yield import_axios.default.get(url, { headers: { "User-Agent": UA } });
       let html = yield res.text();
       if (html.includes("Redirecting") || html.length < 1500) {
         const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA } });
+          const res2 = yield import_axios.default.get(rm[1], { headers: { "User-Agent": UA } });
           html = yield res2.text();
         }
       }
@@ -142,6 +146,9 @@ function resolve(url) {
     }
   });
 }
+
+// src/resolvers/filemoon.js
+var import_axios2 = __toESM(require("axios"));
 
 // src/utils/aes-gcm.js
 var import_crypto_js = __toESM(require("crypto-js"));
@@ -214,10 +221,10 @@ function resolve2(url) {
         return null;
       const id = idMatch[1];
       try {
-        const apiRes = yield fetch(`https://${new URL(url).hostname}/api/videos/${id}`, {
+        const apiRes = yield import_axios2.default.get(`https://${new URL(url).hostname}/api/videos/${id}`, {
           headers: { "User-Agent": UA2, "Referer": url }
         });
-        const data = yield apiRes.json();
+        const data = yield apiRes.data;
         if (data.playback) {
           const decrypted = yield decryptByse(data.playback);
           if (decrypted && decrypted.sources) {
@@ -227,7 +234,7 @@ function resolve2(url) {
         }
       } catch (e) {
       }
-      const res = yield fetch(url, { headers: { "User-Agent": UA2, "Referer": url } });
+      const res = yield import_axios2.default.get(url, { headers: { "User-Agent": UA2, "Referer": url } });
       const html = yield res.text();
       const fm = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
       if (fm)
@@ -240,6 +247,7 @@ function resolve2(url) {
 }
 
 // src/resolvers/hlswish.js
+var import_axios3 = __toESM(require("axios"));
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpack(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -270,7 +278,7 @@ function resolve3(url) {
         }
       }
       const origin = new URL(targetUrl).origin;
-      const res = yield fetch(targetUrl, {
+      const res = yield import_axios3.default.get(targetUrl, {
         headers: { "User-Agent": UA3, "Referer": origin + "/", "Origin": origin }
       });
       const html = yield res.text();
@@ -304,6 +312,7 @@ function resolve3(url) {
 }
 
 // src/resolvers/vidhide.js
+var import_axios4 = __toESM(require("axios"));
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackVidHide(script) {
   try {
@@ -336,7 +345,7 @@ function resolve4(url) {
   return __async(this, null, function* () {
     try {
       const origin = new URL(url).origin;
-      const res = yield fetch(url, {
+      const res = yield import_axios4.default.get(url, {
         headers: { "User-Agent": UA4, "Referer": origin + "/" }
       });
       const html = yield res.text();
@@ -364,13 +373,14 @@ function resolve4(url) {
 }
 
 // src/resolvers/vimeos.js
+var import_axios5 = __toESM(require("axios"));
 var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function resolve5(embedUrl) {
   return __async(this, null, function* () {
     var _a, _b, _c, _d, _e, _f, _g;
     try {
       console.log(`[Vimeos] Resolviendo v\xEDa fetch: ${embedUrl}`);
-      const res = yield fetch(embedUrl, {
+      const res = yield import_axios5.default.get(embedUrl, {
         headers: {
           "User-Agent": UA5,
           "Referer": "https://vimeos.net/",
@@ -382,10 +392,10 @@ function resolve5(embedUrl) {
       if (vimeoIdMatch) {
         const vimeoId = vimeoIdMatch[1];
         try {
-          const configRes = yield fetch(`https://player.vimeo.com/video/${vimeoId}/config`, {
+          const configRes = yield import_axios5.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
             headers: { "User-Agent": UA5, "Referer": embedUrl }
           });
-          const config = yield configRes.json();
+          const config = yield configRes.data;
           const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
           if (hlsUrl) {
             return {
@@ -463,8 +473,8 @@ function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const url = `https://api.themoviedb.org/3/${mediaType === "movie" ? "movie" : "tv"}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-      const res = yield fetch(url);
-      const data = yield res.json();
+      const res = yield import_axios6.default.get(url);
+      const data = yield res.data;
       return {
         title: data.title || data.name || "",
         originalTitle: data.original_title || data.original_name || "",
@@ -487,8 +497,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         return [];
       const postType = mediaType === "movie" ? "movies" : "tvshows";
       const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${postType}&query=${encodeURIComponent(title.replace(/[:]/g, " "))}`;
-      const searchRes = yield fetch(searchUrl);
-      const searchData = yield searchRes.json();
+      const searchRes = yield import_axios6.default.get(searchUrl);
+      const searchData = yield searchRes.data;
       if (!searchData || searchData.error || !((_b = (_a = searchData.data) == null ? void 0 : _a.posts) == null ? void 0 : _b.length))
         return [];
       const posts = searchData.data.posts;
@@ -496,16 +506,16 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       let finalId = matchedPost._id;
       if (mediaType === "tv") {
         const epUrl = `https://hackstore2.com/api/rest/episodes?post_id=${finalId}`;
-        const epRes = yield fetch(epUrl);
-        const epData = yield epRes.json();
+        const epRes = yield import_axios6.default.get(epUrl);
+        const epData = yield epRes.data;
         const epMatch = (_c = epData.data) == null ? void 0 : _c.find((e) => e.season_number == season && e.episode_number == episode);
         if (!epMatch)
           return [];
         finalId = epMatch._id;
       }
       const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${finalId}`;
-      const playerRes = yield fetch(playerUrl);
-      const playerData = yield playerRes.json();
+      const playerRes = yield import_axios6.default.get(playerUrl);
+      const playerData = yield playerRes.data;
       if (!playerData.data)
         return [];
       const results = yield Promise.allSettled(playerData.data.map((player) => __async(this, null, function* () {

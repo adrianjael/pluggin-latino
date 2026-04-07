@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-07T22:35:13.632Z
+ * Generated: 2026-04-07T22:50:19.954Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -62,7 +62,11 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
+// src/cuevana_gs/extractor.js
+var import_axios6 = __toESM(require("axios"));
+
 // src/resolvers/voe.js
+var import_axios = __toESM(require("axios"));
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function decodeBase64(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -77,12 +81,12 @@ function resolve(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[VOE] Resolviendo Directo: ${url}`);
-      const res = yield fetch(url, { headers: { "User-Agent": UA } });
+      const res = yield import_axios.default.get(url, { headers: { "User-Agent": UA } });
       let html = yield res.text();
       if (html.includes("Redirecting") || html.length < 1500) {
         const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA } });
+          const res2 = yield import_axios.default.get(rm[1], { headers: { "User-Agent": UA } });
           html = yield res2.text();
         }
       }
@@ -132,6 +136,9 @@ function resolve(url) {
     }
   });
 }
+
+// src/resolvers/filemoon.js
+var import_axios2 = __toESM(require("axios"));
 
 // src/utils/aes-gcm.js
 var import_crypto_js = __toESM(require("crypto-js"));
@@ -204,10 +211,10 @@ function resolve2(url) {
         return null;
       const id = idMatch[1];
       try {
-        const apiRes = yield fetch(`https://${new URL(url).hostname}/api/videos/${id}`, {
+        const apiRes = yield import_axios2.default.get(`https://${new URL(url).hostname}/api/videos/${id}`, {
           headers: { "User-Agent": UA2, "Referer": url }
         });
-        const data = yield apiRes.json();
+        const data = yield apiRes.data;
         if (data.playback) {
           const decrypted = yield decryptByse(data.playback);
           if (decrypted && decrypted.sources) {
@@ -217,7 +224,7 @@ function resolve2(url) {
         }
       } catch (e) {
       }
-      const res = yield fetch(url, { headers: { "User-Agent": UA2, "Referer": url } });
+      const res = yield import_axios2.default.get(url, { headers: { "User-Agent": UA2, "Referer": url } });
       const html = yield res.text();
       const fm = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
       if (fm)
@@ -230,13 +237,14 @@ function resolve2(url) {
 }
 
 // src/resolvers/vimeos.js
+var import_axios3 = __toESM(require("axios"));
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function resolve3(embedUrl) {
   return __async(this, null, function* () {
     var _a, _b, _c, _d, _e, _f, _g;
     try {
       console.log(`[Vimeos] Resolviendo v\xEDa fetch: ${embedUrl}`);
-      const res = yield fetch(embedUrl, {
+      const res = yield import_axios3.default.get(embedUrl, {
         headers: {
           "User-Agent": UA3,
           "Referer": "https://vimeos.net/",
@@ -248,10 +256,10 @@ function resolve3(embedUrl) {
       if (vimeoIdMatch) {
         const vimeoId = vimeoIdMatch[1];
         try {
-          const configRes = yield fetch(`https://player.vimeo.com/video/${vimeoId}/config`, {
+          const configRes = yield import_axios3.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
             headers: { "User-Agent": UA3, "Referer": embedUrl }
           });
-          const config = yield configRes.json();
+          const config = yield configRes.data;
           const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
           if (hlsUrl) {
             return {
@@ -309,6 +317,7 @@ function resolve3(embedUrl) {
 }
 
 // src/resolvers/hlswish.js
+var import_axios4 = __toESM(require("axios"));
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpack(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -339,7 +348,7 @@ function resolve4(url) {
         }
       }
       const origin = new URL(targetUrl).origin;
-      const res = yield fetch(targetUrl, {
+      const res = yield import_axios4.default.get(targetUrl, {
         headers: { "User-Agent": UA4, "Referer": origin + "/", "Origin": origin }
       });
       const html = yield res.text();
@@ -373,6 +382,7 @@ function resolve4(url) {
 }
 
 // src/resolvers/vidhide.js
+var import_axios5 = __toESM(require("axios"));
 var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackVidHide(script) {
   try {
@@ -405,7 +415,7 @@ function resolve5(url) {
   return __async(this, null, function* () {
     try {
       const origin = new URL(url).origin;
-      const res = yield fetch(url, {
+      const res = yield import_axios5.default.get(url, {
         headers: { "User-Agent": UA5, "Referer": origin + "/" }
       });
       const html = yield res.text();
@@ -481,7 +491,7 @@ var SERVER_LABELS = {
 };
 function fetchHtml(_0) {
   return __async(this, arguments, function* (url, referer = BASE_URL) {
-    const res = yield fetch(url, { headers: __spreadProps(__spreadValues({}, BASE_HEADERS), { Referer: referer }) });
+    const res = yield import_axios6.default.get(url, { headers: __spreadProps(__spreadValues({}, BASE_HEADERS), { Referer: referer }) });
     return res.text();
   });
 }
@@ -511,8 +521,8 @@ function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const url = `https://api.themoviedb.org/3/${mediaType === "movie" ? "movie" : "tv"}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-      const res = yield fetch(url);
-      const data = yield res.json();
+      const res = yield import_axios6.default.get(url);
+      const data = yield res.data;
       return {
         title: data.title || data.name || "",
         originalTitle: data.original_title || data.original_name || ""
@@ -535,8 +545,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         return __async(this, null, function* () {
           const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${encodeURIComponent(query)}&postsPerPage=10`;
           try {
-            const searchRes = yield fetch(searchUrl, { headers: BASE_HEADERS });
-            return yield searchRes.json();
+            const searchRes = yield import_axios6.default.get(searchUrl, { headers: BASE_HEADERS });
+            return yield searchRes.data;
           } catch (err) {
             return { error: true };
           }
@@ -558,16 +568,16 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       if (mediaType !== "movie" && season && episode) {
         try {
           const epUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${postId}&season=${season}&postsPerPage=100`;
-          const epRes = yield fetch(epUrl, { headers: BASE_HEADERS });
-          const epJson = yield epRes.json();
+          const epRes = yield import_axios6.default.get(epUrl, { headers: BASE_HEADERS });
+          const epJson = yield epRes.data;
           const epMatch = epJson.data.posts.find((e) => parseInt(e.episode_number) === parseInt(episode));
           if (epMatch)
             postId = epMatch._id;
         } catch (err) {
         }
       }
-      const playerRes = yield fetch(`${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`, { headers: BASE_HEADERS });
-      const playerJson = yield playerRes.json();
+      const playerRes = yield import_axios6.default.get(`${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`, { headers: BASE_HEADERS });
+      const playerJson = yield playerRes.data;
       if (playerJson.error || !((_e = playerJson.data) == null ? void 0 : _e.embeds))
         return [];
       const settledResults = yield Promise.allSettled(playerJson.data.embeds.map((embed) => __async(this, null, function* () {

@@ -1,7 +1,29 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-07T22:35:13.813Z
+ * Generated: 2026-04-07T22:50:20.028Z
  */
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -24,6 +46,7 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/playhubmax/index.js
+var import_axios = __toESM(require("axios"));
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var PHM_API = "https://api.playhubmax.com/api";
 var AES_KEY_STR = "33dff3b1c1362e45e1425fcc9724d6f3";
@@ -170,8 +193,8 @@ function decryptSources(b64) {
 function getSources(type, uuid) {
   return __async(this, null, function* () {
     try {
-      const res = yield fetch(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS });
-      const data = yield res.json();
+      const res = yield import_axios.default.get(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS });
+      const data = yield res.data;
       if (!data.data)
         return [];
       const sources = decryptSources(data.data);
@@ -190,13 +213,13 @@ function getStreams(tmdbId, mediaType, season, episode) {
     try {
       const type = mediaType === "series" || mediaType === "tv" ? "tv" : "movie";
       const tmdbUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-      const tmdbRes = yield fetch(tmdbUrl);
-      const tmdbData = yield tmdbRes.json();
+      const tmdbRes = yield import_axios.default.get(tmdbUrl);
+      const tmdbData = yield tmdbRes.data;
       const title = type === "movie" ? tmdbData.title : tmdbData.name;
       if (!title)
         return [];
-      const searchRes = yield fetch(`${PHM_API}/US/en/contents?q=${encodeURIComponent(title)}`, { headers: API_HEADERS });
-      const candidatesData = yield searchRes.json();
+      const searchRes = yield import_axios.default.get(`${PHM_API}/US/en/contents?q=${encodeURIComponent(title)}`, { headers: API_HEADERS });
+      const candidatesData = yield searchRes.data;
       const candidates = candidatesData.data || [];
       const match = candidates.find((c) => {
         var _a2;
@@ -206,13 +229,13 @@ function getStreams(tmdbId, mediaType, season, episode) {
         return [];
       let finalSources = [];
       if (type === "tv") {
-        const detailRes = yield fetch(`${PHM_API}/en/contents/${match.uuid}`, { headers: API_HEADERS });
-        const detail = yield detailRes.json();
+        const detailRes = yield import_axios.default.get(`${PHM_API}/en/contents/${match.uuid}`, { headers: API_HEADERS });
+        const detail = yield detailRes.data;
         const seasonObj = (_a = detail.seasons) == null ? void 0 : _a.find((s) => parseInt(s.seasonNumber) === parseInt(season));
         if (!seasonObj)
           return [];
-        const episodesRes = yield fetch(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
-        const episodesData = yield episodesRes.json();
+        const episodesRes = yield import_axios.default.get(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
+        const episodesData = yield episodesRes.data;
         const ep = (_b = episodesData.data) == null ? void 0 : _b.find((e) => parseInt(e.episodeNumber) === parseInt(episode));
         if (!ep)
           return [];

@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-07T22:35:13.744Z
+ * Generated: 2026-04-07T22:50:20.001Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -61,6 +61,12 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
+
+// src/pelisgo/index.js
+var import_axios6 = __toESM(require("axios"));
+
+// src/resolvers/filemoon.js
+var import_axios = __toESM(require("axios"));
 
 // src/utils/aes-gcm.js
 var import_crypto_js = __toESM(require("crypto-js"));
@@ -133,10 +139,10 @@ function resolve(url) {
         return null;
       const id = idMatch[1];
       try {
-        const apiRes = yield fetch(`https://${new URL(url).hostname}/api/videos/${id}`, {
+        const apiRes = yield import_axios.default.get(`https://${new URL(url).hostname}/api/videos/${id}`, {
           headers: { "User-Agent": UA, "Referer": url }
         });
-        const data = yield apiRes.json();
+        const data = yield apiRes.data;
         if (data.playback) {
           const decrypted = yield decryptByse(data.playback);
           if (decrypted && decrypted.sources) {
@@ -146,7 +152,7 @@ function resolve(url) {
         }
       } catch (e) {
       }
-      const res = yield fetch(url, { headers: { "User-Agent": UA, "Referer": url } });
+      const res = yield import_axios.default.get(url, { headers: { "User-Agent": UA, "Referer": url } });
       const html = yield res.text();
       const fm = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
       if (fm)
@@ -159,6 +165,7 @@ function resolve(url) {
 }
 
 // src/resolvers/voe.js
+var import_axios2 = __toESM(require("axios"));
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function decodeBase64(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -173,12 +180,12 @@ function resolve2(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[VOE] Resolviendo Directo: ${url}`);
-      const res = yield fetch(url, { headers: { "User-Agent": UA2 } });
+      const res = yield import_axios2.default.get(url, { headers: { "User-Agent": UA2 } });
       let html = yield res.text();
       if (html.includes("Redirecting") || html.length < 1500) {
         const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA2 } });
+          const res2 = yield import_axios2.default.get(rm[1], { headers: { "User-Agent": UA2 } });
           html = yield res2.text();
         }
       }
@@ -230,13 +237,14 @@ function resolve2(url) {
 }
 
 // src/resolvers/vimeos.js
+var import_axios3 = __toESM(require("axios"));
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function resolve3(embedUrl) {
   return __async(this, null, function* () {
     var _a, _b, _c, _d, _e, _f, _g;
     try {
       console.log(`[Vimeos] Resolviendo v\xEDa fetch: ${embedUrl}`);
-      const res = yield fetch(embedUrl, {
+      const res = yield import_axios3.default.get(embedUrl, {
         headers: {
           "User-Agent": UA3,
           "Referer": "https://vimeos.net/",
@@ -248,10 +256,10 @@ function resolve3(embedUrl) {
       if (vimeoIdMatch) {
         const vimeoId = vimeoIdMatch[1];
         try {
-          const configRes = yield fetch(`https://player.vimeo.com/video/${vimeoId}/config`, {
+          const configRes = yield import_axios3.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
             headers: { "User-Agent": UA3, "Referer": embedUrl }
           });
-          const config = yield configRes.json();
+          const config = yield configRes.data;
           const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
           if (hlsUrl) {
             return {
@@ -309,6 +317,7 @@ function resolve3(embedUrl) {
 }
 
 // src/resolvers/hlswish.js
+var import_axios4 = __toESM(require("axios"));
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpack(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -339,7 +348,7 @@ function resolve4(url) {
         }
       }
       const origin = new URL(targetUrl).origin;
-      const res = yield fetch(targetUrl, {
+      const res = yield import_axios4.default.get(targetUrl, {
         headers: { "User-Agent": UA4, "Referer": origin + "/", "Origin": origin }
       });
       const html = yield res.text();
@@ -373,6 +382,7 @@ function resolve4(url) {
 }
 
 // src/resolvers/vidhide.js
+var import_axios5 = __toESM(require("axios"));
 var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackVidHide(script) {
   try {
@@ -405,7 +415,7 @@ function resolve5(url) {
   return __async(this, null, function* () {
     try {
       const origin = new URL(url).origin;
-      const res = yield fetch(url, {
+      const res = yield import_axios5.default.get(url, {
         headers: { "User-Agent": UA5, "Referer": origin + "/" }
       });
       const html = yield res.text();
@@ -486,7 +496,7 @@ function fetchText(_0) {
   return __async(this, arguments, function* (url, referer = BASE) {
     try {
       const headers = __spreadProps(__spreadValues({}, COMMON_HEADERS), { Referer: referer });
-      const res = yield fetch(url, { headers });
+      const res = yield import_axios6.default.get(url, { headers });
       return yield res.text();
     } catch (e) {
       return "";
@@ -496,8 +506,8 @@ function fetchText(_0) {
 function resolvePelisGoDownload(id) {
   return __async(this, null, function* () {
     try {
-      const res = yield fetch(`https://pelisgo.online/api/download/${id}`, { headers: COMMON_HEADERS });
-      const data = yield res.json();
+      const res = yield import_axios6.default.get(`https://pelisgo.online/api/download/${id}`, { headers: COMMON_HEADERS });
+      const data = yield res.data;
       return data.url || null;
     } catch (e) {
       return null;

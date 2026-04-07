@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-07T22:35:13.608Z
+ * Generated: 2026-04-07T22:50:19.931Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -46,6 +46,7 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/cinemacity/index.js
+var import_axios = __toESM(require("axios"));
 var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
 var MAIN_URL = "https://cinemacity.cc";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
@@ -59,8 +60,8 @@ function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const url = `https://api.themoviedb.org/3/${mediaType === "movie" ? "movie" : "tv"}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-      const res = yield fetch(url);
-      const data = yield res.json();
+      const res = yield import_axios.default.get(url);
+      const data = yield res.data;
       return {
         title: data.title || data.name,
         year: (data.release_date || data.first_air_date || "").substring(0, 4)
@@ -87,7 +88,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       if (!tmdbInfo)
         return [];
       const searchUrl = `${MAIN_URL}/index.php?do=search&subaction=search&story=${encodeURIComponent(tmdbInfo.title)}`;
-      const searchRes = yield fetch(searchUrl, { headers: HEADERS });
+      const searchRes = yield import_axios.default.get(searchUrl, { headers: HEADERS });
       const $search = import_cheerio_without_node_native.default.load(yield searchRes.text());
       let mediaUrl = null;
       $search("div.dar-short_item").each((i, el) => {
@@ -101,7 +102,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       });
       if (!mediaUrl)
         return [];
-      const pageRes = yield fetch(mediaUrl, { headers: HEADERS });
+      const pageRes = yield import_axios.default.get(mediaUrl, { headers: HEADERS });
       const $page = import_cheerio_without_node_native.default.load(yield pageRes.text());
       let fileData = null;
       $page("script").each((i, el) => {

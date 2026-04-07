@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-07T22:35:13.666Z
+ * Generated: 2026-04-07T22:50:19.969Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -45,7 +45,11 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
+// src/fuegocine/index.js
+var import_axios5 = __toESM(require("axios"));
+
 // src/resolvers/voe.js
+var import_axios = __toESM(require("axios"));
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function decodeBase64(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -60,12 +64,12 @@ function resolve(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[VOE] Resolviendo Directo: ${url}`);
-      const res = yield fetch(url, { headers: { "User-Agent": UA } });
+      const res = yield import_axios.default.get(url, { headers: { "User-Agent": UA } });
       let html = yield res.text();
       if (html.includes("Redirecting") || html.length < 1500) {
         const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA } });
+          const res2 = yield import_axios.default.get(rm[1], { headers: { "User-Agent": UA } });
           html = yield res2.text();
         }
       }
@@ -116,10 +120,14 @@ function resolve(url) {
   });
 }
 
+// src/resolvers/filemoon.js
+var import_axios2 = __toESM(require("axios"));
+
 // src/utils/aes-gcm.js
 var import_crypto_js = __toESM(require("crypto-js"));
 
 // src/resolvers/hlswish.js
+var import_axios3 = __toESM(require("axios"));
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpack(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -150,7 +158,7 @@ function resolve2(url) {
         }
       }
       const origin = new URL(targetUrl).origin;
-      const res = yield fetch(targetUrl, {
+      const res = yield import_axios3.default.get(targetUrl, {
         headers: { "User-Agent": UA2, "Referer": origin + "/", "Origin": origin }
       });
       const html = yield res.text();
@@ -184,6 +192,7 @@ function resolve2(url) {
 }
 
 // src/resolvers/vidhide.js
+var import_axios4 = __toESM(require("axios"));
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackVidHide(script) {
   try {
@@ -216,7 +225,7 @@ function resolve3(url) {
   return __async(this, null, function* () {
     try {
       const origin = new URL(url).origin;
-      const res = yield fetch(url, {
+      const res = yield import_axios4.default.get(url, {
         headers: { "User-Agent": UA3, "Referer": origin + "/" }
       });
       const html = yield res.text();
@@ -260,8 +269,8 @@ function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const url = `https://api.themoviedb.org/3/${mediaType === "movie" ? "movie" : "tv"}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-      const res = yield fetch(url);
-      const data = yield res.json();
+      const res = yield import_axios5.default.get(url);
+      const data = yield res.data;
       return {
         title: data.title || data.name,
         year: (data.release_date || data.first_air_date || "").substring(0, 4)
@@ -279,15 +288,15 @@ function getStreams(tmdbId, mediaType, season, episode) {
       if (!tmdbInfo)
         return [];
       const searchTitle = season ? `${tmdbInfo.title} ${season}x${episode}` : tmdbInfo.title;
-      const searchRes = yield fetch(SEARCH_BASE + encodeURIComponent(searchTitle));
-      const searchJson = yield searchRes.json();
+      const searchRes = yield import_axios5.default.get(SEARCH_BASE + encodeURIComponent(searchTitle));
+      const searchJson = yield searchRes.data;
       const entries = ((_a = searchJson.feed) == null ? void 0 : _a.entry) || [];
       let allStreams = [];
       for (const entry of entries) {
         const entryUrl = (_c = (_b = entry.link) == null ? void 0 : _b.find((l) => l.rel === "alternate")) == null ? void 0 : _c.href;
         if (!entryUrl)
           continue;
-        const pageRes = yield fetch(entryUrl, { headers: { "User-Agent": UA4 } });
+        const pageRes = yield import_axios5.default.get(entryUrl, { headers: { "User-Agent": UA4 } });
         const html = yield pageRes.text();
         const scriptsMatch = html.match(/const\s+_SV_LINKS\s*=\s*\[([\s\S]*?)\]\s*;/);
         if (!scriptsMatch)

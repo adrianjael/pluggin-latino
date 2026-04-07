@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T22:35:13.784Z
+ * Generated: 2026-04-07T22:50:20.014Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -77,7 +77,7 @@ __export(extractor_exports, {
 function fetchText(url, referer) {
   return __async(this, null, function* () {
     try {
-      const res = yield fetch(url, { headers: { "User-Agent": UA, "Referer": referer || "https://pelispedia.mov/" } });
+      const res = yield import_axios.default.get(url, { headers: { "User-Agent": UA, "Referer": referer || "https://pelispedia.mov/" } });
       return yield res.text();
     } catch (e) {
       return "";
@@ -129,13 +129,17 @@ function extractStreams(url) {
     return streams;
   });
 }
-var import_cheerio_without_node_native, UA;
+var import_axios, import_cheerio_without_node_native, UA;
 var init_extractor = __esm({
   "src/pelispedia/extractor.js"() {
+    import_axios = __toESM(require("axios"));
     import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
     UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
   }
 });
+
+// src/pelispedia/index.js
+var import_axios7 = __toESM(require("axios"));
 
 // src/utils/string.js
 function normalizeTitle(t) {
@@ -148,6 +152,7 @@ function normalizeTitle(t) {
 init_extractor();
 
 // src/resolvers/voe.js
+var import_axios2 = __toESM(require("axios"));
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function decodeBase64(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -162,12 +167,12 @@ function resolve(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[VOE] Resolviendo Directo: ${url}`);
-      const res = yield fetch(url, { headers: { "User-Agent": UA2 } });
+      const res = yield import_axios2.default.get(url, { headers: { "User-Agent": UA2 } });
       let html = yield res.text();
       if (html.includes("Redirecting") || html.length < 1500) {
         const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA2 } });
+          const res2 = yield import_axios2.default.get(rm[1], { headers: { "User-Agent": UA2 } });
           html = yield res2.text();
         }
       }
@@ -217,6 +222,9 @@ function resolve(url) {
     }
   });
 }
+
+// src/resolvers/filemoon.js
+var import_axios3 = __toESM(require("axios"));
 
 // src/utils/aes-gcm.js
 var import_crypto_js = __toESM(require("crypto-js"));
@@ -289,10 +297,10 @@ function resolve2(url) {
         return null;
       const id = idMatch[1];
       try {
-        const apiRes = yield fetch(`https://${new URL(url).hostname}/api/videos/${id}`, {
+        const apiRes = yield import_axios3.default.get(`https://${new URL(url).hostname}/api/videos/${id}`, {
           headers: { "User-Agent": UA3, "Referer": url }
         });
-        const data = yield apiRes.json();
+        const data = yield apiRes.data;
         if (data.playback) {
           const decrypted = yield decryptByse(data.playback);
           if (decrypted && decrypted.sources) {
@@ -302,7 +310,7 @@ function resolve2(url) {
         }
       } catch (e) {
       }
-      const res = yield fetch(url, { headers: { "User-Agent": UA3, "Referer": url } });
+      const res = yield import_axios3.default.get(url, { headers: { "User-Agent": UA3, "Referer": url } });
       const html = yield res.text();
       const fm = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
       if (fm)
@@ -315,6 +323,7 @@ function resolve2(url) {
 }
 
 // src/resolvers/hlswish.js
+var import_axios4 = __toESM(require("axios"));
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpack(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -345,7 +354,7 @@ function resolve3(url) {
         }
       }
       const origin = new URL(targetUrl).origin;
-      const res = yield fetch(targetUrl, {
+      const res = yield import_axios4.default.get(targetUrl, {
         headers: { "User-Agent": UA4, "Referer": origin + "/", "Origin": origin }
       });
       const html = yield res.text();
@@ -379,6 +388,7 @@ function resolve3(url) {
 }
 
 // src/resolvers/vidhide.js
+var import_axios5 = __toESM(require("axios"));
 var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackVidHide(script) {
   try {
@@ -411,7 +421,7 @@ function resolve4(url) {
   return __async(this, null, function* () {
     try {
       const origin = new URL(url).origin;
-      const res = yield fetch(url, {
+      const res = yield import_axios5.default.get(url, {
         headers: { "User-Agent": UA5, "Referer": origin + "/" }
       });
       const html = yield res.text();
@@ -439,12 +449,13 @@ function resolve4(url) {
 }
 
 // src/resolvers/uqload.js
+var import_axios6 = __toESM(require("axios"));
 var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function resolve5(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[Uqload] Fetching: ${url}`);
-      const res = yield fetch(url, {
+      const res = yield import_axios6.default.get(url, {
         headers: {
           "User-Agent": UA6,
           "Referer": "https://xupalace.org/"
@@ -455,7 +466,7 @@ function resolve5(url) {
       console.log(`[Uqload] HTML Length: ${html.length}`);
       if (html.length < 100 && (html.includes("restricted") || html.includes("domain"))) {
         console.log(`[Uqload] Error de restricci\xF3n de dominio detectado.`);
-        const res2 = yield fetch(url, {
+        const res2 = yield import_axios6.default.get(url, {
           headers: { "User-Agent": UA6, "Referer": "https://pelispedia.mov/" }
         });
         const html2 = yield res2.text();
@@ -552,7 +563,7 @@ function decodeJwtPayload(token) {
 function fetchText2(url) {
   return __async(this, null, function* () {
     try {
-      const res = yield fetch(url, { headers: { "User-Agent": UA7, "Referer": "https://pelispedia.mov/" } });
+      const res = yield import_axios7.default.get(url, { headers: { "User-Agent": UA7, "Referer": "https://pelispedia.mov/" } });
       return yield res.text();
     } catch (e) {
       return "";
