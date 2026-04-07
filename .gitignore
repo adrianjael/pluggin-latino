@@ -30,17 +30,17 @@ Thumbs.db
 *.log
 /tmp/
 test_*.js
+test-*.js
+debug-*.js
+debug_*.js
 check-sites.js
 *.html
 *.webp
 *.png
 
+# Documentación interna
+HOW_TO_ADD_PROVIDER.md
+
 # Entorno
 .env
 .env.local
-
-# Documentación interna
-HOW_TO_ADD_PROVIDER.md
-HOW_TO_ADD_PROVIDER.md
-HOW_TO_ADD_PROVIDER.md
-*.md

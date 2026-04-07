@@ -3,6 +3,7 @@ import { extractStreams } from './extractor.js';
 
 const BASE = "https://pelispedia.mov";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 async function fetchText(url) {
     try {
@@ -16,12 +17,26 @@ async function fetchText(url) {
     } catch (e) { return ""; }
 }
 
+/**
+ * Obtiene el título en español de TMDB (útil si Nuvio pasa el título en inglés).
+ */
+async function getSpanishTitle(tmdbId, type) {
+    if (!tmdbId || tmdbId === 'dummy') return null;
+    try {
+        const url = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_KEY}&language=es-MX`;
+        const res = await fetch(url);
+        const data = await res.json();
+        return data.title || data.name || null;
+    } catch (e) { return null; }
+}
+
 async function searchMedia(query) {
     const url = `${BASE}/search?s=${encodeURIComponent(query)}`;
     const html = await fetchText(url);
     if (!html) return [];
 
     // Regex ultra-flexible para atributos href y title en cualquier orden
+    // También captura texto dentro del tag si el atributo title falla
     const re = /<a[^>]+href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"[^>]*title="([^"]+)"|<a[^>]+title="([^"]+)"[^>]+href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
     const results = [];
     let m;
@@ -43,7 +58,7 @@ async function searchMedia(query) {
         }
     }
 
-    // Fallback: Si no hay resultados con title, intentar solo con href y slug
+    // Fallback: Si no hay resultados con title, intentar con href y slug
     if (results.length === 0) {
         const simpleRe = /href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
         while ((m = simpleRe.exec(html)) !== null) {
@@ -51,7 +66,7 @@ async function searchMedia(query) {
                 url: m[1],
                 type: m[2],
                 slug: m[3],
-                title: m[3].replace(/-/g, ' ') // Título fallback basado en slug
+                title: m[3].replace(/-/g, ' ')
             });
         }
     }
@@ -60,9 +75,23 @@ async function searchMedia(query) {
 
 async function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
-        console.log(`[Pelispedia] Buscando: "${title}" (${mediaType})`);
+        const type = (mediaType || '').toLowerCase();
+        const tmdbType = (type === 'movie') ? 'movie' : 'tv';
+        
+        console.log(`[Pelispedia] Buscando: "${title}" (${type}) tmdbId: ${tmdbId}`);
+        
         let matches = await searchMedia(title);
 
+        // Si no hay resultados, intentar con el nombre en español de TMDB
+        if (matches.length === 0 && tmdbId && tmdbId !== 'dummy') {
+            const esTitle = await getSpanishTitle(tmdbId, tmdbType);
+            if (esTitle && esTitle !== title) {
+                console.log(`[Pelispedia] Reintentando con título TMDB: "${esTitle}"`);
+                matches = await searchMedia(esTitle);
+            }
+        }
+
+        // Si sigue sin haber resultados, intentar con la primera palabra
         if (matches.length === 0) {
             const firstWord = title.split(' ')[0];
             if (firstWord.length > 3) {
@@ -75,8 +104,8 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         // Filtrar por similitud y tipo
         const bestMatch = matches.find(m => {
             const sim = calculateSimilarity(title, m.title);
-            const typeMatch = (mediaType === 'movie' && m.type === 'pelicula') || 
-                              ((mediaType === 'tv' || mediaType === 'series') && m.type === 'serie');
+            const typeMatch = (type === 'movie' && m.type === 'pelicula') || 
+                              ((type === 'tv' || type === 'series') && m.type === 'serie');
             
             if (sim > 0.4 && typeMatch) {
                 m.similarity = sim;
@@ -86,17 +115,16 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         });
 
         if (!bestMatch) {
-            console.log("[Pelispedia] No se encontró coincidencia con similitud suficiente.");
+            console.log("[Pelispedia] No se encontró coincidencia adecuada.");
             return [];
         }
 
         let targetUrl = bestMatch.url;
-        if (mediaType === 'tv' || mediaType === 'series') {
-            // Construir URL de episodio: /serie/{slug}/temporada/{n}/capitulo/{m}
+        if (type === 'tv' || type === 'series') {
             targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${season}/capitulo/${episode}`;
         }
 
-        console.log(`[Pelispedia] Solicitando streams de: ${targetUrl}`);
+        console.log(`[Pelispedia] Extrayendo de: ${targetUrl}`);
         const streams = await extractStreams(targetUrl);
 
         return streams;
