@@ -1,9 +1,9 @@
 [
   {
-    "id": "nuvio-pelis-plus-lat",
-    "name": "PelisPlusHD",
-    "description": "Peliculas y Series Latino",
-    "version": "1.3.0",
+    "id": "test-latam-99",
+    "name": "PelisPlus Test",
+    "description": "Test de carga rapida",
+    "version": "1.0.0",
     "author": "AdrianJael",
     "supportedTypes": [
       "movie",
@@ -11,6 +11,7 @@
     ],
     "filename": "providers/pelisplus.js",
     "enabled": true,
+    "logo": "",
     "contentLanguage": [
       "es"
     ],
@@ -19,6 +20,7 @@
       "m3u8"
     ],
     "limited": false,
+    "disabledPlatforms": [],
     "supportsExternalPlayer": true
   }
 ]
