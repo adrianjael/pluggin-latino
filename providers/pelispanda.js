@@ -1,5 +1,537 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-07T22:26:06.083Z
+ * Generated: 2026-04-07T22:31:35.044Z
  */
-var P=Object.create;var b=Object.defineProperty;var J=Object.getOwnPropertyDescriptor;var B=Object.getOwnPropertyNames;var F=Object.getPrototypeOf,Z=Object.prototype.hasOwnProperty;var _=(t,e)=>{for(var r in e)b(t,r,{get:e[r],enumerable:!0})},z=(t,e,r,a)=>{if(e&&typeof e=="object"||typeof e=="function")for(let i of B(e))!Z.call(t,i)&&i!==r&&b(t,i,{get:()=>e[i],enumerable:!(a=J(e,i))||a.enumerable});return t};var q=(t,e,r)=>(r=t!=null?P(F(t)):{},z(e||!t||!t.__esModule?b(r,"default",{value:t,enumerable:!0}):r,t)),X=t=>z(b({},"__esModule",{value:!0}),t);var d=(t,e,r)=>new Promise((a,i)=>{var s=l=>{try{o(r.next(l))}catch(c){i(c)}},n=l=>{try{o(r.throw(l))}catch(c){i(c)}},o=l=>l.done?a(l.value):Promise.resolve(l.value).then(s,n);o((r=r.apply(t,e)).next())});var ne={};_(ne,{getStreams:()=>D});module.exports=X(ne);var j=q(require("cheerio-without-node-native"));var k="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";function $(t){let e="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",r=String(t).replace(/=+$/,""),a="";for(let i=0,s,n,o=0;n=r.charAt(o++);~n&&(s=i%4?s*64+n:n,i++%4)?a+=String.fromCharCode(255&s>>(-2*i&6)):0)n=e.indexOf(n);return a}function T(t){return d(this,null,function*(){try{console.log(`[VOE] Resolviendo Directo: ${t}`);let r=yield(yield fetch(t,{headers:{"User-Agent":k}})).text();if(r.includes("Redirecting")||r.length<1500){let s=r.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);s&&(r=yield(yield fetch(s[1],{headers:{"User-Agent":k}})).text())}let a=r.match(/<script type="application\/json">([\s\S]*?)<\/script>/);if(a)try{let s=JSON.parse(a[1].trim()),n=Array.isArray(s)?s[0]:s;if(typeof n!="string")return null;let o=n.replace(/[a-zA-Z]/g,f=>String.fromCharCode((f<="Z"?90:122)>=(f=f.charCodeAt(0)+13)?f:f-26)),l=["@$","^^","~@","%?","*~","!!","#&"];for(let f of l)o=o.split(f).join("");let c=$(o),u="";for(let f=0;f<c.length;f++)u+=String.fromCharCode(c.charCodeAt(f)-3);let w=u.split("").reverse().join(""),m=JSON.parse($(w));if(m&&m.source)return console.log(`[VOE] -> m3u8 encontrado: ${m.source.substring(0,60)}...`),{url:m.source,quality:"1080p",isM3U8:!0,headers:{"User-Agent":k,Referer:t}}}catch(s){console.error("[VOE] Decryption failed:",s.message)}let i=r.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);return i?{url:i[1],quality:"1080p",isM3U8:!0,headers:{"User-Agent":k,Referer:t}}:null}catch(e){return console.error(`[VOE] Error resolviedo: ${e.message}`),null}})}var S=q(require("crypto-js"));function N(t,e,r){try{let i=r.slice(0,-16),s=S.default.lib.WordArray.create(t),n=new Uint8Array(16);n.set(e,0),n[15]=2;let o=S.default.lib.WordArray.create(n);return S.default.AES.decrypt({ciphertext:S.default.lib.WordArray.create(i)},s,{iv:o,mode:S.default.mode.CTR,padding:S.default.pad.NoPadding}).toString(S.default.enc.Utf8)}catch(a){return console.error("[PureJS-GCM] Error Decrypting:",a.message),null}}var R="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";function W(t){let e=t.replace(/-/g,"+").replace(/_/g,"/");for(;e.length%4;)e+="=";if(typeof Buffer!="undefined")return Buffer.from(e,"base64");let r=atob(e);return new Uint8Array(r.split("").map(a=>a.charCodeAt(0)))}function Q(t){return d(this,null,function*(){try{let e=[];for(let n of t.key_parts)W(n).forEach(o=>e.push(o));let r=new Uint8Array(e),a=W(t.iv),i=W(t.payload);if(typeof crypto!="undefined"&&crypto.subtle)try{let n=yield crypto.subtle.importKey("raw",r,"AES-GCM",!1,["decrypt"]),o=yield crypto.subtle.decrypt({name:"AES-GCM",iv:a},n,i);return JSON.parse(new TextDecoder().decode(o))}catch(n){}let s=N(r,a,i);return s?JSON.parse(s):null}catch(e){return null}})}function O(t){return d(this,null,function*(){try{let e=new URL(t).origin,r=t.match(/\/e\/([a-zA-Z0-9]+)/);if(!r)return null;let a=r[1];try{let l=yield(yield fetch(`https://${new URL(t).hostname}/api/videos/${a}`,{headers:{"User-Agent":R,Referer:t}})).json();if(l.playback){let c=yield Q(l.playback);if(c&&c.sources){let u=c.sources[0];return{url:u.url,quality:u.height?`${u.height}p`:"1080p",isM3U8:!0,headers:{"User-Agent":R,Referer:e+"/",Origin:e}}}}}catch(o){}let n=(yield(yield fetch(t,{headers:{"User-Agent":R,Referer:t}})).text()).match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);return n?{url:n[1],quality:"1080p",isM3U8:!0,headers:{"User-Agent":R,Referer:e+"/",Origin:e}}:null}catch(e){return null}})}var E="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";function Y(t,e,r,a,i,s){let n="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",o=l=>{let c=0;for(let u=0;u<l.length;u++){let w=n.indexOf(l[u]);if(w===-1)return NaN;c=c*e+w}return c};return t.replace(/\b([0-9a-zA-Z]+)\b/g,l=>{let c=o(l);return isNaN(c)||c>=a.length?l:a[c]||l})}var ee={"hglink.to":"vibuxer.com"};function V(t){return d(this,null,function*(){try{let e=t;for(let[o,l]of Object.entries(ee))if(e.includes(o)){e=e.replace(o,l);break}let r=new URL(e).origin,i=yield(yield fetch(e,{headers:{"User-Agent":E,Referer:r+"/",Origin:r}})).text(),s=null,n=i.match(/file\s*:\s*["']([^"']+)["']/i);if(n&&(s=n[1],s.startsWith("/")&&(s=r+s)),!s){let o=i.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);if(o){let c=Y(o[1],parseInt(o[2]),parseInt(o[3]),o[4].split("|")).match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);c&&(s=c[1],s.startsWith("/")&&(s=r+s))}}return s?{url:s,quality:"1080p",headers:{"User-Agent":E,Referer:r+"/"}}:null}catch(e){return null}})}var L="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";function te(t){try{let e=t.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);if(!e)return null;let[r,a,i,s,n]=e;i=parseInt(i),s=parseInt(s),n=n.split("|");let o=(c,u)=>{let w="0123456789abcdefghijklmnopqrstuvwxyz",m="";for(;c>0;)m=w[c%u]+m,c=Math.floor(c/u);return m||"0"};return a.replace(/\b\w+\b/g,c=>{let u=parseInt(c,36);return u<n.length&&n[u]?n[u]:o(u,i)})}catch(e){return null}}function K(t){return d(this,null,function*(){try{let e=new URL(t).origin,i=(yield(yield fetch(t,{headers:{"User-Agent":L,Referer:e+"/"}})).text()).match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);if(!i)return null;let s=te(i[0]);if(!s)return null;let n=s.match(/"hls[24]"\s*:\s*"([^"]+)"/);if(!n)return null;let o=n[1];return o.startsWith("http")||(o=e+o),{url:o,quality:"1080p",headers:{"User-Agent":L,Referer:e+"/",Origin:e}}}catch(e){return null}})}var M="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";function I(t){return d(this,null,function*(){var e,r,a,i,s,n,o;try{console.log(`[Vimeos] Resolviendo v\xEDa fetch: ${t}`);let c=yield(yield fetch(t,{headers:{"User-Agent":M,Referer:"https://vimeos.net/",Accept:"text/html"}})).text(),u=c.match(/vimeo\.com\/video\/(\d+)/i)||t.match(/\/(\d{7,10})/);if(u){let m=u[1];try{let U=yield(yield fetch(`https://player.vimeo.com/video/${m}/config`,{headers:{"User-Agent":M,Referer:t}})).json(),A=(s=(i=(a=(r=(e=U.request)==null?void 0:e.files)==null?void 0:r.hls)==null?void 0:a.cdns)==null?void 0:i.default)==null?void 0:s.url;if(A)return{url:A,quality:"1080p",isM3U8:!0,headers:{"User-Agent":M,Referer:"https://player.vimeo.com/"}};let x=(o=(n=U.request)==null?void 0:n.files)==null?void 0:o.progressive;if(x&&x.length>0){let p=x.sort((g,v)=>(parseInt(v.quality)||0)-(parseInt(g.quality)||0))[0];return{url:p.url,quality:p.quality?`${p.quality}p`:"1080p",headers:{"User-Agent":M,Referer:"https://player.vimeo.com/"}}}}catch(f){console.log(`[Vimeos] API Config Fall\xF3: ${f.message}`)}}let w=c.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);if(w){let m=w[1],f=parseInt(w[2]),U=w[4].split("|"),A="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",x=v=>{let h=0;for(let y=0;y<v.length;y++)h=h*f+A.indexOf(v[y]);return h},g=m.replace(/\b(\w+)\b/g,v=>{let h=x(v);return U[h]&&U[h]!==""?U[h]:v}).match(/["']([^"']+\.m3u8[^"']*)['"]/i);if(g)return{url:g[1],quality:"1080p",isM3U8:!0,headers:{"User-Agent":M,Referer:"https://vimeos.net/"}}}return null}catch(l){return console.log(`[Vimeos] Error cr\xEDtico: ${l.message}`),null}})}var G="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",re={voe:"VOE",streamwish:"StreamWish",hglink:"StreamWish",sw:"StreamWish",wishembed:"StreamWish",filemoon:"Filemoon",f75s:"Filemoon",vidhide:"VidHide",minochinos:"VidHide",dintezuvio:"VidHide",vimeos:"Vimeos",netu:"Netu",waaw:"Netu"};function se(t,e){return d(this,null,function*(){try{let r=`https://www.themoviedb.org/${e}/${t}?language=es-MX`,i=yield(yield fetch(r,{headers:{"User-Agent":G}})).text();return{title:j.default.load(i)(".title h2 a").text().trim()||""}}catch(r){return null}})}function H(t,e,r,a,i){return d(this,null,function*(){try{console.log(`[PelisPanda v1.9.0] Extraer: ${i||t}`);let s=i;if(!s){let p=yield se(t,e);p&&(s=p.title)}if(!s)return[];let n=`https://pelispanda.org/wp-json/wpreact/v1/search?query=${encodeURIComponent(s)}`,l=yield(yield fetch(n)).json(),c=e==="movie"?"pelicula":"serie",u=l.results.find(p=>p.tmdb_id==t&&p.type===c)||l.results[0];if(!u)return[];let m=`https://pelispanda.org/wp-json/wpreact/v1/${e==="movie"?"movie":"serie"}/${u.slug}/related`,A=(yield(yield fetch(m)).json()).embeds||[];return e!=="movie"&&(A=A.filter(p=>p.season==r&&p.episode==a)),(yield Promise.allSettled(A.map(p=>d(this,null,function*(){let g=(p.url||"").replace(/\\\//g,"/");if(g.includes("goodstream"))return null;let v="unknown";try{v=new URL(g).hostname.split(".")[0]}catch(C){}let h=null,y=g.toLowerCase();if(y.includes("voe")?h=yield T(g):y.includes("filemoon")?h=yield O(g):y.includes("streamwish")||y.includes("hglink")||y.includes("wishembed")?h=yield V(g):y.includes("vidhide")||y.includes("dintezuvio")||y.includes("minochinos")?h=yield K(g):y.includes("vimeos")&&(h=yield I(g)),h&&h.url){let C=re[v]||v;return{name:"PelisPanda",title:`${h.quality||"1080p"} \xB7 Latino \xB7 ${C}`,url:h.url,quality:h.quality||"1080p",isM3U8:!!h.isM3U8,headers:h.headers||{"User-Agent":G,Referer:g}}}return null})))).filter(p=>p.status==="fulfilled"&&p.value).map(p=>p.value)}catch(s){return[]}})}function D(t,e,r,a,i,s){return d(this,null,function*(){return H(t,e,r,a,i,s)})}module.exports={getStreams:D};
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve6, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve6(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/pelispanda/index.js
+var pelispanda_exports = {};
+__export(pelispanda_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(pelispanda_exports);
+
+// src/pelispanda/extractor.js
+var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
+
+// src/resolvers/voe.js
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function decodeBase64(input) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  let str = String(input).replace(/=+$/, "");
+  let output = "";
+  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+function resolve(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[VOE] Resolviendo Directo: ${url}`);
+      const res = yield fetch(url, { headers: { "User-Agent": UA } });
+      let html = yield res.text();
+      if (html.includes("Redirecting") || html.length < 1500) {
+        const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+        if (rm) {
+          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA } });
+          html = yield res2.text();
+        }
+      }
+      const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[1].trim());
+          let encText = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (typeof encText !== "string")
+            return null;
+          let rot13 = encText.replace(/[a-zA-Z]/g, (c) => String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
+          const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+          for (const n of noise)
+            rot13 = rot13.split(n).join("");
+          let b64_1 = decodeBase64(rot13);
+          let shifted = "";
+          for (let i = 0; i < b64_1.length; i++)
+            shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+          let reversed = shifted.split("").reverse().join("");
+          let data = JSON.parse(decodeBase64(reversed));
+          if (data && data.source) {
+            console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
+            return {
+              url: data.source,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA, "Referer": url }
+            };
+          }
+        } catch (ex) {
+          console.error("[VOE] Decryption failed:", ex.message);
+        }
+      }
+      const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+      if (m3u8Match) {
+        return {
+          url: m3u8Match[1],
+          quality: "1080p",
+          isM3U8: true,
+          headers: { "User-Agent": UA, "Referer": url }
+        };
+      }
+      return null;
+    } catch (e) {
+      console.error(`[VOE] Error resolviedo: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/utils/aes-gcm.js
+var import_crypto_js = __toESM(require("crypto-js"));
+function decryptGCM(key, iv, ciphertextWithTag) {
+  try {
+    const tagSize = 16;
+    const ciphertext = ciphertextWithTag.slice(0, -tagSize);
+    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
+    const ivCounter = new Uint8Array(16);
+    ivCounter.set(iv, 0);
+    ivCounter[15] = 2;
+    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
+    const decrypted = import_crypto_js.default.AES.decrypt(
+      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
+      keyWA,
+      {
+        iv: ivWA,
+        mode: import_crypto_js.default.mode.CTR,
+        padding: import_crypto_js.default.pad.NoPadding
+      }
+    );
+    return decrypted.toString(import_crypto_js.default.enc.Utf8);
+  } catch (e) {
+    console.error("[PureJS-GCM] Error Decrypting:", e.message);
+    return null;
+  }
+}
+
+// src/resolvers/filemoon.js
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+function base64UrlDecode(input) {
+  let s = input.replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4)
+    s += "=";
+  if (typeof Buffer !== "undefined")
+    return Buffer.from(s, "base64");
+  const bin = atob(s);
+  return new Uint8Array(bin.split("").map((c) => c.charCodeAt(0)));
+}
+function decryptByse(playback) {
+  return __async(this, null, function* () {
+    try {
+      const keyArr = [];
+      for (const p of playback.key_parts)
+        base64UrlDecode(p).forEach((b) => keyArr.push(b));
+      const key = new Uint8Array(keyArr);
+      const iv = base64UrlDecode(playback.iv);
+      const ciphertextWithTag = base64UrlDecode(playback.payload);
+      if (typeof crypto !== "undefined" && crypto.subtle) {
+        try {
+          const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
+          const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
+          return JSON.parse(new TextDecoder().decode(decryptedArr));
+        } catch (e) {
+        }
+      }
+      const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
+      return decryptedStr ? JSON.parse(decryptedStr) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function resolve2(url) {
+  return __async(this, null, function* () {
+    try {
+      const origin = new URL(url).origin;
+      const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
+      if (!idMatch)
+        return null;
+      const id = idMatch[1];
+      try {
+        const apiRes = yield fetch(`https://${new URL(url).hostname}/api/videos/${id}`, {
+          headers: { "User-Agent": UA2, "Referer": url }
+        });
+        const data = yield apiRes.json();
+        if (data.playback) {
+          const decrypted = yield decryptByse(data.playback);
+          if (decrypted && decrypted.sources) {
+            const best = decrypted.sources[0];
+            return { url: best.url, quality: best.height ? `${best.height}p` : "1080p", isM3U8: true, headers: { "User-Agent": UA2, "Referer": origin + "/", "Origin": origin } };
+          }
+        }
+      } catch (e) {
+      }
+      const res = yield fetch(url, { headers: { "User-Agent": UA2, "Referer": url } });
+      const html = yield res.text();
+      const fm = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
+      if (fm)
+        return { url: fm[1], quality: "1080p", isM3U8: true, headers: { "User-Agent": UA2, "Referer": origin + "/", "Origin": origin } };
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+
+// src/resolvers/hlswish.js
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function unpack(p, a, c, k, e, d) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const decode = (r) => {
+    let res = 0;
+    for (let l = 0; l < r.length; l++) {
+      let s = chars.indexOf(r[l]);
+      if (s === -1)
+        return NaN;
+      res = res * a + s;
+    }
+    return res;
+  };
+  return p.replace(/\b([0-9a-zA-Z]+)\b/g, (match) => {
+    let val = decode(match);
+    return isNaN(val) || val >= k.length ? match : k[val] || match;
+  });
+}
+var DOMAIN_MAP = { "hglink.to": "vibuxer.com" };
+function resolve3(url) {
+  return __async(this, null, function* () {
+    try {
+      let targetUrl = url;
+      for (const [old, replacement] of Object.entries(DOMAIN_MAP)) {
+        if (targetUrl.includes(old)) {
+          targetUrl = targetUrl.replace(old, replacement);
+          break;
+        }
+      }
+      const origin = new URL(targetUrl).origin;
+      const res = yield fetch(targetUrl, {
+        headers: { "User-Agent": UA3, "Referer": origin + "/", "Origin": origin }
+      });
+      const html = yield res.text();
+      let finalUrl = null;
+      const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
+      if (fileMatch) {
+        finalUrl = fileMatch[1];
+        if (finalUrl.startsWith("/"))
+          finalUrl = origin + finalUrl;
+      }
+      if (!finalUrl) {
+        const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+        if (packedMatch) {
+          const unpacked = unpack(packedMatch[1], parseInt(packedMatch[2]), parseInt(packedMatch[3]), packedMatch[4].split("|"));
+          const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);
+          if (m3u8Match) {
+            finalUrl = m3u8Match[1];
+            if (finalUrl.startsWith("/"))
+              finalUrl = origin + finalUrl;
+          }
+        }
+      }
+      if (finalUrl) {
+        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA3, "Referer": origin + "/" } };
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+
+// src/resolvers/vidhide.js
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function unpackVidHide(script) {
+  try {
+    const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
+    if (!match)
+      return null;
+    let [full, p, a, c, k] = match;
+    a = parseInt(a);
+    c = parseInt(c);
+    k = k.split("|");
+    const decode = (l, s) => {
+      const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
+      let res = "";
+      for (; l > 0; ) {
+        res = chars[l % s] + res;
+        l = Math.floor(l / s);
+      }
+      return res || "0";
+    };
+    const unpacked = p.replace(/\b\w+\b/g, (l) => {
+      const s = parseInt(l, 36);
+      return s < k.length && k[s] ? k[s] : decode(s, a);
+    });
+    return unpacked;
+  } catch (e) {
+    return null;
+  }
+}
+function resolve4(url) {
+  return __async(this, null, function* () {
+    try {
+      const origin = new URL(url).origin;
+      const res = yield fetch(url, {
+        headers: { "User-Agent": UA4, "Referer": origin + "/" }
+      });
+      const html = yield res.text();
+      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
+      if (!packedMatch)
+        return null;
+      const unpacked = unpackVidHide(packedMatch[0]);
+      if (!unpacked)
+        return null;
+      const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
+      if (!hlsMatch)
+        return null;
+      let finalUrl = hlsMatch[1];
+      if (!finalUrl.startsWith("http"))
+        finalUrl = origin + finalUrl;
+      return {
+        url: finalUrl,
+        quality: "1080p",
+        headers: { "User-Agent": UA4, "Referer": origin + "/", "Origin": origin }
+      };
+    } catch (e) {
+      return null;
+    }
+  });
+}
+
+// src/resolvers/vimeos.js
+var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+function resolve5(embedUrl) {
+  return __async(this, null, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    try {
+      console.log(`[Vimeos] Resolviendo v\xEDa fetch: ${embedUrl}`);
+      const res = yield fetch(embedUrl, {
+        headers: {
+          "User-Agent": UA5,
+          "Referer": "https://vimeos.net/",
+          "Accept": "text/html"
+        }
+      });
+      const html = yield res.text();
+      const vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i) || embedUrl.match(/\/(\d{7,10})/);
+      if (vimeoIdMatch) {
+        const vimeoId = vimeoIdMatch[1];
+        try {
+          const configRes = yield fetch(`https://player.vimeo.com/video/${vimeoId}/config`, {
+            headers: { "User-Agent": UA5, "Referer": embedUrl }
+          });
+          const config = yield configRes.json();
+          const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
+          if (hlsUrl) {
+            return {
+              url: hlsUrl,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA5, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+          const progressive = (_g = (_f = config.request) == null ? void 0 : _f.files) == null ? void 0 : _g.progressive;
+          if (progressive && progressive.length > 0) {
+            const best = progressive.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0))[0];
+            return {
+              url: best.url,
+              quality: best.quality ? `${best.quality}p` : "1080p",
+              headers: { "User-Agent": UA5, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+        } catch (apiErr) {
+          console.log(`[Vimeos] API Config Fall\xF3: ${apiErr.message}`);
+        }
+      }
+      const packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        const payload = packMatch[1];
+        const radix = parseInt(packMatch[2]);
+        const symtab = packMatch[4].split("|");
+        const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const unbase = (str) => {
+          let result = 0;
+          for (let i = 0; i < str.length; i++)
+            result = result * radix + chars.indexOf(str[i]);
+          return result;
+        };
+        const unpacked = payload.replace(/\b(\w+)\b/g, (match) => {
+          const idx = unbase(match);
+          return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+        });
+        const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
+        if (m3u8Match) {
+          return {
+            url: m3u8Match[1],
+            quality: "1080p",
+            isM3U8: true,
+            headers: { "User-Agent": UA5, "Referer": "https://vimeos.net/" }
+          };
+        }
+      }
+      return null;
+    } catch (err) {
+      console.log(`[Vimeos] Error cr\xEDtico: ${err.message}`);
+      return null;
+    }
+  });
+}
+
+// src/pelispanda/extractor.js
+var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var SERVER_LABELS = {
+  "voe": "VOE",
+  "streamwish": "StreamWish",
+  "hglink": "StreamWish",
+  "sw": "StreamWish",
+  "wishembed": "StreamWish",
+  "filemoon": "Filemoon",
+  "f75s": "Filemoon",
+  "vidhide": "VidHide",
+  "minochinos": "VidHide",
+  "dintezuvio": "VidHide",
+  "vimeos": "Vimeos",
+  "netu": "Netu",
+  "waaw": "Netu"
+};
+function getTmdbInfo(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    try {
+      const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
+      const res = yield fetch(url, { headers: { "User-Agent": UA6 } });
+      const html = yield res.text();
+      const $ = import_cheerio_without_node_native.default.load(html);
+      const title = $(".title h2 a").text().trim();
+      return { title: title || "" };
+    } catch (error) {
+      return null;
+    }
+  });
+}
+function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[PelisPanda v1.9.0] Extraer: ${providedTitle || tmdbId}`);
+      let searchTitle = providedTitle;
+      if (!searchTitle) {
+        const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
+        if (tmdbInfo)
+          searchTitle = tmdbInfo.title;
+      }
+      if (!searchTitle)
+        return [];
+      const searchUrl = `https://pelispanda.org/wp-json/wpreact/v1/search?query=${encodeURIComponent(searchTitle)}`;
+      const searchRes = yield fetch(searchUrl);
+      const searchData = yield searchRes.json();
+      const targetType = mediaType === "movie" ? "pelicula" : "serie";
+      const movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId && r.type === targetType) || searchData.results[0];
+      if (!movieMatch)
+        return [];
+      const endpointType = mediaType === "movie" ? "movie" : "serie";
+      const playersUrl = `https://pelispanda.org/wp-json/wpreact/v1/${endpointType}/${movieMatch.slug}/related`;
+      const playersRes = yield fetch(playersUrl);
+      const playersData = yield playersRes.json();
+      let embeds = playersData.embeds || [];
+      if (mediaType !== "movie") {
+        embeds = embeds.filter((e) => e.season == season && e.episode == episode);
+      }
+      const results = yield Promise.allSettled(embeds.map((player) => __async(this, null, function* () {
+        const rawUrl = (player.url || "").replace(/\\\//g, "/");
+        if (rawUrl.includes("goodstream"))
+          return null;
+        let serverKey = "unknown";
+        try {
+          serverKey = new URL(rawUrl).hostname.split(".")[0];
+        } catch (e) {
+        }
+        let resolved = null;
+        const s = rawUrl.toLowerCase();
+        if (s.includes("voe"))
+          resolved = yield resolve(rawUrl);
+        else if (s.includes("filemoon"))
+          resolved = yield resolve2(rawUrl);
+        else if (s.includes("streamwish") || s.includes("hglink") || s.includes("wishembed"))
+          resolved = yield resolve3(rawUrl);
+        else if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("minochinos"))
+          resolved = yield resolve4(rawUrl);
+        else if (s.includes("vimeos"))
+          resolved = yield resolve5(rawUrl);
+        if (resolved && resolved.url) {
+          const label = SERVER_LABELS[serverKey] || serverKey;
+          return {
+            name: "PelisPanda",
+            title: `${resolved.quality || "1080p"} \xB7 Latino \xB7 ${label}`,
+            url: resolved.url,
+            quality: resolved.quality || "1080p",
+            isM3U8: !!resolved.isM3U8,
+            headers: resolved.headers || { "User-Agent": UA6, "Referer": rawUrl }
+          };
+        }
+        return null;
+      })));
+      return results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+    } catch (error) {
+      return [];
+    }
+  });
+}
+
+// src/pelispanda/index.js
+function getStreams(tmdbId, mediaType, season, episode, title, year) {
+  return __async(this, null, function* () {
+    return extractStreams(tmdbId, mediaType, season, episode, title, year);
+  });
+}

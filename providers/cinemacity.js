@@ -1,5 +1,171 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-07T22:26:06.029Z
+ * Generated: 2026-04-07T22:31:34.916Z
  */
-var R=Object.create;var w=Object.defineProperty;var U=Object.getOwnPropertyDescriptor;var D=Object.getOwnPropertyNames;var I=Object.getPrototypeOf,L=Object.prototype.hasOwnProperty;var k=(t,a)=>{for(var e in a)w(t,e,{get:a[e],enumerable:!0})},M=(t,a,e,i)=>{if(a&&typeof a=="object"||typeof a=="function")for(let r of D(a))!L.call(t,r)&&r!==e&&w(t,r,{get:()=>a[r],enumerable:!(i=U(a,r))||i.enumerable});return t};var q=(t,a,e)=>(e=t!=null?R(I(t)):{},M(a||!t||!t.__esModule?w(e,"default",{value:t,enumerable:!0}):e,t)),H=t=>M(w({},"__esModule",{value:!0}),t);var g=(t,a,e)=>new Promise((i,r)=>{var n=f=>{try{u(e.next(f))}catch(p){r(p)}},l=f=>{try{u(e.throw(f))}catch(p){r(p)}},u=f=>f.done?i(f.value):Promise.resolve(f.value).then(n,l);u((e=e.apply(t,a)).next())});var B={};k(B,{getStreams:()=>v});module.exports=H(B);var x=q(require("cheerio-without-node-native"));var S="https://cinemacity.cc",T="439c478a771f35c05022f9feabcca01c",W="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",C={"User-Agent":W,Cookie:"dle_user_id=32729; dle_password=894171c6a8dab18ee594d5c652009a35;",Referer:`${S}/`};function K(t,a){return g(this,null,function*(){try{let e=`https://api.themoviedb.org/3/${a==="movie"?"movie":"tv"}/${t}?api_key=${T}&language=es-MX`,r=yield(yield fetch(e)).json();return{title:r.title||r.name,year:(r.release_date||r.first_air_date||"").substring(0,4)}}catch(e){return null}})}function N(t){let a="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",e=String(t).replace(/=+$/,""),i="";for(let r=0,n,l,u=0;l=e.charAt(u++);~l&&(n=r%4?n*64+l:l,r++%4)?i+=String.fromCharCode(255&n>>(-2*r&6)):0)l=a.indexOf(l);return i}function v(t,a,e,i){return g(this,null,function*(){var r;try{let n=yield K(t,a);if(!n)return[];let l=`${S}/index.php?do=search&subaction=search&story=${encodeURIComponent(n.title)}`,u=yield fetch(l,{headers:C}),f=x.default.load(yield u.text()),p=null;if(f("div.dar-short_item").each((h,d)=>{let c=f(d).find("a").first(),s=c.attr("href"),o=c.text().toLowerCase();if(s&&(o.includes(n.title.toLowerCase())||o.includes(n.year)))return p=s,!1}),!p)return[];let E=yield fetch(p,{headers:C}),_=x.default.load(yield E.text()),m=null;if(_("script").each((h,d)=>{let s=(_(d).html()||"").match(/atob\s*\(\s*['"](.*?)['"]\s*\)/);if(s){let o=N(s[1]),y=o.match(/file\s*:\s*(['"])(.*?)\1/)||o.match(/file\s*:\s*(\[.*?\])/);if(y){try{let $=y[2]||y[1];m=$.startsWith("[")?JSON.parse($):$}catch($){m=y[2]||y[1]}return!1}}}),!m)return[];let b=[];if(a==="movie"){let h=Array.isArray(m)?m[0].file:m;b.push({url:h,q:"HD"})}else{let h=m.find(c=>{var s,o;return((s=c.title)==null?void 0:s.includes(`Season ${e}`))||((o=c.title)==null?void 0:o.includes(`S${e}`))}),d=(r=h==null?void 0:h.folder)==null?void 0:r.find(c=>{var s,o;return((s=c.title)==null?void 0:s.includes(`Episode ${i}`))||((o=c.title)==null?void 0:o.includes(`E${i}`))});d!=null&&d.file&&b.push({url:d.file,q:"HD"})}let A=[];return b.forEach(h=>{h.url.split(",").forEach(c=>{let s=c.match(/\[(.*?)\](.*)/);A.push({name:"CinemaCity",title:`${s?s[1]:"720p"} \xB7 Latino \xB7 CinemaCity`,url:s?s[2]:c,quality:s?s[1]:"720p",headers:C})})}),A}catch(n){return[]}})}module.exports={getStreams:v};
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/cinemacity/index.js
+var cinemacity_exports = {};
+__export(cinemacity_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(cinemacity_exports);
+var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
+var MAIN_URL = "https://cinemacity.cc";
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var HEADERS = {
+  "User-Agent": UA,
+  "Cookie": "dle_user_id=32729; dle_password=894171c6a8dab18ee594d5c652009a35;",
+  "Referer": `${MAIN_URL}/`
+};
+function getTmdbInfo(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    try {
+      const url = `https://api.themoviedb.org/3/${mediaType === "movie" ? "movie" : "tv"}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
+      const res = yield fetch(url);
+      const data = yield res.json();
+      return {
+        title: data.title || data.name,
+        year: (data.release_date || data.first_air_date || "").substring(0, 4)
+      };
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function decodeBase64(input) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  let str = String(input).replace(/=+$/, "");
+  let output = "";
+  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+function getStreams(tmdbId, mediaType, season, episode) {
+  return __async(this, null, function* () {
+    var _a;
+    try {
+      const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
+      if (!tmdbInfo)
+        return [];
+      const searchUrl = `${MAIN_URL}/index.php?do=search&subaction=search&story=${encodeURIComponent(tmdbInfo.title)}`;
+      const searchRes = yield fetch(searchUrl, { headers: HEADERS });
+      const $search = import_cheerio_without_node_native.default.load(yield searchRes.text());
+      let mediaUrl = null;
+      $search("div.dar-short_item").each((i, el) => {
+        const anchor = $search(el).find("a").first();
+        const href = anchor.attr("href");
+        const entryText = anchor.text().toLowerCase();
+        if (href && (entryText.includes(tmdbInfo.title.toLowerCase()) || entryText.includes(tmdbInfo.year))) {
+          mediaUrl = href;
+          return false;
+        }
+      });
+      if (!mediaUrl)
+        return [];
+      const pageRes = yield fetch(mediaUrl, { headers: HEADERS });
+      const $page = import_cheerio_without_node_native.default.load(yield pageRes.text());
+      let fileData = null;
+      $page("script").each((i, el) => {
+        const script = $page(el).html() || "";
+        const atobMatch = script.match(/atob\s*\(\s*['"](.*?)['"]\s*\)/);
+        if (atobMatch) {
+          const decoded = decodeBase64(atobMatch[1]);
+          const fileMatch = decoded.match(/file\s*:\s*(['"])(.*?)\1/) || decoded.match(/file\s*:\s*(\[.*?\])/);
+          if (fileMatch) {
+            try {
+              const raw = fileMatch[2] || fileMatch[1];
+              fileData = raw.startsWith("[") ? JSON.parse(raw) : raw;
+            } catch (e) {
+              fileData = fileMatch[2] || fileMatch[1];
+            }
+            return false;
+          }
+        }
+      });
+      if (!fileData)
+        return [];
+      let urls = [];
+      if (mediaType === "movie") {
+        const movieFile = Array.isArray(fileData) ? fileData[0].file : fileData;
+        urls.push({ url: movieFile, q: "HD" });
+      } else {
+        const sObj = fileData.find((s) => {
+          var _a2, _b;
+          return ((_a2 = s.title) == null ? void 0 : _a2.includes(`Season ${season}`)) || ((_b = s.title) == null ? void 0 : _b.includes(`S${season}`));
+        });
+        const eObj = (_a = sObj == null ? void 0 : sObj.folder) == null ? void 0 : _a.find((e) => {
+          var _a2, _b;
+          return ((_a2 = e.title) == null ? void 0 : _a2.includes(`Episode ${episode}`)) || ((_b = e.title) == null ? void 0 : _b.includes(`E${episode}`));
+        });
+        if (eObj == null ? void 0 : eObj.file)
+          urls.push({ url: eObj.file, q: "HD" });
+      }
+      const streams = [];
+      urls.forEach((item) => {
+        const parts = item.url.split(",");
+        parts.forEach((p) => {
+          const qMatch = p.match(/\[(.*?)\](.*)/);
+          streams.push({
+            name: "CinemaCity",
+            title: `${qMatch ? qMatch[1] : "720p"} \xB7 Latino \xB7 CinemaCity`,
+            url: qMatch ? qMatch[2] : p,
+            quality: qMatch ? qMatch[1] : "720p",
+            headers: HEADERS
+          });
+        });
+      });
+      return streams;
+    } catch (e) {
+      return [];
+    }
+  });
+}

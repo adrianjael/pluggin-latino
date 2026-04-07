@@ -1,5 +1,256 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-07T22:26:06.105Z
+ * Generated: 2026-04-07T22:31:35.084Z
  */
-var $=Object.defineProperty;var N=Object.getOwnPropertyDescriptor;var O=Object.getOwnPropertyNames;var b=Object.prototype.hasOwnProperty;var M=(e,r)=>{for(var t in r)$(e,t,{get:r[t],enumerable:!0})},P=(e,r,t,s)=>{if(r&&typeof r=="object"||typeof r=="function")for(let o of O(r))!b.call(e,o)&&o!==t&&$(e,o,{get:()=>r[o],enumerable:!(s=N(r,o))||s.enumerable});return e};var U=e=>P($({},"__esModule",{value:!0}),e);var x=(e,r,t)=>new Promise((s,o)=>{var d=i=>{try{a(t.next(i))}catch(c){o(c)}},u=i=>{try{a(t.throw(i))}catch(c){o(c)}},a=i=>i.done?s(i.value):Promise.resolve(i.value).then(d,u);a((t=t.apply(e,r)).next())});var q={};M(q,{getStreams:()=>B});module.exports=U(q);var C="439c478a771f35c05022f9feabcca01c",y="https://api.playhubmax.com/api",H="33dff3b1c1362e45e1425fcc9724d6f3",K="33dff3b1c1362e45",D="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",A={"User-Agent":D,Accept:"application/json, text/plain, */*",Origin:"https://www.playhubmax.com",Referer:"https://www.playhubmax.com/"},p=[99,124,119,123,242,107,111,197,48,1,103,43,254,215,171,118,202,130,201,125,250,89,71,240,173,212,162,175,156,164,114,192,183,253,147,38,54,63,247,204,52,165,229,241,113,216,49,21,4,199,35,195,24,150,5,154,7,18,128,226,235,39,178,117,9,131,44,26,27,110,90,160,82,59,214,179,41,227,47,132,83,209,0,237,32,252,177,91,106,203,190,57,74,76,88,207,208,239,170,251,67,77,51,133,69,249,2,127,80,60,159,168,81,163,64,143,146,157,56,245,188,182,218,33,16,255,243,210,205,12,19,236,95,151,68,23,196,167,126,61,100,93,25,115,96,129,79,220,34,42,144,136,70,238,184,20,222,94,11,219,224,50,58,10,73,6,36,92,194,211,172,98,145,149,228,121,231,200,55,109,141,213,78,169,108,86,244,234,101,122,174,8,186,120,37,46,28,166,180,198,232,221,116,31,75,189,139,138,112,62,181,102,72,3,246,14,97,53,87,185,134,193,29,158,225,248,152,17,105,217,142,148,155,30,135,233,206,85,40,223,140,161,137,13,191,230,66,104,65,153,45,15,176,84,187,22],j=(()=>{let e=new Array(256);for(let r=0;r<256;r++)e[p[r]]=r;return e})(),L=[1,2,4,8,16,32,64,128,27,54];function f(e,r){let t=0;for(let s=0;s<8;s++){r&1&&(t^=e);let o=e&128;e=e<<1&255,o&&(e^=27),r>>=1}return t}function T(e){let r=[];for(let t=0;t<8;t++)r[t]=e.slice(t*4,t*4+4);for(let t=8;t<60;t++){let s=r[t-1].slice();if(t%8===0){let o=[s[1],s[2],s[3],s[0]];s=[p[o[0]],p[o[1]],p[o[2]],p[o[3]]],s[0]^=L[t/8-1]}else t%8===4&&(s=[p[s[0]],p[s[1]],p[s[2]],p[s[3]]]);r[t]=[r[t-8][0]^s[0],r[t-8][1]^s[1],r[t-8][2]^s[2],r[t-8][3]^s[3]]}return r}function W(e,r){let t=[[e[0],e[1],e[2],e[3]],[e[4],e[5],e[6],e[7]],[e[8],e[9],e[10],e[11]],[e[12],e[13],e[14],e[15]]];for(let a=0;a<4;a++){let i=r[56+a];for(let c=0;c<4;c++)t[a][c]^=i[c]}for(let a=13;a>=1;a--){let i=t[3][1];t[3][1]=t[2][1],t[2][1]=t[1][1],t[1][1]=t[0][1],t[0][1]=i;let c=t[0][2];t[0][2]=t[2][2],t[2][2]=c,c=t[1][2],t[1][2]=t[3][2],t[3][2]=c;let h=t[0][3];t[0][3]=t[1][3],t[1][3]=t[2][3],t[2][3]=t[3][3],t[3][3]=h;for(let l=0;l<4;l++)for(let n=0;n<4;n++)t[l][n]=j[t[l][n]];for(let l=0;l<4;l++){let n=r[a*4+l];for(let m=0;m<4;m++)t[l][m]^=n[m]}for(let l=0;l<4;l++){let n=t[l].slice();t[l][0]=f(n[0],14)^f(n[1],11)^f(n[2],13)^f(n[3],9),t[l][1]=f(n[0],9)^f(n[1],14)^f(n[2],11)^f(n[3],13),t[l][2]=f(n[0],13)^f(n[1],9)^f(n[2],14)^f(n[3],11),t[l][3]=f(n[0],11)^f(n[1],13)^f(n[2],9)^f(n[3],14)}}let s=t[3][1];t[3][1]=t[2][1],t[2][1]=t[1][1],t[1][1]=t[0][1],t[0][1]=s;let o=t[0][2];t[0][2]=t[2][2],t[2][2]=o,o=t[1][2],t[1][2]=t[3][2],t[3][2]=o;let d=t[0][3];t[0][3]=t[1][3],t[1][3]=t[2][3],t[2][3]=t[3][3],t[3][3]=d;for(let a=0;a<4;a++)for(let i=0;i<4;i++)t[a][i]=j[t[a][i]];for(let a=0;a<4;a++){let i=r[a];for(let c=0;c<4;c++)t[a][c]^=i[c]}let u=[];for(let a=0;a<4;a++)for(let i=0;i<4;i++)u.push(t[a][i]);return u}function X(e){try{let r=Array.from(Buffer.from(H,"utf8")),t=Array.from(Buffer.from(K,"utf8")),s=Array.from(Buffer.from(e,"base64")),o=T(r),d=[],u=t;for(let c=0;c<s.length;c+=16){let h=s.slice(c,c+16),l=W(h,o);for(let n=0;n<16;n++)d.push(l[n]^u[n]);u=h}let a=d[d.length-1];if(a<1||a>16)return[];let i=Buffer.from(d.slice(0,d.length-a)).toString("utf8");return JSON.parse(i)}catch(r){return[]}}function v(e,r){return x(this,null,function*(){try{let s=yield(yield fetch(`${y}/${e}/${r}/sources`,{headers:A})).json();return s.data?X(s.data).filter(d=>{var u;return(u=d.languages)==null?void 0:u.includes("es")}):[]}catch(t){return[]}})}function B(e,r,t,s){return x(this,null,function*(){var o,d;try{let u=r==="series"||r==="tv"?"tv":"movie",a=`https://api.themoviedb.org/3/${u}/${e}?api_key=${C}&language=es-MX`,c=yield(yield fetch(a)).json(),h=u==="movie"?c.title:c.name;if(!h)return[];let S=((yield(yield fetch(`${y}/US/en/contents?q=${encodeURIComponent(h)}`,{headers:A})).json()).data||[]).find(w=>{var R;return((R=w.title)==null?void 0:R.toLowerCase())===h.toLowerCase()});if(!S)return[];let g=[];if(u==="tv"){let E=(o=(yield(yield fetch(`${y}/en/contents/${S.uuid}`,{headers:A})).json()).seasons)==null?void 0:o.find(_=>parseInt(_.seasonNumber)===parseInt(t));if(!E)return[];let I=(d=(yield(yield fetch(`${y}/en/episodes?season_id=${E.id}`,{headers:A})).json()).data)==null?void 0:d.find(_=>parseInt(_.episodeNumber)===parseInt(s));if(!I)return[];g=yield v("episode",I.uuid)}else g=yield v("content",S.uuid);return g.map(w=>({name:"PlayHubMax",title:`1080p \xB7 Latino \xB7 PlayHub (${w.hostName||"Directo"})`,url:w.url,quality:"1080p",headers:{"User-Agent":D,Referer:"https://www.playhubmax.com/",Origin:"https://www.playhubmax.com"}}))}catch(u){return[]}})}module.exports={getStreams:B};
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/playhubmax/index.js
+var playhubmax_exports = {};
+__export(playhubmax_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(playhubmax_exports);
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var PHM_API = "https://api.playhubmax.com/api";
+var AES_KEY_STR = "33dff3b1c1362e45e1425fcc9724d6f3";
+var AES_IV_STR = "33dff3b1c1362e45";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var API_HEADERS = {
+  "User-Agent": UA,
+  "Accept": "application/json, text/plain, */*",
+  "Origin": "https://www.playhubmax.com",
+  "Referer": "https://www.playhubmax.com/"
+};
+var AES_SBOX = [99, 124, 119, 123, 242, 107, 111, 197, 48, 1, 103, 43, 254, 215, 171, 118, 202, 130, 201, 125, 250, 89, 71, 240, 173, 212, 162, 175, 156, 164, 114, 192, 183, 253, 147, 38, 54, 63, 247, 204, 52, 165, 229, 241, 113, 216, 49, 21, 4, 199, 35, 195, 24, 150, 5, 154, 7, 18, 128, 226, 235, 39, 178, 117, 9, 131, 44, 26, 27, 110, 90, 160, 82, 59, 214, 179, 41, 227, 47, 132, 83, 209, 0, 237, 32, 252, 177, 91, 106, 203, 190, 57, 74, 76, 88, 207, 208, 239, 170, 251, 67, 77, 51, 133, 69, 249, 2, 127, 80, 60, 159, 168, 81, 163, 64, 143, 146, 157, 56, 245, 188, 182, 218, 33, 16, 255, 243, 210, 205, 12, 19, 236, 95, 151, 68, 23, 196, 167, 126, 61, 100, 93, 25, 115, 96, 129, 79, 220, 34, 42, 144, 136, 70, 238, 184, 20, 222, 94, 11, 219, 224, 50, 58, 10, 73, 6, 36, 92, 194, 211, 172, 98, 145, 149, 228, 121, 231, 200, 55, 109, 141, 213, 78, 169, 108, 86, 244, 234, 101, 122, 174, 8, 186, 120, 37, 46, 28, 166, 180, 198, 232, 221, 116, 31, 75, 189, 139, 138, 112, 62, 181, 102, 72, 3, 246, 14, 97, 53, 87, 185, 134, 193, 29, 158, 225, 248, 152, 17, 105, 217, 142, 148, 155, 30, 135, 233, 206, 85, 40, 223, 140, 161, 137, 13, 191, 230, 66, 104, 65, 153, 45, 15, 176, 84, 187, 22];
+var AES_SBOX_INV = (() => {
+  const inv = new Array(256);
+  for (let i = 0; i < 256; i++)
+    inv[AES_SBOX[i]] = i;
+  return inv;
+})();
+var AES_RCON = [1, 2, 4, 8, 16, 32, 64, 128, 27, 54];
+function gmul(a, b) {
+  let p = 0;
+  for (let i = 0; i < 8; i++) {
+    if (b & 1)
+      p ^= a;
+    let hbs = a & 128;
+    a = a << 1 & 255;
+    if (hbs)
+      a ^= 27;
+    b >>= 1;
+  }
+  return p;
+}
+function aesKeyExpansion(keyBytes) {
+  let w = [];
+  for (let i = 0; i < 8; i++)
+    w[i] = keyBytes.slice(i * 4, i * 4 + 4);
+  for (let i = 8; i < 60; i++) {
+    let temp = w[i - 1].slice();
+    if (i % 8 === 0) {
+      let rot = [temp[1], temp[2], temp[3], temp[0]];
+      temp = [AES_SBOX[rot[0]], AES_SBOX[rot[1]], AES_SBOX[rot[2]], AES_SBOX[rot[3]]];
+      temp[0] ^= AES_RCON[i / 8 - 1];
+    } else if (i % 8 === 4) {
+      temp = [AES_SBOX[temp[0]], AES_SBOX[temp[1]], AES_SBOX[temp[2]], AES_SBOX[temp[3]]];
+    }
+    w[i] = [w[i - 8][0] ^ temp[0], w[i - 8][1] ^ temp[1], w[i - 8][2] ^ temp[2], w[i - 8][3] ^ temp[3]];
+  }
+  return w;
+}
+function aesDecryptBlock(block, roundKeys) {
+  let s = [[block[0], block[1], block[2], block[3]], [block[4], block[5], block[6], block[7]], [block[8], block[9], block[10], block[11]], [block[12], block[13], block[14], block[15]]];
+  for (let c = 0; c < 4; c++) {
+    let rk = roundKeys[56 + c];
+    for (let r = 0; r < 4; r++)
+      s[c][r] ^= rk[r];
+  }
+  for (let round = 13; round >= 1; round--) {
+    let t12 = s[3][1];
+    s[3][1] = s[2][1];
+    s[2][1] = s[1][1];
+    s[1][1] = s[0][1];
+    s[0][1] = t12;
+    let t22 = s[0][2];
+    s[0][2] = s[2][2];
+    s[2][2] = t22;
+    t22 = s[1][2];
+    s[1][2] = s[3][2];
+    s[3][2] = t22;
+    let t32 = s[0][3];
+    s[0][3] = s[1][3];
+    s[1][3] = s[2][3];
+    s[2][3] = s[3][3];
+    s[3][3] = t32;
+    for (let c = 0; c < 4; c++)
+      for (let r = 0; r < 4; r++)
+        s[c][r] = AES_SBOX_INV[s[c][r]];
+    for (let c = 0; c < 4; c++) {
+      let rk = roundKeys[round * 4 + c];
+      for (let r = 0; r < 4; r++)
+        s[c][r] ^= rk[r];
+    }
+    for (let c = 0; c < 4; c++) {
+      let a = s[c].slice();
+      s[c][0] = gmul(a[0], 14) ^ gmul(a[1], 11) ^ gmul(a[2], 13) ^ gmul(a[3], 9);
+      s[c][1] = gmul(a[0], 9) ^ gmul(a[1], 14) ^ gmul(a[2], 11) ^ gmul(a[3], 13);
+      s[c][2] = gmul(a[0], 13) ^ gmul(a[1], 9) ^ gmul(a[2], 14) ^ gmul(a[3], 11);
+      s[c][3] = gmul(a[0], 11) ^ gmul(a[1], 13) ^ gmul(a[2], 9) ^ gmul(a[3], 14);
+    }
+  }
+  let t1 = s[3][1];
+  s[3][1] = s[2][1];
+  s[2][1] = s[1][1];
+  s[1][1] = s[0][1];
+  s[0][1] = t1;
+  let t2 = s[0][2];
+  s[0][2] = s[2][2];
+  s[2][2] = t2;
+  t2 = s[1][2];
+  s[1][2] = s[3][2];
+  s[3][2] = t2;
+  let t3 = s[0][3];
+  s[0][3] = s[1][3];
+  s[1][3] = s[2][3];
+  s[2][3] = s[3][3];
+  s[3][3] = t3;
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++)
+      s[c][r] = AES_SBOX_INV[s[c][r]];
+  for (let c = 0; c < 4; c++) {
+    let rk = roundKeys[c];
+    for (let r = 0; r < 4; r++)
+      s[c][r] ^= rk[r];
+  }
+  let out = [];
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++)
+      out.push(s[c][r]);
+  return out;
+}
+function decryptSources(b64) {
+  try {
+    let key = Array.from(Buffer.from(AES_KEY_STR, "utf8"));
+    let iv = Array.from(Buffer.from(AES_IV_STR, "utf8"));
+    let ct = Array.from(Buffer.from(b64, "base64"));
+    let roundKeys = aesKeyExpansion(key);
+    let plain = [];
+    let prev = iv;
+    for (let i = 0; i < ct.length; i += 16) {
+      let block = ct.slice(i, i + 16);
+      let dec = aesDecryptBlock(block, roundKeys);
+      for (let j = 0; j < 16; j++)
+        plain.push(dec[j] ^ prev[j]);
+      prev = block;
+    }
+    let pad = plain[plain.length - 1];
+    if (pad < 1 || pad > 16)
+      return [];
+    let json = Buffer.from(plain.slice(0, plain.length - pad)).toString("utf8");
+    return JSON.parse(json);
+  } catch (e) {
+    return [];
+  }
+}
+function getSources(type, uuid) {
+  return __async(this, null, function* () {
+    try {
+      const res = yield fetch(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS });
+      const data = yield res.json();
+      if (!data.data)
+        return [];
+      const sources = decryptSources(data.data);
+      return sources.filter((s) => {
+        var _a;
+        return (_a = s.languages) == null ? void 0 : _a.includes("es");
+      });
+    } catch (e) {
+      return [];
+    }
+  });
+}
+function getStreams(tmdbId, mediaType, season, episode) {
+  return __async(this, null, function* () {
+    var _a, _b;
+    try {
+      const type = mediaType === "series" || mediaType === "tv" ? "tv" : "movie";
+      const tmdbUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
+      const tmdbRes = yield fetch(tmdbUrl);
+      const tmdbData = yield tmdbRes.json();
+      const title = type === "movie" ? tmdbData.title : tmdbData.name;
+      if (!title)
+        return [];
+      const searchRes = yield fetch(`${PHM_API}/US/en/contents?q=${encodeURIComponent(title)}`, { headers: API_HEADERS });
+      const candidatesData = yield searchRes.json();
+      const candidates = candidatesData.data || [];
+      const match = candidates.find((c) => {
+        var _a2;
+        return ((_a2 = c.title) == null ? void 0 : _a2.toLowerCase()) === title.toLowerCase();
+      });
+      if (!match)
+        return [];
+      let finalSources = [];
+      if (type === "tv") {
+        const detailRes = yield fetch(`${PHM_API}/en/contents/${match.uuid}`, { headers: API_HEADERS });
+        const detail = yield detailRes.json();
+        const seasonObj = (_a = detail.seasons) == null ? void 0 : _a.find((s) => parseInt(s.seasonNumber) === parseInt(season));
+        if (!seasonObj)
+          return [];
+        const episodesRes = yield fetch(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
+        const episodesData = yield episodesRes.json();
+        const ep = (_b = episodesData.data) == null ? void 0 : _b.find((e) => parseInt(e.episodeNumber) === parseInt(episode));
+        if (!ep)
+          return [];
+        finalSources = yield getSources("episode", ep.uuid);
+      } else {
+        finalSources = yield getSources("content", match.uuid);
+      }
+      return finalSources.map((s) => ({
+        name: "PlayHubMax",
+        title: `1080p \xB7 Latino \xB7 PlayHub (${s.hostName || "Directo"})`,
+        url: s.url,
+        quality: "1080p",
+        headers: { "User-Agent": UA, "Referer": "https://www.playhubmax.com/", "Origin": "https://www.playhubmax.com" }
+      }));
+    } catch (e) {
+      return [];
+    }
+  });
+}

@@ -1,5 +1,433 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-07T22:26:06.116Z
+ * Generated: 2026-04-07T22:31:35.095Z
  */
-var O=Object.create;var A=Object.defineProperty;var L=Object.getOwnPropertyDescriptor;var T=Object.getOwnPropertyNames;var V=Object.getPrototypeOf,_=Object.prototype.hasOwnProperty;var z=(t,e)=>{for(var r in e)A(t,r,{get:e[r],enumerable:!0})},b=(t,e,r,c)=>{if(e&&typeof e=="object"||typeof e=="function")for(let i of T(e))!_.call(t,i)&&i!==r&&A(t,i,{get:()=>e[i],enumerable:!(c=L(e,i))||c.enumerable});return t};var K=(t,e,r)=>(r=t!=null?O(V(t)):{},b(e||!t||!t.__esModule?A(r,"default",{value:t,enumerable:!0}):r,t)),G=t=>b(A({},"__esModule",{value:!0}),t);var p=(t,e,r)=>new Promise((c,i)=>{var n=l=>{try{o(r.next(l))}catch(a){i(a)}},s=l=>{try{o(r.throw(l))}catch(a){i(a)}},o=l=>l.done?c(l.value):Promise.resolve(l.value).then(n,s);o((r=r.apply(t,e)).next())});var F={};z(F,{getStreams:()=>N});module.exports=G(F);var w="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";function k(t){let e="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",r=String(t).replace(/=+$/,""),c="";for(let i=0,n,s,o=0;s=r.charAt(o++);~s&&(n=i%4?n*64+s:s,i++%4)?c+=String.fromCharCode(255&n>>(-2*i&6)):0)s=e.indexOf(s);return c}function U(t){return p(this,null,function*(){try{console.log(`[VOE] Resolviendo Directo: ${t}`);let r=yield(yield fetch(t,{headers:{"User-Agent":w}})).text();if(r.includes("Redirecting")||r.length<1500){let n=r.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);n&&(r=yield(yield fetch(n[1],{headers:{"User-Agent":w}})).text())}let c=r.match(/<script type="application\/json">([\s\S]*?)<\/script>/);if(c)try{let n=JSON.parse(c[1].trim()),s=Array.isArray(n)?n[0]:n;if(typeof s!="string")return null;let o=s.replace(/[a-zA-Z]/g,h=>String.fromCharCode((h<="Z"?90:122)>=(h=h.charCodeAt(0)+13)?h:h-26)),l=["@$","^^","~@","%?","*~","!!","#&"];for(let h of l)o=o.split(h).join("");let a=k(o),u="";for(let h=0;h<a.length;h++)u+=String.fromCharCode(a.charCodeAt(h)-3);let d=u.split("").reverse().join(""),f=JSON.parse(k(d));if(f&&f.source)return console.log(`[VOE] -> m3u8 encontrado: ${f.source.substring(0,60)}...`),{url:f.source,quality:"1080p",isM3U8:!0,headers:{"User-Agent":w,Referer:t}}}catch(n){console.error("[VOE] Decryption failed:",n.message)}let i=r.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);return i?{url:i[1],quality:"1080p",isM3U8:!0,headers:{"User-Agent":w,Referer:t}}:null}catch(e){return console.error(`[VOE] Error resolviedo: ${e.message}`),null}})}var g=K(require("crypto-js"));function x(t,e,r){try{let i=r.slice(0,-16),n=g.default.lib.WordArray.create(t),s=new Uint8Array(16);s.set(e,0),s[15]=2;let o=g.default.lib.WordArray.create(s);return g.default.AES.decrypt({ciphertext:g.default.lib.WordArray.create(i)},n,{iv:o,mode:g.default.mode.CTR,padding:g.default.pad.NoPadding}).toString(g.default.enc.Utf8)}catch(c){return console.error("[PureJS-GCM] Error Decrypting:",c.message),null}}var v="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";function S(t){let e=t.replace(/-/g,"+").replace(/_/g,"/");for(;e.length%4;)e+="=";if(typeof Buffer!="undefined")return Buffer.from(e,"base64");let r=atob(e);return new Uint8Array(r.split("").map(c=>c.charCodeAt(0)))}function H(t){return p(this,null,function*(){try{let e=[];for(let s of t.key_parts)S(s).forEach(o=>e.push(o));let r=new Uint8Array(e),c=S(t.iv),i=S(t.payload);if(typeof crypto!="undefined"&&crypto.subtle)try{let s=yield crypto.subtle.importKey("raw",r,"AES-GCM",!1,["decrypt"]),o=yield crypto.subtle.decrypt({name:"AES-GCM",iv:c},s,i);return JSON.parse(new TextDecoder().decode(o))}catch(s){}let n=x(r,c,i);return n?JSON.parse(n):null}catch(e){return null}})}function M(t){return p(this,null,function*(){try{let e=new URL(t).origin,r=t.match(/\/e\/([a-zA-Z0-9]+)/);if(!r)return null;let c=r[1];try{let l=yield(yield fetch(`https://${new URL(t).hostname}/api/videos/${c}`,{headers:{"User-Agent":v,Referer:t}})).json();if(l.playback){let a=yield H(l.playback);if(a&&a.sources){let u=a.sources[0];return{url:u.url,quality:u.height?`${u.height}p`:"1080p",isM3U8:!0,headers:{"User-Agent":v,Referer:e+"/",Origin:e}}}}}catch(o){}let s=(yield(yield fetch(t,{headers:{"User-Agent":v,Referer:t}})).text()).match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);return s?{url:s[1],quality:"1080p",isM3U8:!0,headers:{"User-Agent":v,Referer:e+"/",Origin:e}}:null}catch(e){return null}})}var W="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";function q(t,e,r,c,i,n){let s="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",o=l=>{let a=0;for(let u=0;u<l.length;u++){let d=s.indexOf(l[u]);if(d===-1)return NaN;a=a*e+d}return a};return t.replace(/\b([0-9a-zA-Z]+)\b/g,l=>{let a=o(l);return isNaN(a)||a>=c.length?l:c[a]||l})}var I={"hglink.to":"vibuxer.com"};function C(t){return p(this,null,function*(){try{let e=t;for(let[o,l]of Object.entries(I))if(e.includes(o)){e=e.replace(o,l);break}let r=new URL(e).origin,i=yield(yield fetch(e,{headers:{"User-Agent":W,Referer:r+"/",Origin:r}})).text(),n=null,s=i.match(/file\s*:\s*["']([^"']+)["']/i);if(s&&(n=s[1],n.startsWith("/")&&(n=r+n)),!n){let o=i.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);if(o){let a=q(o[1],parseInt(o[2]),parseInt(o[3]),o[4].split("|")).match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);a&&(n=a[1],n.startsWith("/")&&(n=r+n))}}return n?{url:n,quality:"1080p",headers:{"User-Agent":W,Referer:r+"/"}}:null}catch(e){return null}})}var R="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";function j(t){try{let e=t.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);if(!e)return null;let[r,c,i,n,s]=e;i=parseInt(i),n=parseInt(n),s=s.split("|");let o=(a,u)=>{let d="0123456789abcdefghijklmnopqrstuvwxyz",f="";for(;a>0;)f=d[a%u]+f,a=Math.floor(a/u);return f||"0"};return c.replace(/\b\w+\b/g,a=>{let u=parseInt(a,36);return u<s.length&&s[u]?s[u]:o(u,i)})}catch(e){return null}}function E(t){return p(this,null,function*(){try{let e=new URL(t).origin,i=(yield(yield fetch(t,{headers:{"User-Agent":R,Referer:e+"/"}})).text()).match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);if(!i)return null;let n=j(i[0]);if(!n)return null;let s=n.match(/"hls[24]"\s*:\s*"([^"]+)"/);if(!s)return null;let o=s[1];return o.startsWith("http")||(o=e+o),{url:o,quality:"1080p",headers:{"User-Agent":R,Referer:e+"/",Origin:e}}}catch(e){return null}})}var B="439c478a771f35c05022f9feabcca01c",D="https://xupalace.org",$="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",J={voe:"VOE",filemoon:"Filemoon",f75s:"Filemoon",streamwish:"StreamWish",hglink:"StreamWish",sw:"StreamWish",vidhide:"VidHide",minochinos:"VidHide",dintezuvio:"VidHide",vidhidepro:"VidHide"},P={0:"Latino",1:"Castellano",2:"Subtitulado"};function Z(t,e){return p(this,null,function*(){try{let r=`https://api.themoviedb.org/3/${e}/${t}/external_ids?api_key=${B}`;return(yield(yield fetch(r)).json()).imdb_id||null}catch(r){return null}})}function N(t,e,r,c){return p(this,null,function*(){if(!t)return[];try{let i=yield Z(t,e);if(!i)return[];let n=e==="movie"?`/video/${i}/`:`/video/${i}-${r}x${String(c).padStart(2,"0")}/`,o=yield(yield fetch(`${D}${n}`,{headers:{"User-Agent":$}})).text(),l=[...o.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'[^)]+\)[^<]*data-lang="(\d+)"/g)],a=[];return l.length>0?l.forEach(d=>a.push({url:d[1],lang:parseInt(d[2])})):[...o.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'/g)].forEach(f=>a.push({url:f[1],lang:0})),(yield Promise.allSettled(a.map(d=>p(this,null,function*(){let f=d.url,h=f.toLowerCase(),m=null,y="unknown";return h.includes("voe")?(y="voe",m=yield U(f)):h.includes("filemoon")?(y="filemoon",m=yield M(f)):h.includes("streamwish")||h.includes("hglink")?(y="streamwish",m=yield C(f)):(h.includes("vidhide")||h.includes("minochinos"))&&(y="vidhide",m=yield E(f)),m&&m.url?{name:"XuPalace",title:`${m.quality||"1080p"} \xB7 ${P[d.lang]||"Latino"} \xB7 ${J[y]||y}`,url:m.url,quality:m.quality||"1080p",headers:m.headers||{"User-Agent":$,Referer:f}}:null})))).filter(d=>d.status==="fulfilled"&&d.value).map(d=>d.value)}catch(i){return[]}})}module.exports={getStreams:N};
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve5, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve5(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/xupalace/index.js
+var xupalace_exports = {};
+__export(xupalace_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(xupalace_exports);
+
+// src/resolvers/voe.js
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function decodeBase64(input) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  let str = String(input).replace(/=+$/, "");
+  let output = "";
+  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+function resolve(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[VOE] Resolviendo Directo: ${url}`);
+      const res = yield fetch(url, { headers: { "User-Agent": UA } });
+      let html = yield res.text();
+      if (html.includes("Redirecting") || html.length < 1500) {
+        const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+        if (rm) {
+          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA } });
+          html = yield res2.text();
+        }
+      }
+      const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[1].trim());
+          let encText = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (typeof encText !== "string")
+            return null;
+          let rot13 = encText.replace(/[a-zA-Z]/g, (c) => String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
+          const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+          for (const n of noise)
+            rot13 = rot13.split(n).join("");
+          let b64_1 = decodeBase64(rot13);
+          let shifted = "";
+          for (let i = 0; i < b64_1.length; i++)
+            shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+          let reversed = shifted.split("").reverse().join("");
+          let data = JSON.parse(decodeBase64(reversed));
+          if (data && data.source) {
+            console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
+            return {
+              url: data.source,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA, "Referer": url }
+            };
+          }
+        } catch (ex) {
+          console.error("[VOE] Decryption failed:", ex.message);
+        }
+      }
+      const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+      if (m3u8Match) {
+        return {
+          url: m3u8Match[1],
+          quality: "1080p",
+          isM3U8: true,
+          headers: { "User-Agent": UA, "Referer": url }
+        };
+      }
+      return null;
+    } catch (e) {
+      console.error(`[VOE] Error resolviedo: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/utils/aes-gcm.js
+var import_crypto_js = __toESM(require("crypto-js"));
+function decryptGCM(key, iv, ciphertextWithTag) {
+  try {
+    const tagSize = 16;
+    const ciphertext = ciphertextWithTag.slice(0, -tagSize);
+    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
+    const ivCounter = new Uint8Array(16);
+    ivCounter.set(iv, 0);
+    ivCounter[15] = 2;
+    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
+    const decrypted = import_crypto_js.default.AES.decrypt(
+      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
+      keyWA,
+      {
+        iv: ivWA,
+        mode: import_crypto_js.default.mode.CTR,
+        padding: import_crypto_js.default.pad.NoPadding
+      }
+    );
+    return decrypted.toString(import_crypto_js.default.enc.Utf8);
+  } catch (e) {
+    console.error("[PureJS-GCM] Error Decrypting:", e.message);
+    return null;
+  }
+}
+
+// src/resolvers/filemoon.js
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+function base64UrlDecode(input) {
+  let s = input.replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4)
+    s += "=";
+  if (typeof Buffer !== "undefined")
+    return Buffer.from(s, "base64");
+  const bin = atob(s);
+  return new Uint8Array(bin.split("").map((c) => c.charCodeAt(0)));
+}
+function decryptByse(playback) {
+  return __async(this, null, function* () {
+    try {
+      const keyArr = [];
+      for (const p of playback.key_parts)
+        base64UrlDecode(p).forEach((b) => keyArr.push(b));
+      const key = new Uint8Array(keyArr);
+      const iv = base64UrlDecode(playback.iv);
+      const ciphertextWithTag = base64UrlDecode(playback.payload);
+      if (typeof crypto !== "undefined" && crypto.subtle) {
+        try {
+          const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
+          const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
+          return JSON.parse(new TextDecoder().decode(decryptedArr));
+        } catch (e) {
+        }
+      }
+      const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
+      return decryptedStr ? JSON.parse(decryptedStr) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function resolve2(url) {
+  return __async(this, null, function* () {
+    try {
+      const origin = new URL(url).origin;
+      const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
+      if (!idMatch)
+        return null;
+      const id = idMatch[1];
+      try {
+        const apiRes = yield fetch(`https://${new URL(url).hostname}/api/videos/${id}`, {
+          headers: { "User-Agent": UA2, "Referer": url }
+        });
+        const data = yield apiRes.json();
+        if (data.playback) {
+          const decrypted = yield decryptByse(data.playback);
+          if (decrypted && decrypted.sources) {
+            const best = decrypted.sources[0];
+            return { url: best.url, quality: best.height ? `${best.height}p` : "1080p", isM3U8: true, headers: { "User-Agent": UA2, "Referer": origin + "/", "Origin": origin } };
+          }
+        }
+      } catch (e) {
+      }
+      const res = yield fetch(url, { headers: { "User-Agent": UA2, "Referer": url } });
+      const html = yield res.text();
+      const fm = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
+      if (fm)
+        return { url: fm[1], quality: "1080p", isM3U8: true, headers: { "User-Agent": UA2, "Referer": origin + "/", "Origin": origin } };
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+
+// src/resolvers/hlswish.js
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function unpack(p, a, c, k, e, d) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const decode = (r) => {
+    let res = 0;
+    for (let l = 0; l < r.length; l++) {
+      let s = chars.indexOf(r[l]);
+      if (s === -1)
+        return NaN;
+      res = res * a + s;
+    }
+    return res;
+  };
+  return p.replace(/\b([0-9a-zA-Z]+)\b/g, (match) => {
+    let val = decode(match);
+    return isNaN(val) || val >= k.length ? match : k[val] || match;
+  });
+}
+var DOMAIN_MAP = { "hglink.to": "vibuxer.com" };
+function resolve3(url) {
+  return __async(this, null, function* () {
+    try {
+      let targetUrl = url;
+      for (const [old, replacement] of Object.entries(DOMAIN_MAP)) {
+        if (targetUrl.includes(old)) {
+          targetUrl = targetUrl.replace(old, replacement);
+          break;
+        }
+      }
+      const origin = new URL(targetUrl).origin;
+      const res = yield fetch(targetUrl, {
+        headers: { "User-Agent": UA3, "Referer": origin + "/", "Origin": origin }
+      });
+      const html = yield res.text();
+      let finalUrl = null;
+      const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
+      if (fileMatch) {
+        finalUrl = fileMatch[1];
+        if (finalUrl.startsWith("/"))
+          finalUrl = origin + finalUrl;
+      }
+      if (!finalUrl) {
+        const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+        if (packedMatch) {
+          const unpacked = unpack(packedMatch[1], parseInt(packedMatch[2]), parseInt(packedMatch[3]), packedMatch[4].split("|"));
+          const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);
+          if (m3u8Match) {
+            finalUrl = m3u8Match[1];
+            if (finalUrl.startsWith("/"))
+              finalUrl = origin + finalUrl;
+          }
+        }
+      }
+      if (finalUrl) {
+        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA3, "Referer": origin + "/" } };
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+
+// src/resolvers/vidhide.js
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function unpackVidHide(script) {
+  try {
+    const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
+    if (!match)
+      return null;
+    let [full, p, a, c, k] = match;
+    a = parseInt(a);
+    c = parseInt(c);
+    k = k.split("|");
+    const decode = (l, s) => {
+      const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
+      let res = "";
+      for (; l > 0; ) {
+        res = chars[l % s] + res;
+        l = Math.floor(l / s);
+      }
+      return res || "0";
+    };
+    const unpacked = p.replace(/\b\w+\b/g, (l) => {
+      const s = parseInt(l, 36);
+      return s < k.length && k[s] ? k[s] : decode(s, a);
+    });
+    return unpacked;
+  } catch (e) {
+    return null;
+  }
+}
+function resolve4(url) {
+  return __async(this, null, function* () {
+    try {
+      const origin = new URL(url).origin;
+      const res = yield fetch(url, {
+        headers: { "User-Agent": UA4, "Referer": origin + "/" }
+      });
+      const html = yield res.text();
+      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
+      if (!packedMatch)
+        return null;
+      const unpacked = unpackVidHide(packedMatch[0]);
+      if (!unpacked)
+        return null;
+      const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
+      if (!hlsMatch)
+        return null;
+      let finalUrl = hlsMatch[1];
+      if (!finalUrl.startsWith("http"))
+        finalUrl = origin + finalUrl;
+      return {
+        url: finalUrl,
+        quality: "1080p",
+        headers: { "User-Agent": UA4, "Referer": origin + "/", "Origin": origin }
+      };
+    } catch (e) {
+      return null;
+    }
+  });
+}
+
+// src/xupalace/index.js
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var BASE_URL = "https://xupalace.org";
+var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var SERVER_LABELS = {
+  "voe": "VOE",
+  "filemoon": "Filemoon",
+  "f75s": "Filemoon",
+  "streamwish": "StreamWish",
+  "hglink": "StreamWish",
+  "sw": "StreamWish",
+  "vidhide": "VidHide",
+  "minochinos": "VidHide",
+  "dintezuvio": "VidHide",
+  "vidhidepro": "VidHide"
+};
+var LANG_NAMES = { 0: "Latino", 1: "Castellano", 2: "Subtitulado" };
+function getImdbId(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    try {
+      const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
+      const res = yield fetch(url);
+      const data = yield res.json();
+      return data.imdb_id || null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function getStreams(tmdbId, mediaType, season, episode) {
+  return __async(this, null, function* () {
+    if (!tmdbId)
+      return [];
+    try {
+      const imdbId = yield getImdbId(tmdbId, mediaType);
+      if (!imdbId)
+        return [];
+      const path = mediaType === "movie" ? `/video/${imdbId}/` : `/video/${imdbId}-${season}x${String(episode).padStart(2, "0")}/`;
+      const res = yield fetch(`${BASE_URL}${path}`, { headers: { "User-Agent": UA5 } });
+      const html = yield res.text();
+      const matches = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'[^)]+\)[^<]*data-lang="(\d+)"/g)];
+      const urlsToResolve = [];
+      if (matches.length > 0) {
+        matches.forEach((m) => urlsToResolve.push({ url: m[1], lang: parseInt(m[2]) }));
+      } else {
+        const fallback = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'/g)];
+        fallback.forEach((m) => urlsToResolve.push({ url: m[1], lang: 0 }));
+      }
+      const results = yield Promise.allSettled(urlsToResolve.map((item) => __async(this, null, function* () {
+        const url = item.url;
+        const s = url.toLowerCase();
+        let resolved = null;
+        let key = "unknown";
+        if (s.includes("voe")) {
+          key = "voe";
+          resolved = yield resolve(url);
+        } else if (s.includes("filemoon")) {
+          key = "filemoon";
+          resolved = yield resolve2(url);
+        } else if (s.includes("streamwish") || s.includes("hglink")) {
+          key = "streamwish";
+          resolved = yield resolve3(url);
+        } else if (s.includes("vidhide") || s.includes("minochinos")) {
+          key = "vidhide";
+          resolved = yield resolve4(url);
+        }
+        if (resolved && resolved.url) {
+          return {
+            name: "XuPalace",
+            title: `${resolved.quality || "1080p"} \xB7 ${LANG_NAMES[item.lang] || "Latino"} \xB7 ${SERVER_LABELS[key] || key}`,
+            url: resolved.url,
+            quality: resolved.quality || "1080p",
+            headers: resolved.headers || { "User-Agent": UA5, "Referer": url }
+          };
+        }
+        return null;
+      })));
+      return results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+    } catch (e) {
+      return [];
+    }
+  });
+}
