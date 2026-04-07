@@ -312,7 +312,7 @@
       ],
       "filename": "providers/pelispedia.js",
       "enabled": true,
-      "logo": "https://pelispedia.mov/favicon.ico",
+      "logo": "https://pelispedia.mov/themes/pelispedia/img/faviconen.png",
       "contentLanguage": [
         "es"
       ],
