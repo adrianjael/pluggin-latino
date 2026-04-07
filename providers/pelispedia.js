@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T17:36:46.932Z
+ * Generated: 2026-04-07T17:44:43.941Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -229,36 +229,43 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
       const type = (mediaType || "").toLowerCase();
       const tmdbType = type === "movie" ? "movie" : "tv";
-      console.log(`[Pelispedia] Buscando: "${title}" (${type}) tmdbId: ${tmdbId}`);
+      console.log(`[Pelispedia] Buscando: "${title}" (${type})`);
       let matches = yield searchMedia(title);
+      console.log(`[Pelispedia] Busqueda inicial: ${matches.length} resultados.`);
       if (matches.length === 0 && tmdbId && tmdbId !== "dummy") {
         const esTitle = yield getSpanishTitle(tmdbId, tmdbType);
         if (esTitle && esTitle !== title) {
-          console.log(`[Pelispedia] Reintentando con t\xEDtulo TMDB: "${esTitle}"`);
+          console.log(`[Pelispedia] Reintentando con titulo TMDB: "${esTitle}"`);
           matches = yield searchMedia(esTitle);
+          console.log(`[Pelispedia] Busqueda TMDB: ${matches.length} resultados.`);
         }
       }
       if (matches.length === 0) {
         const firstWord = title.split(" ")[0];
         if (firstWord.length > 3) {
+          console.log(`[Pelispedia] Reintentando con primera palabra: "${firstWord}"`);
           matches = yield searchMedia(firstWord);
+          console.log(`[Pelispedia] Busqueda word: ${matches.length} resultados.`);
         }
       }
-      if (matches.length === 0)
+      if (matches.length === 0) {
+        console.log("[Pelispedia] Cero resultados finales.");
         return [];
+      }
       const normTarget = (title || "").toLowerCase();
       const bestMatch = matches.find((m) => {
         const normMatch = (m.title || "").toLowerCase();
-        const sim = calculateSimilarity(normTarget, normMatch) || (normTarget === normMatch ? 1 : 0);
+        const similarity = calculateSimilarity(normTarget, normMatch) || (normTarget === normMatch ? 1 : 0);
         const typeMatch = type === "movie" && m.type === "pelicula" || (type === "tv" || type === "series") && m.type === "serie";
-        if (sim > 0.4 && typeMatch) {
-          m.similarity = sim;
+        console.log(`[Pelispedia] Eval: "${m.title}" (sim: ${similarity}, type: ${m.type}, ok: ${similarity > 0.4 && typeMatch})`);
+        if (similarity > 0.4 && typeMatch) {
+          m.similarity = similarity;
           return true;
         }
         return false;
       });
       if (!bestMatch) {
-        console.log("[Pelispedia] No se encontr\xF3 coincidencia adecuada.");
+        console.log("[Pelispedia] No se encontro coincidencia con similitud > 0.4.");
         return [];
       }
       let targetUrl = bestMatch.url;
@@ -266,9 +273,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const s = season || 1;
         const e = episode || 1;
         targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${s}/capitulo/${e}`;
+        console.log(`[Pelispedia] URL Serie construida: ${targetUrl}`);
       }
-      console.log(`[Pelispedia] Extrayendo de: ${targetUrl}`);
       const streams = yield extractStreams(targetUrl);
+      console.log(`[Pelispedia] Finalizado: ${streams.length} streams.`);
       return streams;
     } catch (e) {
       console.error("[Pelispedia] Error:", e);
