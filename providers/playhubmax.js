@@ -1,12 +1,10 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-07T18:11:20.704Z
+ * Generated: 2026-04-07T22:07:11.072Z
  */
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -20,14 +18,6 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
@@ -56,7 +46,6 @@ __export(playhubmax_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(playhubmax_exports);
-var import_axios = __toESM(require("axios"));
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var PHM_API = "https://api.playhubmax.com/api";
 var AES_KEY_STR = "33dff3b1c1362e45e1425fcc9724d6f3";
@@ -200,20 +189,11 @@ function decryptSources(b64) {
     return [];
   }
 }
-function searchContents(q) {
-  return __async(this, null, function* () {
-    try {
-      const { data } = yield import_axios.default.get(`${PHM_API}/US/en/contents?q=${encodeURIComponent(q)}`, { headers: API_HEADERS, timeout: 8e3 });
-      return data.data || [];
-    } catch (e) {
-      return [];
-    }
-  });
-}
 function getSources(type, uuid) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield import_axios.default.get(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS, timeout: 8e3 });
+      const res = yield fetch(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS });
+      const data = yield res.json();
       if (!data.data)
         return [];
       const sources = decryptSources(data.data);
@@ -226,26 +206,20 @@ function getSources(type, uuid) {
     }
   });
 }
-function getContentDetail(uuid) {
-  return __async(this, null, function* () {
-    try {
-      const { data } = yield import_axios.default.get(`${PHM_API}/en/contents/${uuid}`, { headers: API_HEADERS, timeout: 8e3 });
-      return data;
-    } catch (e) {
-      return {};
-    }
-  });
-}
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     var _a, _b;
     try {
       const type = mediaType === "series" || mediaType === "tv" ? "tv" : "movie";
-      const { data: tmdbInfo } = yield import_axios.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
-      const title = type === "movie" ? tmdbInfo.title : tmdbInfo.name;
+      const tmdbUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
+      const tmdbRes = yield fetch(tmdbUrl);
+      const tmdbData = yield tmdbRes.json();
+      const title = type === "movie" ? tmdbData.title : tmdbData.name;
       if (!title)
         return [];
-      const candidates = yield searchContents(title);
+      const searchRes = yield fetch(`${PHM_API}/US/en/contents?q=${encodeURIComponent(title)}`, { headers: API_HEADERS });
+      const candidatesData = yield searchRes.json();
+      const candidates = candidatesData.data || [];
       const match = candidates.find((c) => {
         var _a2;
         return ((_a2 = c.title) == null ? void 0 : _a2.toLowerCase()) === title.toLowerCase();
@@ -254,12 +228,14 @@ function getStreams(tmdbId, mediaType, season, episode) {
         return [];
       let finalSources = [];
       if (type === "tv") {
-        const detail = yield getContentDetail(match.uuid);
+        const detailRes = yield fetch(`${PHM_API}/en/contents/${match.uuid}`, { headers: API_HEADERS });
+        const detail = yield detailRes.json();
         const seasonObj = (_a = detail.seasons) == null ? void 0 : _a.find((s) => parseInt(s.seasonNumber) === parseInt(season));
         if (!seasonObj)
           return [];
-        const { data: episodes } = yield import_axios.default.get(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
-        const ep = (_b = episodes.data) == null ? void 0 : _b.find((e) => parseInt(e.episodeNumber) === parseInt(episode));
+        const episodesRes = yield fetch(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
+        const episodesData = yield episodesRes.json();
+        const ep = (_b = episodesData.data) == null ? void 0 : _b.find((e) => parseInt(e.episodeNumber) === parseInt(episode));
         if (!ep)
           return [];
         finalSources = yield getSources("episode", ep.uuid);
@@ -268,13 +244,12 @@ function getStreams(tmdbId, mediaType, season, episode) {
       }
       return finalSources.map((s) => ({
         name: "PlayHubMax",
-        title: `[LAT] PlayHub \xB7 ${s.hostName || "Stream"}`,
+        title: `1080p \xB7 Latino \xB7 PlayHub (${s.hostName || "Directo"})`,
         url: s.url,
         quality: "1080p",
-        headers: { "User-Agent": UA, "Referer": "https://www.playhubmax.com/" }
+        headers: { "User-Agent": UA, "Referer": "https://www.playhubmax.com/", "Origin": "https://www.playhubmax.com" }
       }));
     } catch (e) {
-      console.error("[PlayHubMax] error:", e.message);
       return [];
     }
   });

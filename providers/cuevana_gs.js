@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-07T18:11:20.639Z
+ * Generated: 2026-04-07T21:56:28.737Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -277,39 +277,30 @@ function resolve2(url) {
 }
 
 // src/resolvers/vimeos.js
-var import_axios2 = __toESM(require("axios"));
-
-// src/resolvers/quality.js
-var import_axios = __toESM(require("axios"));
-
-// src/resolvers/vimeos.js
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function resolve3(embedUrl) {
   return __async(this, null, function* () {
     var _a, _b, _c, _d, _e, _f, _g;
     try {
-      console.log(`[Vimeos] Resolviendo Universal (v2.0): ${embedUrl}`);
-      const resp = yield import_axios2.default.get(embedUrl, {
+      console.log(`[Vimeos] Resolviendo v\xEDa fetch: ${embedUrl}`);
+      const res = yield fetch(embedUrl, {
         headers: {
           "User-Agent": UA3,
           "Referer": "https://vimeos.net/",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-        },
-        timeout: 1e4
+          "Accept": "text/html"
+        }
       });
-      const html = resp.data;
+      const html = yield res.text();
       const vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i) || embedUrl.match(/\/(\d{7,10})/);
       if (vimeoIdMatch) {
         const vimeoId = vimeoIdMatch[1];
-        console.log(`[Vimeos] ID Vimeo detectado: ${vimeoId}. Consultado API Config...`);
         try {
-          const configRes = yield import_axios2.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
+          const configRes = yield fetch(`https://player.vimeo.com/video/${vimeoId}/config`, {
             headers: { "User-Agent": UA3, "Referer": embedUrl }
           });
-          const config = configRes.data;
+          const config = yield configRes.json();
           const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
           if (hlsUrl) {
-            console.log(`[Vimeos] \u2713 HLS Directo encontrado.`);
             return {
               url: hlsUrl,
               quality: "1080p",
@@ -320,7 +311,6 @@ function resolve3(embedUrl) {
           const progressive = (_g = (_f = config.request) == null ? void 0 : _f.files) == null ? void 0 : _g.progressive;
           if (progressive && progressive.length > 0) {
             const best = progressive.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0))[0];
-            console.log(`[Vimeos] \u2713 MP4 Directo encontrado (${best.quality}).`);
             return {
               url: best.url,
               quality: best.quality ? `${best.quality}p` : "1080p",
@@ -333,7 +323,6 @@ function resolve3(embedUrl) {
       }
       const packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
       if (packMatch) {
-        console.log(`[Vimeos] Usando Fallback Unpacker...`);
         const payload = packMatch[1];
         const radix = parseInt(packMatch[2]);
         const symtab = packMatch[4].split("|");
@@ -350,12 +339,14 @@ function resolve3(embedUrl) {
         });
         const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
         if (m3u8Match) {
-          const url = m3u8Match[1];
-          const finalHeaders = { "User-Agent": UA3, "Referer": "https://vimeos.net/" };
-          return { url, quality: "1080p", isM3U8: true, headers: finalHeaders };
+          return {
+            url: m3u8Match[1],
+            quality: "1080p",
+            isM3U8: true,
+            headers: { "User-Agent": UA3, "Referer": "https://vimeos.net/" }
+          };
         }
       }
-      console.log("[Vimeos] No se encontr\xF3 video directo.");
       return null;
     } catch (err) {
       console.log(`[Vimeos] Error cr\xEDtico: ${err.message}`);
@@ -365,8 +356,7 @@ function resolve3(embedUrl) {
 }
 
 // src/resolvers/hlswish.js
-var import_axios3 = __toESM(require("axios"));
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpack2(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const decode = (r) => {
@@ -395,13 +385,12 @@ function resolve4(url) {
           break;
         }
       }
-      console.log(`[HLSWish] Resolviendo: ${url}`);
+      console.log(`[HLSWish] Resolviendo v\xEDa fetch: ${url}`);
       const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
-      const { data: html } = yield import_axios3.default.get(targetUrl, {
-        headers: { "User-Agent": UA4, Referer: "https://embed69.org/", Origin: "https://embed69.org" },
-        timeout: 15e3,
-        maxRedirects: 5
+      const res = yield fetch(targetUrl, {
+        headers: { "User-Agent": UA4, Referer: "https://embed69.org/", Origin: "https://embed69.org" }
       });
+      const html = yield res.text();
       let finalUrl = null;
       const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
       if (fileMatch) {
@@ -422,8 +411,11 @@ function resolve4(url) {
         }
       }
       if (finalUrl) {
-        console.log(`[HLSWish] URL encontrada: ${finalUrl.substring(0, 80)}...`);
-        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA4, Referer: baseOrigin + "/" } };
+        return {
+          url: finalUrl,
+          quality: "1080p",
+          headers: { "User-Agent": UA4, Referer: baseOrigin + "/" }
+        };
       }
       return null;
     } catch (e) {
@@ -434,8 +426,7 @@ function resolve4(url) {
 }
 
 // src/resolvers/vidhide.js
-var import_axios4 = __toESM(require("axios"));
-var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackVidHide(script) {
   try {
     const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
@@ -466,27 +457,29 @@ function unpackVidHide(script) {
 function resolve5(url) {
   return __async(this, null, function* () {
     try {
-      console.log(`[VidHide] Resolviendo: ${url}`);
-      const { data: html } = yield import_axios4.default.get(url, {
-        timeout: 15e3,
-        maxRedirects: 10,
-        headers: { "User-Agent": UA5, Referer: "https://embed69.org/" }
+      console.log(`[VidHide] Resolviendo v\xEDa fetch: ${url}`);
+      const res = yield fetch(url, {
+        headers: { "User-Agent": UA5, "Referer": "https://embed69.org/" }
       });
+      const html = yield res.text();
       const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
       if (!packedMatch)
-        return console.log("[VidHide] No se encontr\xF3 bloque eval"), null;
+        return null;
       const unpacked = unpackVidHide(packedMatch[0]);
       if (!unpacked)
-        return console.log("[VidHide] No se pudo desempacar"), null;
+        return null;
       const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
       if (!hlsMatch)
-        return console.log("[VidHide] No se encontr\xF3 hls2/hls4"), null;
+        return null;
       let finalUrl = hlsMatch[1];
-      if (!finalUrl.startsWith("http"))
-        finalUrl = new URL(url).origin + finalUrl;
-      console.log(`[VidHide] URL encontrada: ${finalUrl.substring(0, 80)}...`);
       const origin = new URL(url).origin;
-      return { url: finalUrl, headers: { "User-Agent": UA5, Referer: origin + "/", Origin: origin } };
+      if (!finalUrl.startsWith("http"))
+        finalUrl = origin + finalUrl;
+      return {
+        url: finalUrl,
+        quality: "1080p",
+        headers: { "User-Agent": UA5, "Referer": origin + "/", "Origin": origin }
+      };
     } catch (e) {
       console.log(`[VidHide] Error: ${e.message}`);
       return null;
@@ -524,9 +517,22 @@ function calculateSimilarity(title1, title2) {
 // src/cuevana_gs/extractor.js
 var BASE_URL = "https://cuevana.gs";
 var BASE_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
-  "Referer": BASE_URL,
-  "Accept-Language": "es-ES,es;q=0.9"
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Referer": BASE_URL
+};
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var SERVER_LABELS = {
+  "voe": "VOE",
+  "hglink": "StreamWish",
+  "streamwish": "StreamWish",
+  "sw": "StreamWish",
+  "wishembed": "StreamWish",
+  "filemoon": "Filemoon",
+  "f75s": "Filemoon",
+  "vidhide": "VidHide",
+  "minochinos": "VidHide",
+  "dintezuvio": "VidHide",
+  "vimeos": "Vimeos"
 };
 function fetchHtml(_0) {
   return __async(this, arguments, function* (url, referer = BASE_URL) {
@@ -537,29 +543,20 @@ function fetchHtml(_0) {
 function resolveEmbed(embedUrl, server) {
   return __async(this, null, function* () {
     try {
-      if (server === "voe") {
-        const r = yield resolve(embedUrl);
-        return r ? r : null;
-      }
-      if (server.includes("filemoon") || server.includes("f75s")) {
-        const r = yield resolve2(embedUrl);
-        return r ? r : null;
-      }
-      if (server === "vimeos") {
-        const r = yield resolve3(embedUrl);
-        return r ? r : null;
-      }
-      if (server.includes("streamwish") || server.includes("hglink") || server.includes("sw") || server.includes("wishembed")) {
-        const r = yield resolve4(embedUrl);
-        return r ? r : null;
-      }
-      if (server.includes("vidhide") || server.includes("minochinos")) {
-        const r = yield resolve5(embedUrl);
-        return r ? r : null;
-      }
+      const s = server.toLowerCase();
+      if (s === "voe")
+        return yield resolve(embedUrl);
+      if (s.includes("filemoon") || s.includes("f75s"))
+        return yield resolve2(embedUrl);
+      if (s === "vimeos")
+        return yield resolve3(embedUrl);
+      if (s.includes("streamwish") || s.includes("hglink") || s.includes("sw") || s.includes("wishembed"))
+        return yield resolve4(embedUrl);
+      if (s.includes("vidhide") || s.includes("minochinos") || s.includes("dintezuvio"))
+        return yield resolve5(embedUrl);
       const html = yield fetchHtml(embedUrl, embedUrl);
       const m = html.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
-      return m ? m[0].replace(/\\/g, "") : null;
+      return m ? { url: m[0].replace(/\\/g, ""), quality: "1080p" } : null;
     } catch (e) {
       return null;
     }
@@ -568,38 +565,30 @@ function resolveEmbed(embedUrl, server) {
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
-      const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-      const res = yield fetch(url, { headers: { "User-Agent": BASE_HEADERS["User-Agent"] } });
-      const html = yield res.text();
-      let title = "";
-      let year = "";
-      const titleMatch = html.match(/<title>(.*?)(?:\s+&\#8212;|\s+-|\s+\()/);
-      if (titleMatch)
-        title = titleMatch[1].trim();
-      const yearMatch = html.match(/\((\d{4})\)/);
-      if (yearMatch)
-        year = yearMatch[1];
-      return { title, year };
-    } catch (e) {
+      const url = `https://api.themoviedb.org/3/${mediaType === "movie" ? "movie" : "tv"}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
+      const res = yield fetch(url);
+      const data = yield res.json();
+      return {
+        title: data.title || data.name || "",
+        originalTitle: data.original_title || data.original_name || ""
+      };
+    } catch (error) {
+      return null;
     }
-    return { title: null, year: "" };
   });
 }
 function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
   return __async(this, null, function* () {
-    var _a, _b, _c, _d, _e, _f;
-    const isMovie = mediaType === "movie";
-    const targetType = isMovie ? "movies" : "tvshows";
-    console.log(`[Cuevana.gs v2.0] Extracting: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
+    var _a, _b, _c, _d, _e;
     try {
       const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-      let searchTitle = providedTitle || tmdbInfo.title;
-      const year = tmdbInfo.year;
+      const title = (tmdbInfo == null ? void 0 : tmdbInfo.title) || providedTitle || "";
+      const originalTitle = (tmdbInfo == null ? void 0 : tmdbInfo.originalTitle) || "";
+      if (!title)
+        return [];
       function performSearch(query) {
         return __async(this, null, function* () {
-          console.log(`[Cuevana.gs] Searching: "${query}"`);
-          const encodedQuery = encodeURIComponent(query);
-          const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${encodedQuery}&postsPerPage=10`;
+          const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${encodeURIComponent(query)}&postsPerPage=10`;
           try {
             const searchRes = yield fetch(searchUrl, { headers: BASE_HEADERS });
             return yield searchRes.json();
@@ -608,109 +597,61 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           }
         });
       }
-      let searchJson = yield performSearch(`${searchTitle} ${year}`);
-      if ((searchJson.error || !((_b = (_a = searchJson.data) == null ? void 0 : _a.posts) == null ? void 0 : _b.length)) && providedTitle && tmdbInfo.title) {
-        searchJson = yield performSearch(`${tmdbInfo.title} ${year}`);
+      const queries = [title, title.split(":")[0].trim(), originalTitle].filter((q) => q && q.length > 2);
+      let searchJson = null;
+      for (const q of queries) {
+        searchJson = yield performSearch(q);
+        if (!searchJson.error && ((_b = (_a = searchJson.data) == null ? void 0 : _a.posts) == null ? void 0 : _b.length))
+          break;
       }
-      if ((searchJson.error || !((_d = (_c = searchJson.data) == null ? void 0 : _c.posts) == null ? void 0 : _d.length)) && tmdbInfo.title) {
-        searchJson = yield performSearch(tmdbInfo.title);
-      }
-      if (searchJson.error || !((_f = (_e = searchJson.data) == null ? void 0 : _e.posts) == null ? void 0 : _f.length)) {
-        searchJson = yield performSearch(searchTitle);
-      }
-      if (searchJson.error || !searchJson.data || !searchJson.data.posts || searchJson.data.posts.length === 0) {
-        console.log(`[Cuevana.gs] No results found.`);
+      if (!searchJson || searchJson.error || !((_d = (_c = searchJson.data) == null ? void 0 : _c.posts) == null ? void 0 : _d.length))
         return [];
-      }
       const posts = searchJson.data.posts;
-      const targetTitle = tmdbInfo.title || searchTitle;
-      let post = null;
-      let maxSim = 0;
-      for (const p of posts) {
-        if (p.type !== targetType)
-          continue;
-        const sim = calculateSimilarity(targetTitle, p.title);
-        if (sim > maxSim) {
-          maxSim = sim;
-          post = p;
-        }
-      }
-      console.log(`[Cuevana.gs] Mejor coincidencia: "${post == null ? void 0 : post.title}" (Similitud: ${maxSim.toFixed(2)})`);
-      if (!post || maxSim < 0.8) {
-        console.log(`[Cuevana.gs] Similitud insuficiente (${maxSim.toFixed(2)} < 0.8). No hay resultados v\xE1lidos.`);
-        return [];
-      }
+      const targetType = mediaType === "movie" ? "movies" : "tvshows";
+      let post = posts.find((p) => p.type === targetType && (calculateSimilarity(title, p.title) > 0.4 || calculateSimilarity(originalTitle, p.title) > 0.4)) || posts[0];
       let postId = post._id;
-      if (!isMovie && season && episode) {
+      if (mediaType !== "movie" && season && episode) {
         try {
-          const episodesUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${postId}&season=${season}&postsPerPage=100`;
-          const epRes = yield fetch(episodesUrl, { headers: BASE_HEADERS });
+          const epUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${postId}&season=${season}&postsPerPage=100`;
+          const epRes = yield fetch(epUrl, { headers: BASE_HEADERS });
           const epJson = yield epRes.json();
-          if (!epJson.error && epJson.data && epJson.data.posts) {
-            const epMatch = epJson.data.posts.find((e) => parseInt(e.episode_number) === parseInt(episode));
-            if (epMatch)
-              postId = epMatch._id;
-          }
+          const epMatch = epJson.data.posts.find((e) => parseInt(e.episode_number) === parseInt(episode));
+          if (epMatch)
+            postId = epMatch._id;
         } catch (err) {
         }
       }
-      let playerUrl = `${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`;
-      const playerRes = yield fetch(playerUrl, { headers: BASE_HEADERS });
+      const playerRes = yield fetch(`${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`, { headers: BASE_HEADERS });
       const playerJson = yield playerRes.json();
-      if (playerJson.error || !playerJson.data || !playerJson.data.embeds || playerJson.data.embeds.length === 0) {
+      if (playerJson.error || !((_e = playerJson.data) == null ? void 0 : _e.embeds))
         return [];
-      }
-      const embeds = playerJson.data.embeds;
-      const streamPromises = embeds.map(function(embed) {
-        return __async(this, null, function* () {
-          const proxyUrl = embed.url;
-          const lang = embed.lang || "Latino";
-          const quality = embed.quality || "HD";
-          let server = "unknown";
-          try {
-            const urlObj = new URL(proxyUrl);
-            server = (urlObj.searchParams.get("server") || "unknown").toLowerCase();
-          } catch (e) {
-          }
-          if (server === "goodstream")
-            return null;
-          try {
-            const proxyHtml = yield fetchHtml(proxyUrl, BASE_URL);
-            const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
-            if (!iframeMatch)
-              return null;
-            const embedUrl = iframeMatch[1];
-            const result = yield resolveEmbed(embedUrl, server);
-            if (!result)
-              return null;
-            const finalUrl = typeof result === "string" ? result : result.url;
-            const direct = typeof result === "object" && !!result.url;
-            if (!finalUrl || !finalUrl.startsWith("http"))
-              return null;
-            const isVimeos = server.includes("vimeos");
-            const titlePrefix = direct ? "[Directo]" : "[Web]";
-            const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-            return {
-              name: "Cuevana.gs",
-              title: `${titlePrefix} \xB7 ${server} (${lang})`,
-              url: finalUrl,
-              quality: typeof result === "object" && result.quality || quality,
-              isM3U8: typeof result === "object" && result.isM3U8 || false,
-              headers: typeof result === "object" && result.headers || {
-                "User-Agent": mobileUA,
-                "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
-                "Origin": isVimeos ? "https://vimeos.net" : void 0
-              }
-            };
-          } catch (e) {
-            return null;
-          }
-        });
-      });
-      const results = yield Promise.all(streamPromises);
-      return results.filter((s) => s !== null);
+      const settledResults = yield Promise.allSettled(playerJson.data.embeds.map((embed) => __async(this, null, function* () {
+        const proxyUrl = embed.url;
+        const lang = embed.lang || "Latino";
+        let srvRaw = "unknown";
+        try {
+          srvRaw = new URL(proxyUrl).searchParams.get("server") || "unknown";
+        } catch (e) {
+        }
+        if (srvRaw.toLowerCase() === "goodstream")
+          return null;
+        const proxyHtml = yield fetchHtml(proxyUrl, BASE_URL);
+        const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+        if (!iframeMatch)
+          return null;
+        const resEmbed = yield resolveEmbed(iframeMatch[1], srvRaw);
+        if (!resEmbed || !resEmbed.url)
+          return null;
+        return {
+          name: "Cuevana.gs",
+          title: `${resEmbed.quality || "1080p"} \xB7 Latino \xB7 ${SERVER_LABELS[srvRaw.toLowerCase()] || srvRaw}`,
+          url: resEmbed.url,
+          quality: resEmbed.quality || "1080p",
+          headers: resEmbed.headers || { "User-Agent": BASE_HEADERS["User-Agent"], "Referer": iframeMatch[1] }
+        };
+      })));
+      return settledResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
     } catch (error) {
-      console.error(`[Cuevana.gs] Global Error: ${error.message}`);
       return [];
     }
   });

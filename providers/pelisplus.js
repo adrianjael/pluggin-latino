@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-07T21:52:49.973Z
+ * Generated: 2026-04-07T21:59:44.980Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -22,6 +22,10 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -38,6 +42,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
@@ -58,6 +63,13 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
+
+// src/pelisplus/index.js
+var pelisplus_exports = {};
+__export(pelisplus_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(pelisplus_exports);
 
 // src/pelisplus/http.js
 var BASE_URL = "https://www.pelisplushd.la";
@@ -505,6 +517,7 @@ function parseHtml(html, url) {
 
 // src/pelisplus/extractor.js
 var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var SERVER_LABELS = {
   "voe": "VOE",
   "streamwish": "StreamWish",
@@ -516,12 +529,13 @@ var SERVER_LABELS = {
   "vidhide": "VidHide",
   "minochinos": "VidHide",
   "dintezuvio": "VidHide",
+  "vidhidepro": "VidHide",
   "uqload": "Uqload"
 };
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
-      const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=439c478a771f35c05022f9feabcca01c&language=es-MX`;
+      const url = `https://api.themoviedb.org/3/${mediaType === "movie" ? "movie" : "tv"}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
       const res = yield fetch(url);
       const data = yield res.json();
       return {
@@ -536,24 +550,14 @@ function getTmdbInfo(tmdbId, mediaType) {
 function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
   return __async(this, null, function* () {
     try {
-      let title = providedTitle;
-      let originalTitle = "";
       const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-      if (tmdbInfo) {
-        title = tmdbInfo.title || title;
-        originalTitle = tmdbInfo.originalTitle;
-      }
-      if (!title)
-        return [];
-      const queries = [
-        title,
-        title.split(":")[0].trim(),
-        // "Hoppers: Operación castor" -> "Hoppers"
-        originalTitle
-      ].filter((q) => q && q.length > 2);
+      const title = (tmdbInfo == null ? void 0 : tmdbInfo.title) || providedTitle || "";
+      const originalTitle = (tmdbInfo == null ? void 0 : tmdbInfo.originalTitle) || "";
+      const queries = [title, title.split(":")[0].trim(), originalTitle].filter((q) => q && q.length > 2);
       let results = [];
       for (const query of queries) {
-        const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query.replace(/[:]/g, " "))}`;
+        const cleanQuery = query.replace(/[:]/g, " ");
+        const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(cleanQuery)}`;
         const searchHtml = yield fetchText(searchUrl);
         const $search = import_cheerio_without_node_native.default.load(searchHtml);
         $search("a.Posters-link").each((i, el) => {
@@ -567,56 +571,55 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       }
       const targetType = mediaType === "tv" ? "/serie/" : "/pelicula/";
       const match = results.find(
-        (r) => (calculateSimilarity(normalizeTitle(title), normalizeTitle(r.title)) > 0.4 || calculateSimilarity(normalizeTitle(originalTitle), normalizeTitle(r.title)) > 0.4) && r.href.includes(targetType)
+        (r) => (calculateSimilarity(normalizeTitle(title), normalizeTitle(r.title)) > 0.35 || calculateSimilarity(normalizeTitle(originalTitle), normalizeTitle(r.title)) > 0.35) && r.href.includes(targetType)
       ) || (results.length > 0 && results[0].href.includes(targetType) ? results[0] : null);
       if (!match)
         return [];
       let targetUrl = BASE_URL + match.href;
-      if (mediaType === "tv") {
+      if (mediaType === "tv")
         targetUrl = targetUrl.replace(/\/$/, "") + `/temporada/${season}/capitulo/${episode}`;
-      }
       const pageHtml = yield fetchText(targetUrl);
       const $page = import_cheerio_without_node_native.default.load(pageHtml);
       const pageTitle = $page("title").text() || "";
       const movieQuality = (pageTitle.match(/Online\s+[^-\s]+\s+([^-\s]+)\s+-/i) || [null, "HD"])[1];
       const embeds = [];
-      $page("#link_url span").each((i, el) => {
-        const url = $page(el).attr("url");
+      $page(".playurl, #link_url span").each((i, el) => {
+        const url = $page(el).attr("data-url") || $page(el).attr("url");
         if (url && url.startsWith("http"))
           embeds.push(url);
       });
-      const streamResults = yield Promise.allSettled(embeds.map((url) => __async(this, null, function* () {
+      const resolved = yield Promise.allSettled(embeds.map((url) => __async(this, null, function* () {
         const s = url.toLowerCase();
-        let resolved = null;
         let key = "unknown";
+        let res = null;
         if (s.includes("voe")) {
           key = "voe";
-          resolved = yield resolve(url);
+          res = yield resolve(url);
         } else if (s.includes("filemoon")) {
           key = "filemoon";
-          resolved = yield resolve2(url);
+          res = yield resolve2(url);
         } else if (s.includes("streamwish") || s.includes("hglink")) {
           key = "streamwish";
-          resolved = yield resolve3(url);
-        } else if (s.includes("vidhide") || s.includes("minochinos")) {
+          res = yield resolve3(url);
+        } else if (s.includes("vidhide")) {
           key = "vidhide";
-          resolved = yield resolve4(url);
+          res = yield resolve4(url);
         } else if (s.includes("uqload")) {
           key = "uqload";
-          resolved = yield resolve5(url);
+          res = yield resolve5(url);
         }
-        if (resolved && resolved.url) {
+        if (res && res.url) {
           return {
             name: "PelisPlusHD",
-            title: `${resolved.quality || movieQuality} \xB7 Latino \xB7 ${SERVER_LABELS[key] || key}`,
-            url: resolved.url,
-            quality: resolved.quality || movieQuality,
-            headers: resolved.headers || { "Referer": url, "User-Agent": UA6 }
+            title: `${res.quality || movieQuality} \xB7 Latino \xB7 ${SERVER_LABELS[key] || key}`,
+            url: res.url,
+            quality: res.quality || movieQuality,
+            headers: res.headers || { "Referer": url, "User-Agent": UA6 }
           };
         }
         return null;
       })));
-      return streamResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+      return resolved.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
     } catch (error) {
       return [];
     }
@@ -639,4 +642,3 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
-module.exports = { getStreams };
