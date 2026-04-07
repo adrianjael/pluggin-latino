@@ -1,28 +1,24 @@
-{
- "name": "Nuvio Latam",
- "version": "1.3.0",
- "scrapers": [
+[
   {
-   "id": "nuvio-pelis-plus-lat",
-   "name": "PelisPlusHD",
-   "description": "Peliculas y Series Latino",
-   "version": "1.3.0",
-   "author": "AdrianJael",
-   "supportedTypes": [
-    "movie",
-    "tv"
-   ],
-   "filename": "providers/pelisplus.js",
-   "enabled": true,
-   "contentLanguage": [
-    "es"
-   ],
-   "formats": [
-    "mp4",
-    "m3u8"
-   ],
-   "limited": false,
-   "supportsExternalPlayer": true
+    "id": "nuvio-pelis-plus-lat",
+    "name": "PelisPlusHD",
+    "description": "Peliculas y Series Latino",
+    "version": "1.3.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/pelisplus.js",
+    "enabled": true,
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "supportsExternalPlayer": true
   }
- ]
-}
+]

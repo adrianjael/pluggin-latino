@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-07T22:31:35.088Z
+ * Generated: 2026-04-07T22:35:13.836Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -22,10 +22,6 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -42,7 +38,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
@@ -63,13 +58,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/seriesmetro/index.js
-var seriesmetro_exports = {};
-__export(seriesmetro_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(seriesmetro_exports);
 
 // src/resolvers/voe.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -597,3 +585,4 @@ function getStreams(tmdbId, mediaType, season, episode) {
     }
   });
 }
+module.exports = { getStreams };

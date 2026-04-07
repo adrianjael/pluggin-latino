@@ -1,24 +1,7 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-07T22:31:35.084Z
+ * Generated: 2026-04-07T22:35:13.813Z
  */
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -41,11 +24,6 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/playhubmax/index.js
-var playhubmax_exports = {};
-__export(playhubmax_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(playhubmax_exports);
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var PHM_API = "https://api.playhubmax.com/api";
 var AES_KEY_STR = "33dff3b1c1362e45e1425fcc9724d6f3";
@@ -254,3 +232,4 @@ function getStreams(tmdbId, mediaType, season, episode) {
     }
   });
 }
+module.exports = { getStreams };

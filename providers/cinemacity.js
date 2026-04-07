@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-07T22:31:34.916Z
+ * Generated: 2026-04-07T22:35:13.608Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -8,10 +8,6 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -28,7 +24,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -51,11 +46,6 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/cinemacity/index.js
-var cinemacity_exports = {};
-__export(cinemacity_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(cinemacity_exports);
 var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
 var MAIN_URL = "https://cinemacity.cc";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
@@ -169,3 +159,4 @@ function getStreams(tmdbId, mediaType, season, episode) {
     }
   });
 }
+module.exports = { getStreams };

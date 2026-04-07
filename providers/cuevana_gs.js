@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-07T22:31:34.942Z
+ * Generated: 2026-04-07T22:35:13.632Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,10 +25,6 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -45,7 +41,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
@@ -66,13 +61,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/cuevana_gs/index.js
-var cuevana_gs_exports = {};
-__export(cuevana_gs_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(cuevana_gs_exports);
 
 // src/resolvers/voe.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -625,3 +613,4 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
+module.exports = { getStreams };

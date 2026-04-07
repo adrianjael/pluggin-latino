@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-07T22:31:35.067Z
+ * Generated: 2026-04-07T22:35:13.792Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -22,10 +22,6 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -42,7 +38,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
@@ -63,13 +58,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/pelisplus/index.js
-var pelisplus_exports = {};
-__export(pelisplus_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(pelisplus_exports);
 
 // src/pelisplus/http.js
 var BASE_URL = "https://www.pelisplushd.la";
@@ -599,3 +587,4 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
+module.exports = { getStreams };

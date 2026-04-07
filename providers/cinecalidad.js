@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-07T22:31:34.841Z
+ * Generated: 2026-04-07T22:35:13.536Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -8,10 +8,6 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -28,7 +24,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve7, reject) => {
     var fulfilled = (value) => {
@@ -49,13 +44,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/cinecalidad/index.js
-var cinecalidad_exports = {};
-__export(cinecalidad_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(cinecalidad_exports);
 
 // src/resolvers/goodstream.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -595,3 +583,4 @@ function getStreams(tmdbId, mediaType, season, episode) {
     }
   });
 }
+module.exports = { getStreams };

@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T22:31:35.059Z
+ * Generated: 2026-04-07T22:35:13.784Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -48,7 +48,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
@@ -137,13 +136,6 @@ var init_extractor = __esm({
     UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
   }
 });
-
-// src/pelispedia/index.js
-var pelispedia_exports = {};
-__export(pelispedia_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(pelispedia_exports);
 
 // src/utils/string.js
 function normalizeTitle(t) {
@@ -648,3 +640,4 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
+module.exports = { getStreams };
