@@ -6,6 +6,7 @@ yarn-error.log*
 
 # Carpetas locales de desarrollo
 src/
+build.js
 
 # Compilación y builds
 # Usamos providers/* para que Git pueda procesar las excepciones (!)
