@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-06T18:17:26.961Z
+ * Generated: 2026-04-07T18:01:21.521Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -108,8 +108,12 @@ function calculateSimilarity(title1, title2) {
   const norm2 = normalizeTitle(title2);
   if (norm1 === norm2)
     return 1;
-  if (norm1.length > 5 && norm2.length > 5 && (norm2.includes(norm1) || norm1.includes(norm2)))
-    return 0.9;
+  if (norm1.length > 5 && norm2.length > 5) {
+    const ratio = Math.min(norm1.length, norm2.length) / Math.max(norm1.length, norm2.length);
+    if ((norm2.includes(norm1) || norm1.includes(norm2)) && ratio > 0.8) {
+      return 0.9;
+    }
+  }
   const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
   const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
   if (words1.size === 0 || words2.size === 0) {

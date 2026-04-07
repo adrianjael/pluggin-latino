@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-06T18:17:26.909Z
+ * Generated: 2026-04-07T18:01:21.462Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -147,26 +147,26 @@ function resolve(url) {
 }
 
 // src/utils/aes-gcm.js
-var CryptoJS = require("crypto-js");
+var import_crypto_js = __toESM(require("crypto-js"));
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
     const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = CryptoJS.lib.WordArray.create(key);
+    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
     const ivCounter = new Uint8Array(16);
     ivCounter.set(iv, 0);
     ivCounter[15] = 2;
-    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
-    const decrypted = CryptoJS.AES.decrypt(
-      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
+    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
+    const decrypted = import_crypto_js.default.AES.decrypt(
+      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
       keyWA,
       {
         iv: ivWA,
-        mode: CryptoJS.mode.CTR,
-        padding: CryptoJS.pad.NoPadding
+        mode: import_crypto_js.default.mode.CTR,
+        padding: import_crypto_js.default.pad.NoPadding
       }
     );
-    return decrypted.toString(CryptoJS.enc.Utf8);
+    return decrypted.toString(import_crypto_js.default.enc.Utf8);
   } catch (e) {
     console.error("[PureJS-GCM] Error Decrypting:", e.message);
     return null;
@@ -625,14 +625,34 @@ function getStreams(tmdbId, mediaType, season, episode) {
       function resolveBatch(embeds) {
         return __async(this, null, function* () {
           const results = yield Promise.allSettled(
-            embeds.map(
-              ({ url, resolver, lang, servername }) => Promise.race([
-                resolver(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { lang, servername }) : null),
-                new Promise(
-                  (_, reject) => setTimeout(() => reject(new Error("timeout")), RESOLVER_TIMEOUT)
-                )
-              ])
-            )
+            embeds.map((_0) => __async(this, [_0], function* ({ url, resolver, lang, servername }) {
+              try {
+                const r = yield Promise.race([
+                  resolver(url),
+                  new Promise(
+                    (_, reject) => setTimeout(() => reject(new Error("timeout")), RESOLVER_TIMEOUT)
+                  )
+                ]);
+                if (!r || !r.url)
+                  return null;
+                try {
+                  const check = yield fetch(r.url, {
+                    method: "HEAD",
+                    headers: r.headers || { "User-Agent": UA7 }
+                  });
+                  if (!check.ok && check.status !== 405) {
+                    console.log(`[Embed69] \u2717 Health Check Fallido (${check.status}) para: ${r.url.substring(0, 50)}...`);
+                    return null;
+                  }
+                } catch (e) {
+                  console.log(`[Embed69] \u2717 Health Check Error para: ${r.url.substring(0, 50)}...`);
+                  return null;
+                }
+                return __spreadProps(__spreadValues({}, r), { lang, servername });
+              } catch (e) {
+                return null;
+              }
+            }))
           );
           return results.filter((r) => {
             var _a;
