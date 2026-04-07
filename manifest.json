@@ -304,7 +304,7 @@
       "id": "pelispedia",
       "name": "Pelispedia",
       "description": "Películas y series en HD con múltiples opciones de servidor (Embed69, Voe, Filemoon, Uqload).",
-      "version": "1.6.0",
+      "version": "1.7.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
