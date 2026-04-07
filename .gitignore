@@ -4,6 +4,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Carpetas locales de desarrollo
+src/
+
 # Compilación y builds
 # Usamos providers/* para que Git pueda procesar las excepciones (!)
 providers/*
