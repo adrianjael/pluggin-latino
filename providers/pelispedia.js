@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T17:44:43.941Z
+ * Generated: 2026-04-07T17:51:58.431Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -98,16 +98,19 @@ function extractStreams(url) {
     const embed69Re = /https?:\/\/embed69\.org\/f\/(tt\d+(-[\d]+x[\d]+)?)/gi;
     let m;
     while ((m = embed69Re.exec(html)) !== null) {
-      streams.push({
-        server: "Embed69",
-        url: m[0],
-        priority: 1
-      });
+      const url_str = m[0];
+      if (!streams.find((s) => s.url === url_str)) {
+        streams.push({
+          servername: "Embed69",
+          url: url_str,
+          quality: "1080p",
+          headers: { "User-Agent": UA, "Referer": url }
+        });
+      }
     }
-    const knownServers = ["Voe", "Filemoon", "Streamwish", "Vidhide", "Uqload"];
     const iframeRe = /https?:\/\/(voe\.sx|filemoon\.sx|bysedikamoum\.com|streamwish\.to|vidhide\.com|minochinos\.com|hglink\.to|audinifer\.com|uqload\.is|uqload\.com)\/([ae]\/)?([a-z0-9]+)/gi;
     while ((m = iframeRe.exec(html)) !== null) {
-      const url2 = m[0];
+      const url_str = m[0];
       const domain = m[1].toLowerCase();
       let name = "Desconocido";
       if (domain.includes("voe"))
@@ -120,11 +123,12 @@ function extractStreams(url) {
         name = "Vidhide";
       else if (domain.includes("uqload"))
         name = "Uqload";
-      if (!streams.find((s) => s.url === url2)) {
+      if (!streams.find((s) => s.url === url_str)) {
         streams.push({
-          server: name,
-          url: url2,
-          priority: 2
+          servername: name,
+          url: url_str,
+          quality: "1080p",
+          headers: { "User-Agent": UA, "Referer": url }
         });
       }
     }
@@ -140,9 +144,10 @@ function extractStreams(url) {
           embedUrl += `-${s}x${e}`;
         }
         streams.push({
-          server: "Embed69 (Auto)",
+          servername: "Embed69 (Auto)",
           url: embedUrl,
-          priority: 1
+          quality: "1080p",
+          headers: { "User-Agent": UA, "Referer": url }
         });
       }
     }
@@ -275,9 +280,16 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${s}/capitulo/${e}`;
         console.log(`[Pelispedia] URL Serie construida: ${targetUrl}`);
       }
-      const streams = yield extractStreams(targetUrl);
-      console.log(`[Pelispedia] Finalizado: ${streams.length} streams.`);
-      return streams;
+      const rawStreams = yield extractStreams(targetUrl);
+      const finalStreams = rawStreams.map((s) => ({
+        name: "Pelispedia.mov",
+        title: `${s.quality || "1080p"} \xB7 Latino \xB7 ${s.servername}`,
+        url: s.url,
+        quality: s.quality || "1080p",
+        headers: s.headers || {}
+      }));
+      console.log(`[Pelispedia] Finalizado: ${finalStreams.length} streams.`);
+      return finalStreams;
     } catch (e) {
       console.error("[Pelispedia] Error:", e);
       return [];
