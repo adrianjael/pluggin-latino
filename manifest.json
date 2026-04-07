@@ -1,29 +1,50 @@
-{
-  "name": "AdrianJael",
-  "version": "1.2.0",
-  "scrapers": [
-    {
-      "id": "pelisplus",
-      "name": "PelisPlusHD",
-      "description": "Peliculas y series en espanol latino.",
-      "version": "1.2.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/pelisplus.js",
-      "enabled": true,
-      "logo": "https://www.pelisplushd.la/images/logo/logo5.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    }
-  ]
-}
+[
+  {
+    "id": "pelisplus",
+    "name": "PelisPlusHD",
+    "description": "Peliculas y series en espanol latino.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/pelisplus.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "embed69",
+    "name": "Embed69",
+    "description": "Peliculas y series latino via embed69.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/embed69.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  }
+]
