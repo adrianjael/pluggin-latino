@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T20:26:04.558Z
+ * Generated: 2026-04-07T20:37:06.509Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -102,14 +102,27 @@ function calculateSimilarity(title1, title2) {
 }
 
 // src/pelispedia/extractor.js
+var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function decodeBase64(input) {
+  if (!input)
+    return "";
+  try {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    let str = String(input).replace(/=+$/, "");
+    let output = "";
+    for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+      buffer = chars.indexOf(buffer);
+    }
+    return output;
+  } catch (e) {
+    return "";
+  }
+}
 function fetchText(url, referer) {
   return __async(this, null, function* () {
     try {
-      const headers = { "User-Agent": UA };
-      if (referer)
-        headers["Referer"] = referer;
-      const res = yield fetch(url, { headers });
+      const res = yield fetch(url, { headers: { "User-Agent": UA, "Referer": referer || "https://pelispedia.mov/" } });
       return yield res.text();
     } catch (e) {
       return "";
@@ -121,71 +134,48 @@ function extractStreams(url) {
     const html = yield fetchText(url);
     if (!html)
       return [];
+    const $ = import_cheerio_without_node_native.default.load(html);
     const streams = [];
-    const embed69Re = /https?:\/\/embed69\.org\/f\/(tt\d+(-[\d]+x[\d]+)?)/gi;
+    const seenUrls = /* @__PURE__ */ new Set();
+    $(".server-option, li[data-id], .dooplay_player_option").each((i, el) => {
+      const $el = $(el);
+      const serverUrl = $el.attr("data-url") || $el.find("a").attr("href");
+      const langCode = $el.attr("data-lang") || "";
+      let name = $el.find(".title").text().trim() || $el.text().trim() || "Servidor";
+      let lang = "Latino";
+      if (langCode === "2" || name.toLowerCase().includes("castellano"))
+        lang = "Castellano";
+      if (langCode === "3" || name.toLowerCase().includes("sub"))
+        lang = "Subtitulado";
+      if (serverUrl && serverUrl.startsWith("http") && !seenUrls.has(serverUrl)) {
+        seenUrls.add(serverUrl);
+        streams.push({ servername: name, url: serverUrl, language: lang });
+      }
+    });
+    const playerRegex = /createplayer\(['"]([^'"]+)['"]\)/gi;
     let m;
-    while ((m = embed69Re.exec(html)) !== null) {
-      const url_str = m[0];
-      if (!streams.find((s) => s.url === url_str)) {
-        streams.push({
-          servername: "Embed69",
-          url: url_str,
-          quality: "1080p",
-          headers: { "User-Agent": UA, "Referer": url }
-        });
+    while ((m = playerRegex.exec(html)) !== null) {
+      const decoded = decodeBase64(m[1]);
+      if (decoded && decoded.startsWith("http") && !seenUrls.has(decoded)) {
+        seenUrls.add(decoded);
+        streams.push({ servername: "Auto-Detect", url: decoded, language: "Latino" });
       }
     }
-    const iframeRe = /https?:\/\/(voe\.sx|filemoon\.sx|bysedikamoum\.com|streamwish\.to|vidhide\.com|minochinos\.com|hglink\.to|audinifer\.com|uqload\.is|uqload\.com)\/([ae]\/)?([a-z0-9]+)/gi;
+    const iframeRe = /https?:\/\/(voe\.sx|filemoon|streamwish|vidhide|uqload|hglink|embed69|nuuuppp)\.[^"'\s<>]+/gi;
     while ((m = iframeRe.exec(html)) !== null) {
-      const url_str = m[0];
-      const domain = m[1].toLowerCase();
-      let name = "Desconocido";
-      if (domain.includes("voe"))
-        name = "Voe";
-      else if (domain.includes("filemoon") || domain.includes("bysedikamoum"))
-        name = "Filemoon";
-      else if (domain.includes("streamwish") || domain.includes("hglink") || domain.includes("audinifer"))
-        name = "Streamwish";
-      else if (domain.includes("vidhide") || domain.includes("minochinos"))
-        name = "Vidhide";
-      else if (domain.includes("uqload"))
-        name = "Uqload";
-      if (!streams.find((s) => s.url === url_str)) {
-        streams.push({
-          servername: name,
-          url: url_str,
-          quality: "1080p",
-          headers: { "User-Agent": UA, "Referer": url }
-        });
+      const url_str = m[0].split(/[\\"']/)[0];
+      if (!seenUrls.has(url_str)) {
+        seenUrls.add(url_str);
+        streams.push({ servername: "Iframe", url: url_str, language: "Latino" });
       }
     }
-    if (streams.length === 0) {
-      const ttMatch = html.match(/tt\d{7,10}/);
-      if (ttMatch) {
-        const imdbId = ttMatch[0];
-        const epMatch = url.match(/\/temporada\/(\d+)\/capitulo\/(\d+)/);
-        let embedUrl = `https://embed69.org/f/${imdbId}`;
-        if (epMatch) {
-          const s = epMatch[1];
-          const e = epMatch[2].padStart(2, "0");
-          embedUrl += `-${s}x${e}`;
-        }
-        streams.push({
-          servername: "Embed69 (Auto)",
-          url: embedUrl,
-          quality: "1080p",
-          headers: { "User-Agent": UA, "Referer": url }
-        });
-      }
-    }
-    console.log(`[Pelispedia Extractor] Found ${streams.length} stream(s).`);
     return streams;
   });
 }
 
 // src/resolvers/voe.js
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-function decodeBase64(input) {
+function decodeBase642(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   let str = String(input).replace(/=+$/, "");
   let output = "";
@@ -218,12 +208,12 @@ function resolve(url) {
           const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
           for (const n of noise)
             rot13 = rot13.split(n).join("");
-          let b64_1 = decodeBase64(rot13);
+          let b64_1 = decodeBase642(rot13);
           let shifted = "";
           for (let i = 0; i < b64_1.length; i++)
             shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
           let reversed = shifted.split("").reverse().join("");
-          let data = JSON.parse(decodeBase64(reversed));
+          let data = JSON.parse(decodeBase642(reversed));
           if (data && data.source) {
             console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
             return {
@@ -549,7 +539,6 @@ function resolve5(url) {
 // src/pelispedia/index.js
 var BASE = "https://pelispedia.mov";
 var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-var TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
 var RESOLVER_MAP = {
   "voe.sx": resolve,
   "hglink.to": resolve3,
@@ -565,7 +554,13 @@ var RESOLVER_MAP = {
   "dintezuvio.com": resolve4,
   "vidhide.com": resolve4,
   "uqload.to": resolve5,
-  "uqload.com": resolve5
+  "uqload.com": resolve5,
+  "uqload.is": resolve5,
+  "minochinos.com": resolve4,
+  "audinifer.com": resolve3,
+  "pstream.org": resolve3,
+  "embed69.org": resolveEmbed69
+  // Restablecido
 };
 function decodeJwtPayload(token) {
   try {
@@ -579,6 +574,16 @@ function decodeJwtPayload(token) {
   } catch (e) {
     return null;
   }
+}
+function fetchText2(url) {
+  return __async(this, null, function* () {
+    try {
+      const res = yield fetch(url, { headers: { "User-Agent": UA7, "Referer": BASE } });
+      return yield res.text();
+    } catch (e) {
+      return "";
+    }
+  });
 }
 function resolveEmbed69(embedUrl) {
   return __async(this, null, function* () {
@@ -598,7 +603,7 @@ function resolveEmbed69(embedUrl) {
         if (!payload || !payload.link)
           continue;
         for (const [pattern, resolver] of Object.entries(RESOLVER_MAP)) {
-          if (payload.link.includes(pattern)) {
+          if (payload.link.includes(pattern) && pattern !== "embed69.org") {
             const result = yield resolver(payload.link);
             if (result && result.url) {
               return __spreadProps(__spreadValues({}, result), { servername: embed.servername });
@@ -607,74 +612,23 @@ function resolveEmbed69(embedUrl) {
         }
       }
     } catch (e) {
-      console.error("[Pelispedia] resolveEmbed69 error:", e.message);
+      console.error("[Embed69] Error:", e.message);
     }
     return null;
   });
 }
-function fetchText2(url) {
-  return __async(this, null, function* () {
-    try {
-      const res = yield fetch(url, {
-        headers: {
-          "User-Agent": UA7,
-          "Referer": BASE
-        }
-      });
-      return yield res.text();
-    } catch (e) {
-      return "";
-    }
-  });
-}
-function decodeSimpleHtml(t) {
-  if (!t)
-    return "";
-  return t.replace(/&eacute;/g, "\xE9").replace(/&aacute;/g, "a").replace(/&iacute;/g, "i").replace(/&oacute;/g, "o").replace(/&úcute;/g, "u").replace(/&ntilde;/g, "\xF1").replace(/&amp;/g, "&");
-}
-function getSpanishTitle(tmdbId, type) {
-  return __async(this, null, function* () {
-    if (!tmdbId || tmdbId === "dummy")
-      return null;
-    try {
-      const url = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_KEY}&language=es-MX`;
-      const res = yield fetch(url);
-      const data = yield res.json();
-      return data.title || data.name || null;
-    } catch (e) {
-      return null;
-    }
-  });
-}
 function searchMedia(query) {
   return __async(this, null, function* () {
-    const normalizedQuery = normalizeTitle(query);
-    const url = `${BASE}/search?s=${encodeURIComponent(normalizedQuery)}`;
+    const normQuery = normalizeTitle(query).replace(/\s+/g, "+");
+    const url = `${BASE}/search?s=${encodeURIComponent(normQuery)}`;
     const html = yield fetchText2(url);
     if (!html)
       return [];
     const results = [];
+    const re = /href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
     let m;
-    const cardRe = /<a[^>]+href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"[^>]*>([\s\S]*?)<\/a>/gi;
-    while ((m = cardRe.exec(html)) !== null) {
-      const url2 = m[1];
-      const type = m[2];
-      const slug = m[3];
-      const content = m[4];
-      const titleMatch = content.match(/title="([^"]+)"/) || content.match(/alt="([^"]+)"/) || content.match(/<h\d[^>]*>(.*?)<\/h\d>/);
-      const title = titleMatch ? decodeSimpleHtml(titleMatch[1]).replace(/<[^>]+>/g, "").trim() : slug.replace(/-/g, " ");
-      results.push({ url: url2, type, slug, title });
-    }
-    if (results.length === 0) {
-      const linkRe = /href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
-      while ((m = linkRe.exec(html)) !== null) {
-        results.push({
-          url: m[1],
-          type: m[2],
-          slug: m[3],
-          title: m[3].replace(/-/g, " ")
-        });
-      }
+    while ((m = re.exec(html)) !== null) {
+      results.push({ url: m[1], type: m[2], slug: m[3], title: m[3].replace(/-/g, " ") });
     }
     return results;
   });
@@ -683,17 +637,9 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
       const type = (mediaType || "").toLowerCase();
-      const tmdbType = type === "movie" ? "movie" : "tv";
-      console.log(`[Pelispedia] Buscando: "${title}" (${type})`);
       let matches = yield searchMedia(title);
-      if (matches.length === 0 && tmdbId && tmdbId !== "dummy") {
-        const esTitle = yield getSpanishTitle(tmdbId, tmdbType);
-        if (esTitle && normalizeTitle(esTitle) !== normalizeTitle(title)) {
-          matches = yield searchMedia(esTitle);
-        }
-      }
       if (matches.length === 0) {
-        const firstWord = normalizeTitle(title).split(" ")[0];
+        const firstWord = title.split(" ")[0];
         if (firstWord.length > 3)
           matches = yield searchMedia(firstWord);
       }
@@ -702,60 +648,41 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const normTarget = normalizeTitle(title);
       const bestMatch = matches.find((m) => {
         const normMatch = normalizeTitle(m.title);
-        const similarity = calculateSimilarity(normTarget, normMatch);
-        const typeMatch = type === "movie" && m.type === "pelicula" || (type === "tv" || type === "series" || type === "serie") && m.type === "serie";
-        return (similarity > 0.4 || normMatch.includes(normTarget) || normTarget.includes(normMatch)) && typeMatch;
-      });
-      if (!bestMatch) {
-        console.log("[Pelispedia] No se encontr\xF3 una coincidencia aceptable.");
-        return [];
-      }
+        const isSerie = type === "tv" || type === "series" || type === "serie";
+        const typeMatch = isSerie && m.type === "serie" || !isSerie && m.type === "pelicula";
+        return calculateSimilarity(normTarget, normMatch) > 0.4 && typeMatch;
+      }) || matches[0];
       let targetUrl = bestMatch.url;
-      if (typeMatchSerie(type)) {
-        const s = season || 1;
-        const e = episode || 1;
-        targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${s}/capitulo/${e}`;
+      if (bestMatch.type === "serie") {
+        targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${season || 1}/capitulo/${episode || 1}`;
       }
       const rawEmbeds = yield extractStreams(targetUrl);
-      console.log(`[Pelispedia] Resolviendo ${rawEmbeds.length} embeds en: ${targetUrl}`);
-      const finalStreams = [];
-      yield Promise.all(rawEmbeds.map((embed) => __async(this, null, function* () {
+      const streams = yield Promise.all(rawEmbeds.map((embed) => __async(this, null, function* () {
         try {
           let resolved = null;
-          const srvLower = embed.servername.toLowerCase();
-          if (srvLower.includes("embed69")) {
-            resolved = yield resolveEmbed69(embed.url);
-          } else {
-            for (const [pattern, resolver] of Object.entries(RESOLVER_MAP)) {
-              if (embed.url.includes(pattern)) {
-                resolved = yield resolver(embed.url);
-                if (resolved)
-                  resolved.servername = embed.servername;
-                break;
-              }
+          for (const [pattern, resolver] of Object.entries(RESOLVER_MAP)) {
+            if (embed.url.includes(pattern)) {
+              resolved = yield pattern === "embed69.org" ? resolveEmbed69(embed.url) : resolver(embed.url);
+              break;
             }
           }
           if (resolved && resolved.url) {
-            finalStreams.push({
+            return {
               name: "Pelispedia",
-              title: `${resolved.quality || "1080p"} \xB7 Latino \xB7 ${resolved.servername || "Pelispedia"}`,
+              title: `${resolved.quality || "1080p"} \xB7 ${embed.language || "Latino"} \xB7 ${embed.servername || resolved.servername}`,
               url: resolved.url,
               quality: resolved.quality || "1080p",
               headers: resolved.headers || { "User-Agent": UA7, "Referer": embed.url }
-            });
+            };
           }
         } catch (err) {
         }
+        return null;
       })));
-      console.log(`[Pelispedia] Devueltos ${finalStreams.length} resultados.`);
-      return finalStreams;
+      return streams.filter((s) => s !== null);
     } catch (e) {
       console.error("[Pelispedia] Error:", e);
       return [];
     }
   });
-}
-function typeMatchSerie(type) {
-  const t = type.toLowerCase();
-  return t === "tv" || t === "series" || t === "serie" || t === "tvshow";
 }
