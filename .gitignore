@@ -65,3 +65,4 @@ HOW_TO_ADD_PROVIDER.md
 # Entorno
 .env
 .env.local
+*.mjs
