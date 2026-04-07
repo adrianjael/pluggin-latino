@@ -1,8 +1,8 @@
 [
   {
-    "id": "pelisplus",
-    "name": "PelisPlusHD",
-    "description": "Peliculas y series en espanol latino.",
+    "id": "lat-pelisplus",
+    "name": "PelisPlusHD Latam",
+    "description": "Peliculas y series latino.",
     "version": "1.0.0",
     "author": "AdrianJael",
     "supportedTypes": [
@@ -24,9 +24,57 @@
     "supportsExternalPlayer": true
   },
   {
-    "id": "embed69",
-    "name": "Embed69",
-    "description": "Peliculas y series latino via embed69.",
+    "id": "lat-pelisgo",
+    "name": "PelisGo Latam",
+    "description": "Streaming alta fidelidad.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/pelisgo.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-hackstore2",
+    "name": "HackStore2 Latam",
+    "description": "Peliculas HD.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/hackstore2.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-embed69",
+    "name": "Embed69 Latam",
+    "description": "Peliculas via Embed69.",
     "version": "1.0.0",
     "author": "AdrianJael",
     "supportedTypes": [
@@ -34,6 +82,245 @@
       "tv"
     ],
     "filename": "providers/embed69.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-cuevana_gs",
+    "name": "Cuevana.gs Latam",
+    "description": "Servidores estables.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/cuevana_gs.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-cinecalidad",
+    "name": "CineCalidad Latam",
+    "description": "Peliculas HD.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie"
+    ],
+    "filename": "providers/cinecalidad.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-lamovie",
+    "name": "LaMovie Latam",
+    "description": "HD Latino.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/lamovie.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-seriesmetro",
+    "name": "SeriesMetro Latam",
+    "description": "Series y peliculas.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/seriesmetro.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-xupalace",
+    "name": "XuPalace Latam",
+    "description": "HD Latino e Ingles.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/xupalace.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-fuegocine",
+    "name": "FuegoCine Latam",
+    "description": "Enlaces directos.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/fuegocine.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-playhubmax",
+    "name": "PlayHubMax Latam",
+    "description": "Contenido premium.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/playhubmax.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-cinemacity",
+    "name": "CinemaCity Latam",
+    "description": "Subtituladas y latino.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/cinemacity.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-pelispedia",
+    "name": "Pelispedia Latam",
+    "description": "Catalogo masivo.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/pelispedia.js",
+    "enabled": true,
+    "logo": "",
+    "contentLanguage": [
+      "es"
+    ],
+    "formats": [
+      "mp4",
+      "m3u8"
+    ],
+    "limited": false,
+    "disabledPlatforms": [],
+    "supportsExternalPlayer": true
+  },
+  {
+    "id": "lat-pelispanda",
+    "name": "PelisPanda Latam",
+    "description": "Peliculas directo.",
+    "version": "1.0.0",
+    "author": "AdrianJael",
+    "supportedTypes": [
+      "movie",
+      "tv"
+    ],
+    "filename": "providers/pelispanda.js",
     "enabled": true,
     "logo": "",
     "contentLanguage": [
