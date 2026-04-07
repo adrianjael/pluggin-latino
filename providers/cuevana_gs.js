@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-06T18:17:26.899Z
+ * Generated: 2026-04-07T17:29:41.019Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,6 +25,10 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -41,6 +45,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve4, reject) => {
     var fulfilled = (value) => {
@@ -61,6 +66,13 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
+
+// src/cuevana_gs/index.js
+var cuevana_gs_exports = {};
+__export(cuevana_gs_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(cuevana_gs_exports);
 
 // src/resolvers/voe.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -134,26 +146,26 @@ function resolve(url) {
 }
 
 // src/utils/aes-gcm.js
-var CryptoJS = require("crypto-js");
+var import_crypto_js = __toESM(require("crypto-js"));
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
     const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = CryptoJS.lib.WordArray.create(key);
+    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
     const ivCounter = new Uint8Array(16);
     ivCounter.set(iv, 0);
     ivCounter[15] = 2;
-    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
-    const decrypted = CryptoJS.AES.decrypt(
-      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
+    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
+    const decrypted = import_crypto_js.default.AES.decrypt(
+      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
       keyWA,
       {
         iv: ivWA,
-        mode: CryptoJS.mode.CTR,
-        padding: CryptoJS.pad.NoPadding
+        mode: import_crypto_js.default.mode.CTR,
+        padding: import_crypto_js.default.pad.NoPadding
       }
     );
-    return decrypted.toString(CryptoJS.enc.Utf8);
+    return decrypted.toString(import_crypto_js.default.enc.Utf8);
   } catch (e) {
     console.error("[PureJS-GCM] Error Decrypting:", e.message);
     return null;
@@ -352,6 +364,33 @@ function resolve3(embedUrl) {
   });
 }
 
+// src/utils/string.js
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function calculateSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.length > 5 && norm2.length > 5) {
+    const ratio = Math.min(norm1.length, norm2.length) / Math.max(norm1.length, norm2.length);
+    if ((norm2.includes(norm1) || norm1.includes(norm2)) && ratio > 0.8) {
+      return 0.9;
+    }
+  }
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0) {
+    return norm1 === norm2 ? 1 : norm1.includes(norm2) || norm2.includes(norm1) ? 0.5 : 0;
+  }
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+
 // src/cuevana_gs/extractor.js
 var BASE_URL = "https://cuevana.gs";
 var BASE_HEADERS = {
@@ -446,8 +485,23 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         return [];
       }
       const posts = searchJson.data.posts;
-      const normalizedTarget = (tmdbInfo.title || searchTitle).toLowerCase().replace(/[^a-z0-9]/g, "");
-      let post = posts.find((p) => p.type === targetType && p.title.toLowerCase().replace(/[^a-z0-9]/g, "").includes(normalizedTarget)) || posts.find((p) => p.type === targetType) || posts[0];
+      const targetTitle = tmdbInfo.title || searchTitle;
+      let post = null;
+      let maxSim = 0;
+      for (const p of posts) {
+        if (p.type !== targetType)
+          continue;
+        const sim = calculateSimilarity(targetTitle, p.title);
+        if (sim > maxSim) {
+          maxSim = sim;
+          post = p;
+        }
+      }
+      console.log(`[Cuevana.gs] Mejor coincidencia: "${post == null ? void 0 : post.title}" (Similitud: ${maxSim.toFixed(2)})`);
+      if (!post || maxSim < 0.8) {
+        console.log(`[Cuevana.gs] Similitud insuficiente (${maxSim.toFixed(2)} < 0.8). No hay resultados v\xE1lidos.`);
+        return [];
+      }
       let postId = post._id;
       if (!isMovie && season && episode) {
         try {
@@ -535,4 +589,3 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
-module.exports = { getStreams };

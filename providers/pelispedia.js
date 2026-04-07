@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T17:05:13.446Z
+ * Generated: 2026-04-07T17:29:40.828Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -58,8 +58,12 @@ function calculateSimilarity(title1, title2) {
   const norm2 = normalizeTitle(title2);
   if (norm1 === norm2)
     return 1;
-  if (norm1.length > 5 && norm2.length > 5 && (norm2.includes(norm1) || norm1.includes(norm2)))
-    return 0.9;
+  if (norm1.length > 5 && norm2.length > 5) {
+    const ratio = Math.min(norm1.length, norm2.length) / Math.max(norm1.length, norm2.length);
+    if ((norm2.includes(norm1) || norm1.includes(norm2)) && ratio > 0.8) {
+      return 0.9;
+    }
+  }
   const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
   const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
   if (words1.size === 0 || words2.size === 0) {
@@ -239,8 +243,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }
       if (matches.length === 0)
         return [];
+      const normTarget = (title || "").toLowerCase();
       const bestMatch = matches.find((m) => {
-        const sim = calculateSimilarity(title, m.title);
+        const normMatch = (m.title || "").toLowerCase();
+        const sim = calculateSimilarity(normTarget, normMatch) || (normTarget === normMatch ? 1 : 0);
         const typeMatch = type === "movie" && m.type === "pelicula" || (type === "tv" || type === "series") && m.type === "serie";
         if (sim > 0.4 && typeMatch) {
           m.similarity = sim;
@@ -254,7 +260,9 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }
       let targetUrl = bestMatch.url;
       if (type === "tv" || type === "series") {
-        targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${season}/capitulo/${episode}`;
+        const s = season || 1;
+        const e = episode || 1;
+        targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${s}/capitulo/${e}`;
       }
       console.log(`[Pelispedia] Extrayendo de: ${targetUrl}`);
       const streams = yield extractStreams(targetUrl);
