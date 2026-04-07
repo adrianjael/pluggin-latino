@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T18:01:21.515Z
+ * Generated: 2026-04-07T18:07:08.189Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -47,7 +47,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve5, reject) => {
+  return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -62,7 +62,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve5(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve6(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -515,13 +515,46 @@ function resolve4(url) {
   });
 }
 
+// src/resolvers/uqload.js
+var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function resolve5(url) {
+  return __async(this, null, function* () {
+    try {
+      const res = yield fetch(url, {
+        headers: {
+          "User-Agent": UA6,
+          "Referer": "https://pelispedia.mov/"
+        }
+      });
+      const html = yield res.text();
+      const videoMatch = html.match(/sources:\s*\[\s*\{?\s*src:\s*["']([^"']+)["']/i) || html.match(/src:\s*["']([^"']+)["']/i) || html.match(/["'](https?:\/\/[^"']+\.(mp4|m3u8)[^"']*)["']/i);
+      if (videoMatch) {
+        return {
+          url: videoMatch[1].startsWith("//") ? "https:" + videoMatch[1] : videoMatch[1],
+          quality: "HD",
+          name: "Uqload",
+          headers: {
+            "User-Agent": UA6,
+            "Referer": url
+          }
+        };
+      }
+    } catch (e) {
+      console.error("[Uqload Resolver] Error:", e.message);
+    }
+    return null;
+  });
+}
+
 // src/pelispedia/index.js
 var BASE = "https://pelispedia.mov";
-var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
 var RESOLVER_MAP = {
   "voe.sx": resolve,
   "hglink.to": resolve3,
+  "hanerix.com": resolve3,
+  // Nuevo dominio para Streamwish
   "streamwish.com": resolve3,
   "streamwish.to": resolve3,
   "wishembed.online": resolve3,
@@ -531,7 +564,10 @@ var RESOLVER_MAP = {
   "filemoon.to": resolve2,
   "moonembed.pro": resolve2,
   "dintezuvio.com": resolve4,
-  "vidhide.com": resolve4
+  "vidhide.com": resolve4,
+  "uqload.to": resolve5,
+  // Nuevo resolver Uqload
+  "uqload.com": resolve5
 };
 function decodeJwtPayload(token) {
   try {
@@ -583,7 +619,7 @@ function fetchText2(url) {
     try {
       const res = yield fetch(url, {
         headers: {
-          "User-Agent": UA6,
+          "User-Agent": UA7,
           "Referer": BASE
         }
       });
@@ -613,29 +649,21 @@ function searchMedia(query) {
     const html = yield fetchText2(url);
     if (!html)
       return [];
-    const re = /<a[^>]+href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"[^>]*title="([^"]+)"|<a[^>]+title="([^"]+)"[^>]+href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
     const results = [];
     let m;
-    while ((m = re.exec(html)) !== null) {
-      if (m[1]) {
-        results.push({
-          url: m[1],
-          type: m[2],
-          slug: m[3],
-          title: m[4].replace(/&amp;/g, "&")
-        });
-      } else {
-        results.push({
-          url: m[6],
-          type: m[7],
-          slug: m[8],
-          title: m[5].replace(/&amp;/g, "&")
-        });
-      }
+    const cardRe = /<a[^>]+href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"[^>]*>([\s\S]*?)<\/a>/gi;
+    while ((m = cardRe.exec(html)) !== null) {
+      const url2 = m[1];
+      const type = m[2];
+      const slug = m[3];
+      const content = m[4];
+      const titleMatch = content.match(/title="([^"]+)"/) || content.match(/alt="([^"]+)"/) || content.match(/<h\d[^>]*>(.*?)<\/h\d>/);
+      const title = titleMatch ? titleMatch[1].replace(/&amp;/g, "&").replace(/<[^>]+>/g, "").trim() : slug.replace(/-/g, " ");
+      results.push({ url: url2, type, slug, title });
     }
     if (results.length === 0) {
-      const simpleRe = /href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
-      while ((m = simpleRe.exec(html)) !== null) {
+      const linkRe = /href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
+      while ((m = linkRe.exec(html)) !== null) {
         results.push({
           url: m[1],
           type: m[2],
@@ -665,8 +693,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         if (firstWord.length > 3)
           matches = yield searchMedia(firstWord);
       }
-      if (matches.length === 0)
+      if (matches.length === 0) {
+        console.log("[Pelispedia] Sin coincidencias en la b\xFAsqueda.");
         return [];
+      }
       const normTarget = (title || "").toLowerCase();
       const bestMatch = matches.find((m) => {
         const normMatch = (m.title || "").toLowerCase();
@@ -674,21 +704,22 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const typeMatch = type === "movie" && m.type === "pelicula" || (type === "tv" || type === "series") && m.type === "serie";
         return similarity > 0.4 && typeMatch;
       });
-      if (!bestMatch)
+      if (!bestMatch) {
+        console.log("[Pelispedia] Mejor coincidencia insuficiente o tipo incorrecto.");
         return [];
+      }
       let targetUrl = bestMatch.url;
       if (type === "tv" || type === "series") {
-        const s = season || 1;
-        const e = episode || 1;
-        targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${s}/capitulo/${e}`;
+        targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${season || 1}/capitulo/${episode || 1}`;
       }
+      console.log(`[Pelispedia] Navegando a: ${targetUrl}`);
       const rawEmbeds = yield extractStreams(targetUrl);
       console.log(`[Pelispedia] Embeds encontrados: ${rawEmbeds.length}. Resolviendo...`);
       const finalStreams = [];
       yield Promise.all(rawEmbeds.map((embed) => __async(this, null, function* () {
         try {
           let resolved = null;
-          if (embed.servername.includes("Embed69")) {
+          if (embed.servername.toLowerCase().includes("embed69")) {
             resolved = yield resolveEmbed69(embed.url);
           } else {
             for (const [pattern, resolver] of Object.entries(RESOLVER_MAP)) {
@@ -706,7 +737,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               title: `${resolved.quality || "1080p"} \xB7 Latino \xB7 ${resolved.servername || "Pelispedia"}`,
               url: resolved.url,
               quality: resolved.quality || "1080p",
-              headers: resolved.headers || { "User-Agent": UA6, "Referer": embed.url }
+              headers: resolved.headers || { "User-Agent": UA7, "Referer": embed.url }
             });
           }
         } catch (err) {
