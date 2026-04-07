@@ -185,17 +185,40 @@ export async function getStreams(tmdbId, mediaType, season, episode) {
       return embeds;
     }
 
-    // 6. Resolver un lote en paralelo
+    // 6. Resolver un lote en paralelo con Health Check
     async function resolveBatch(embeds) {
       const results = await Promise.allSettled(
-        embeds.map(({ url, resolver, lang, servername }) =>
-          Promise.race([
-            resolver(url).then(r => r ? { ...r, lang, servername } : null),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('timeout')), RESOLVER_TIMEOUT)
-            )
-          ])
-        )
+        embeds.map(async ({ url, resolver, lang, servername }) => {
+          try {
+            const r = await Promise.race([
+              resolver(url),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('timeout')), RESOLVER_TIMEOUT)
+              )
+            ]);
+
+            if (!r || !r.url) return null;
+
+            // Health Check dinámico: Verificamos si el enlace realmente responde
+            try {
+              const check = await fetch(r.url, { 
+                method: 'HEAD', 
+                headers: r.headers || { 'User-Agent': UA } 
+              });
+              if (!check.ok && check.status !== 405) { // Algunos servidores bloquean HEAD pero el stream funciona (405)
+                console.log(`[Embed69] ✗ Health Check Fallido (${check.status}) para: ${r.url.substring(0, 50)}...`);
+                return null;
+              }
+            } catch (e) {
+              console.log(`[Embed69] ✗ Health Check Error para: ${r.url.substring(0, 50)}...`);
+              return null;
+            }
+
+            return { ...r, lang, servername };
+          } catch (e) {
+            return null;
+          }
+        })
       );
       return results
         .filter(r => r.status === 'fulfilled' && r.value?.url)

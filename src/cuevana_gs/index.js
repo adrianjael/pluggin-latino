@@ -8,4 +8,4 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         return [];
     }
 }
-module.exports = { getStreams };
+export { getStreams };

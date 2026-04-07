@@ -5,7 +5,7 @@
 
 // Usamos CryptoJS para el núcleo de AES-CTR si es posible, o una implementación manual.
 // Dado que 'crypto-js' está disponible como external, podemos usarlo para la parte de AES.
-const CryptoJS = require('crypto-js');
+import CryptoJS from 'crypto-js';
 
 /**
  * Descifra AES-256-GCM usando CryptoJS + Lógica GCM manual.

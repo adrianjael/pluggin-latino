@@ -1,6 +1,7 @@
 import { resolve as resolveVoe } from '../resolvers/voe.js';
 import { resolve as resolveFilemoon } from '../resolvers/filemoon.js';
 import { resolve as resolveVimeos } from '../resolvers/vimeos.js';
+import { calculateSimilarity } from '../utils/string.js';
 
 const BASE_URL = 'https://cuevana.gs';
 const BASE_HEADERS = {
@@ -97,11 +98,27 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         }
 
         const posts = searchJson.data.posts;
-        const normalizedTarget = (tmdbInfo.title || searchTitle).toLowerCase().replace(/[^a-z0-9]/g, '');
-        let post = posts.find(p => p.type === targetType && 
-            p.title.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedTarget)) ||
-            posts.find(p => p.type === targetType) ||
-            posts[0];
+        const targetTitle = tmdbInfo.title || searchTitle;
+        
+        // Buscamos el post más similar del tipo correcto
+        let post = null;
+        let maxSim = 0;
+
+        for (const p of posts) {
+            if (p.type !== targetType) continue;
+            const sim = calculateSimilarity(targetTitle, p.title);
+            if (sim > maxSim) {
+                maxSim = sim;
+                post = p;
+            }
+        }
+
+        console.log(`[Cuevana.gs] Mejor coincidencia: "${post?.title}" (Similitud: ${maxSim.toFixed(2)})`);
+
+        if (!post || maxSim < 0.4) {
+            console.log(`[Cuevana.gs] Similitud insuficiente (${maxSim.toFixed(2)} < 0.4). No hay resultados válidos.`);
+            return [];
+        }
 
         let postId = post._id;
         if (!isMovie && season && episode) {

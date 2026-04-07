@@ -7,6 +7,7 @@
 import { resolve as resolveFilemoon } from '../resolvers/filemoon.js';
 import { resolve as resolveVoe } from '../resolvers/voe.js';
 import { resolve as resolveVimeos } from '../resolvers/vimeos.js';
+import { calculateSimilarity } from '../utils/string.js';
 
 const BASE = "https://pelisgo.online";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -204,7 +205,19 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
 
         if (paths.length === 0) return [];
 
-        const slug = paths[0].split('/')[paths[0].split('/').length - 1];
+        // VALIDACIÓN DE TÍTULO: Verificamos que el mejor resultado sea suficientemente similar
+        const bestMatch = paths[0];
+        const resultSlug = bestMatch.split('/').pop();
+        const similarity = calculateSimilarity(title, resultSlug.replace(/-/g, ' '));
+        
+        console.log(`[PelisGo] Mejor coincidencia: "${resultSlug}" (Similitud: ${similarity.toFixed(2)})`);
+        
+        if (similarity < 0.4) {
+            console.log(`[PelisGo] Similitud insuficiente (${similarity.toFixed(2)} < 0.4). Descartando resultado.`);
+            return [];
+        }
+
+        const slug = resultSlug;
         const pageUrl = type === 'movie'
             ? `${BASE}/movies/${slug}`
             : `${BASE}/series/${slug}/temporada/${season || 1}/episodio/${episode || 1}`;
@@ -213,9 +226,13 @@ async function getStreams(tmdbId, mediaType, season, episode, title) {
         if (!html) return [];
 
         const onlineStreams = await getOnlineStreams(html);
+        
+        // Validación final: si encontramos streams pero el título en la página es muy diferente, descartamos.
+        // (Opcional, pero pelisgoSearch ya debería haber filtrado)
+        
         console.log(`[PelisGo] Done: ${onlineStreams.length} stream(s) found (Direct Video Edition).`);
         return onlineStreams;
     } catch (e) { return []; }
 }
 
-module.exports = { getStreams };
+export { getStreams };
