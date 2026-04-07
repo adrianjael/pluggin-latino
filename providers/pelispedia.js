@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T22:14:18.216Z
+ * Generated: 2026-04-07T22:22:13.427Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -503,7 +503,6 @@ var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, 
 var RESOLVER_MAP = {
   "voe.sx": resolve,
   "voe.un": resolve,
-  "voe.sx": resolve,
   "hglink.to": resolve3,
   "streamwish.com": resolve3,
   "streamwish.to": resolve3,
@@ -635,7 +634,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             if (r.url) {
               streams.push({
                 name: "Pelispedia",
-                title: `${r.quality || "1080p"} \xB7 Latino \xB7 ${r.servername || embed.servername || "Server"}`,
+                title: `${r.quality || "1080p"} \xC2\xB7 Latino \xC2\xB7 ${r.servername || embed.servername || "Server"}`,
                 url: r.url,
                 headers: r.headers || { "User-Agent": UA7, "Referer": currentUrl }
               });

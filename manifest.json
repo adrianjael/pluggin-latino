@@ -143,7 +143,7 @@
     {
       "id": "cinecalidad",
       "name": "CineCalidad",
-      "description": "Películas en HD (Latino) con servidores rÃƒÂ¡pidos como Voe y Filemoon",
+      "description": "Películas en HD (Latino) con servidores rápidos como Voe y Filemoon",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -165,7 +165,7 @@
     {
       "id": "lamovie",
       "name": "LaMovie",
-      "description": "Películas, series y anime en HD (Latino) con servidores rÃƒÂ¡pidos",
+      "description": "Películas, series y anime en HD (Latino) con servidores rápidos",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -290,6 +290,29 @@
       "filename": "providers/cinemacity.js",
       "enabled": true,
       "logo": "https://i.postimg.cc/XYjKhS3b/cinemacity.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "pelispedia",
+      "name": "Pelispedia",
+      "description": "Catálogo masivo con servidores Voe, Uqload y Streamgrade.",
+      "version": "1.2.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/pelispedia.js",
+      "enabled": true,
+      "logo": "https://www.pelispedia.li/favicon.ico",
       "contentLanguage": [
         "es"
       ],
