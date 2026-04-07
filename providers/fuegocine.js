@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-07T22:06:33.073Z
+ * Generated: 2026-04-07T22:14:18.182Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -161,10 +161,9 @@ function resolve2(url) {
           break;
         }
       }
-      console.log(`[HLSWish] Resolviendo v\xEDa fetch: ${url}`);
-      const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
+      const origin = new URL(targetUrl).origin;
       const res = yield fetch(targetUrl, {
-        headers: { "User-Agent": UA2, Referer: "https://embed69.org/", Origin: "https://embed69.org" }
+        headers: { "User-Agent": UA2, "Referer": origin + "/", "Origin": origin }
       });
       const html = yield res.text();
       let finalUrl = null;
@@ -172,7 +171,7 @@ function resolve2(url) {
       if (fileMatch) {
         finalUrl = fileMatch[1];
         if (finalUrl.startsWith("/"))
-          finalUrl = baseOrigin + finalUrl;
+          finalUrl = origin + finalUrl;
       }
       if (!finalUrl) {
         const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
@@ -182,20 +181,15 @@ function resolve2(url) {
           if (m3u8Match) {
             finalUrl = m3u8Match[1];
             if (finalUrl.startsWith("/"))
-              finalUrl = baseOrigin + finalUrl;
+              finalUrl = origin + finalUrl;
           }
         }
       }
       if (finalUrl) {
-        return {
-          url: finalUrl,
-          quality: "1080p",
-          headers: { "User-Agent": UA2, Referer: baseOrigin + "/" }
-        };
+        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA2, "Referer": origin + "/" } };
       }
       return null;
     } catch (e) {
-      console.log(`[HLSWish] Error: ${e.message}`);
       return null;
     }
   });
@@ -233,9 +227,9 @@ function unpackVidHide(script) {
 function resolve3(url) {
   return __async(this, null, function* () {
     try {
-      console.log(`[VidHide] Resolviendo v\xEDa fetch: ${url}`);
+      const origin = new URL(url).origin;
       const res = yield fetch(url, {
-        headers: { "User-Agent": UA3, "Referer": "https://embed69.org/" }
+        headers: { "User-Agent": UA3, "Referer": origin + "/" }
       });
       const html = yield res.text();
       const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
@@ -248,7 +242,6 @@ function resolve3(url) {
       if (!hlsMatch)
         return null;
       let finalUrl = hlsMatch[1];
-      const origin = new URL(url).origin;
       if (!finalUrl.startsWith("http"))
         finalUrl = origin + finalUrl;
       return {
@@ -257,7 +250,6 @@ function resolve3(url) {
         headers: { "User-Agent": UA3, "Referer": origin + "/", "Origin": origin }
       };
     } catch (e) {
-      console.log(`[VidHide] Error: ${e.message}`);
       return null;
     }
   });

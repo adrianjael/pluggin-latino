@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-07T21:54:48.946Z
+ * Generated: 2026-04-07T22:14:18.209Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -169,19 +169,12 @@ function base64UrlDecode(input) {
   const bin = atob(s);
   return new Uint8Array(bin.split("").map((c) => c.charCodeAt(0)));
 }
-function unpack(p, a, c, k, e, d) {
-  while (c--)
-    if (k[c])
-      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
-  return p;
-}
 function decryptByse(playback) {
   return __async(this, null, function* () {
     try {
       const keyArr = [];
-      for (const p of playback.key_parts) {
+      for (const p of playback.key_parts)
         base64UrlDecode(p).forEach((b) => keyArr.push(b));
-      }
       const key = new Uint8Array(keyArr);
       const iv = base64UrlDecode(playback.iv);
       const ciphertextWithTag = base64UrlDecode(playback.payload);
@@ -191,14 +184,11 @@ function decryptByse(playback) {
           const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
           return JSON.parse(new TextDecoder().decode(decryptedArr));
         } catch (e) {
-          console.log("[Byse] Subtle fail");
         }
       }
-      console.log("[Byse] Usando motor Pure-JS para Hermes...");
       const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
       return decryptedStr ? JSON.parse(decryptedStr) : null;
     } catch (e) {
-      console.error(`[Byse Decrypt] Error: ${e.message}`);
       return null;
     }
   });
@@ -206,14 +196,13 @@ function decryptByse(playback) {
 function resolve2(url) {
   return __async(this, null, function* () {
     try {
+      const origin = new URL(url).origin;
       const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
       if (!idMatch)
         return null;
       const id = idMatch[1];
-      console.log(`[Filemoon] Resolviendo Universal (v4.0): ${id}`);
       try {
-        const hostname = new URL(url).hostname;
-        const apiRes = yield fetch(`https://${hostname}/api/videos/${id}`, {
+        const apiRes = yield fetch(`https://${new URL(url).hostname}/api/videos/${id}`, {
           headers: { "User-Agent": UA2, "Referer": url }
         });
         const data = yield apiRes.json();
@@ -221,42 +210,18 @@ function resolve2(url) {
           const decrypted = yield decryptByse(data.playback);
           if (decrypted && decrypted.sources) {
             const best = decrypted.sources[0];
-            return {
-              url: best.url,
-              quality: best.height ? `${best.height}p` : "1080p",
-              isM3U8: true,
-              headers: {
-                "User-Agent": UA2,
-                "Referer": "https://arbitrarydecisions.com/",
-                "Origin": "https://arbitrarydecisions.com"
-              }
-            };
+            return { url: best.url, quality: best.height ? `${best.height}p` : "1080p", isM3U8: true, headers: { "User-Agent": UA2, "Referer": origin + "/", "Origin": origin } };
           }
         }
-      } catch (apiErr) {
-        console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
+      } catch (e) {
       }
       const res = yield fetch(url, { headers: { "User-Agent": UA2, "Referer": url } });
       const html = yield res.text();
-      const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
-      for (const match of evalMatches) {
-        const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
-        const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
-        if (fm)
-          return {
-            url: fm[1],
-            quality: "1080p",
-            isM3U8: true,
-            headers: {
-              "User-Agent": UA2,
-              "Referer": "https://arbitrarydecisions.com/",
-              "Origin": "https://arbitrarydecisions.com"
-            }
-          };
-      }
+      const fm = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
+      if (fm)
+        return { url: fm[1], quality: "1080p", isM3U8: true, headers: { "User-Agent": UA2, "Referer": origin + "/", "Origin": origin } };
       return null;
     } catch (e) {
-      console.error(`[Filemoon] Error Global: ${e.message}`);
       return null;
     }
   });
@@ -264,7 +229,7 @@ function resolve2(url) {
 
 // src/resolvers/hlswish.js
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-function unpack2(p, a, c, k, e, d) {
+function unpack(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const decode = (r) => {
     let res = 0;
@@ -292,10 +257,9 @@ function resolve3(url) {
           break;
         }
       }
-      console.log(`[HLSWish] Resolviendo v\xEDa fetch: ${url}`);
-      const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
+      const origin = new URL(targetUrl).origin;
       const res = yield fetch(targetUrl, {
-        headers: { "User-Agent": UA3, Referer: "https://embed69.org/", Origin: "https://embed69.org" }
+        headers: { "User-Agent": UA3, "Referer": origin + "/", "Origin": origin }
       });
       const html = yield res.text();
       let finalUrl = null;
@@ -303,30 +267,25 @@ function resolve3(url) {
       if (fileMatch) {
         finalUrl = fileMatch[1];
         if (finalUrl.startsWith("/"))
-          finalUrl = baseOrigin + finalUrl;
+          finalUrl = origin + finalUrl;
       }
       if (!finalUrl) {
         const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
         if (packedMatch) {
-          const unpacked = unpack2(packedMatch[1], parseInt(packedMatch[2]), parseInt(packedMatch[3]), packedMatch[4].split("|"));
+          const unpacked = unpack(packedMatch[1], parseInt(packedMatch[2]), parseInt(packedMatch[3]), packedMatch[4].split("|"));
           const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);
           if (m3u8Match) {
             finalUrl = m3u8Match[1];
             if (finalUrl.startsWith("/"))
-              finalUrl = baseOrigin + finalUrl;
+              finalUrl = origin + finalUrl;
           }
         }
       }
       if (finalUrl) {
-        return {
-          url: finalUrl,
-          quality: "1080p",
-          headers: { "User-Agent": UA3, Referer: baseOrigin + "/" }
-        };
+        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA3, "Referer": origin + "/" } };
       }
       return null;
     } catch (e) {
-      console.log(`[HLSWish] Error: ${e.message}`);
       return null;
     }
   });
@@ -364,9 +323,9 @@ function unpackVidHide(script) {
 function resolve4(url) {
   return __async(this, null, function* () {
     try {
-      console.log(`[VidHide] Resolviendo v\xEDa fetch: ${url}`);
+      const origin = new URL(url).origin;
       const res = yield fetch(url, {
-        headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" }
+        headers: { "User-Agent": UA4, "Referer": origin + "/" }
       });
       const html = yield res.text();
       const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
@@ -379,7 +338,6 @@ function resolve4(url) {
       if (!hlsMatch)
         return null;
       let finalUrl = hlsMatch[1];
-      const origin = new URL(url).origin;
       if (!finalUrl.startsWith("http"))
         finalUrl = origin + finalUrl;
       return {
@@ -388,7 +346,6 @@ function resolve4(url) {
         headers: { "User-Agent": UA4, "Referer": origin + "/", "Origin": origin }
       };
     } catch (e) {
-      console.log(`[VidHide] Error: ${e.message}`);
       return null;
     }
   });
