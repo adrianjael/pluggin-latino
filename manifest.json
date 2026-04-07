@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "AdrianJael",
   "version": "1.2.0",
   "scrapers": [
@@ -28,7 +28,7 @@
     {
       "id": "pelisplus",
       "name": "PelisPlusHD",
-      "description": "Películas y series en espanol latino desde PelisPlusHD.la",
+      "description": "Peliculas y series en espanol latino desde PelisPlusHD.la",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -51,7 +51,7 @@
     {
       "id": "hackstore2",
       "name": "HackStore2",
-      "description": "API Nativa de Películas en HD",
+      "description": "API Nativa de Peliculas en HD",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -74,7 +74,7 @@
     {
       "id": "pelispanda",
       "name": "PelisPanda",
-      "description": "Películas y series directo desde pelispanda.org",
+      "description": "Peliculas y series directo desde pelispanda.org",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -97,7 +97,7 @@
     {
       "id": "cuevana_gs",
       "name": "Cuevana.gs",
-      "description": "Películas y series en alta definición (Latino) con servidores estables",
+      "description": "Peliculas y series en alta definicion (Latino) con servidores estables",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -120,7 +120,7 @@
     {
       "id": "embed69",
       "name": "Embed69",
-      "description": "Películas y series (Latino) via embed69.org usando IMDB IDs directos",
+      "description": "Peliculas y series (Latino) via embed69.org usando IMDB IDs directos",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -143,7 +143,7 @@
     {
       "id": "cinecalidad",
       "name": "CineCalidad",
-      "description": "Películas en HD (Latino) con servidores rÃƒÂ¡pidos como Voe y Filemoon",
+      "description": "Peliculas en HD (Latino) con servidores rAApidos como Voe y Filemoon",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -165,7 +165,7 @@
     {
       "id": "lamovie",
       "name": "LaMovie",
-      "description": "Películas, series y anime en HD (Latino) con servidores rÃƒÂ¡pidos",
+      "description": "Peliculas, series y anime en HD (Latino) con servidores rAApidos",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -188,7 +188,7 @@
     {
       "id": "seriesmetro",
       "name": "SeriesMetro",
-      "description": "Especialista en series y películas (Latino) con servidores Fastream",
+      "description": "Especialista en series y peliculas (Latino) con servidores Fastream",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -211,7 +211,7 @@
     {
       "id": "xupalace",
       "name": "XuPalace",
-      "description": "Películas y series en alta definición (Latino, Español y Subtitulado)",
+      "description": "Peliculas y series en alta definicion (Latino, Espanol y Subtitulado)",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -234,7 +234,7 @@
     {
       "id": "fuegocine",
       "name": "FuegoCine",
-      "description": "Películas y series con enlaces directos y alta velocidad.",
+      "description": "Peliculas y series con enlaces directos y alta velocidad.",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -280,7 +280,7 @@
     {
       "id": "cinemacity",
       "name": "CinemaCity",
-      "description": "Catálogo extenso con servidores directos y subtítulos.",
+      "description": "Catalogo extenso con servidores directos y subtitulos.",
       "version": "1.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
