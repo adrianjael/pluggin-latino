@@ -299,29 +299,6 @@
       ],
       "limited": false,
       "supportsExternalPlayer": true
-    },
-    {
-      "id": "pelispedia",
-      "name": "Pelispedia",
-      "description": "Películas y series en HD con múltiples opciones de servidor (Embed69, Voe, Filemoon, Uqload).",
-      "version": "1.7.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/pelispedia.js",
-      "enabled": true,
-      "logo": "https://pelispedia.mov/themes/pelispedia/img/faviconen.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
     }
   ]
 }
