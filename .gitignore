@@ -33,10 +33,25 @@ test_*.js
 test-*.js
 debug-*.js
 debug_*.js
+inspect_*.js
+test.js
+test2.js
+get_downloads.js
+parse_har.js
+find-action.js
+check_downloads.js
+inspect_series.js
+inspect_vimeos.js
+inspect_boda.js
 check-sites.js
 *.html
 *.webp
 *.png
+
+# Archivos de datos locales
+boda_buzz.json
+bundle.js
+testpuppeteer/
 
 # Documentación interna
 HOW_TO_ADD_PROVIDER.md
