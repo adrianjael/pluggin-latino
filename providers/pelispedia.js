@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T21:26:03.208Z
+ * Generated: 2026-04-07T21:31:09.981Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,6 +25,9 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -67,43 +70,11 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/pelispedia/index.js
-var pelispedia_exports = {};
-__export(pelispedia_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(pelispedia_exports);
-
-// src/utils/string.js
-function normalizeTitle(t) {
-  if (!t)
-    return "";
-  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-}
-function calculateSimilarity(title1, title2) {
-  const norm1 = normalizeTitle(title1);
-  const norm2 = normalizeTitle(title2);
-  if (norm1 === norm2)
-    return 1;
-  if (norm1.length > 5 && norm2.length > 5) {
-    const ratio = Math.min(norm1.length, norm2.length) / Math.max(norm1.length, norm2.length);
-    if ((norm2.includes(norm1) || norm1.includes(norm2)) && ratio > 0.8) {
-      return 0.9;
-    }
-  }
-  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
-  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
-  if (words1.size === 0 || words2.size === 0) {
-    return norm1 === norm2 ? 1 : norm1.includes(norm2) || norm2.includes(norm1) ? 0.5 : 0;
-  }
-  const intersection = new Set([...words1].filter((w) => words2.has(w)));
-  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
-  return intersection.size / union.size;
-}
-
 // src/pelispedia/extractor.js
-var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var extractor_exports = {};
+__export(extractor_exports, {
+  extractStreams: () => extractStreams
+});
 function fetchText(url, referer) {
   return __async(this, null, function* () {
     try {
@@ -159,6 +130,30 @@ function extractStreams(url) {
     return streams;
   });
 }
+var import_cheerio_without_node_native, UA;
+var init_extractor = __esm({
+  "src/pelispedia/extractor.js"() {
+    import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
+    UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+  }
+});
+
+// src/pelispedia/index.js
+var pelispedia_exports = {};
+__export(pelispedia_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(pelispedia_exports);
+
+// src/utils/string.js
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// src/pelispedia/index.js
+init_extractor();
 
 // src/resolvers/voe.js
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -549,6 +544,7 @@ var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, 
 var RESOLVER_MAP = {
   "voe.sx": resolve,
   "voe.un": resolve,
+  "voe.sx": resolve,
   "hglink.to": resolve3,
   "streamwish.com": resolve3,
   "streamwish.to": resolve3,
@@ -579,8 +575,14 @@ var SERVER_LABELS = {
   "voe": "VOE",
   "hglink": "StreamWish",
   "streamwish": "StreamWish",
+  "hanerix": "StreamWish",
+  "wishembed": "StreamWish",
+  "filelions": "StreamWish",
+  "bysedikamoum": "Filemoon",
   "filemoon": "Filemoon",
+  "moonembed": "Filemoon",
   "minochinos": "VidHide",
+  "dintezuvio": "VidHide",
   "vidhide": "VidHide",
   "uqload": "Uqload"
 };
@@ -607,18 +609,6 @@ function fetchText2(url) {
     }
   });
 }
-function resolveXupalaceBridge(url) {
-  return __async(this, null, function* () {
-    try {
-      const html = yield fetchText2(url);
-      const $ = import_cheerio_without_node_native2.default.load(html);
-      const iframeSrc = $("iframe").attr("src");
-      return iframeSrc || url;
-    } catch (e) {
-      return url;
-    }
-  });
-}
 function resolveEmbed69(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -636,9 +626,9 @@ function resolveEmbed69(embedUrl) {
             if (payload.link.includes(pattern) && pattern !== "embed69.org") {
               const r = yield resolver(payload.link);
               if (r && r.url) {
-                const srvName = pattern.split(".")[0];
+                const rawName = pattern.split(".")[0];
                 results.push(__spreadProps(__spreadValues({}, r), {
-                  servername: SERVER_LABELS[srvName] || srvName
+                  servername: SERVER_LABELS[rawName] || rawName
                 }));
                 break;
               }
@@ -652,82 +642,46 @@ function resolveEmbed69(embedUrl) {
     }
   });
 }
-function searchMedia(query) {
-  return __async(this, null, function* () {
-    const normQuery = normalizeTitle(query).replace(/\s+/g, "+");
-    const url = `${BASE}/search?s=${encodeURIComponent(normQuery)}`;
-    const html = yield fetchText2(url);
-    if (!html)
-      return [];
-    const results = [];
-    const re = /href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
-    let m;
-    while ((m = re.exec(html)) !== null) {
-      results.push({ url: m[1], type: m[2], slug: m[3], title: m[3].replace(/-/g, " ") });
-    }
-    return results;
-  });
-}
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
-      const type = (mediaType || "").toLowerCase();
-      let matches = yield searchMedia(title);
-      if (matches.length === 0) {
-        const firstWord = title.split(" ")[0];
-        if (firstWord.length > 3)
-          matches = yield searchMedia(firstWord);
-      }
+      const url = `https://pelispedia.mov/search?s=${normalizeTitle(title).replace(/\s+/g, "+")}`;
+      const html = yield fetchText2(url);
+      const re = /href="(https:\/\/pelispedia\.mov\/(pelicula|serie)\/([^"]+))"/gi;
+      const matches = [];
+      let m;
+      while ((m = re.exec(html)) !== null)
+        matches.push({ url: m[1], type: m[2], slug: m[3] });
       if (matches.length === 0)
         return [];
-      const normTarget = normalizeTitle(title);
-      const bestMatch = matches.find((m) => {
-        const normMatch = normalizeTitle(m.title);
-        const isSerie = type === "tv" || type === "series" || type === "serie";
-        const typeMatch = isSerie && m.type === "serie" || !isSerie && m.type === "pelicula";
-        return calculateSimilarity(normTarget, normMatch) > 0.4 && typeMatch;
-      }) || matches[0];
-      let targetUrl = bestMatch.url;
-      if (bestMatch.type === "serie") {
-        targetUrl = `${BASE}/serie/${bestMatch.slug}/temporada/${season || 1}/capitulo/${episode || 1}`;
-      }
-      const rawEmbeds = yield extractStreams(targetUrl);
+      const best = matches[0];
+      let targetUrl = best.url;
+      if (best.type === "serie")
+        targetUrl = `${BASE}/serie/${best.slug}/temporada/${season || 1}/capitulo/${episode || 1}`;
+      const { extractStreams: extractStreams2 } = yield Promise.resolve().then(() => (init_extractor(), extractor_exports));
+      const rawEmbeds = yield extractStreams2(targetUrl);
       const streams = [];
       for (const embed of rawEmbeds) {
-        try {
-          let currentUrl = embed.url;
-          if (currentUrl.includes("xupalace.org")) {
-            currentUrl = yield resolveXupalaceBridge(currentUrl);
+        let currentUrl = embed.url;
+        let resolved = null;
+        for (const [pattern, resolver] of Object.entries(RESOLVER_MAP)) {
+          if (currentUrl.includes(pattern)) {
+            resolved = yield pattern === "embed69.org" ? resolveEmbed69(currentUrl) : resolver(currentUrl);
+            break;
           }
-          let resolved = null;
-          for (const [pattern, resolver] of Object.entries(RESOLVER_MAP)) {
-            if (currentUrl.includes(pattern)) {
-              resolved = yield pattern === "embed69.org" ? resolveEmbed69(currentUrl) : resolver(currentUrl);
-              break;
-            }
-          }
-          if (resolved) {
-            if (Array.isArray(resolved)) {
-              resolved.forEach((r) => {
-                streams.push({
-                  name: "Pelispedia",
-                  title: `${r.quality || "1080p"} \xB7 Latino \xB7 ${r.servername || "Server"}`,
-                  url: r.url,
-                  quality: r.quality || "1080p",
-                  headers: r.headers || { "User-Agent": UA7, "Referer": currentUrl }
-                });
-              });
-            } else if (resolved.url) {
+        }
+        if (resolved) {
+          const results = Array.isArray(resolved) ? resolved : [resolved];
+          results.forEach((r) => {
+            if (r.url) {
               streams.push({
                 name: "Pelispedia",
-                title: `${resolved.quality || "1080p"} \xB7 Latino \xB7 ${embed.servername || resolved.servername || "Server"}`,
-                url: resolved.url,
-                quality: resolved.quality || "1080p",
-                headers: resolved.headers || { "User-Agent": UA7, "Referer": currentUrl }
+                title: `${r.quality || "1080p"} \xB7 Latino \xB7 ${r.servername || embed.servername || "Server"}`,
+                url: r.url,
+                headers: r.headers || { "User-Agent": UA7, "Referer": currentUrl }
               });
             }
-          }
-        } catch (err) {
+          });
         }
       }
       return streams;
