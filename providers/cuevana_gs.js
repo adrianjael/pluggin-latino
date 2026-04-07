@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-07T17:29:41.019Z
+ * Generated: 2026-04-07T18:00:46.895Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -47,7 +47,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve4, reject) => {
+  return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -62,7 +62,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve4(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve6(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -364,6 +364,136 @@ function resolve3(embedUrl) {
   });
 }
 
+// src/resolvers/hlswish.js
+var import_axios3 = __toESM(require("axios"));
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function unpack2(p, a, c, k, e, d) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const decode = (r) => {
+    let res = 0;
+    for (let l = 0; l < r.length; l++) {
+      let s = chars.indexOf(r[l]);
+      if (s === -1)
+        return NaN;
+      res = res * a + s;
+    }
+    return res;
+  };
+  return p.replace(/\b([0-9a-zA-Z]+)\b/g, (match) => {
+    let val = decode(match);
+    return isNaN(val) || val >= k.length ? match : k[val] || match;
+  });
+}
+var DOMAIN_MAP = { "hglink.to": "vibuxer.com" };
+function resolve4(url) {
+  return __async(this, null, function* () {
+    try {
+      let targetUrl = url;
+      for (const [old, replacement] of Object.entries(DOMAIN_MAP)) {
+        if (targetUrl.includes(old)) {
+          targetUrl = targetUrl.replace(old, replacement);
+          break;
+        }
+      }
+      console.log(`[HLSWish] Resolviendo: ${url}`);
+      const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
+      const { data: html } = yield import_axios3.default.get(targetUrl, {
+        headers: { "User-Agent": UA4, Referer: "https://embed69.org/", Origin: "https://embed69.org" },
+        timeout: 15e3,
+        maxRedirects: 5
+      });
+      let finalUrl = null;
+      const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
+      if (fileMatch) {
+        finalUrl = fileMatch[1];
+        if (finalUrl.startsWith("/"))
+          finalUrl = baseOrigin + finalUrl;
+      }
+      if (!finalUrl) {
+        const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+        if (packedMatch) {
+          const unpacked = unpack2(packedMatch[1], parseInt(packedMatch[2]), parseInt(packedMatch[3]), packedMatch[4].split("|"));
+          const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);
+          if (m3u8Match) {
+            finalUrl = m3u8Match[1];
+            if (finalUrl.startsWith("/"))
+              finalUrl = baseOrigin + finalUrl;
+          }
+        }
+      }
+      if (finalUrl) {
+        console.log(`[HLSWish] URL encontrada: ${finalUrl.substring(0, 80)}...`);
+        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA4, Referer: baseOrigin + "/" } };
+      }
+      return null;
+    } catch (e) {
+      console.log(`[HLSWish] Error: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/vidhide.js
+var import_axios4 = __toESM(require("axios"));
+var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function unpackVidHide(script) {
+  try {
+    const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
+    if (!match)
+      return null;
+    let [full, p, a, c, k] = match;
+    a = parseInt(a);
+    c = parseInt(c);
+    k = k.split("|");
+    const decode = (l, s) => {
+      const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
+      let res = "";
+      for (; l > 0; ) {
+        res = chars[l % s] + res;
+        l = Math.floor(l / s);
+      }
+      return res || "0";
+    };
+    const unpacked = p.replace(/\b\w+\b/g, (l) => {
+      const s = parseInt(l, 36);
+      return s < k.length && k[s] ? k[s] : decode(s, a);
+    });
+    return unpacked;
+  } catch (e) {
+    return null;
+  }
+}
+function resolve5(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[VidHide] Resolviendo: ${url}`);
+      const { data: html } = yield import_axios4.default.get(url, {
+        timeout: 15e3,
+        maxRedirects: 10,
+        headers: { "User-Agent": UA5, Referer: "https://embed69.org/" }
+      });
+      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
+      if (!packedMatch)
+        return console.log("[VidHide] No se encontr\xF3 bloque eval"), null;
+      const unpacked = unpackVidHide(packedMatch[0]);
+      if (!unpacked)
+        return console.log("[VidHide] No se pudo desempacar"), null;
+      const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
+      if (!hlsMatch)
+        return console.log("[VidHide] No se encontr\xF3 hls2/hls4"), null;
+      let finalUrl = hlsMatch[1];
+      if (!finalUrl.startsWith("http"))
+        finalUrl = new URL(url).origin + finalUrl;
+      console.log(`[VidHide] URL encontrada: ${finalUrl.substring(0, 80)}...`);
+      const origin = new URL(url).origin;
+      return { url: finalUrl, headers: { "User-Agent": UA5, Referer: origin + "/", Origin: origin } };
+    } catch (e) {
+      console.log(`[VidHide] Error: ${e.message}`);
+      return null;
+    }
+  });
+}
+
 // src/utils/string.js
 function normalizeTitle(t) {
   if (!t)
@@ -417,6 +547,14 @@ function resolveEmbed(embedUrl, server) {
       }
       if (server === "vimeos") {
         const r = yield resolve3(embedUrl);
+        return r ? r : null;
+      }
+      if (server.includes("streamwish") || server.includes("hglink") || server.includes("sw") || server.includes("wishembed")) {
+        const r = yield resolve4(embedUrl);
+        return r ? r : null;
+      }
+      if (server.includes("vidhide") || server.includes("minochinos")) {
+        const r = yield resolve5(embedUrl);
         return r ? r : null;
       }
       const html = yield fetchHtml(embedUrl, embedUrl);

@@ -1,6 +1,6 @@
 /**
  * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T17:55:53.848Z
+ * Generated: 2026-04-07T18:00:46.741Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -702,7 +702,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           }
           if (resolved && resolved.url) {
             finalStreams.push({
-              name: "Pelispedia.mov",
+              name: "Pelispedia",
               title: `${resolved.quality || "1080p"} \xB7 Latino \xB7 ${resolved.servername || "Pelispedia"}`,
               url: resolved.url,
               quality: resolved.quality || "1080p",
@@ -713,7 +713,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           console.error(`[Pelispedia] Error resolviendo embed ${embed.servername}:`, err.message);
         }
       })));
-      console.log(`[Pelispedia] Finalizado: ${finalStreams.length} enlaces directos.`);
+      console.log(`[Pelispedia] Finalizado: ${finalStreams.length} enlaces directos encontrados.`);
       return finalStreams;
     } catch (e) {
       console.error("[Pelispedia] Error Gen\xE9rico:", e);

@@ -302,9 +302,9 @@
     },
     {
       "id": "pelispedia",
-      "name": "Pelispedia.mov",
+      "name": "Pelispedia",
       "description": "Películas y series en HD con múltiples opciones de servidor (Embed69, Voe, Filemoon).",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
