@@ -20,6 +20,7 @@ providers/*
 !providers/playhubmax.js
 !providers/cinemacity.js
 !providers/pelisgo.js
+!providers/pelispedia.js
 
 # Archivos de sistema
 .DS_Store
@@ -37,3 +38,8 @@ check-sites.js
 # Entorno
 .env
 .env.local
+
+# Documentación interna
+HOW_TO_ADD_PROVIDER.md
+HOW_TO_ADD_PROVIDER.md
+HOW_TO_ADD_PROVIDER.md
