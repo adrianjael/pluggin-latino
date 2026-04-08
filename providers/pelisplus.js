@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-08T22:41:20.821Z
+ * Generated: 2026-04-08T22:48:46.182Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -45,7 +45,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -60,7 +60,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve2(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -69,13 +69,13 @@ var __async = (__this, __arguments, generator) => {
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
     var import_axios2 = __toESM(require("axios"));
-    var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    var DEFAULT_UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
     function request(url, options) {
       return __async(this, null, function* () {
         var opt = options || {};
         var headers = Object.assign({
-          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA2,
+          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA3,
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
@@ -101,7 +101,7 @@ var require_http = __commonJS({
         }
       });
     }
-    function fetchHtml2(url, options) {
+    function fetchHtml3(url, options) {
       return __async(this, null, function* () {
         var res = yield request(url, options);
         return yield res.text();
@@ -115,16 +115,16 @@ var require_http = __commonJS({
     }
     module2.exports = {
       request,
-      fetchHtml: fetchHtml2,
+      fetchHtml: fetchHtml3,
       fetchJson: fetchJson2,
-      DEFAULT_UA: DEFAULT_UA2,
+      DEFAULT_UA: DEFAULT_UA3,
       MOBILE_UA
     };
   }
 });
 
 // src/pelisplus/extractor.js
-var import_http = __toESM(require_http());
+var import_http2 = __toESM(require_http());
 var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
 
 // src/utils/string.js
@@ -214,128 +214,45 @@ function isGoodMatch(query, result, minScore) {
   var ms = minScore || 0.45;
   return calculateSimilarity(query, result) >= ms;
 }
-
-// src/pelisplus/extractor.js
-var BASE_URL = "https://www.pelisplushd.la";
-function unpackEval(payload, radix, symtab) {
-  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
-    var result = 0;
-    var digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    for (var i = 0; i < match.length; i++) {
-      var pos = digits.indexOf(match[i]);
-      if (pos === -1 || pos >= radix)
-        return match;
-      result = result * radix + pos;
-    }
-    if (result >= symtab.length)
-      return match;
-    return symtab[result] && symtab[result] !== "" ? symtab[result] : match;
-  });
-}
-function resolveStreamwish(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      var body = yield (0, import_http.fetchHtml)(embedUrl, { headers: { Referer: embedUrl } });
-      if (body.indexOf("Page is loading") !== -1 || body.length < 2e3) {
-        var mirrorMatch = body.match(/main\s*:\s*\["([^"]+)"/i) || body.match(/["'](https?:\/\/[^"']+\/e\/[\w-]+)["']/i);
-        if (mirrorMatch) {
-          var mirrorUrl = mirrorMatch[1].indexOf("http") === 0 ? mirrorMatch[1] : "https://" + mirrorMatch[1] + "/e/" + embedUrl.split("/").pop();
-          body = yield (0, import_http.fetchHtml)(mirrorUrl, { headers: { Referer: mirrorUrl } });
-        }
-      }
-      var packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        var unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        var m3u8 = unpacked.match(/"?(?:file|hls(?:2|3)?)"?\s*[:=]\s*"?([^"'\s,]+\.m3u8[^"'\s]*)"?/i) || unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        if (m3u8)
-          return (m3u8[1] || m3u8[0]).replace(/\\/g, "");
-      }
-      var rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-      return rawM3u8 ? rawM3u8[0] : embedUrl;
-    } catch (e) {
-      return embedUrl;
-    }
-  });
-}
-function resolveVidhide(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      var body = yield (0, import_http.fetchHtml)(embedUrl, { headers: { Referer: embedUrl } });
-      if (body.indexOf("Loading") !== -1 || body.length < 2e3) {
-        var mirrorMatch = body.match(/["'](https?:\/\/[^"']+\/v\/[\w-]+)["']/i);
-        if (mirrorMatch)
-          body = yield (0, import_http.fetchHtml)(mirrorMatch[1], { headers: { Referer: mirrorMatch[1] } });
-      }
-      var packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        var unpacked = unpackEval(packMatch[1], parseInt(packMatch[2]), packMatch[4].split("|"));
-        var m3u8 = unpacked.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        if (m3u8)
-          return m3u8[0].replace(/\\/g, "");
-      }
-      var rawM3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-      return rawM3u8 ? rawM3u8[0] : embedUrl;
-    } catch (e) {
-      return embedUrl;
-    }
-  });
-}
-var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-function getTmdbInfo(tmdbId, mediaType) {
-  return __async(this, null, function* () {
-    try {
-      const typePath = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      let data = {};
-      if (String(tmdbId).startsWith("tt")) {
-        const url = `https://api.themoviedb.org/3/find/${tmdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=es-MX`;
-        const findData = yield (0, import_http.fetchJson)(url);
-        if (findData.movie_results && findData.movie_results.length > 0)
-          data = findData.movie_results[0];
-        else if (findData.tv_results && findData.tv_results.length > 0)
-          data = findData.tv_results[0];
-      } else {
-        const url = `https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-        data = yield (0, import_http.fetchJson)(url);
-      }
-      return {
-        title: data.title || data.name || "",
-        originalTitle: data.original_title || data.original_name || data.title || data.name || ""
-      };
-    } catch (error) {
-      console.warn("[PelisPlusHD] TMDB error: " + error.message);
-      return null;
-    }
-  });
-}
-function decodeBase64(input) {
+function base64Decode(input) {
   var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   var str = String(input).replace(/=+$/, "");
   var output = "";
+  if (str.length % 4 === 1)
+    throw new Error("Base64 invalido");
   var bc = 0, bs, buffer, idx = 0;
   while (buffer = str.charAt(idx++)) {
     buffer = chars.indexOf(buffer);
     if (~buffer) {
       bs = bc % 4 ? bs * 64 + buffer : buffer;
-      if (bc++ % 4)
+      if (bc++ % 4) {
         output += String.fromCharCode(255 & bs >> (-2 * bc & 6));
+      }
     }
   }
   return output;
 }
-function resolveVoesx(embedUrl) {
+
+// src/resolvers/voe.js
+var import_http = __toESM(require_http());
+function resolve(url) {
   return __async(this, null, function* () {
     try {
-      var body = yield (0, import_http.fetchHtml)(embedUrl, { headers: { Referer: embedUrl } });
-      if (body.indexOf("Redirecting") !== -1 || body.length < 1e3) {
-        var redirectMatch = body.match(/window\.location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/i);
-        if (redirectMatch)
-          body = yield (0, import_http.fetchHtml)(redirectMatch[1], { headers: { Referer: redirectMatch[1] } });
+      console.log("[VOE] Resolving: " + url);
+      var html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
+      if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
+        var rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+        if (rm) {
+          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
+        }
       }
-      var jsonMatch = body.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+      var jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
       if (jsonMatch) {
         try {
-          var jsonData = JSON.parse(jsonMatch[1].trim());
-          var encText = Array.isArray(jsonData) ? jsonData[0] : jsonData;
+          var parsed = JSON.parse(jsonMatch[1].trim());
+          var encText = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (typeof encText !== "string")
+            return null;
           var rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
             var code = c.charCodeAt(0);
             var limit = c <= "Z" ? 90 : 122;
@@ -344,24 +261,70 @@ function resolveVoesx(embedUrl) {
           });
           var noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
           for (var i = 0; i < noise.length; i++) {
-            rot13 = rot13.split(noise[i]).join("");
+            var n = noise[i];
+            rot13 = rot13.split(n).join("");
           }
-          var b64_1 = decodeBase64(rot13);
+          var b64_1 = base64Decode(rot13);
           var shiftedStr = "";
-          for (var j = 0; j < b64_1.length; j++)
+          for (var j = 0; j < b64_1.length; j++) {
             shiftedStr += String.fromCharCode(b64_1.charCodeAt(j) - 3);
+          }
           var reversed = shiftedStr.split("").reverse().join("");
-          var data = JSON.parse(decodeBase64(reversed));
-          if (data && data.source)
-            return data.source;
+          var data = JSON.parse(base64Decode(reversed));
+          if (data && data.source) {
+            console.log("[VOE] -> m3u8 encontrado: " + data.source.substring(0, 60) + "...");
+            return {
+              url: data.source,
+              quality: "1080p",
+              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+            };
+          }
         } catch (ex) {
-          console.log("[PelisPlusHD] Error decrypting VoeSX: " + ex.message);
+          console.error("[VOE] Decryption failed:", ex.message);
         }
       }
-      var m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-      return m3u8 ? m3u8[0].replace(/\\/g, "") : embedUrl;
+      var m3u8MatchRaw = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+      if (m3u8MatchRaw) {
+        return {
+          url: m3u8MatchRaw[1],
+          quality: "1080p",
+          headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+        };
+      }
+      return null;
     } catch (e) {
-      return embedUrl;
+      console.error("[VOE] Error resolviedo: " + e.message);
+      return null;
+    }
+  });
+}
+
+// src/pelisplus/extractor.js
+var BASE_URL = "https://www.pelisplushd.la";
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+function getTmdbInfo(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    try {
+      const typePath = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
+      let data = {};
+      if (String(tmdbId).startsWith("tt")) {
+        const url = `https://api.themoviedb.org/3/find/${tmdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=es-MX`;
+        const findData = yield (0, import_http2.fetchJson)(url);
+        if (findData.movie_results && findData.movie_results.length > 0)
+          data = findData.movie_results[0];
+        else if (findData.tv_results && findData.tv_results.length > 0)
+          data = findData.tv_results[0];
+      } else {
+        const url = `https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
+        data = yield (0, import_http2.fetchJson)(url);
+      }
+      return {
+        title: data.title || data.name || "",
+        originalTitle: data.original_title || data.original_name || data.title || data.name || ""
+      };
+    } catch (error) {
+      console.warn("[PelisPlusHD] TMDB error: " + error.message);
+      return null;
     }
   });
 }
@@ -394,7 +357,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       for (var j = 0; j < uniqueTitles.length; j++) {
         var query = uniqueTitles[j];
         var searchUrl = BASE_URL + "/search?s=" + encodeURIComponent(query);
-        var searchHtml = yield (0, import_http.fetchHtml)(searchUrl);
+        var searchHtml = yield (0, import_http2.fetchHtml)(searchUrl);
         var $search = import_cheerio_without_node_native.default.load(searchHtml);
         var searchResults = [];
         $search("a.Posters-link").each(function(idx, el) {
@@ -434,7 +397,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       if (mediaType === "tv") {
         movieUrl = movieUrl.replace(/\/$/, "") + "/temporada/" + season + "/capitulo/" + episode;
       }
-      var pageHtml = yield (0, import_http.fetchHtml)(movieUrl, { headers: { Referer: BASE_URL } });
+      var pageHtml = yield (0, import_http2.fetchHtml)(movieUrl, { headers: { Referer: BASE_URL } });
       var $page = import_cheerio_without_node_native.default.load(pageHtml);
       var pageTitle = $page("title").text() || "";
       var qualityMatch = pageTitle.match(/Online\s+[^-\s]+\s+([^-\s]+)\s+-/i) || pageTitle.match(/\s+([A-Z0-9]+)\s+-/i);
@@ -462,27 +425,29 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       for (var m = 0; m < rawResults.length; m++) {
         var res = rawResults[m];
         var fUrl = res.serverUrl;
-        var isStreamwish = /streamwish|strwish|wishembed|playnixes|niramirus|awish|dwish|fmoon|pstream/i.test(fUrl);
-        var isVidhide = /vidhide|dintezuvio|callistanise|acek-cdn|vadisov/i.test(fUrl);
         var isVoesx = /voe\.sx|voe-sx|jefferycontrolmodel/i.test(fUrl);
-        if (isStreamwish)
-          fUrl = yield resolveStreamwish(fUrl);
-        else if (isVidhide)
-          fUrl = yield resolveVidhide(fUrl);
-        else if (isVoesx)
-          fUrl = yield resolveVoesx(fUrl);
-        if (fUrl && fUrl.indexOf("http") === 0) {
-          finalStreams.push({
-            name: "PelisPlusHD",
-            langLabel: res.language,
-            serverLabel: res.serverName,
-            url: fUrl,
-            quality: movieQuality,
-            headers: {
-              "Referer": res.serverUrl,
-              "User-Agent": import_http.DEFAULT_UA
-            }
-          });
+        let directUrl = fUrl;
+        if (isVoesx) {
+          const voeRes = yield resolve(fUrl);
+          if (voeRes && voeRes.url) {
+            directUrl = voeRes.url;
+          }
+        }
+        if (directUrl && directUrl.indexOf("http") === 0) {
+          var extMatch = directUrl.match(/\.(m3u8|mp4|mkv|avI|m4v|webm)/i);
+          if (extMatch !== null || directUrl.indexOf("waaw") !== -1) {
+            finalStreams.push({
+              name: "PelisPlusHD",
+              langLabel: res.language,
+              serverLabel: res.serverName,
+              url: directUrl,
+              quality: movieQuality,
+              headers: {
+                "Referer": res.serverUrl,
+                "User-Agent": import_http2.DEFAULT_UA
+              }
+            });
+          }
         }
       }
       return finalStreams;
