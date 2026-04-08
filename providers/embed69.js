@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-08T20:47:13.173Z
+ * Generated: 2026-04-08T21:01:50.928Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -475,22 +475,25 @@ function resolve4(url) {
         maxRedirects: 10,
         headers: { "User-Agent": UA3, "Referer": "https://embed69.org/" }
       });
+      let finalUrl = null;
       const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
-      if (!packedMatch) {
-        console.log("[VidHide] No se encontr\xF3 bloque eval");
+      if (packedMatch) {
+        const unpacked = unpackVidHide(packedMatch[0]);
+        if (unpacked) {
+          const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
+          if (hlsMatch)
+            finalUrl = hlsMatch[1];
+        }
+      }
+      if (!finalUrl) {
+        const rawMatch = html.match(/"hls[24]"\s*:\s*"([^"]+)"/) || html.match(/file\s*:\s*["']([^"']+)["']/i);
+        if (rawMatch)
+          finalUrl = rawMatch[1];
+      }
+      if (!finalUrl) {
+        console.log("[VidHide] No se encontr\xF3 URL de video");
         return null;
       }
-      const unpacked = unpackVidHide(packedMatch[0]);
-      if (!unpacked) {
-        console.log("[VidHide] No se pudo desempacar");
-        return null;
-      }
-      const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
-      if (!hlsMatch) {
-        console.log("[VidHide] No se encontr\xF3 hls2/hls4");
-        return null;
-      }
-      let finalUrl = hlsMatch[1];
       if (!finalUrl.startsWith("http")) {
         finalUrl = new URL(url).origin + finalUrl;
       }
@@ -616,6 +619,8 @@ var RESOLVER_MAP = {
   "streamwish.com": resolve3,
   "streamwish.to": resolve3,
   "wishembed.online": resolve3,
+  "audinifer.com": resolve3,
+  // streamwish alias
   "filelions.com": resolve3,
   "bysedikamoum.com": resolve2,
   // filemoon alias
@@ -629,6 +634,7 @@ var RESOLVER_MAP = {
   "vidhide.pro": resolve4,
   "vidhide.bz": resolve4,
   "vidhide.net": resolve4,
+  "vidhide.top": resolve4,
   "vadisov.com": resolve4,
   "callistanise.com": resolve4,
   "amusemre.com": resolve4,
