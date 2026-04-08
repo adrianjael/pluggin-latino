@@ -1,10 +1,12 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-08T21:34:13.148Z
+ * Generated: 2026-04-08T21:48:21.569Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
@@ -22,6 +24,7 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -70,7 +73,163 @@ __export(fuegocine_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(fuegocine_exports);
+var import_axios2 = __toESM(require("axios"));
+
+// src/utils/m3u8.js
 var import_axios = __toESM(require("axios"));
+function getQualityFromHeight(height) {
+  if (!height)
+    return "Auto";
+  const h = parseInt(height);
+  if (h >= 2160)
+    return "4K";
+  if (h >= 1440)
+    return "1440p";
+  if (h >= 1080)
+    return "1080p";
+  if (h >= 720)
+    return "720p";
+  if (h >= 480)
+    return "480p";
+  if (h >= 360)
+    return "360p";
+  return "240p";
+}
+function parseBestQuality(content) {
+  const lines = content.split("\n");
+  let bestHeight = 0;
+  for (const line of lines) {
+    if (line.includes("RESOLUTION=")) {
+      const match = line.match(/RESOLUTION=\d+x(\d+)/);
+      if (match) {
+        const height = parseInt(match[1]);
+        if (height > bestHeight)
+          bestHeight = height;
+      }
+    }
+  }
+  return bestHeight > 0 ? getQualityFromHeight(bestHeight) : "720p";
+}
+function validateStream(stream) {
+  return __async(this, null, function* () {
+    if (!stream || !stream.url)
+      return stream;
+    const { url, headers } = stream;
+    try {
+      const response = yield import_axios.default.get(url, {
+        timeout: 4e3,
+        responseType: "text",
+        headers: __spreadProps(__spreadValues({}, headers || {}), {
+          "Accept": "*/*",
+          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
+        })
+      });
+      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(response.data);
+        return __spreadProps(__spreadValues({}, stream), {
+          quality: realQuality,
+          verified: true
+          // <--- Marcamos como verificado
+        });
+      }
+      return __spreadProps(__spreadValues({}, stream), { verified: true });
+    } catch (error) {
+      return __spreadProps(__spreadValues({}, stream), { verified: false });
+    }
+  });
+}
+
+// src/utils/sorting.js
+var QUALITY_SCORE = {
+  "4K": 100,
+  "1440p": 90,
+  "1080p": 80,
+  "720p": 70,
+  "480p": 60,
+  "360p": 50,
+  "240p": 40,
+  "Auto": 30,
+  "Unknown": 0
+};
+function sortStreamsByQuality(streams) {
+  if (!Array.isArray(streams))
+    return [];
+  return [...streams].sort((a, b) => {
+    const scoreA = QUALITY_SCORE[a.quality] || 0;
+    const scoreB = QUALITY_SCORE[b.quality] || 0;
+    if (scoreA === scoreB) {
+      if (a.quality === "Auto")
+        return 1;
+      if (b.quality === "Auto")
+        return -1;
+    }
+    return scoreB - scoreA;
+  });
+}
+
+// src/utils/engine.js
+function normalizeLanguage(lang) {
+  const l = (lang || "").toLowerCase();
+  if (l.includes("latino") || l.includes("lat"))
+    return "Latino";
+  if (l.includes("espa\xF1ol") || l.includes("castellano") || l.includes("esp"))
+    return "Espa\xF1ol";
+  if (l.includes("sub") || l.includes("vose"))
+    return "Subtitulado";
+  return lang || "Latino";
+}
+function normalizeServer(server) {
+  if (!server)
+    return "Servidor";
+  const s = server.toLowerCase();
+  if (s.includes("voe"))
+    return "VOE";
+  if (s.includes("filemoon"))
+    return "Filemoon";
+  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish"))
+    return "StreamWish";
+  if (s.includes("vidhide") || s.includes("dintezuvio"))
+    return "VidHide";
+  if (s.includes("waaw") || s.includes("netu"))
+    return "Netu";
+  if (s.includes("fastream"))
+    return "Fastream";
+  return server;
+}
+function finalizeStreams(streams, providerName) {
+  return __async(this, null, function* () {
+    if (!Array.isArray(streams) || streams.length === 0)
+      return [];
+    console.log(`[Engine] Processing ${streams.length} streams for ${providerName}...`);
+    let validated = streams;
+    try {
+      const results = yield Promise.allSettled(
+        streams.map((s) => validateStream(s))
+      );
+      validated = results.map(
+        (r, i) => r.status === "fulfilled" ? r.value : streams[i]
+      );
+    } catch (e) {
+      console.error(`[Engine] Validation error: ${e.message}`);
+    }
+    const sorted = sortStreamsByQuality(validated);
+    return sorted.map((s) => {
+      const q = s.quality || "HD";
+      const lang = normalizeLanguage(s.langLabel || s.language);
+      const server = normalizeServer(s.serverLabel || s.serverName || s.servername);
+      const check = s.verified ? " \u2713" : "";
+      return {
+        name: providerName || s.name || "Provider",
+        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        url: s.url,
+        quality: q,
+        headers: s.headers || {}
+      };
+    });
+  });
+}
+
+// src/fuegocine/index.js
 var BASE_URL = "https://www.fuegocine.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var SEARCH_BASE = `${BASE_URL}/feeds/posts/default?alt=json&max-results=10&q=`;
@@ -83,7 +242,7 @@ function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const type = mediaType === "movie" ? "movie" : "tv";
-      const { data } = yield import_axios.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`, { timeout: 5e3 });
+      const { data } = yield import_axios2.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`, { timeout: 5e3 });
       const title = type === "movie" ? data.title || data.original_title : data.name || data.original_name;
       const originalTitle = type === "movie" ? data.original_title || data.title : data.original_name || data.name;
       const year = (type === "movie" ? data.release_date || "" : data.first_air_date || "").slice(0, 4);
@@ -147,7 +306,7 @@ function extractLinks(html) {
 function resolveTurboVid(embedUrl) {
   return __async(this, null, function* () {
     try {
-      const { data: html } = yield import_axios.default.get(embedUrl, { headers: { Referer: BASE_URL }, timeout: 8e3 });
+      const { data: html } = yield import_axios2.default.get(embedUrl, { headers: { Referer: BASE_URL }, timeout: 8e3 });
       const hashMatch = html.match(/data-hash="([^"]+\.m3u8[^"]*)"/);
       return hashMatch ? hashMatch[1] : embedUrl;
     } catch (e) {
@@ -158,7 +317,7 @@ function resolveTurboVid(embedUrl) {
 function resolveOkRu(embedUrl) {
   return __async(this, null, function* () {
     try {
-      const { data: html } = yield import_axios.default.get(embedUrl, { headers: { Referer: BASE_URL }, timeout: 8e3 });
+      const { data: html } = yield import_axios2.default.get(embedUrl, { headers: { Referer: BASE_URL }, timeout: 8e3 });
       const hlsMatch = html.match(/ondemandHls\\&quot;:\\&quot;(https:[^\\&]+)/);
       return hlsMatch ? hlsMatch[1].replace(/\\\\/g, "\\").replace(/\\/g, "") : embedUrl;
     } catch (e) {
@@ -189,7 +348,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       if (!title)
         return [];
       const searchTitle = season ? `${title} ${season}x${episode}` : title;
-      const { data: searchJson } = yield import_axios.default.get(SEARCH_BASE + encodeURIComponent(searchTitle), { timeout: 8e3 });
+      const { data: searchJson } = yield import_axios2.default.get(SEARCH_BASE + encodeURIComponent(searchTitle), { timeout: 8e3 });
       const entries = ((_a = searchJson.feed) == null ? void 0 : _a.entry) || [];
       const streams = [];
       for (const entry of entries) {
@@ -201,7 +360,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
         const normTitle = normalizeTitle(title);
         if (!normEntry.includes(normTitle))
           continue;
-        const { data: html } = yield import_axios.default.get(entryUrl, { timeout: 8e3 });
+        const { data: html } = yield import_axios2.default.get(entryUrl, { timeout: 8e3 });
         const links = extractLinks(html);
         for (const link of links) {
           let finalUrl = link.url;
@@ -212,18 +371,19 @@ function getStreams(tmdbId, mediaType, season, episode) {
           const host = getHostLabel(finalUrl);
           const isDrive = host === "Drive";
           streams.push(__spreadValues({
-            name: "FuegoCine",
-            title: `[${link.lang.toUpperCase()}] ${host} \xB7 ${link.quality}`,
+            langLabel: link.lang,
+            serverLabel: host,
             url: finalUrl,
             quality: link.quality || "720p",
             headers: isDrive ? { "User-Agent": UA } : DEFAULT_HEADERS
           }, isDrive && { mimeType: "video/mp4" }));
         }
       }
-      return streams;
+      return yield finalizeStreams(streams, "FuegoCine");
     } catch (e) {
       console.error("[FuegoCine] error:", e.message);
       return [];
     }
   });
 }
+module.exports = { getStreams };

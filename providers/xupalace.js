@@ -1,13 +1,30 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-08T21:34:13.211Z
+ * Generated: 2026-04-08T21:48:21.625Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -107,10 +124,164 @@ __export(xupalace_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(xupalace_exports);
-var import_axios3 = __toESM(require("axios"));
+var import_axios4 = __toESM(require("axios"));
+
+// src/utils/m3u8.js
+var import_axios = __toESM(require("axios"));
+function getQualityFromHeight(height) {
+  if (!height)
+    return "Auto";
+  const h = parseInt(height);
+  if (h >= 2160)
+    return "4K";
+  if (h >= 1440)
+    return "1440p";
+  if (h >= 1080)
+    return "1080p";
+  if (h >= 720)
+    return "720p";
+  if (h >= 480)
+    return "480p";
+  if (h >= 360)
+    return "360p";
+  return "240p";
+}
+function parseBestQuality(content) {
+  const lines = content.split("\n");
+  let bestHeight = 0;
+  for (const line of lines) {
+    if (line.includes("RESOLUTION=")) {
+      const match = line.match(/RESOLUTION=\d+x(\d+)/);
+      if (match) {
+        const height = parseInt(match[1]);
+        if (height > bestHeight)
+          bestHeight = height;
+      }
+    }
+  }
+  return bestHeight > 0 ? getQualityFromHeight(bestHeight) : "720p";
+}
+function validateStream(stream) {
+  return __async(this, null, function* () {
+    if (!stream || !stream.url)
+      return stream;
+    const { url, headers } = stream;
+    try {
+      const response = yield import_axios.default.get(url, {
+        timeout: 4e3,
+        responseType: "text",
+        headers: __spreadProps(__spreadValues({}, headers || {}), {
+          "Accept": "*/*",
+          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
+        })
+      });
+      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(response.data);
+        return __spreadProps(__spreadValues({}, stream), {
+          quality: realQuality,
+          verified: true
+          // <--- Marcamos como verificado
+        });
+      }
+      return __spreadProps(__spreadValues({}, stream), { verified: true });
+    } catch (error) {
+      return __spreadProps(__spreadValues({}, stream), { verified: false });
+    }
+  });
+}
+
+// src/utils/sorting.js
+var QUALITY_SCORE = {
+  "4K": 100,
+  "1440p": 90,
+  "1080p": 80,
+  "720p": 70,
+  "480p": 60,
+  "360p": 50,
+  "240p": 40,
+  "Auto": 30,
+  "Unknown": 0
+};
+function sortStreamsByQuality(streams) {
+  if (!Array.isArray(streams))
+    return [];
+  return [...streams].sort((a, b) => {
+    const scoreA = QUALITY_SCORE[a.quality] || 0;
+    const scoreB = QUALITY_SCORE[b.quality] || 0;
+    if (scoreA === scoreB) {
+      if (a.quality === "Auto")
+        return 1;
+      if (b.quality === "Auto")
+        return -1;
+    }
+    return scoreB - scoreA;
+  });
+}
+
+// src/utils/engine.js
+function normalizeLanguage(lang) {
+  const l = (lang || "").toLowerCase();
+  if (l.includes("latino") || l.includes("lat"))
+    return "Latino";
+  if (l.includes("espa\xF1ol") || l.includes("castellano") || l.includes("esp"))
+    return "Espa\xF1ol";
+  if (l.includes("sub") || l.includes("vose"))
+    return "Subtitulado";
+  return lang || "Latino";
+}
+function normalizeServer(server) {
+  if (!server)
+    return "Servidor";
+  const s = server.toLowerCase();
+  if (s.includes("voe"))
+    return "VOE";
+  if (s.includes("filemoon"))
+    return "Filemoon";
+  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish"))
+    return "StreamWish";
+  if (s.includes("vidhide") || s.includes("dintezuvio"))
+    return "VidHide";
+  if (s.includes("waaw") || s.includes("netu"))
+    return "Netu";
+  if (s.includes("fastream"))
+    return "Fastream";
+  return server;
+}
+function finalizeStreams(streams, providerName) {
+  return __async(this, null, function* () {
+    if (!Array.isArray(streams) || streams.length === 0)
+      return [];
+    console.log(`[Engine] Processing ${streams.length} streams for ${providerName}...`);
+    let validated = streams;
+    try {
+      const results = yield Promise.allSettled(
+        streams.map((s) => validateStream(s))
+      );
+      validated = results.map(
+        (r, i) => r.status === "fulfilled" ? r.value : streams[i]
+      );
+    } catch (e) {
+      console.error(`[Engine] Validation error: ${e.message}`);
+    }
+    const sorted = sortStreamsByQuality(validated);
+    return sorted.map((s) => {
+      const q = s.quality || "HD";
+      const lang = normalizeLanguage(s.langLabel || s.language);
+      const server = normalizeServer(s.serverLabel || s.serverName || s.servername);
+      const check = s.verified ? " \u2713" : "";
+      return {
+        name: providerName || s.name || "Provider",
+        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        url: s.url,
+        quality: q,
+        headers: s.headers || {}
+      };
+    });
+  });
+}
 
 // src/resolvers/hlswish.js
-var import_axios = __toESM(require("axios"));
+var import_axios2 = __toESM(require("axios"));
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpackEval(payload, radix, symtab) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -146,7 +317,7 @@ function resolve(url) {
       }
       console.log(`[HLSWish] Resolviendo: ${url}`);
       const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
-      const { data: html } = yield import_axios.default.get(targetUrl, {
+      const { data: html } = yield import_axios2.default.get(targetUrl, {
         headers: {
           "User-Agent": UA,
           "Referer": "https://embed69.org/",
@@ -418,7 +589,7 @@ function resolve3(url) {
 }
 
 // src/resolvers/vidhide.js
-var import_axios2 = __toESM(require("axios"));
+var import_axios3 = __toESM(require("axios"));
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpackVidHide(script) {
   try {
@@ -451,7 +622,7 @@ function resolve4(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[VidHide] Resolviendo: ${url}`);
-      const { data: html } = yield import_axios2.default.get(url, {
+      const { data: html } = yield import_axios3.default.get(url, {
         timeout: 15e3,
         maxRedirects: 10,
         headers: { "User-Agent": UA3, "Referer": "https://embed69.org/" }
@@ -519,7 +690,7 @@ function getImdbId(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
-      const { data } = yield import_axios3.default.get(url, { timeout: 5e3, headers: { "User-Agent": UA4 } });
+      const { data } = yield import_axios4.default.get(url, { timeout: 5e3, headers: { "User-Agent": UA4 } });
       return data.imdb_id || null;
     } catch (e) {
       return null;
@@ -530,7 +701,7 @@ function getEmbeds(imdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
       const path = mediaType === "movie" ? `/video/${imdbId}/` : `/video/${imdbId}-${season}x${String(episode).padStart(2, "0")}/`;
-      const { data: html } = yield import_axios3.default.get(`${BASE_URL}${path}`, { timeout: 8e3, headers: HTML_HEADERS });
+      const { data: html } = yield import_axios4.default.get(`${BASE_URL}${path}`, { timeout: 8e3, headers: HTML_HEADERS });
       const matches = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'[^)]+\)[^<]*data-lang="(\d+)"/g)];
       if (matches.length === 0) {
         const fallback = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'/g)];
@@ -563,34 +734,41 @@ function getStreams(tmdbId, mediaType, season, episode) {
       const byLang = yield getEmbeds(imdbId, mediaType, season, episode);
       if (Object.keys(byLang).length === 0)
         return [];
+      const allStreams = [];
       for (const lang of [0, 1, 2]) {
         const urls = byLang[lang];
         if (!urls || urls.length === 0)
           continue;
         const results = yield Promise.allSettled(urls.map((url) => __async(this, null, function* () {
-          const domain = new URL(url).hostname.replace("www.", "");
-          const resolver = RESOLVER_MAP[domain];
-          if (!resolver)
-            return null;
-          const result = yield resolver.fn(url);
-          if (result)
-            result.server = resolver.name;
-          return result;
+          try {
+            const domain = new URL(url).hostname.replace("www.", "");
+            const resolver = RESOLVER_MAP[domain];
+            if (!resolver)
+              return null;
+            const result = yield resolver.fn(url);
+            if (result) {
+              return {
+                langLabel: LANG_NAMES[lang],
+                serverLabel: resolver.name,
+                url: result.url,
+                quality: result.quality || "1080p",
+                headers: result.headers || {}
+              };
+            }
+          } catch (e) {
+          }
+          return null;
         })));
-        const streams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => ({
-          name: "XuPalace",
-          title: `${r.value.quality || "1080p"} \xB7 ${LANG_NAMES[lang]} \xB7 ${r.value.server}`,
-          url: r.value.url,
-          quality: r.value.quality || "1080p",
-          headers: r.value.headers || {}
-        }));
-        if (streams.length > 0)
-          return streams;
+        results.forEach((r) => {
+          if (r.status === "fulfilled" && r.value)
+            allStreams.push(r.value);
+        });
       }
-      return [];
+      return yield finalizeStreams(allStreams, "XuPalace");
     } catch (e) {
       console.log(`[XuPalace] Error: ${e.message}`);
       return [];
     }
   });
 }
+module.exports = { getStreams };

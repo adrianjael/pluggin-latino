@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-08T21:39:35.258Z
+ * Generated: 2026-04-08T21:48:21.560Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -205,6 +205,68 @@ function sortStreamsByQuality(streams) {
         return -1;
     }
     return scoreB - scoreA;
+  });
+}
+
+// src/utils/engine.js
+function normalizeLanguage(lang) {
+  const l = (lang || "").toLowerCase();
+  if (l.includes("latino") || l.includes("lat"))
+    return "Latino";
+  if (l.includes("espa\xF1ol") || l.includes("castellano") || l.includes("esp"))
+    return "Espa\xF1ol";
+  if (l.includes("sub") || l.includes("vose"))
+    return "Subtitulado";
+  return lang || "Latino";
+}
+function normalizeServer(server) {
+  if (!server)
+    return "Servidor";
+  const s = server.toLowerCase();
+  if (s.includes("voe"))
+    return "VOE";
+  if (s.includes("filemoon"))
+    return "Filemoon";
+  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish"))
+    return "StreamWish";
+  if (s.includes("vidhide") || s.includes("dintezuvio"))
+    return "VidHide";
+  if (s.includes("waaw") || s.includes("netu"))
+    return "Netu";
+  if (s.includes("fastream"))
+    return "Fastream";
+  return server;
+}
+function finalizeStreams(streams, providerName) {
+  return __async(this, null, function* () {
+    if (!Array.isArray(streams) || streams.length === 0)
+      return [];
+    console.log(`[Engine] Processing ${streams.length} streams for ${providerName}...`);
+    let validated = streams;
+    try {
+      const results = yield Promise.allSettled(
+        streams.map((s) => validateStream(s))
+      );
+      validated = results.map(
+        (r, i) => r.status === "fulfilled" ? r.value : streams[i]
+      );
+    } catch (e) {
+      console.error(`[Engine] Validation error: ${e.message}`);
+    }
+    const sorted = sortStreamsByQuality(validated);
+    return sorted.map((s) => {
+      const q = s.quality || "HD";
+      const lang = normalizeLanguage(s.langLabel || s.language);
+      const server = normalizeServer(s.serverLabel || s.serverName || s.servername);
+      const check = s.verified ? " \u2713" : "";
+      return {
+        name: providerName || s.name || "Provider",
+        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        url: s.url,
+        quality: q,
+        headers: s.headers || {}
+      };
+    });
   });
 }
 
@@ -887,33 +949,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
           });
         }
       }
-      const elapsed = ((Date.now() - startTime) / 1e3).toFixed(2);
-      console.log(`[Embed69] \u2713 ${streams.length} encontrados en ${elapsed}s. Verificando calidad...`);
-      let finalStreams = streams;
-      try {
-        const validationResults = yield Promise.allSettled(
-          streams.map((s) => validateStream(s))
-        );
-        finalStreams = validationResults.map(
-          (r, i) => r.status === "fulfilled" ? r.value : streams[i]
-        );
-      } catch (ve) {
-        console.log(`[Embed69] Validation error: ${ve.message}`);
-      }
-      const sorted = sortStreamsByQuality(finalStreams);
-      return sorted.map((s) => {
-        const q = s.quality || "1080p";
-        const l = s.langLabel || "Latino";
-        const sv = s.serverLabel || "Servidor";
-        const check = s.verified ? " \u2713" : "";
-        return {
-          name: s.name,
-          title: `${q}${check} \xB7 ${l} \xB7 ${sv}`,
-          url: s.url,
-          quality: q,
-          headers: s.headers || {}
-        };
-      });
+      return yield finalizeStreams(streams, "Embed69");
     } catch (e) {
       console.log(`[Embed69] Error: ${e.message}`);
       return [];
