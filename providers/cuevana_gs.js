@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-07T18:11:20.639Z
+ * Generated: 2026-04-08T18:09:05.598Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,10 +25,6 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -45,9 +41,8 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve6, reject) => {
+  return new Promise((resolve4, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -62,17 +57,10 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve6(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve4(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/cuevana_gs/index.js
-var cuevana_gs_exports = {};
-__export(cuevana_gs_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(cuevana_gs_exports);
 
 // src/resolvers/voe.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -146,26 +134,26 @@ function resolve(url) {
 }
 
 // src/utils/aes-gcm.js
-var import_crypto_js = __toESM(require("crypto-js"));
+var CryptoJS = require("crypto-js");
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
     const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
+    const keyWA = CryptoJS.lib.WordArray.create(key);
     const ivCounter = new Uint8Array(16);
     ivCounter.set(iv, 0);
     ivCounter[15] = 2;
-    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
-    const decrypted = import_crypto_js.default.AES.decrypt(
-      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
+    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
+    const decrypted = CryptoJS.AES.decrypt(
+      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
       keyWA,
       {
         iv: ivWA,
-        mode: import_crypto_js.default.mode.CTR,
-        padding: import_crypto_js.default.pad.NoPadding
+        mode: CryptoJS.mode.CTR,
+        padding: CryptoJS.pad.NoPadding
       }
     );
-    return decrypted.toString(import_crypto_js.default.enc.Utf8);
+    return decrypted.toString(CryptoJS.enc.Utf8);
   } catch (e) {
     console.error("[PureJS-GCM] Error Decrypting:", e.message);
     return null;
@@ -364,136 +352,6 @@ function resolve3(embedUrl) {
   });
 }
 
-// src/resolvers/hlswish.js
-var import_axios3 = __toESM(require("axios"));
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
-function unpack2(p, a, c, k, e, d) {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const decode = (r) => {
-    let res = 0;
-    for (let l = 0; l < r.length; l++) {
-      let s = chars.indexOf(r[l]);
-      if (s === -1)
-        return NaN;
-      res = res * a + s;
-    }
-    return res;
-  };
-  return p.replace(/\b([0-9a-zA-Z]+)\b/g, (match) => {
-    let val = decode(match);
-    return isNaN(val) || val >= k.length ? match : k[val] || match;
-  });
-}
-var DOMAIN_MAP = { "hglink.to": "vibuxer.com" };
-function resolve4(url) {
-  return __async(this, null, function* () {
-    try {
-      let targetUrl = url;
-      for (const [old, replacement] of Object.entries(DOMAIN_MAP)) {
-        if (targetUrl.includes(old)) {
-          targetUrl = targetUrl.replace(old, replacement);
-          break;
-        }
-      }
-      console.log(`[HLSWish] Resolviendo: ${url}`);
-      const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
-      const { data: html } = yield import_axios3.default.get(targetUrl, {
-        headers: { "User-Agent": UA4, Referer: "https://embed69.org/", Origin: "https://embed69.org" },
-        timeout: 15e3,
-        maxRedirects: 5
-      });
-      let finalUrl = null;
-      const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
-      if (fileMatch) {
-        finalUrl = fileMatch[1];
-        if (finalUrl.startsWith("/"))
-          finalUrl = baseOrigin + finalUrl;
-      }
-      if (!finalUrl) {
-        const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-        if (packedMatch) {
-          const unpacked = unpack2(packedMatch[1], parseInt(packedMatch[2]), parseInt(packedMatch[3]), packedMatch[4].split("|"));
-          const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);
-          if (m3u8Match) {
-            finalUrl = m3u8Match[1];
-            if (finalUrl.startsWith("/"))
-              finalUrl = baseOrigin + finalUrl;
-          }
-        }
-      }
-      if (finalUrl) {
-        console.log(`[HLSWish] URL encontrada: ${finalUrl.substring(0, 80)}...`);
-        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA4, Referer: baseOrigin + "/" } };
-      }
-      return null;
-    } catch (e) {
-      console.log(`[HLSWish] Error: ${e.message}`);
-      return null;
-    }
-  });
-}
-
-// src/resolvers/vidhide.js
-var import_axios4 = __toESM(require("axios"));
-var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
-function unpackVidHide(script) {
-  try {
-    const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
-    if (!match)
-      return null;
-    let [full, p, a, c, k] = match;
-    a = parseInt(a);
-    c = parseInt(c);
-    k = k.split("|");
-    const decode = (l, s) => {
-      const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
-      let res = "";
-      for (; l > 0; ) {
-        res = chars[l % s] + res;
-        l = Math.floor(l / s);
-      }
-      return res || "0";
-    };
-    const unpacked = p.replace(/\b\w+\b/g, (l) => {
-      const s = parseInt(l, 36);
-      return s < k.length && k[s] ? k[s] : decode(s, a);
-    });
-    return unpacked;
-  } catch (e) {
-    return null;
-  }
-}
-function resolve5(url) {
-  return __async(this, null, function* () {
-    try {
-      console.log(`[VidHide] Resolviendo: ${url}`);
-      const { data: html } = yield import_axios4.default.get(url, {
-        timeout: 15e3,
-        maxRedirects: 10,
-        headers: { "User-Agent": UA5, Referer: "https://embed69.org/" }
-      });
-      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
-      if (!packedMatch)
-        return console.log("[VidHide] No se encontr\xF3 bloque eval"), null;
-      const unpacked = unpackVidHide(packedMatch[0]);
-      if (!unpacked)
-        return console.log("[VidHide] No se pudo desempacar"), null;
-      const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
-      if (!hlsMatch)
-        return console.log("[VidHide] No se encontr\xF3 hls2/hls4"), null;
-      let finalUrl = hlsMatch[1];
-      if (!finalUrl.startsWith("http"))
-        finalUrl = new URL(url).origin + finalUrl;
-      console.log(`[VidHide] URL encontrada: ${finalUrl.substring(0, 80)}...`);
-      const origin = new URL(url).origin;
-      return { url: finalUrl, headers: { "User-Agent": UA5, Referer: origin + "/", Origin: origin } };
-    } catch (e) {
-      console.log(`[VidHide] Error: ${e.message}`);
-      return null;
-    }
-  });
-}
-
 // src/utils/string.js
 function normalizeTitle(t) {
   if (!t)
@@ -505,12 +363,8 @@ function calculateSimilarity(title1, title2) {
   const norm2 = normalizeTitle(title2);
   if (norm1 === norm2)
     return 1;
-  if (norm1.length > 5 && norm2.length > 5) {
-    const ratio = Math.min(norm1.length, norm2.length) / Math.max(norm1.length, norm2.length);
-    if ((norm2.includes(norm1) || norm1.includes(norm2)) && ratio > 0.8) {
-      return 0.9;
-    }
-  }
+  if (norm1.length > 5 && norm2.length > 5 && (norm2.includes(norm1) || norm1.includes(norm2)))
+    return 0.9;
   const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
   const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
   if (words1.size === 0 || words2.size === 0) {
@@ -547,14 +401,6 @@ function resolveEmbed(embedUrl, server) {
       }
       if (server === "vimeos") {
         const r = yield resolve3(embedUrl);
-        return r ? r : null;
-      }
-      if (server.includes("streamwish") || server.includes("hglink") || server.includes("sw") || server.includes("wishembed")) {
-        const r = yield resolve4(embedUrl);
-        return r ? r : null;
-      }
-      if (server.includes("vidhide") || server.includes("minochinos")) {
-        const r = yield resolve5(embedUrl);
         return r ? r : null;
       }
       const html = yield fetchHtml(embedUrl, embedUrl);
@@ -624,22 +470,12 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       }
       const posts = searchJson.data.posts;
       const targetTitle = tmdbInfo.title || searchTitle;
-      let post = null;
-      let maxSim = 0;
-      for (const p of posts) {
-        if (p.type !== targetType)
-          continue;
-        const sim = calculateSimilarity(targetTitle, p.title);
-        if (sim > maxSim) {
-          maxSim = sim;
-          post = p;
-        }
-      }
-      console.log(`[Cuevana.gs] Mejor coincidencia: "${post == null ? void 0 : post.title}" (Similitud: ${maxSim.toFixed(2)})`);
-      if (!post || maxSim < 0.8) {
-        console.log(`[Cuevana.gs] Similitud insuficiente (${maxSim.toFixed(2)} < 0.8). No hay resultados v\xE1lidos.`);
+      const matches = posts.filter((p) => p.type === targetType).map((p) => __spreadProps(__spreadValues({}, p), { score: calculateSimilarity(targetTitle, p.title) })).filter((p) => p.score >= 0.5).sort((a, b) => b.score - a.score);
+      if (matches.length === 0) {
+        console.log(`[Cuevana.gs] No high-quality matches found (Similarity < 0.5). Top results: ${posts.map((p) => p.title).join(", ")}`);
         return [];
       }
+      let post = matches[0];
       let postId = post._id;
       if (!isMovie && season && episode) {
         try {
@@ -727,3 +563,4 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
+module.exports = { getStreams };

@@ -2,6 +2,8 @@ import { resolve as resolveVoe } from '../resolvers/voe.js';
 import { resolve as resolveFilemoon } from '../resolvers/filemoon.js';
 import { resolve as resolveVimeos } from '../resolvers/vimeos.js';
 
+import { calculateSimilarity } from '../utils/string.js';
+
 const BASE_URL = 'https://cuevana.gs';
 const BASE_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
@@ -97,11 +99,19 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         }
 
         const posts = searchJson.data.posts;
-        const normalizedTarget = (tmdbInfo.title || searchTitle).toLowerCase().replace(/[^a-z0-9]/g, '');
-        let post = posts.find(p => p.type === targetType && 
-            p.title.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedTarget)) ||
-            posts.find(p => p.type === targetType) ||
-            posts[0];
+        const targetTitle = tmdbInfo.title || searchTitle;
+        const matches = posts
+            .filter(p => p.type === targetType)
+            .map(p => ({ ...p, score: calculateSimilarity(targetTitle, p.title) }))
+            .filter(p => p.score >= 0.5)
+            .sort((a, b) => b.score - a.score);
+
+        if (matches.length === 0) {
+            console.log(`[Cuevana.gs] No high-quality matches found (Similarity < 0.5). Top results: ${posts.map(p => p.title).join(', ')}`);
+            return [];
+        }
+
+        let post = matches[0];
 
         let postId = post._id;
         if (!isMovie && season && episode) {
