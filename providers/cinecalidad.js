@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-07T18:11:20.565Z
+ * Generated: 2026-04-06T18:17:26.844Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -224,26 +224,26 @@ function resolve2(url) {
 }
 
 // src/utils/aes-gcm.js
-var import_crypto_js = __toESM(require("crypto-js"));
+var CryptoJS = require("crypto-js");
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
     const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
+    const keyWA = CryptoJS.lib.WordArray.create(key);
     const ivCounter = new Uint8Array(16);
     ivCounter.set(iv, 0);
     ivCounter[15] = 2;
-    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
-    const decrypted = import_crypto_js.default.AES.decrypt(
-      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
+    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
+    const decrypted = CryptoJS.AES.decrypt(
+      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
       keyWA,
       {
         iv: ivWA,
-        mode: import_crypto_js.default.mode.CTR,
-        padding: import_crypto_js.default.pad.NoPadding
+        mode: CryptoJS.mode.CTR,
+        padding: CryptoJS.pad.NoPadding
       }
     );
-    return decrypted.toString(import_crypto_js.default.enc.Utf8);
+    return decrypted.toString(CryptoJS.enc.Utf8);
   } catch (e) {
     console.error("[PureJS-GCM] Error Decrypting:", e.message);
     return null;
