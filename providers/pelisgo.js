@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-06T18:17:26.943Z
+ * Generated: 2026-04-07T18:11:20.676Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -22,6 +22,10 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -38,6 +42,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve4, reject) => {
     var fulfilled = (value) => {
@@ -59,27 +64,34 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
+// src/pelisgo/index.js
+var pelisgo_exports = {};
+__export(pelisgo_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(pelisgo_exports);
+
 // src/utils/aes-gcm.js
-var CryptoJS = require("crypto-js");
+var import_crypto_js = __toESM(require("crypto-js"));
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
     const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = CryptoJS.lib.WordArray.create(key);
+    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
     const ivCounter = new Uint8Array(16);
     ivCounter.set(iv, 0);
     ivCounter[15] = 2;
-    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
-    const decrypted = CryptoJS.AES.decrypt(
-      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
+    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
+    const decrypted = import_crypto_js.default.AES.decrypt(
+      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
       keyWA,
       {
         iv: ivWA,
-        mode: CryptoJS.mode.CTR,
-        padding: CryptoJS.pad.NoPadding
+        mode: import_crypto_js.default.mode.CTR,
+        padding: import_crypto_js.default.pad.NoPadding
       }
     );
-    return decrypted.toString(CryptoJS.enc.Utf8);
+    return decrypted.toString(import_crypto_js.default.enc.Utf8);
   } catch (e) {
     console.error("[PureJS-GCM] Error Decrypting:", e.message);
     return null;
@@ -349,6 +361,33 @@ function resolve3(embedUrl) {
   });
 }
 
+// src/utils/string.js
+function normalizeTitle(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function calculateSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.length > 5 && norm2.length > 5) {
+    const ratio = Math.min(norm1.length, norm2.length) / Math.max(norm1.length, norm2.length);
+    if ((norm2.includes(norm1) || norm1.includes(norm2)) && ratio > 0.8) {
+      return 0.9;
+    }
+  }
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0) {
+    return norm1 === norm2 ? 1 : norm1.includes(norm2) || norm2.includes(norm1) ? 0.5 : 0;
+  }
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+
 // src/pelisgo/index.js
 var BASE = "https://pelisgo.online";
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -461,10 +500,8 @@ function getOnlineStreams(rawHtml) {
               direct = r.url;
               vimeosHeaders = r.headers;
             }
-          } else if (cleanUrl.includes("desu") || cleanUrl.includes("hqq.ac") || cleanUrl.includes("netu")) {
+          } else if (cleanUrl.includes("desu") || cleanUrl.includes("hqq.ac") || cleanUrl.includes("netu") || cleanUrl.includes("seekstreaming") || cleanUrl.includes("embedseek")) {
             continue;
-          } else if (cleanUrl.includes("seekstreaming") || cleanUrl.includes("embedseek")) {
-            label = "SeekStreaming";
           }
           if (direct) {
             const headers = label === "Vimeos" && typeof vimeosHeaders !== "undefined" ? vimeosHeaders : { "User-Agent": UA4, "Referer": BASE };
@@ -535,7 +572,15 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }
       if (paths.length === 0)
         return [];
-      const slug = paths[0].split("/")[paths[0].split("/").length - 1];
+      const bestMatch = paths[0];
+      const resultSlug = bestMatch.split("/").pop();
+      const similarity = calculateSimilarity(title, resultSlug.replace(/-/g, " "));
+      console.log(`[PelisGo] Mejor coincidencia: "${resultSlug}" (Similitud: ${similarity.toFixed(2)})`);
+      if (similarity < 0.8) {
+        console.log(`[PelisGo] Similitud insuficiente (${similarity.toFixed(2)} < 0.8). Descartando resultado.`);
+        return [];
+      }
+      const slug = resultSlug;
       const pageUrl = type === "movie" ? `${BASE}/movies/${slug}` : `${BASE}/series/${slug}/temporada/${season || 1}/episodio/${episode || 1}`;
       const html = yield fetchText(pageUrl);
       if (!html)
@@ -548,4 +593,3 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
-module.exports = { getStreams };
