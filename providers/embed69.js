@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-08T18:44:17.445Z
+ * Generated: 2026-04-08T18:56:26.021Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -183,7 +183,7 @@ function resolve(url) {
               url: data.source,
               quality: "1080p",
               isM3U8: true,
-              headers: { "User-Agent": UA, "Referer": url }
+              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
             };
           }
         } catch (ex) {
@@ -196,7 +196,7 @@ function resolve(url) {
           url: m3u8Match[1],
           quality: "1080p",
           isM3U8: true,
-          headers: { "User-Agent": UA, "Referer": url }
+          headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
         };
       }
       return null;
@@ -211,26 +211,26 @@ function resolve(url) {
 var import_http2 = __toESM(require_http());
 
 // src/utils/aes-gcm.js
-var CryptoJS = require("crypto-js");
+var import_crypto_js = __toESM(require("crypto-js"));
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
     const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = CryptoJS.lib.WordArray.create(key);
+    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
     const ivCounter = new Uint8Array(16);
     ivCounter.set(iv, 0);
     ivCounter[15] = 2;
-    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
-    const decrypted = CryptoJS.AES.decrypt(
-      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
+    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
+    const decrypted = import_crypto_js.default.AES.decrypt(
+      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
       keyWA,
       {
         iv: ivWA,
-        mode: CryptoJS.mode.CTR,
-        padding: CryptoJS.pad.NoPadding
+        mode: import_crypto_js.default.mode.CTR,
+        padding: import_crypto_js.default.pad.NoPadding
       }
     );
-    return decrypted.toString(CryptoJS.enc.Utf8);
+    return decrypted.toString(import_crypto_js.default.enc.Utf8);
   } catch (e) {
     console.error("[PureJS-GCM] Error Decrypting:", e.message);
     return null;
@@ -475,7 +475,7 @@ var import_http5 = __toESM(require_http());
 
 // src/resolvers/quality.js
 var import_axios = __toESM(require("axios"));
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function detectQuality(_0) {
   return __async(this, arguments, function* (url, headers = {}) {
     try {
@@ -483,7 +483,7 @@ function detectQuality(_0) {
         return "1080p";
       const { data } = yield import_axios.default.get(url, {
         timeout: 5e3,
-        headers: __spreadValues({ "User-Agent": UA2 }, headers),
+        headers: __spreadValues({ "User-Agent": UA }, headers),
         responseType: "text"
       });
       if (!data.includes("#EXT-X-STREAM-INF")) {
@@ -559,8 +559,14 @@ var RESOLVER_MAP = {
   "filemoon.sx": resolve2,
   "filemoon.to": resolve2,
   "moonembed.pro": resolve2,
+  "moonalu.com": resolve2,
+  // Nuevo alias Filemoon
   "dintezuvio.com": resolve4,
   "vidhide.com": resolve4,
+  "minochinos.com": resolve4,
+  // Nuevo alias Vidhide
+  "lvturbo.com": resolve4,
+  // Nuevo alias Vidhide
   "goodstream.one": resolve5
 };
 var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
@@ -590,7 +596,7 @@ function getImdbId(tmdbId, mediaType) {
 }
 function extract(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     const imdbId = yield getImdbId(tmdbId, mediaType);
     if (!imdbId)
       return [];
@@ -599,13 +605,17 @@ function extract(tmdbId, mediaType, season, episode) {
       const e = String(episode).padStart(2, "0");
       embedUrl = `${BASE_URL}/f/${imdbId}-${parseInt(season)}x${e}`;
     }
+    console.log(`[Embed69 Debug] URL: ${embedUrl}`);
     const html = yield (0, import_http6.fetchHtml)(embedUrl, {
       headers: { "User-Agent": import_http6.DEFAULT_UA, "Referer": "https://sololatino.net/" }
     });
     const dlMatch = html.match(/let\s+dataLink\s*=\s*(\[.+\]);/);
-    if (!dlMatch)
+    if (!dlMatch) {
+      console.log("[Embed69 Debug] No dataLink found in HTML");
       return [];
+    }
     const dataLink = JSON.parse(dlMatch[1]);
+    console.log(`[Embed69 Debug] dataLink contains ${dataLink.length} sections: ${dataLink.map((d) => d.video_language).join(", ")}`);
     const byLang = {};
     for (const section of dataLink) {
       byLang[section.video_language || "LAT"] = section;
@@ -617,15 +627,22 @@ function extract(tmdbId, mediaType, season, episode) {
       if (!section || !section.sortedEmbeds)
         continue;
       const embedsToResolve = [];
-      for (const embed of section.sortedEmbeds) {
+      console.log(`[Embed69 Debug] Section ${lang} found with ${((_a = section.sortedEmbeds) == null ? void 0 : _a.length) || 0} embeds.`);
+      for (const embed of section.sortedEmbeds || []) {
+        console.log(`[Embed69 Debug] -> Server Found: ${embed.servername}`);
         if (embed.servername === "download")
           continue;
         const payload = decodeJwtPayload(embed.link);
-        if (!payload || !payload.link)
+        if (!payload || !payload.link) {
+          console.log(`[Embed69 Debug]    x No payload/link for ${embed.servername}`);
           continue;
-        const resolver = (_a = Object.entries(RESOLVER_MAP).find(([p]) => payload.link.includes(p))) == null ? void 0 : _a[1];
+        }
+        console.log(`[Embed69 Debug]    - URL found: ${payload.link}`);
+        const resolver = (_b = Object.entries(RESOLVER_MAP).find(([p]) => payload.link.includes(p))) == null ? void 0 : _b[1];
         if (resolver) {
           embedsToResolve.push({ url: payload.link, resolver, lang, servername: embed.servername });
+        } else {
+          console.log(`[Embed69 Debug]    x No resolver for: ${payload.link}`);
         }
       }
       if (embedsToResolve.length === 0)
@@ -640,7 +657,7 @@ function extract(tmdbId, mediaType, season, episode) {
         )
       );
       for (const res of results) {
-        if (res.status === "fulfilled" && ((_b = res.value) == null ? void 0 : _b.url)) {
+        if (res.status === "fulfilled" && ((_c = res.value) == null ? void 0 : _c.url)) {
           const stream = res.value;
           if (seenUrls.has(stream.url))
             continue;
