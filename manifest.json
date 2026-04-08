@@ -118,8 +118,8 @@
       "supportsExternalPlayer": true
     },
     {
-      "id": "embed69_nuv",
-      "name": "Embed69 Latino",
+      "id": "embed69",
+      "name": "Embed69",
       "description": "Peliculas y series via embed69.org (V1.5.0)",
       "version": "1.5.0",
       "author": "AdrianJael",
@@ -127,7 +127,7 @@
         "movie",
         "tv"
       ],
-      "filename": "providers/embed69_nuv.js",
+      "filename": "providers/embed69.js",
       "enabled": true,
       "logo": "https://i.ibb.co/6ndVz8Q/logo-embed.png",
       "contentLanguage": [
