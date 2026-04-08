@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-08T22:29:30.167Z
+ * Generated: 2026-04-08T22:34:35.696Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -80,28 +80,21 @@ var require_http = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var requestOptions = Object.assign({}, opt, {
-            headers,
-            timeout: opt.timeout || 5e3,
-            responseType: opt.responseType || "text",
-            validateStatus: function(status) {
-              return status >= 200 && status < 600;
-            }
+          var fetchOptions = Object.assign({}, opt, { headers });
+          var timeoutMs = opt.timeout || 5e3;
+          var timeoutPromise = new Promise((resolve4, reject) => {
+            setTimeout(() => {
+              reject(new Error("Timeout after " + timeoutMs + "ms"));
+            }, timeoutMs);
           });
-          var response = yield import_axios2.default.get(url, requestOptions);
-          if (response.status >= 400 && !opt.ignoreErrors) {
+          var response = yield Promise.race([
+            fetch(url, fetchOptions),
+            timeoutPromise
+          ]);
+          if (!response.ok && !opt.ignoreErrors) {
             console.warn("[HTTP] Error " + response.status + " en " + url);
           }
-          return {
-            ok: response.status >= 200 && response.status < 300,
-            status: response.status,
-            text: () => __async(this, null, function* () {
-              return response.data;
-            }),
-            json: () => __async(this, null, function* () {
-              return typeof response.data === "string" ? JSON.parse(response.data) : response.data;
-            })
-          };
+          return response;
         } catch (error) {
           console.error("[HTTP] Error en " + url + ": " + error.message);
           throw error;
