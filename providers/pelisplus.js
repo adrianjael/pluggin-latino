@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-08T23:29:03.425Z
+ * Generated: 2026-04-08T23:36:31.775Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -133,10 +133,12 @@ function resolveStreamwish(embedUrl) {
     try {
       let body = yield fetchHtml(embedUrl, embedUrl);
       if (body.includes("Page is loading") || body.length < 2e3) {
-        const mirrorMatch = body.match(/main\s*:\s*\["([^"]+)"/i) || body.match(/["'](https?:\/\/[^"']+\/e\/[\w-]+)["']/i);
-        if (mirrorMatch) {
-          const mirrorUrl = mirrorMatch[1].startsWith("http") ? mirrorMatch[1] : `https://${mirrorMatch[1]}/e/${embedUrl.split("/").pop()}`;
+        const rawId = embedUrl.split("/").pop();
+        const mirrors = [`https://embedwish.com/e/${rawId}`, `https://hglamioz.com/e/${rawId}`, `https://awish.pro/e/${rawId}`];
+        for (const mirrorUrl of mirrors) {
           body = yield fetchHtml(mirrorUrl, mirrorUrl);
+          if (!body.includes("Page is loading") && body.includes("eval(function"))
+            break;
         }
       }
       const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
@@ -348,7 +350,7 @@ function extractStreams(tmdbId, mediaType, season, episode) {
       }
       const streams = yield Promise.all(rawResults.map((res) => __async(this, null, function* () {
         let finalUrl = res.serverUrl;
-        const isStreamwish = /streamwish|strwish|wishembed|playnixes|niramirus|awish|dwish|fmoon|pstream/i.test(finalUrl);
+        const isStreamwish = /streamwish|strwish|wishembed|playnixes|niramirus|awish|dwish|fmoon|pstream|hglamioz|hlswish|embedwish|sswish|fullwish/i.test(finalUrl);
         const isVidhide = /vidhide|dintezuvio|callistanise|acek-cdn|vadisov/i.test(finalUrl);
         const isVoesx = /voe\.sx|voe-sx|jefferycontrolmodel/i.test(finalUrl);
         if (isStreamwish)
