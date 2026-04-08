@@ -1,6 +1,8 @@
-import { fetchText, fetchHtml, BASE_URL } from './http.js';
+import { fetchHtml, fetchJson } from '../utils/http.js';
 import cheerio from 'cheerio-without-node-native';
-import { normalizeTitle, calculateSimilarity } from '../utils/string.js';
+import { normalizeTitle, calculateSimilarity, isGoodMatch } from '../utils/string.js';
+
+const BASE_URL = "https://www.pelisplushd.la";
 
 /**
  * Desempaqueta código ofuscado con P.A.C.K.E.R (usado por reproductores)
@@ -19,24 +21,15 @@ function unpackEval(payload, radix, symtab) {
     });
 }
 
-
-/**
- * Comprueba si un título es una coincidencia aceptable (score > 0.4)
- */
-function isGoodMatch(query, result, minScore = 0.4) {
-    return calculateSimilarity(query, result) >= minScore;
-}
-
 async function resolveStreamwish(embedUrl) {
     try {
-        let body = await fetchHtml(embedUrl, embedUrl);
+        let body = await fetchHtml(embedUrl, { headers: { Referer: embedUrl } });
         
-        // Si detectamos la pantalla de carga, intentamos buscar espejos
         if (body.includes('Page is loading') || body.length < 2000) {
             const mirrorMatch = body.match(/main\s*:\s*\["([^"]+)"/i) || body.match(/["'](https?:\/\/[^"']+\/e\/[\w-]+)["']/i);
             if (mirrorMatch) {
                 const mirrorUrl = mirrorMatch[1].startsWith('http') ? mirrorMatch[1] : `https://${mirrorMatch[1]}/e/${embedUrl.split('/').pop()}`;
-                body = await fetchHtml(mirrorUrl, mirrorUrl);
+                body = await fetchHtml(mirrorUrl, { headers: { Referer: mirrorUrl } });
             }
         }
 
@@ -57,12 +50,11 @@ async function resolveStreamwish(embedUrl) {
 
 async function resolveVidhide(embedUrl) {
     try {
-        let body = await fetchHtml(embedUrl, embedUrl);
+        let body = await fetchHtml(embedUrl, { headers: { Referer: embedUrl } });
         
-        // VidHide también puede tener pantallas de carga o redirecciones
         if (body.includes('Loading') || body.length < 2000) {
              const mirrorMatch = body.match(/["'](https?:\/\/[^"']+\/v\/[\w-]+)["']/i);
-             if (mirrorMatch) body = await fetchHtml(mirrorMatch[1], mirrorMatch[1]);
+             if (mirrorMatch) body = await fetchHtml(mirrorMatch[1], { headers: { Referer: mirrorMatch[1] } });
         }
 
         const packMatch = body.match(/eval\(function\(p,a,c,k,e,[\w]+\)\{[\s\S]+?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
@@ -79,13 +71,10 @@ async function resolveVidhide(embedUrl) {
     }
 }
 
-/**
- * Gets movie titles from TMDB (Spanish and Original)
- */
 async function getTmdbInfo(tmdbId, mediaType) {
     try {
         const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-        const html = await fetchText(url);
+        const html = await fetchHtml(url);
         const $ = cheerio.load(html);
         
         const title = $('.title h2 a').text().trim();
@@ -96,11 +85,11 @@ async function getTmdbInfo(tmdbId, mediaType) {
             originalTitle: originalTitle || title || '' 
         };
     } catch (error) {
+        console.warn(`[PelisPlusHD] TMDB error: ${error.message}`);
         return null;
     }
 }
 
-// Base64 Decode seguro (para entornos sin atob como Hermes puro)
 function decodeBase64(input) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
   let str = String(input).replace(/=+$/, '');
@@ -113,21 +102,18 @@ function decodeBase64(input) {
 
 async function resolveVoesx(embedUrl) {
     try {
-        let body = await fetchHtml(embedUrl, embedUrl);
+        let body = await fetchHtml(embedUrl, { headers: { Referer: embedUrl } });
         
         if (body.includes('Redirecting') || body.length < 1000) {
             const redirectMatch = body.match(/window\.location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/i);
-            if (redirectMatch) body = await fetchHtml(redirectMatch[1], redirectMatch[1]);
+            if (redirectMatch) body = await fetchHtml(redirectMatch[1], { headers: { Referer: redirectMatch[1] } });
         }
 
-        // Nuevo extractor VoeSX (Rompe Ofuscación)
         const jsonMatch = body.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
         if (jsonMatch) {
             try {
                 let encText = JSON.parse(jsonMatch[1].trim())[0];
-                let rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
-                    return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
-                });
+                let rot13 = encText.replace(/[a-zA-Z]/g, (c) => String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
                 const noise = ['@$', '^^', '~@', '%?', '*~', '!!', '#&'];
                 for (const n of noise) rot13 = rot13.split(n).join('');
                 
@@ -138,29 +124,23 @@ async function resolveVoesx(embedUrl) {
                 let reversed = shifted.split('').reverse().join('');
                 let b64_2 = decodeBase64(reversed);
                 
-                // Limpiar posibles caracteres de escape JSON
                 let data = JSON.parse(b64_2);
                 if (data && data.source) return data.source;
             } catch(ex) {
-                console.log("[PelisPlusHD] Error rompiendo VoeSX:", ex.message);
+                console.log("[PelisPlusHD] Error decrypting VoeSX:", ex.message);
             }
         }
 
         const m3u8 = body.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-        if (m3u8) return m3u8[0].replace(/\\/g, '');
-        
-        return embedUrl;
+        return m3u8 ? m3u8[0].replace(/\\/g, '') : embedUrl;
     } catch (e) {
         return embedUrl;
     }
 }
 
-/**
- * Main extraction function
- */
 export async function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
     try {
-        console.log(`[PelisPlusHD] Estrayendo para: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
+        console.log(`[PelisPlusHD] Scrapping: ${providedTitle || tmdbId} (${mediaType}) S${season || ''}E${episode || ''}`);
         const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
         const titlesToTry = [];
         
@@ -170,19 +150,14 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             if (tmdbInfo.originalTitle && tmdbInfo.originalTitle !== tmdbInfo.title) titlesToTry.push(tmdbInfo.originalTitle);
         }
 
-        // Eliminar duplicados y títulos vacíos
         const uniqueTitles = [...new Set(titlesToTry)].filter(t => t && t.length > 2);
         
-        if (uniqueTitles.length === 0) {
-            console.log("[PelisPlusHD] No se pudo obtener ningún título para buscar.");
-            return [];
-        }
+        if (uniqueTitles.length === 0) return [];
 
         let movieUrl = null;
         for (const query of uniqueTitles) {
             const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query)}`;
-            console.log(`[PelisPlusHD] Probando búsqueda: "${query}"`);
-            const searchHtml = await fetchText(searchUrl);
+            const searchHtml = await fetchHtml(searchUrl);
             const $search = cheerio.load(searchHtml);
             
             const results = [];
@@ -197,27 +172,17 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
 
             const targetType = mediaType === 'tv' ? '/serie/' : '/pelicula/';
             
-            // Intento 1: Coincidencia casi-exacta
             let match = results.find(r => 
                 (normalizeTitle(r.title) === normalizeTitle(query) || r.title.toLowerCase().includes(query.toLowerCase())) && 
                 r.href.includes(targetType)
             );
 
-            // Intento 2: Similitud Difusa (Fuzzy Match)
             if (!match) {
-                match = results.find(r => 
-                    isGoodMatch(query, r.title, 0.45) && 
-                    r.href.includes(targetType)
-                );
-            }
-
-            // Intento 3: Coincidencia muy relajada para estrenos (0.3)
-            if (!match) {
-                match = results.find(r => isGoodMatch(query, r.title, 0.3) && r.href.includes(targetType));
+                match = results.find(r => isGoodMatch(query, r.title, 0.45) && r.href.includes(targetType));
             }
 
             if (match) {
-                console.log(`[PelisPlusHD] ¡Coincidencia encontrada!: "${match.title}" -> ${match.href}`);
+                console.log(`[PelisPlusHD] Match found: "${match.title}"`);
                 movieUrl = BASE_URL + match.href;
                 break;
             }
@@ -226,23 +191,16 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         if (!movieUrl) return [];
 
         if (mediaType === 'tv') {
-            // El patrón antiguo /episodio/ ya no existe. Ahora es: /serie/{slug}/temporada/{S}/capitulo/{E}
             movieUrl = movieUrl.replace(/\/$/, '') + `/temporada/${season}/capitulo/${episode}`;
         }
 
-        const pageHtml = await fetchText(movieUrl);
+        const pageHtml = await fetchHtml(movieUrl, { headers: { Referer: BASE_URL } });
         const $page = cheerio.load(pageHtml);
 
-        // Extraer calidad del título de la página (Ej: "Ver Zeta (2026) Online Latino HD - Pelisplus")
         const pageTitle = $page('title').text() || "";
         const qualityMatch = pageTitle.match(/Online\s+[^-\s]+\s+([^-\s]+)\s+-/i) || pageTitle.match(/\s+([A-Z0-9]+)\s+-/i);
         let movieQuality = qualityMatch ? qualityMatch[1].trim() : "HD";
         
-        // Limpiar "HD" duplicado si ya viene en el nombre del servidor (v1.3.1)
-        if (movieQuality === "HD" && pageTitle.toLowerCase().includes("online")) {
-            // Si el título es muy genérico, mantenemos HD pero evitamos repeticiones
-        }
-
         const rawResults = [];
         $page('li.playurl').each((i, el) => {
             const $el = $page(el);
@@ -251,18 +209,13 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             const serverNameRaw = $el.find('a').text().trim() || "Servidor";
 
             if (serverUrl && serverUrl.startsWith('http')) {
-                let inferredName = serverNameRaw;
-                // Normalizar nombres conocidos si es necesario
-                if (serverUrl.includes('voe')) inferredName = "Voe";
-                else if (serverUrl.includes('streamwish') || serverUrl.includes('awish') || serverUrl.includes('dwish')) inferredName = "Streamwish";
-                else if (serverUrl.includes('vidhide')) inferredName = "Vidhide";
-                else if (serverUrl.includes('waaw') || serverUrl.includes('netu')) inferredName = "Netu";
+                let name = serverNameRaw;
+                if (serverUrl.includes('voe')) name = "Voe";
+                else if (serverUrl.includes('streamwish') || serverUrl.includes('awish') || serverUrl.includes('dwish')) name = "Streamwish";
+                else if (serverUrl.includes('vidhide')) name = "Vidhide";
+                else if (serverUrl.includes('waaw') || serverUrl.includes('netu')) name = "Netu";
                 
-                rawResults.push({ 
-                    serverUrl, 
-                    serverName: inferredName, 
-                    language 
-                });
+                rawResults.push({ serverUrl, serverName: name, language });
             }
         });
 
@@ -277,17 +230,11 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             else if (isVidhide) finalUrl = await resolveVidhide(finalUrl);
             else if (isVoesx) finalUrl = await resolveVoesx(finalUrl);
 
-            // Permitir que Nuvio utilice su reproductor externo/interno para WebView (como Filemoon)
-            // si no logramos sacar el directo m3u8.
-            if (!finalUrl.startsWith('http')) {
-                return null;
-            }
-
-            const cleanServerName = res.serverName.replace(/\s*\(.*?\)\s*/g, '').trim();
+            if (!finalUrl.startsWith('http')) return null;
 
             return {
                 name: "PelisPlusHD",
-                title: `${cleanServerName} (${res.language.includes("Latino") ? "Latino" : "Español"}) ${movieQuality}`,
+                title: `${res.serverName} (${res.language}) ${movieQuality}`,
                 url: finalUrl,
                 quality: movieQuality,
                 headers: {
@@ -297,9 +244,9 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             };
         }));
 
-        // Filtrar nulos (servidores muertos)
         return streams.filter(s => s !== null);
     } catch (error) {
+        console.error(`[PelisPlusHD] Error: ${error.message}`);
         return [];
     }
 }

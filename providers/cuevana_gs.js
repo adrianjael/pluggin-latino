@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-08T18:09:05.598Z
+ * Generated: 2026-04-08T18:32:40.721Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,6 +25,9 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -61,6 +64,64 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
+
+// src/utils/http.js
+var require_http = __commonJS({
+  "src/utils/http.js"(exports2, module2) {
+    var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    var MOBILE_UA2 = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+    function request(_0) {
+      return __async(this, arguments, function* (url, options = {}) {
+        const timeout = options.timeout || 15e3;
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        const headers = __spreadValues({
+          "User-Agent": options.mobile ? MOBILE_UA2 : DEFAULT_UA,
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+        }, options.headers);
+        try {
+          const response = yield fetch(url, __spreadProps(__spreadValues({}, options), {
+            headers,
+            signal: controller.signal
+          }));
+          clearTimeout(id);
+          if (!response.ok && !options.ignoreErrors) {
+            console.warn(`[HTTP] Error ${response.status} en ${url}`);
+          }
+          return response;
+        } catch (error) {
+          clearTimeout(id);
+          if (error.name === "AbortError") {
+            console.error(`[HTTP] Timeout exceed (${timeout}ms) en ${url}`);
+          } else {
+            console.error(`[HTTP] Error en ${url}: ${error.message}`);
+          }
+          throw error;
+        }
+      });
+    }
+    function fetchHtml2(_0) {
+      return __async(this, arguments, function* (url, options = {}) {
+        const res = yield request(url, options);
+        return yield res.text();
+      });
+    }
+    function fetchJson2(_0) {
+      return __async(this, arguments, function* (url, options = {}) {
+        const res = yield request(url, options);
+        return yield res.json();
+      });
+    }
+    module2.exports = {
+      request,
+      fetchHtml: fetchHtml2,
+      fetchJson: fetchJson2,
+      DEFAULT_UA,
+      MOBILE_UA: MOBILE_UA2
+    };
+  }
+});
 
 // src/resolvers/voe.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -353,57 +414,72 @@ function resolve3(embedUrl) {
 }
 
 // src/utils/string.js
+var NOISE_WORDS = [
+  "latino",
+  "espanol",
+  "hispano",
+  "dual",
+  "subs",
+  "subtitulado",
+  "hd",
+  "1080p",
+  "720p",
+  "4k",
+  "uhd",
+  "completa",
+  "pelicula",
+  "serie",
+  "episodio",
+  "capitulo",
+  "temporada"
+];
 function normalizeTitle(t) {
   if (!t)
     return "";
-  return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  let normalized = t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  const parts = normalized.split(" ").filter((word) => !NOISE_WORDS.includes(word));
+  return parts.length > 0 ? parts.join(" ") : normalized;
 }
 function calculateSimilarity(title1, title2) {
   const norm1 = normalizeTitle(title1);
   const norm2 = normalizeTitle(title2);
   if (norm1 === norm2)
     return 1;
-  if (norm1.length > 5 && norm2.length > 5 && (norm2.includes(norm1) || norm1.includes(norm2)))
-    return 0.9;
-  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
-  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (norm1.length > 6 && norm2.length > 6 && (norm2.includes(norm1) || norm1.includes(norm2))) {
+    return 0.95;
+  }
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 1));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 1));
   if (words1.size === 0 || words2.size === 0) {
     return norm1 === norm2 ? 1 : norm1.includes(norm2) || norm2.includes(norm1) ? 0.5 : 0;
   }
   const intersection = new Set([...words1].filter((w) => words2.has(w)));
   const union = /* @__PURE__ */ new Set([...words1, ...words2]);
-  return intersection.size / union.size;
+  const score = intersection.size / union.size;
+  const yearMatch1 = title1.match(/\b(19|20)\d{2}\b/);
+  const yearMatch2 = title2.match(/\b(19|20)\d{2}\b/);
+  if (yearMatch1 && yearMatch2 && yearMatch1[0] !== yearMatch2[0]) {
+    return score * 0.5;
+  }
+  return score;
 }
 
 // src/cuevana_gs/extractor.js
+var import_http = __toESM(require_http());
 var BASE_URL = "https://cuevana.gs";
-var BASE_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
-  "Referer": BASE_URL,
-  "Accept-Language": "es-ES,es;q=0.9"
-};
-function fetchHtml(_0) {
-  return __async(this, arguments, function* (url, referer = BASE_URL) {
-    const res = yield fetch(url, { headers: __spreadProps(__spreadValues({}, BASE_HEADERS), { Referer: referer }) });
-    return res.text();
-  });
-}
 function resolveEmbed(embedUrl, server) {
   return __async(this, null, function* () {
     try {
       if (server === "voe") {
-        const r = yield resolve(embedUrl);
-        return r ? r : null;
+        return yield resolve(embedUrl);
       }
       if (server.includes("filemoon") || server.includes("f75s")) {
-        const r = yield resolve2(embedUrl);
-        return r ? r : null;
+        return yield resolve2(embedUrl);
       }
       if (server === "vimeos") {
-        const r = yield resolve3(embedUrl);
-        return r ? r : null;
+        return yield resolve3(embedUrl);
       }
-      const html = yield fetchHtml(embedUrl, embedUrl);
+      const html = yield (0, import_http.fetchHtml)(embedUrl, { headers: { Referer: embedUrl } });
       const m = html.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
       return m ? m[0].replace(/\\/g, "") : null;
     } catch (e) {
@@ -415,8 +491,7 @@ function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-      const res = yield fetch(url, { headers: { "User-Agent": BASE_HEADERS["User-Agent"] } });
-      const html = yield res.text();
+      const html = yield (0, import_http.fetchHtml)(url);
       let title = "";
       let year = "";
       const titleMatch = html.match(/<title>(.*?)(?:\s+&\#8212;|\s+-|\s+\()/);
@@ -427,52 +502,53 @@ function getTmdbInfo(tmdbId, mediaType) {
         year = yearMatch[1];
       return { title, year };
     } catch (e) {
+      console.warn(`[Cuevana.gs] Failed to fetch TMDB info: ${e.message}`);
     }
     return { title: null, year: "" };
   });
 }
 function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
   return __async(this, null, function* () {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
     const isMovie = mediaType === "movie";
     const targetType = isMovie ? "movies" : "tvshows";
-    console.log(`[Cuevana.gs v2.0] Extracting: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
+    console.log(`[Cuevana.gs] Extracting: ${providedTitle || tmdbId} (${mediaType})`);
     try {
       const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-      let searchTitle = providedTitle || tmdbInfo.title;
+      const searchTitle = providedTitle || tmdbInfo.title;
       const year = tmdbInfo.year;
+      if (!searchTitle) {
+        console.error("[Cuevana.gs] No search title found.");
+        return [];
+      }
       function performSearch(query) {
         return __async(this, null, function* () {
           console.log(`[Cuevana.gs] Searching: "${query}"`);
           const encodedQuery = encodeURIComponent(query);
           const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${encodedQuery}&postsPerPage=10`;
           try {
-            const searchRes = yield fetch(searchUrl, { headers: BASE_HEADERS });
-            return yield searchRes.json();
+            return yield (0, import_http.fetchJson)(searchUrl, { headers: { Referer: BASE_URL } });
           } catch (err) {
             return { error: true };
           }
         });
       }
       let searchJson = yield performSearch(`${searchTitle} ${year}`);
-      if ((searchJson.error || !((_b = (_a = searchJson.data) == null ? void 0 : _a.posts) == null ? void 0 : _b.length)) && providedTitle && tmdbInfo.title) {
-        searchJson = yield performSearch(`${tmdbInfo.title} ${year}`);
-      }
-      if ((searchJson.error || !((_d = (_c = searchJson.data) == null ? void 0 : _c.posts) == null ? void 0 : _d.length)) && tmdbInfo.title) {
+      if ((searchJson.error || !((_b = (_a = searchJson.data) == null ? void 0 : _a.posts) == null ? void 0 : _b.length)) && tmdbInfo.title) {
         searchJson = yield performSearch(tmdbInfo.title);
       }
-      if (searchJson.error || !((_f = (_e = searchJson.data) == null ? void 0 : _e.posts) == null ? void 0 : _f.length)) {
+      if (searchJson.error || !((_d = (_c = searchJson.data) == null ? void 0 : _c.posts) == null ? void 0 : _d.length)) {
         searchJson = yield performSearch(searchTitle);
       }
-      if (searchJson.error || !searchJson.data || !searchJson.data.posts || searchJson.data.posts.length === 0) {
+      if (searchJson.error || !((_f = (_e = searchJson.data) == null ? void 0 : _e.posts) == null ? void 0 : _f.length)) {
         console.log(`[Cuevana.gs] No results found.`);
         return [];
       }
       const posts = searchJson.data.posts;
       const targetTitle = tmdbInfo.title || searchTitle;
-      const matches = posts.filter((p) => p.type === targetType).map((p) => __spreadProps(__spreadValues({}, p), { score: calculateSimilarity(targetTitle, p.title) })).filter((p) => p.score >= 0.5).sort((a, b) => b.score - a.score);
+      const matches = posts.filter((p) => p.type === targetType).map((p) => __spreadProps(__spreadValues({}, p), { score: calculateSimilarity(targetTitle, p.title) })).filter((p) => p.score >= 0.45).sort((a, b) => b.score - a.score);
       if (matches.length === 0) {
-        console.log(`[Cuevana.gs] No high-quality matches found (Similarity < 0.5). Top results: ${posts.map((p) => p.title).join(", ")}`);
+        console.log(`[Cuevana.gs] No high-quality matches found.`);
         return [];
       }
       let post = matches[0];
@@ -480,69 +556,70 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       if (!isMovie && season && episode) {
         try {
           const episodesUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${postId}&season=${season}&postsPerPage=100`;
-          const epRes = yield fetch(episodesUrl, { headers: BASE_HEADERS });
-          const epJson = yield epRes.json();
-          if (!epJson.error && epJson.data && epJson.data.posts) {
+          const epJson = yield (0, import_http.fetchJson)(episodesUrl, { headers: { Referer: BASE_URL } });
+          if (!epJson.error && ((_g = epJson.data) == null ? void 0 : _g.posts)) {
             const epMatch = epJson.data.posts.find((e) => parseInt(e.episode_number) === parseInt(episode));
             if (epMatch)
               postId = epMatch._id;
+            else {
+              console.warn(`[Cuevana.gs] Episode S${season}E${episode} not found.`);
+              return [];
+            }
           }
         } catch (err) {
+          console.error(`[Cuevana.gs] Error fetching episodes: ${err.message}`);
         }
       }
-      let playerUrl = `${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`;
-      const playerRes = yield fetch(playerUrl, { headers: BASE_HEADERS });
-      const playerJson = yield playerRes.json();
-      if (playerJson.error || !playerJson.data || !playerJson.data.embeds || playerJson.data.embeds.length === 0) {
+      const playerUrl = `${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`;
+      const playerJson = yield (0, import_http.fetchJson)(playerUrl, { headers: { Referer: BASE_URL } });
+      if (playerJson.error || !((_i = (_h = playerJson.data) == null ? void 0 : _h.embeds) == null ? void 0 : _i.length)) {
+        console.log("[Cuevana.gs] No embeds found.");
         return [];
       }
       const embeds = playerJson.data.embeds;
-      const streamPromises = embeds.map(function(embed) {
-        return __async(this, null, function* () {
-          const proxyUrl = embed.url;
-          const lang = embed.lang || "Latino";
-          const quality = embed.quality || "HD";
-          let server = "unknown";
-          try {
-            const urlObj = new URL(proxyUrl);
-            server = (urlObj.searchParams.get("server") || "unknown").toLowerCase();
-          } catch (e) {
-          }
-          if (server === "goodstream")
+      const streamPromises = embeds.map((embed) => __async(this, null, function* () {
+        const proxyUrl = embed.url;
+        const lang = embed.lang || "Latino";
+        const quality = embed.quality || "HD";
+        let server = "unknown";
+        try {
+          const urlObj = new URL(proxyUrl);
+          server = (urlObj.searchParams.get("server") || "unknown").toLowerCase();
+        } catch (e) {
+        }
+        if (server === "goodstream")
+          return null;
+        try {
+          const proxyHtml = yield (0, import_http.fetchHtml)(proxyUrl, { headers: { Referer: BASE_URL } });
+          const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+          if (!iframeMatch)
             return null;
-          try {
-            const proxyHtml = yield fetchHtml(proxyUrl, BASE_URL);
-            const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
-            if (!iframeMatch)
-              return null;
-            const embedUrl = iframeMatch[1];
-            const result = yield resolveEmbed(embedUrl, server);
-            if (!result)
-              return null;
-            const finalUrl = typeof result === "string" ? result : result.url;
-            const direct = typeof result === "object" && !!result.url;
-            if (!finalUrl || !finalUrl.startsWith("http"))
-              return null;
-            const isVimeos = server.includes("vimeos");
-            const titlePrefix = direct ? "[Directo]" : "[Web]";
-            const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-            return {
-              name: "Cuevana.gs",
-              title: `${titlePrefix} \xB7 ${server} (${lang})`,
-              url: finalUrl,
-              quality: typeof result === "object" && result.quality || quality,
-              isM3U8: typeof result === "object" && result.isM3U8 || false,
-              headers: typeof result === "object" && result.headers || {
-                "User-Agent": mobileUA,
-                "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
-                "Origin": isVimeos ? "https://vimeos.net" : void 0
-              }
-            };
-          } catch (e) {
+          const embedUrl = iframeMatch[1];
+          const result = yield resolveEmbed(embedUrl, server);
+          if (!result)
             return null;
-          }
-        });
-      });
+          const finalUrl = typeof result === "string" ? result : result.url;
+          const isDirect = typeof result === "object" && !!result.url;
+          if (!finalUrl || !finalUrl.startsWith("http"))
+            return null;
+          const isVimeos = server.includes("vimeos");
+          const titlePrefix = isDirect ? "[Directo]" : "[Web]";
+          return {
+            name: "Cuevana.gs",
+            title: `${titlePrefix} \xB7 ${server} (${lang})`,
+            url: finalUrl,
+            quality: typeof result === "object" && result.quality || quality,
+            isM3U8: typeof result === "object" && result.isM3U8 || finalUrl.includes(".m3u8"),
+            headers: typeof result === "object" && result.headers || {
+              "User-Agent": import_http.MOBILE_UA,
+              "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
+              "Origin": isVimeos ? "https://vimeos.net" : void 0
+            }
+          };
+        } catch (e) {
+          return null;
+        }
+      }));
       const results = yield Promise.all(streamPromises);
       return results.filter((s) => s !== null);
     } catch (error) {

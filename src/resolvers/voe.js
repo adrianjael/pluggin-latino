@@ -1,4 +1,4 @@
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+import { fetchHtml, DEFAULT_UA } from '../utils/http.js';
 
 function decodeBase64(input) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
@@ -15,17 +15,15 @@ function decodeBase64(input) {
  */
 export async function resolve(url) {
     try {
-        console.log(`[VOE] Resolviendo Directo: ${url}`);
+        console.log(`[VOE] Resolving: ${url}`);
         
-        const res = await fetch(url, { headers: { 'User-Agent': UA } });
-        let html = await res.text();
+        let html = await fetchHtml(url, { headers: { 'User-Agent': DEFAULT_UA } });
 
         // Manejar redirecciones internas de VOE
         if (html.includes('Redirecting') || html.length < 1500) {
             const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
             if (rm) {
-                const res2 = await fetch(rm[1], { headers: { 'User-Agent': UA } });
-                html = await res2.text();
+                html = await fetchHtml(rm[1], { headers: { 'User-Agent': DEFAULT_UA } });
             }
         }
 

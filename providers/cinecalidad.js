@@ -1,10 +1,12 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-07T18:11:20.565Z
+ * Generated: 2026-04-08T18:33:38.294Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
@@ -21,6 +23,10 @@ var __spreadValues = (a, b) => {
         __defNormalProp(a, prop, b[prop]);
     }
   return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 var __export = (target, all) => {
   for (var name in all)
@@ -64,6 +70,64 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
+// src/utils/http.js
+var require_http = __commonJS({
+  "src/utils/http.js"(exports, module2) {
+    var DEFAULT_UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+    function request(_0) {
+      return __async(this, arguments, function* (url, options = {}) {
+        const timeout = options.timeout || 15e3;
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        const headers = __spreadValues({
+          "User-Agent": options.mobile ? MOBILE_UA : DEFAULT_UA3,
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+        }, options.headers);
+        try {
+          const response = yield fetch(url, __spreadProps(__spreadValues({}, options), {
+            headers,
+            signal: controller.signal
+          }));
+          clearTimeout(id);
+          if (!response.ok && !options.ignoreErrors) {
+            console.warn(`[HTTP] Error ${response.status} en ${url}`);
+          }
+          return response;
+        } catch (error) {
+          clearTimeout(id);
+          if (error.name === "AbortError") {
+            console.error(`[HTTP] Timeout exceed (${timeout}ms) en ${url}`);
+          } else {
+            console.error(`[HTTP] Error en ${url}: ${error.message}`);
+          }
+          throw error;
+        }
+      });
+    }
+    function fetchHtml3(_0) {
+      return __async(this, arguments, function* (url, options = {}) {
+        const res = yield request(url, options);
+        return yield res.text();
+      });
+    }
+    function fetchJson2(_0) {
+      return __async(this, arguments, function* (url, options = {}) {
+        const res = yield request(url, options);
+        return yield res.json();
+      });
+    }
+    module2.exports = {
+      request,
+      fetchHtml: fetchHtml3,
+      fetchJson: fetchJson2,
+      DEFAULT_UA: DEFAULT_UA3,
+      MOBILE_UA
+    };
+  }
+});
+
 // src/cinecalidad/index.js
 var cinecalidad_exports = {};
 __export(cinecalidad_exports, {
@@ -77,7 +141,7 @@ var import_axios2 = __toESM(require("axios"));
 
 // src/resolvers/quality.js
 var import_axios = __toESM(require("axios"));
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function detectQuality(_0) {
   return __async(this, arguments, function* (url, headers = {}) {
     try {
@@ -85,7 +149,7 @@ function detectQuality(_0) {
         return "1080p";
       const { data } = yield import_axios.default.get(url, {
         timeout: 5e3,
-        headers: __spreadValues({ "User-Agent": UA }, headers),
+        headers: __spreadValues({ "User-Agent": UA2 }, headers),
         responseType: "text"
       });
       if (!data.includes("#EXT-X-STREAM-INF")) {
@@ -121,14 +185,14 @@ function detectQuality(_0) {
 }
 
 // src/resolvers/goodstream.js
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log(`[GoodStream] Resolviendo: ${embedUrl}`);
       const response = yield import_axios2.default.get(embedUrl, {
         headers: {
-          "User-Agent": UA2,
+          "User-Agent": UA3,
           "Referer": "https://goodstream.one",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         },
@@ -141,7 +205,7 @@ function resolve(embedUrl) {
         return null;
       }
       const videoUrl = match[1];
-      const refererHeaders = { "Referer": embedUrl, "Origin": "https://goodstream.one", "User-Agent": UA2 };
+      const refererHeaders = { "Referer": embedUrl, "Origin": "https://goodstream.one", "User-Agent": UA3 };
       const quality = yield detectQuality(videoUrl, refererHeaders);
       console.log(`[GoodStream] URL encontrada (${quality}): ${videoUrl.substring(0, 80)}...`);
       return { url: videoUrl, quality, headers: refererHeaders };
@@ -153,7 +217,7 @@ function resolve(embedUrl) {
 }
 
 // src/resolvers/voe.js
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var import_http = __toESM(require_http());
 function decodeBase64(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   let str = String(input).replace(/=+$/, "");
@@ -166,14 +230,12 @@ function decodeBase64(input) {
 function resolve2(url) {
   return __async(this, null, function* () {
     try {
-      console.log(`[VOE] Resolviendo Directo: ${url}`);
-      const res = yield fetch(url, { headers: { "User-Agent": UA3 } });
-      let html = yield res.text();
+      console.log(`[VOE] Resolving: ${url}`);
+      let html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
       if (html.includes("Redirecting") || html.length < 1500) {
         const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          const res2 = yield fetch(rm[1], { headers: { "User-Agent": UA3 } });
-          html = yield res2.text();
+          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
         }
       }
       const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
@@ -199,7 +261,7 @@ function resolve2(url) {
               url: data.source,
               quality: "1080p",
               isM3U8: true,
-              headers: { "User-Agent": UA3, "Referer": url }
+              headers: { "User-Agent": UA, "Referer": url }
             };
           }
         } catch (ex) {
@@ -212,7 +274,7 @@ function resolve2(url) {
           url: m3u8Match[1],
           quality: "1080p",
           isM3U8: true,
-          headers: { "User-Agent": UA3, "Referer": url }
+          headers: { "User-Agent": UA, "Referer": url }
         };
       }
       return null;
@@ -223,27 +285,30 @@ function resolve2(url) {
   });
 }
 
+// src/resolvers/filemoon.js
+var import_http2 = __toESM(require_http());
+
 // src/utils/aes-gcm.js
-var import_crypto_js = __toESM(require("crypto-js"));
+var CryptoJS = require("crypto-js");
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
     const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
+    const keyWA = CryptoJS.lib.WordArray.create(key);
     const ivCounter = new Uint8Array(16);
     ivCounter.set(iv, 0);
     ivCounter[15] = 2;
-    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
-    const decrypted = import_crypto_js.default.AES.decrypt(
-      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
+    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
+    const decrypted = CryptoJS.AES.decrypt(
+      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
       keyWA,
       {
         iv: ivWA,
-        mode: import_crypto_js.default.mode.CTR,
-        padding: import_crypto_js.default.pad.NoPadding
+        mode: CryptoJS.mode.CTR,
+        padding: CryptoJS.pad.NoPadding
       }
     );
-    return decrypted.toString(import_crypto_js.default.enc.Utf8);
+    return decrypted.toString(CryptoJS.enc.Utf8);
   } catch (e) {
     console.error("[PureJS-GCM] Error Decrypting:", e.message);
     return null;
@@ -251,7 +316,6 @@ function decryptGCM(key, iv, ciphertextWithTag) {
 }
 
 // src/resolvers/filemoon.js
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function base64UrlDecode(input) {
   let s = input.replace(/-/g, "+").replace(/_/g, "/");
   while (s.length % 4)
@@ -286,7 +350,7 @@ function decryptByse(playback) {
           console.log("[Byse] Subtle fail");
         }
       }
-      console.log("[Byse] Usando motor Pure-JS para Hermes...");
+      console.log("[Byse] Using Pure-JS motor for Hermes...");
       const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
       return decryptedStr ? JSON.parse(decryptedStr) : null;
     } catch (e) {
@@ -302,13 +366,12 @@ function resolve3(url) {
       if (!idMatch)
         return null;
       const id = idMatch[1];
-      console.log(`[Filemoon] Resolviendo Universal (v4.0): ${id}`);
+      console.log(`[Filemoon] Resolving: ${id}`);
       try {
         const hostname = new URL(url).hostname;
-        const apiRes = yield fetch(`https://${hostname}/api/videos/${id}`, {
-          headers: { "User-Agent": UA4, "Referer": url }
+        const data = yield (0, import_http2.fetchJson)(`https://${hostname}/api/videos/${id}`, {
+          headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": url }
         });
-        const data = yield apiRes.json();
         if (data.playback) {
           const decrypted = yield decryptByse(data.playback);
           if (decrypted && decrypted.sources) {
@@ -318,7 +381,7 @@ function resolve3(url) {
               quality: best.height ? `${best.height}p` : "1080p",
               isM3U8: true,
               headers: {
-                "User-Agent": UA4,
+                "User-Agent": import_http2.DEFAULT_UA,
                 "Referer": "https://arbitrarydecisions.com/",
                 "Origin": "https://arbitrarydecisions.com"
               }
@@ -328,8 +391,7 @@ function resolve3(url) {
       } catch (apiErr) {
         console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
       }
-      const res = yield fetch(url, { headers: { "User-Agent": UA4, "Referer": url } });
-      const html = yield res.text();
+      const html = yield (0, import_http2.fetchHtml)(url, { headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": url } });
       const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
       for (const match of evalMatches) {
         const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
@@ -340,7 +402,7 @@ function resolve3(url) {
             quality: "1080p",
             isM3U8: true,
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": import_http2.DEFAULT_UA,
               "Referer": "https://arbitrarydecisions.com/",
               "Origin": "https://arbitrarydecisions.com"
             }
@@ -348,7 +410,7 @@ function resolve3(url) {
       }
       return null;
     } catch (e) {
-      console.error(`[Filemoon] Error Global: ${e.message}`);
+      console.error(`[Filemoon] Global Error: ${e.message}`);
       return null;
     }
   });
@@ -356,7 +418,7 @@ function resolve3(url) {
 
 // src/resolvers/hlswish.js
 var import_axios3 = __toESM(require("axios"));
-var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpack2(p, a, c, k, e, d) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const decode = (r) => {
@@ -388,7 +450,7 @@ function resolve4(url) {
       console.log(`[HLSWish] Resolviendo: ${url}`);
       const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
       const { data: html } = yield import_axios3.default.get(targetUrl, {
-        headers: { "User-Agent": UA5, Referer: "https://embed69.org/", Origin: "https://embed69.org" },
+        headers: { "User-Agent": UA4, Referer: "https://embed69.org/", Origin: "https://embed69.org" },
         timeout: 15e3,
         maxRedirects: 5
       });
@@ -413,7 +475,7 @@ function resolve4(url) {
       }
       if (finalUrl) {
         console.log(`[HLSWish] URL encontrada: ${finalUrl.substring(0, 80)}...`);
-        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA5, Referer: baseOrigin + "/" } };
+        return { url: finalUrl, quality: "1080p", headers: { "User-Agent": UA4, Referer: baseOrigin + "/" } };
       }
       return null;
     } catch (e) {
@@ -425,7 +487,7 @@ function resolve4(url) {
 
 // src/resolvers/vimeos.js
 var import_axios4 = __toESM(require("axios"));
-var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function resolve5(embedUrl) {
   return __async(this, null, function* () {
     var _a, _b, _c, _d, _e, _f, _g;
@@ -433,7 +495,7 @@ function resolve5(embedUrl) {
       console.log(`[Vimeos] Resolviendo Universal (v2.0): ${embedUrl}`);
       const resp = yield import_axios4.default.get(embedUrl, {
         headers: {
-          "User-Agent": UA6,
+          "User-Agent": UA5,
           "Referer": "https://vimeos.net/",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         },
@@ -446,7 +508,7 @@ function resolve5(embedUrl) {
         console.log(`[Vimeos] ID Vimeo detectado: ${vimeoId}. Consultado API Config...`);
         try {
           const configRes = yield import_axios4.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
-            headers: { "User-Agent": UA6, "Referer": embedUrl }
+            headers: { "User-Agent": UA5, "Referer": embedUrl }
           });
           const config = configRes.data;
           const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
@@ -456,7 +518,7 @@ function resolve5(embedUrl) {
               url: hlsUrl,
               quality: "1080p",
               isM3U8: true,
-              headers: { "User-Agent": UA6, "Referer": "https://player.vimeo.com/" }
+              headers: { "User-Agent": UA5, "Referer": "https://player.vimeo.com/" }
             };
           }
           const progressive = (_g = (_f = config.request) == null ? void 0 : _f.files) == null ? void 0 : _g.progressive;
@@ -466,7 +528,7 @@ function resolve5(embedUrl) {
             return {
               url: best.url,
               quality: best.quality ? `${best.quality}p` : "1080p",
-              headers: { "User-Agent": UA6, "Referer": "https://player.vimeo.com/" }
+              headers: { "User-Agent": UA5, "Referer": "https://player.vimeo.com/" }
             };
           }
         } catch (apiErr) {
@@ -493,7 +555,7 @@ function resolve5(embedUrl) {
         const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
         if (m3u8Match) {
           const url = m3u8Match[1];
-          const finalHeaders = { "User-Agent": UA6, "Referer": "https://vimeos.net/" };
+          const finalHeaders = { "User-Agent": UA5, "Referer": "https://vimeos.net/" };
           return { url, quality: "1080p", isM3U8: true, headers: finalHeaders };
         }
       }
@@ -509,9 +571,9 @@ function resolve5(embedUrl) {
 // src/cinecalidad/index.js
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var HOST = "https://www.cinecalidad.vg";
-var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var HEADERS = {
-  "User-Agent": UA7,
+  "User-Agent": UA6,
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Accept-Language": "es-MX,es;q=0.9",
   "Connection": "keep-alive",

@@ -1,4 +1,5 @@
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+import { fetchHtml, fetchJson, DEFAULT_UA } from '../utils/http.js';
+import { decryptGCM } from '../utils/aes-gcm.js';
 
 /**
  * Base64Url Decode compatible con Hermes/Node
@@ -19,8 +20,6 @@ function unpack(p, a, c, k, e, d) {
     return p;
 }
 
-import { decryptGCM } from '../utils/aes-gcm.js';
-
 /**
  * Descifra el payload AES-256-GCM de la API Byse
  */
@@ -34,7 +33,6 @@ async function decryptByse(playback) {
         const iv = base64UrlDecode(playback.iv);
         const ciphertextWithTag = base64UrlDecode(playback.payload);
         
-        // Estrategia A: Subtle (Node/Browser) - Rapida
         if (typeof crypto !== 'undefined' && crypto.subtle) {
             try {
                 const cryptoKey = await crypto.subtle.importKey('raw', key, 'AES-GCM', false, ['decrypt']);
@@ -43,8 +41,7 @@ async function decryptByse(playback) {
             } catch (e) { console.log("[Byse] Subtle fail"); }
         }
 
-        // Estrategia B: Pure JS (Hermes/App) - Compatible
-        console.log("[Byse] Usando motor Pure-JS para Hermes...");
+        console.log("[Byse] Using Pure-JS motor for Hermes...");
         const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
         return decryptedStr ? JSON.parse(decryptedStr) : null;
     } catch (e) {
@@ -55,21 +52,19 @@ async function decryptByse(playback) {
 
 /**
  * Resuelve un enlace de Filemoon al streaming .m3u8 directo.
- * Version 4.0: Universal (SubtleCrypto Detection + Robust ID).
  */
 export async function resolve(url) {
     try {
         const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
         if (!idMatch) return null;
         const id = idMatch[1];
-        console.log(`[Filemoon] Resolviendo Universal (v4.0): ${id}`);
+        console.log(`[Filemoon] Resolving: ${id}`);
         
         try {
             const hostname = new URL(url).hostname;
-            const apiRes = await fetch(`https://${hostname}/api/videos/${id}`, {
-                headers: { 'User-Agent': UA, 'Referer': url }
+            const data = await fetchJson(`https://${hostname}/api/videos/${id}`, {
+                headers: { 'User-Agent': DEFAULT_UA, 'Referer': url }
             });
-            const data = await apiRes.json();
             
             if (data.playback) {
                 const decrypted = await decryptByse(data.playback);
@@ -80,7 +75,7 @@ export async function resolve(url) {
                         quality: best.height ? `${best.height}p` : '1080p',
                         isM3U8: true,
                         headers: {
-                            'User-Agent': UA,
+                            'User-Agent': DEFAULT_UA,
                             'Referer': 'https://arbitrarydecisions.com/',
                             'Origin': 'https://arbitrarydecisions.com'
                         }
@@ -92,8 +87,7 @@ export async function resolve(url) {
         }
 
         // Fallback Unpacker
-        const res = await fetch(url, { headers: { 'User-Agent': UA, 'Referer': url } });
-        const html = await res.text();
+        const html = await fetchHtml(url, { headers: { 'User-Agent': DEFAULT_UA, 'Referer': url } });
         const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
         
         for (const match of evalMatches) {
@@ -104,7 +98,7 @@ export async function resolve(url) {
                 quality: '1080p', 
                 isM3U8: true, 
                 headers: { 
-                    'User-Agent': UA, 
+                    'User-Agent': DEFAULT_UA, 
                     'Referer': 'https://arbitrarydecisions.com/',
                     'Origin': 'https://arbitrarydecisions.com'
                 } 
@@ -113,7 +107,7 @@ export async function resolve(url) {
         
         return null;
     } catch (e) {
-        console.error(`[Filemoon] Error Global: ${e.message}`);
+        console.error(`[Filemoon] Global Error: ${e.message}`);
         return null;
     }
 }

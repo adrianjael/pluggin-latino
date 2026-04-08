@@ -1,20 +1,10 @@
 import { resolve as resolveVoe } from '../resolvers/voe.js';
 import { resolve as resolveFilemoon } from '../resolvers/filemoon.js';
 import { resolve as resolveVimeos } from '../resolvers/vimeos.js';
-
 import { calculateSimilarity } from '../utils/string.js';
+import { fetchHtml, fetchJson, MOBILE_UA } from '../utils/http.js';
 
 const BASE_URL = 'https://cuevana.gs';
-const BASE_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
-    'Referer': BASE_URL,
-    'Accept-Language': 'es-ES,es;q=0.9'
-};
-
-async function fetchHtml(url, referer = BASE_URL) {
-    const res = await fetch(url, { headers: { ...BASE_HEADERS, Referer: referer } });
-    return res.text();
-}
 
 /**
  * Resolutor generico basado en extractores globales
@@ -22,30 +12,28 @@ async function fetchHtml(url, referer = BASE_URL) {
 async function resolveEmbed(embedUrl, server) {
     try {
         if (server === 'voe') {
-            const r = await resolveVoe(embedUrl);
-            return r ? r : null;
+            return await resolveVoe(embedUrl);
         }
         if (server.includes('filemoon') || server.includes('f75s')) {
-            const r = await resolveFilemoon(embedUrl);
-            return r ? r : null;
+            return await resolveFilemoon(embedUrl);
         }
         if (server === 'vimeos') {
-            const r = await resolveVimeos(embedUrl);
-            return r ? r : null;
+            return await resolveVimeos(embedUrl);
         }
         
         // Fallback para otros servidores que puedan tener m3u8 directo en el HTML
-        const html = await fetchHtml(embedUrl, embedUrl);
+        const html = await fetchHtml(embedUrl, { headers: { Referer: embedUrl } });
         const m = html.match(/https?:\/\/[^"'\s\\]+?\.m3u8[^"'\s\\]*/i);
         return m ? m[0].replace(/\\/g, '') : null;
-    } catch (e) { return null; }
+    } catch (e) { 
+        return null; 
+    }
 }
 
 async function getTmdbInfo(tmdbId, mediaType) {
     try {
         const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-        const res = await fetch(url, { headers: { 'User-Agent': BASE_HEADERS['User-Agent'] } });
-        const html = await res.text();
+        const html = await fetchHtml(url);
         
         let title = "";
         let year = "";
@@ -57,7 +45,9 @@ async function getTmdbInfo(tmdbId, mediaType) {
         if (yearMatch) year = yearMatch[1];
         
         return { title, year };
-    } catch (e) { }
+    } catch (e) { 
+        console.warn(`[Cuevana.gs] Failed to fetch TMDB info: ${e.message}`);
+    }
     return { title: null, year: "" };
 }
 
@@ -65,27 +55,33 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
     const isMovie = mediaType === 'movie';
     const targetType = isMovie ? 'movies' : 'tvshows';
     
-    console.log(`[Cuevana.gs v2.0] Extracting: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
+    console.log(`[Cuevana.gs] Extracting: ${providedTitle || tmdbId} (${mediaType})`);
 
     try {
         const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
-        let searchTitle = providedTitle || tmdbInfo.title;
+        const searchTitle = providedTitle || tmdbInfo.title;
         const year = tmdbInfo.year;
+
+        if (!searchTitle) {
+            console.error('[Cuevana.gs] No search title found.');
+            return [];
+        }
 
         async function performSearch(query) {
             console.log(`[Cuevana.gs] Searching: "${query}"`);
             const encodedQuery = encodeURIComponent(query);
             const searchUrl = `${BASE_URL}/wp-api/v1/search?postType=any&q=${encodedQuery}&postsPerPage=10`;
             try {
-                const searchRes = await fetch(searchUrl, { headers: BASE_HEADERS });
-                return await searchRes.json();
-            } catch (err) { return { error: true }; }
+                return await fetchJson(searchUrl, { headers: { Referer: BASE_URL } });
+            } catch (err) { 
+                return { error: true }; 
+            }
         }
 
+        // Intento 1: Título + Año
         let searchJson = await performSearch(`${searchTitle} ${year}`);
-        if ((searchJson.error || !searchJson.data?.posts?.length) && providedTitle && tmdbInfo.title) {
-            searchJson = await performSearch(`${tmdbInfo.title} ${year}`);
-        }
+        
+        // Fallbacks si falla el primer intento
         if ((searchJson.error || !searchJson.data?.posts?.length) && tmdbInfo.title) {
             searchJson = await performSearch(tmdbInfo.title);
         }
@@ -93,7 +89,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             searchJson = await performSearch(searchTitle);
         }
 
-        if (searchJson.error || !searchJson.data || !searchJson.data.posts || searchJson.data.posts.length === 0) {
+        if (searchJson.error || !searchJson.data?.posts?.length) {
             console.log(`[Cuevana.gs] No results found.`);
             return [];
         }
@@ -103,39 +99,46 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         const matches = posts
             .filter(p => p.type === targetType)
             .map(p => ({ ...p, score: calculateSimilarity(targetTitle, p.title) }))
-            .filter(p => p.score >= 0.5)
+            .filter(p => p.score >= 0.45)
             .sort((a, b) => b.score - a.score);
 
         if (matches.length === 0) {
-            console.log(`[Cuevana.gs] No high-quality matches found (Similarity < 0.5). Top results: ${posts.map(p => p.title).join(', ')}`);
+            console.log(`[Cuevana.gs] No high-quality matches found.`);
             return [];
         }
 
         let post = matches[0];
-
         let postId = post._id;
+
+        // Búsqueda de episodio para Series
         if (!isMovie && season && episode) {
             try {
                 const episodesUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${postId}&season=${season}&postsPerPage=100`;
-                const epRes = await fetch(episodesUrl, { headers: BASE_HEADERS });
-                const epJson = await epRes.json();
-                if (!epJson.error && epJson.data && epJson.data.posts) {
+                const epJson = await fetchJson(episodesUrl, { headers: { Referer: BASE_URL } });
+                if (!epJson.error && epJson.data?.posts) {
                     const epMatch = epJson.data.posts.find(e => parseInt(e.episode_number) === parseInt(episode));
                     if (epMatch) postId = epMatch._id;
+                    else {
+                        console.warn(`[Cuevana.gs] Episode S${season}E${episode} not found.`);
+                        return [];
+                    }
                 }
-            } catch (err) {}
+            } catch (err) {
+                console.error(`[Cuevana.gs] Error fetching episodes: ${err.message}`);
+            }
         }
 
-        let playerUrl = `${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`;
-        const playerRes = await fetch(playerUrl, { headers: BASE_HEADERS });
-        const playerJson = await playerRes.json();
+        // Obtener Embeds
+        const playerUrl = `${BASE_URL}/wp-api/v1/player?postId=${postId}&demo=0`;
+        const playerJson = await fetchJson(playerUrl, { headers: { Referer: BASE_URL } });
 
-        if (playerJson.error || !playerJson.data || !playerJson.data.embeds || playerJson.data.embeds.length === 0) {
+        if (playerJson.error || !playerJson.data?.embeds?.length) {
+            console.log('[Cuevana.gs] No embeds found.');
             return [];
         }
 
         const embeds = playerJson.data.embeds;
-        const streamPromises = embeds.map(async function (embed) {
+        const streamPromises = embeds.map(async (embed) => {
             const proxyUrl = embed.url;
             const lang = embed.lang || 'Latino';
             const quality = embed.quality || 'HD';
@@ -149,7 +152,7 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
             if (server === 'goodstream') return null;
 
             try {
-                const proxyHtml = await fetchHtml(proxyUrl, BASE_URL);
+                const proxyHtml = await fetchHtml(proxyUrl, { headers: { Referer: BASE_URL } });
                 const iframeMatch = proxyHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
                 if (!iframeMatch) return null;
                 const embedUrl = iframeMatch[1];
@@ -158,22 +161,21 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 if (!result) return null;
 
                 const finalUrl = typeof result === 'string' ? result : result.url;
-                const direct = typeof result === 'object' && !!result.url;
+                const isDirect = typeof result === 'object' && !!result.url;
 
                 if (!finalUrl || !finalUrl.startsWith('http')) return null;
 
                 const isVimeos = server.includes('vimeos');
-                const titlePrefix = direct ? "[Directo]" : "[Web]";
-                const mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+                const titlePrefix = isDirect ? "[Directo]" : "[Web]";
 
                 return {
                     name: "Cuevana.gs",
                     title: `${titlePrefix} \xB7 ${server} (${lang})`,
                     url: finalUrl,
                     quality: (typeof result === 'object' && result.quality) || quality,
-                    isM3U8: (typeof result === 'object' && result.isM3U8) || false,
+                    isM3U8: (typeof result === 'object' && result.isM3U8) || finalUrl.includes('.m3u8'),
                     headers: (typeof result === 'object' && result.headers) || {
-                        "User-Agent": mobileUA,
+                        "User-Agent": MOBILE_UA,
                         "Referer": isVimeos ? "https://vimeos.net/" : embedUrl,
                         "Origin": isVimeos ? "https://vimeos.net" : undefined
                     }
