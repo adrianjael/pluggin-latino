@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-08T22:08:23.317Z
+ * Generated: 2026-04-08T22:14:02.241Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -275,8 +275,18 @@ function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const typePath = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      const url = `https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-      const data = yield (0, import_http.fetchJson)(url);
+      let data = {};
+      if (String(tmdbId).startsWith("tt")) {
+        const url = `https://api.themoviedb.org/3/find/${tmdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=es-MX`;
+        const findData = yield (0, import_http.fetchJson)(url);
+        if (findData.movie_results && findData.movie_results.length > 0)
+          data = findData.movie_results[0];
+        else if (findData.tv_results && findData.tv_results.length > 0)
+          data = findData.tv_results[0];
+      } else {
+        const url = `https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
+        data = yield (0, import_http.fetchJson)(url);
+      }
       return {
         title: data.title || data.name || "",
         originalTitle: data.original_title || data.original_name || data.title || data.name || ""

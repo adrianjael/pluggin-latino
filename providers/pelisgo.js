@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-08T22:08:23.301Z
+ * Generated: 2026-04-08T22:14:02.226Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -680,15 +680,28 @@ function cleanTitle(str) {
 }
 function getTmdbMetadata(tmdbId, type) {
   return __async(this, null, function* () {
-    var _a;
     try {
       const typePath = type === "tv" || type === "series" ? "tv" : "movie";
-      const res = yield fetch(`https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_KEY}&language=es-MX&append_to_response=external_ids`);
-      const data = yield res.json();
+      let data = {};
+      let externalIds = null;
+      if (String(tmdbId).startsWith("tt")) {
+        const url = `https://api.themoviedb.org/3/find/${tmdbId}?api_key=${TMDB_KEY}&external_source=imdb_id&language=es-MX`;
+        const res = yield fetch(url);
+        const findData = yield res.json();
+        if (findData.movie_results && findData.movie_results.length > 0)
+          data = findData.movie_results[0];
+        else if (findData.tv_results && findData.tv_results.length > 0)
+          data = findData.tv_results[0];
+        externalIds = { imdb_id: tmdbId };
+      } else {
+        const res = yield fetch(`https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_KEY}&language=es-MX&append_to_response=external_ids`);
+        data = yield res.json();
+        externalIds = data.external_ids || null;
+      }
       return {
         title: data.title || data.name || null,
         originalTitle: data.original_title || data.original_name || null,
-        imdbId: ((_a = data.external_ids) == null ? void 0 : _a.imdb_id) || null,
+        imdbId: (externalIds == null ? void 0 : externalIds.imdb_id) || null,
         year: (data.release_date || data.first_air_date || "").split("-")[0]
       };
     } catch (e) {
