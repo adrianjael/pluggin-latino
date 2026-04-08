@@ -1,35 +1,41 @@
 # Dependencias
 node_modules/
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Compilación y builds
-# Usamos providers/* para que Git pueda procesar las excepciones (!)
-providers/*
-!providers/pelisplus.js
-!providers/hackstore2.js
-!providers/pelispanda.js
-!providers/embed69.js
-!providers/cuevana_gs.js
-!providers/cinecalidad.js
-!providers/lamovie.js
-!providers/seriesmetro.js
-!providers/xupalace.js
-!providers/fuegocine.js
-!providers/playhubmax.js
-!providers/cinemacity.js
-!providers/pelisgo.js
+# Código Fuente (Solo desarrollo local)
+src/
+resolvers/
+
+# Scripts de Construcción y Utilidades de Desarrollo
+build.js
+bundle.js
+convert_manifest.js
+server.js
+find-action.js
+check_downloads.js
+get_downloads.js
+emergency_manifest.js
+migrate_to_axios.js
+inspect_*.js
+debug_*.js
+test_*.js
+
+# Configuración de Proyecto (Local)
+package.json
+package-lock.json
+*.json
+!manifest.json
+
+# Compilación y builds (Necesarios para Nuvio)
+/providers/*.js
 
 # Archivos de sistema
 .DS_Store
 Thumbs.db
 
-# Temporales, pruebas y depuración
+# Temporales y depuración
 *.log
 /tmp/
-test_*.js
-check-sites.js
 *.html
 *.webp
 *.png
