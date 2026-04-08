@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-08T23:16:29.390Z
+ * Generated: 2026-04-08T23:22:08.438Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -180,24 +180,36 @@ var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
-      if (!String(tmdbId).startsWith("tt")) {
-        return { title: tmdbId, originalTitle: tmdbId };
-      }
-      const url = `https://api.themoviedb.org/3/find/${tmdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=es-MX`;
-      const res = yield fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-      if (!res.ok)
-        throw new Error("TMDB Error");
-      const findData = yield res.json();
-      if (mediaType === "movie" && findData.movie_results && findData.movie_results.length > 0) {
-        return {
-          title: findData.movie_results[0].title || "",
-          originalTitle: findData.movie_results[0].original_title || ""
-        };
-      } else if (mediaType === "tv" && findData.tv_results && findData.tv_results.length > 0) {
-        return {
-          title: findData.tv_results[0].name || "",
-          originalTitle: findData.tv_results[0].original_name || ""
-        };
+      let typePath = mediaType === "tv" ? "tv" : "movie";
+      if (String(tmdbId).startsWith("tt")) {
+        const url = `https://api.themoviedb.org/3/find/${tmdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=es-MX`;
+        const res = yield fetch(url);
+        const findData = yield res.json();
+        if (mediaType === "movie" && findData.movie_results && findData.movie_results.length > 0) {
+          return {
+            title: findData.movie_results[0].title || "",
+            originalTitle: findData.movie_results[0].original_title || ""
+          };
+        } else if (mediaType === "tv" && findData.tv_results && findData.tv_results.length > 0) {
+          return {
+            title: findData.tv_results[0].name || "",
+            originalTitle: findData.tv_results[0].original_name || ""
+          };
+        }
+      } else {
+        const res = yield fetch(`https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
+        const data = yield res.json();
+        if (mediaType === "movie") {
+          return {
+            title: data.title || "",
+            originalTitle: data.original_title || data.title || ""
+          };
+        } else {
+          return {
+            title: data.name || "",
+            originalTitle: data.original_name || data.name || ""
+          };
+        }
       }
     } catch (error) {
       return null;
