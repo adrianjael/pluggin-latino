@@ -1,45 +1,16 @@
-# Dependencias
-node_modules/
-npm-debug.log*
+# Ignorar TODO por defecto
+/*
 
-# Código Fuente (Solo desarrollo local)
-src/
-resolvers/
-
-# Scripts de Construcción y Utilidades de Desarrollo
-build.js
-bundle.js
-convert_manifest.js
-server.js
-find-action.js
-check_downloads.js
-get_downloads.js
-emergency_manifest.js
-migrate_to_axios.js
-inspect_*.js
-debug_*.js
-test_*.js
-
-# Configuración de Proyecto (Local)
-package.json
-package-lock.json
-*.json
+# Excepciones (Archivos que SÍ queremos en GitHub)
 !manifest.json
+!providers/
+!providers/*.js
+!README.md
+!.gitignore
+!.gitattributes
 
-# Compilación y builds (Necesarios para Nuvio)
-/providers/*.js
-
-# Archivos de sistema
+# Ignorar archivos de sistema y temporales (incluso si están en carpetas permitidas)
 .DS_Store
 Thumbs.db
-
-# Temporales y depuración
 *.log
 /tmp/
-*.html
-*.webp
-*.png
-
-# Entorno
-.env
-.env.local
