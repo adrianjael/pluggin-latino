@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-08T20:36:58.672Z
+ * Generated: 2026-04-08T20:43:47.728Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -605,9 +605,11 @@ function resolve5(embedUrl) {
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
-var RESOLVER_TIMEOUT = 4e3;
+var RESOLVER_TIMEOUT = 1e4;
 var RESOLVER_MAP = {
   "voe.sx": resolve,
+  "voe-sx.com": resolve,
+  "voex.sx": resolve,
   "hglink.to": resolve3,
   // streamwish
   "streamwish.com": resolve3,
@@ -622,6 +624,12 @@ var RESOLVER_MAP = {
   "dintezuvio.com": resolve4,
   // vidhide
   "vidhide.com": resolve4,
+  "vidhide.pro": resolve4,
+  "vadisov.com": resolve4,
+  "callistanise.com": resolve4,
+  "amusemre.com": resolve4,
+  "acek-cdn.xyz": resolve4,
+  "vedonm.com": resolve4,
   "goodstream.one": resolve5
 };
 var SERVER_LABELS = {
