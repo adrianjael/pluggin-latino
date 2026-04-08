@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-08T19:15:48.901Z
+ * Generated: 2026-04-08T19:18:06.832Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -72,9 +72,6 @@ var require_http = __commonJS({
     var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
     function request(_0) {
       return __async(this, arguments, function* (url, options = {}) {
-        const timeout = options.timeout || 15e3;
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
         const headers = __spreadValues({
           "User-Agent": options.mobile ? MOBILE_UA : DEFAULT_UA7,
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -82,21 +79,14 @@ var require_http = __commonJS({
         }, options.headers);
         try {
           const response = yield fetch(url, __spreadProps(__spreadValues({}, options), {
-            headers,
-            signal: controller.signal
+            headers
           }));
-          clearTimeout(id);
           if (!response.ok && !options.ignoreErrors) {
             console.warn(`[HTTP] Error ${response.status} en ${url}`);
           }
           return response;
         } catch (error) {
-          clearTimeout(id);
-          if (error.name === "AbortError") {
-            console.error(`[HTTP] Timeout exceed (${timeout}ms) en ${url}`);
-          } else {
-            console.error(`[HTTP] Error en ${url}: ${error.message}`);
-          }
+          console.error(`[HTTP] Error en ${url}: ${error.message}`);
           throw error;
         }
       });
