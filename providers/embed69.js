@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-08T18:56:26.021Z
+ * Generated: 2026-04-08T19:03:40.434Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -138,17 +138,21 @@ module.exports = __toCommonJS(embed69_exports);
 // src/embed69/extractor.js
 var import_http6 = __toESM(require_http());
 
-// src/resolvers/voe.js
-var import_http = __toESM(require_http());
-function decodeBase64(input) {
+// src/utils/string.js
+function base64Decode(input) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   let str = String(input).replace(/=+$/, "");
   let output = "";
+  if (str.length % 4 === 1)
+    throw new Error("Base64 invalido");
   for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
     buffer = chars.indexOf(buffer);
   }
   return output;
 }
+
+// src/resolvers/voe.js
+var import_http = __toESM(require_http());
 function resolve(url) {
   return __async(this, null, function* () {
     try {
@@ -171,12 +175,12 @@ function resolve(url) {
           const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
           for (const n of noise)
             rot13 = rot13.split(n).join("");
-          let b64_1 = decodeBase64(rot13);
+          let b64_1 = base64Decode(rot13);
           let shifted = "";
           for (let i = 0; i < b64_1.length; i++)
             shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
           let reversed = shifted.split("").reverse().join("");
-          let data = JSON.parse(decodeBase64(reversed));
+          let data = JSON.parse(base64Decode(reversed));
           if (data && data.source) {
             console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
             return {
@@ -560,13 +564,10 @@ var RESOLVER_MAP = {
   "filemoon.to": resolve2,
   "moonembed.pro": resolve2,
   "moonalu.com": resolve2,
-  // Nuevo alias Filemoon
   "dintezuvio.com": resolve4,
   "vidhide.com": resolve4,
   "minochinos.com": resolve4,
-  // Nuevo alias Vidhide
   "lvturbo.com": resolve4,
-  // Nuevo alias Vidhide
   "goodstream.one": resolve5
 };
 var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
@@ -577,7 +578,7 @@ function decodeJwtPayload(token) {
       return null;
     let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     payload += "=".repeat((4 - payload.length % 4) % 4);
-    const decoded = atob(payload);
+    const decoded = base64Decode(payload);
     return JSON.parse(decoded);
   } catch (e) {
     return null;
@@ -681,9 +682,13 @@ function extract(tmdbId, mediaType, season, episode) {
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
-      return yield extract(tmdbId, mediaType, season, episode);
+      console.log(`[Embed69] Buscando streams para TMDB:${tmdbId} (${mediaType})...`);
+      const results = yield extract(tmdbId, mediaType, season, episode);
+      console.log(`[Embed69] B\xFAsqueda finalizada. Resultados: ${results.length}`);
+      return results;
     } catch (e) {
-      console.error(`[Embed69] Critical error: ${e.message}`);
+      console.error(`[Embed69] ERROR CR\xCDTICO: ${e.message}`);
+      console.error(e.stack);
       return [];
     }
   });
