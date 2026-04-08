@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-08T23:22:08.438Z
+ * Generated: 2026-04-08T23:29:03.425Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -363,7 +363,8 @@ function extractStreams(tmdbId, mediaType, season, episode) {
         const cleanServerName = res.serverName.replace(/\s*\(.*?\)\s*/g, "").trim();
         return {
           name: "PelisPlusHD",
-          title: `${cleanServerName} (${res.language.includes("Latino") ? "Latino" : "Espa\xF1ol"}) ${movieQuality}`,
+          title: `${movieQuality} \u2713
+${cleanServerName} - ${res.language.includes("Latino") ? "Latino" : "Espa\xF1ol"}`,
           url: finalUrl,
           quality: movieQuality,
           headers: {
