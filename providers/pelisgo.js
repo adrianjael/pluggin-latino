@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-08T21:48:21.589Z
+ * Generated: 2026-04-08T21:57:18.017Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -678,13 +678,19 @@ function cleanTitle(str) {
     return "";
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim();
 }
-function getSpanishTitle(tmdbId, type) {
+function getTmdbMetadata(tmdbId, type) {
   return __async(this, null, function* () {
+    var _a;
     try {
-      const url = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_KEY}&language=es-MX`;
-      const res = yield fetch(url);
+      const typePath = type === "tv" || type === "series" ? "tv" : "movie";
+      const res = yield fetch(`https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_KEY}&language=es-MX&append_to_response=external_ids`);
       const data = yield res.json();
-      return data.title || data.name || null;
+      return {
+        title: data.title || data.name || null,
+        originalTitle: data.original_title || data.original_name || null,
+        imdbId: ((_a = data.external_ids) == null ? void 0 : _a.imdb_id) || null,
+        year: (data.release_date || data.first_air_date || "").split("-")[0]
+      };
     } catch (e) {
       return null;
     }
@@ -836,35 +842,51 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
       const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      console.log(`[PelisGo v1.7.0] Scann: "${title}" (${type}) tmdbId: ${tmdbId}`);
-      let paths = yield pelisgoSearch(title, type);
-      if (paths.length === 0 && tmdbId) {
-        console.log(`[PelisGo] Reintentando con t\xEDtulo oficial de TMDB...`);
-        const tmdbType = type === "tv" ? "tv" : "movie";
-        const officialTitle = yield getSpanishTitle(tmdbId, tmdbType);
-        if (officialTitle && officialTitle !== title) {
-          console.log(`[PelisGo] Nombre detectado: "${officialTitle}"`);
-          paths = yield pelisgoSearch(officialTitle, type);
+      const meta = yield getTmdbMetadata(tmdbId, type);
+      console.log(`[PelisGo] Buscando: "${title}" (TMDB: ${tmdbId})`);
+      const searchQueries = /* @__PURE__ */ new Set();
+      if (title)
+        searchQueries.add(title);
+      if (meta == null ? void 0 : meta.title)
+        searchQueries.add(meta.title);
+      if (meta == null ? void 0 : meta.originalTitle)
+        searchQueries.add(meta.originalTitle);
+      let bestPath = null;
+      for (const query of searchQueries) {
+        console.log(`[PelisGo] Intento de b\xFAsqueda: "${query}"`);
+        const paths = yield pelisgoSearch(query, type);
+        for (const path of paths) {
+          const resultSlug = path.split("/").pop() || "";
+          const similarity = calculateSimilarity(query, resultSlug.replace(/-/g, " "));
+          if (similarity > 0.6) {
+            bestPath = path;
+            break;
+          }
+          console.log(`[PelisGo] Validando "${resultSlug}" por ID...`);
+          const tempHtml = yield fetchText(`${BASE}${path}`);
+          if ((meta == null ? void 0 : meta.imdbId) && tempHtml.includes(meta.imdbId)) {
+            console.log(`[PelisGo] \u2713 Coincidencia confirmada por IMDb ID: ${meta.imdbId}`);
+            bestPath = path;
+            break;
+          }
         }
+        if (bestPath)
+          break;
       }
-      if (paths.length === 0)
-        return [];
-      const bestMatch = paths[0];
-      const resultSlug = bestMatch.split("/").pop() || "";
-      const similarity = calculateSimilarity(title, resultSlug.replace(/-/g, " "));
-      console.log(`[PelisGo] Mejor coincidencia: "${resultSlug}" (Similitud: ${similarity.toFixed(2)})`);
-      if (similarity < 0.5) {
-        console.log(`[PelisGo] Similitud insuficiente (${similarity.toFixed(2)} < 0.5). Descartando resultado.`);
+      if (!bestPath) {
+        console.log("[PelisGo] No se encontr\xF3 ninguna coincidencia v\xE1lida.");
         return [];
       }
-      const slug = resultSlug;
+      const slug = bestPath.split("/").pop();
       const pageUrl = type === "movie" ? `${BASE}/movies/${slug}` : `${BASE}/series/${slug}/temporada/${season || 1}/episodio/${episode || 1}`;
+      console.log(`[PelisGo] Cargando p\xE1gina final: ${pageUrl}`);
       const html = yield fetchText(pageUrl);
       if (!html)
         return [];
       const onlineStreams = yield getOnlineStreams(html);
       return yield finalizeStreams(onlineStreams, "PelisGo");
     } catch (e) {
+      console.error(`[PelisGo] Error en getStreams: ${e.message}`);
       return [];
     }
   });
