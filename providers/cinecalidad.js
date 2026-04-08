@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-08T23:36:31.654Z
+ * Generated: 2026-04-08T23:39:47.032Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -611,7 +611,7 @@ function resolve3(url) {
 
 // src/resolvers/hlswish.js
 var import_axios4 = __toESM(require("axios"));
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackEval(payload, radix, symtab) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const unbase = (str) => {
@@ -631,60 +631,77 @@ function unpackEval(payload, radix, symtab) {
     return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
   });
 }
-var DOMAIN_MAP = {
-  "hglink.to": "vibuxer.com"
-};
 function resolve4(url) {
   return __async(this, null, function* () {
     try {
       let targetUrl = url;
-      for (const [old, replacement] of Object.entries(DOMAIN_MAP)) {
-        if (targetUrl.includes(old)) {
-          targetUrl = targetUrl.replace(old, replacement);
-          break;
+      const rawId = url.split("/").pop();
+      const mirrors = [
+        targetUrl,
+        `https://embedwish.com/e/${rawId}`,
+        `https://hglamioz.com/e/${rawId}`,
+        `https://awish.pro/e/${rawId}`,
+        `https://strwish.com/e/${rawId}`
+      ];
+      let html = "";
+      let usedUrl = targetUrl;
+      for (const mirror of mirrors) {
+        try {
+          console.log(`[StreamWish] Probando espejo: ${mirror}`);
+          const response = yield import_axios4.default.get(mirror, {
+            headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" },
+            timeout: 8e3
+          });
+          html = response.data;
+          usedUrl = mirror;
+          if (!html.includes("Page is loading") && (html.includes("eval(function") || html.includes(".m3u8"))) {
+            break;
+          }
+        } catch (mirrorErr) {
+          continue;
         }
       }
-      console.log(`[HLSWish] Resolviendo: ${url}`);
-      const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
-      const { data: html } = yield import_axios4.default.get(targetUrl, {
-        headers: {
-          "User-Agent": UA4,
-          "Referer": "https://embed69.org/",
-          "Origin": "https://embed69.org"
-        },
-        timeout: 15e3,
-        maxRedirects: 5
-      });
+      if (!html)
+        return null;
+      const baseOrigin = (usedUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
       let finalUrl = null;
       const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
       if (fileMatch) {
         finalUrl = fileMatch[1];
-        if (finalUrl.startsWith("/"))
-          finalUrl = baseOrigin + finalUrl;
       }
       if (!finalUrl) {
         const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
         if (packedMatch) {
           const unpacked = unpackEval(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
-          const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);
+          const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i) || unpacked.match(/https?:\/\/[^"' \t\n\r]+\.m3u8[^"' \t\n\r]*/i);
           if (m3u8Match) {
-            finalUrl = m3u8Match[1];
-            if (finalUrl.startsWith("/"))
-              finalUrl = baseOrigin + finalUrl;
+            finalUrl = m3u8Match[1] || m3u8Match[0];
           }
         }
       }
+      if (!finalUrl) {
+        const rawMatch = html.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
+        if (rawMatch)
+          finalUrl = rawMatch[0];
+      }
       if (finalUrl) {
-        console.log(`[HLSWish] URL encontrada: ${finalUrl.substring(0, 80)}...`);
+        if (finalUrl.startsWith("/"))
+          finalUrl = baseOrigin + finalUrl;
+        finalUrl = finalUrl.replace(/\\/g, "");
+        console.log(`[StreamWish] URL resuelta satisfactoriamente`);
         return {
           url: finalUrl,
-          quality: "1080p",
-          headers: { "User-Agent": UA4, "Referer": baseOrigin + "/" }
+          quality: "HD",
+          headers: {
+            "User-Agent": UA4,
+            "Referer": baseOrigin + "/",
+            "Origin": baseOrigin
+          }
         };
       }
       return null;
     } catch (e) {
-      console.log(`[HLSWish] Error: ${e.message}`);
+      console.log(`[StreamWish] Error cr\xEDtico: ${e.message}`);
       return null;
     }
   });
