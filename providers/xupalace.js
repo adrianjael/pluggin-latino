@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-08T22:14:02.260Z
+ * Generated: 2026-04-08T22:29:30.242Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -73,6 +73,7 @@ var __async = (__this, __arguments, generator) => {
 // src/utils/http.js
 var require_http = __commonJS({
   "src/utils/http.js"(exports, module2) {
+    var import_axios5 = __toESM(require("axios"));
     var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
     function request(url, options) {
@@ -84,12 +85,28 @@ var require_http = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var fetchOptions = Object.assign({}, opt, { headers });
-          var response = yield fetch(url, fetchOptions);
-          if (!response.ok && !opt.ignoreErrors) {
+          var requestOptions = Object.assign({}, opt, {
+            headers,
+            timeout: opt.timeout || 5e3,
+            responseType: opt.responseType || "text",
+            validateStatus: function(status) {
+              return status >= 200 && status < 600;
+            }
+          });
+          var response = yield import_axios5.default.get(url, requestOptions);
+          if (response.status >= 400 && !opt.ignoreErrors) {
             console.warn("[HTTP] Error " + response.status + " en " + url);
           }
-          return response;
+          return {
+            ok: response.status >= 200 && response.status < 300,
+            status: response.status,
+            text: () => __async(this, null, function* () {
+              return response.data;
+            }),
+            json: () => __async(this, null, function* () {
+              return typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            })
+          };
         } catch (error) {
           console.error("[HTTP] Error en " + url + ": " + error.message);
           throw error;
