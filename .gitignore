@@ -4,12 +4,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Carpetas locales de desarrollo
-src/
-build.js
-server.js
-package*.json
-
 # Compilación y builds
 # Usamos providers/* para que Git pueda procesar las excepciones (!)
 providers/*
@@ -26,7 +20,6 @@ providers/*
 !providers/playhubmax.js
 !providers/cinemacity.js
 !providers/pelisgo.js
-!providers/pelispedia.js
 
 # Archivos de sistema
 .DS_Store
@@ -36,33 +29,11 @@ Thumbs.db
 *.log
 /tmp/
 test_*.js
-test-*.js
-debug-*.js
-debug_*.js
-inspect_*.js
-test.js
-test2.js
-get_downloads.js
-parse_har.js
-find-action.js
-check_downloads.js
-inspect_series.js
-inspect_vimeos.js
-inspect_boda.js
 check-sites.js
 *.html
 *.webp
 *.png
 
-# Archivos de datos locales
-boda_buzz.json
-bundle.js
-testpuppeteer/
-
-# Documentación interna
-HOW_TO_ADD_PROVIDER.md
-
 # Entorno
 .env
 .env.local
-*.mjs
