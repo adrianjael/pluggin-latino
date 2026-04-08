@@ -1,5 +1,596 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-08T21:17:14.952Z
+ * Generated: 2026-04-08T21:34:13.211Z
  */
-var B=Object.create;var S=Object.defineProperty;var F=Object.getOwnPropertyDescriptor;var J=Object.getOwnPropertyNames;var X=Object.getPrototypeOf,Z=Object.prototype.hasOwnProperty;var j=(t,e)=>()=>(e||t((e={exports:{}}).exports,e),e.exports),Y=(t,e)=>{for(var r in e)S(t,r,{get:e[r],enumerable:!0})},O=(t,e,r,s)=>{if(e&&typeof e=="object"||typeof e=="function")for(let a of J(e))!Z.call(t,a)&&a!==r&&S(t,a,{get:()=>e[a],enumerable:!(s=F(e,a))||s.enumerable});return t};var A=(t,e,r)=>(r=t!=null?B(X(t)):{},O(e||!t||!t.__esModule?S(r,"default",{value:t,enumerable:!0}):r,t)),Q=t=>O(S({},"__esModule",{value:!0}),t);var p=(t,e,r)=>new Promise((s,a)=>{var o=c=>{try{i(r.next(c))}catch(l){a(l)}},n=c=>{try{i(r.throw(c))}catch(l){a(l)}},i=c=>c.done?s(c.value):Promise.resolve(c.value).then(o,n);i((r=r.apply(t,e)).next())});var _=j((Ue,T)=>{var N="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",z="Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";function M(t,e){return p(this,null,function*(){var r=e||{},s=Object.assign({"User-Agent":r.mobile?z:N,Accept:"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8","Accept-Language":"es-MX,es;q=0.9,en;q=0.8"},r.headers);try{var a=Object.assign({},r,{headers:s}),o=yield fetch(t,a);return!o.ok&&!r.ignoreErrors&&console.warn("[HTTP] Error "+o.status+" en "+t),o}catch(n){throw console.error("[HTTP] Error en "+t+": "+n.message),n}})}function ae(t,e){return p(this,null,function*(){var r=yield M(t,e);return yield r.text()})}function oe(t,e){return p(this,null,function*(){var r=yield M(t,e);return yield r.json()})}T.exports={request:M,fetchHtml:ae,fetchJson:oe,DEFAULT_UA:N,MOBILE_UA:z}});var he={};Y(he,{getStreams:()=>de});module.exports=Q(he);var W=A(require("axios"));var L=A(require("axios"));var C="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";function ee(t,e,r){let s="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",a=o=>{let n=0;for(let i=0;i<o.length;i++){let c=s.indexOf(o[i]);if(c===-1)return NaN;n=n*e+c}return n};return t.replace(/\b([0-9a-zA-Z]+)\b/g,o=>{let n=a(o);return isNaN(n)||n>=r.length?o:r[n]&&r[n]!==""?r[n]:o})}var te={"hglink.to":"vibuxer.com"};function k(t){return p(this,null,function*(){try{let e=t;for(let[n,i]of Object.entries(te))if(e.includes(n)){e=e.replace(n,i);break}console.log(`[HLSWish] Resolviendo: ${t}`);let r=(e.match(/^(https?:\/\/[^/]+)/)||[])[1]||"https://hlswish.com",{data:s}=yield L.default.get(e,{headers:{"User-Agent":C,Referer:"https://embed69.org/",Origin:"https://embed69.org"},timeout:15e3,maxRedirects:5}),a=null,o=s.match(/file\s*:\s*["']([^"']+)["']/i);if(o&&(a=o[1],a.startsWith("/")&&(a=r+a)),!a){let n=s.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);if(n){let c=ee(n[1],parseInt(n[2]),n[4].split("|")).match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);c&&(a=c[1],a.startsWith("/")&&(a=r+a))}}return a?(console.log(`[HLSWish] URL encontrada: ${a.substring(0,80)}...`),{url:a,quality:"1080p",headers:{"User-Agent":C,Referer:r+"/"}}):null}catch(e){return console.log(`[HLSWish] Error: ${e.message}`),null}})}var m=A(require("crypto-js"));function $(t,e,r){try{let a=r.slice(0,-16),o=m.default.lib.WordArray.create(t),n=new Uint8Array(16);n.set(e,0),n[15]=2;let i=m.default.lib.WordArray.create(n);return m.default.AES.decrypt({ciphertext:m.default.lib.WordArray.create(a)},o,{iv:i,mode:m.default.mode.CTR,padding:m.default.pad.NoPadding}).toString(m.default.enc.Utf8)}catch(s){return console.error("[PureJS-GCM] Error Decrypting:",s.message),null}}function w(t){var e="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",r=String(t).replace(/=+$/,""),s="";if(r.length%4===1)throw new Error("Base64 invalido");for(var a=0,o,n,i=0;n=r.charAt(i++);)n=e.indexOf(n),~n&&(o=a%4?o*64+n:n,a++%4&&(s+=String.fromCharCode(255&o>>(-2*a&6))));return s}function H(t){for(var e="",r=0;r<t.length;){var s=t[r++];s<128?e+=String.fromCharCode(s):s>191&&s<224?e+=String.fromCharCode((s&31)<<6|t[r++]&63):e+=String.fromCharCode((s&15)<<12|(t[r++]&63)<<6|t[r++]&63)}return e}var x="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";function E(t){let e=t.replace(/-/g,"+").replace(/_/g,"/");for(;e.length%4;)e+="=";let r=w(e);return new Uint8Array(r.split("").map(s=>s.charCodeAt(0)))}function re(t,e,r,s,a,o){for(;r--;)s[r]&&(t=t.replace(new RegExp("\\b"+r.toString(e)+"\\b","g"),s[r]));return t}function ne(t){return p(this,null,function*(){try{let e=[];for(let n of t.key_parts)E(n).forEach(i=>e.push(i));let r=new Uint8Array(e),s=E(t.iv),a=E(t.payload);if(typeof crypto!="undefined"&&crypto.subtle)try{let n=yield crypto.subtle.importKey("raw",r,"AES-GCM",!1,["decrypt"]),i=yield crypto.subtle.decrypt({name:"AES-GCM",iv:s},n,a);return JSON.parse(H(new Uint8Array(i)))}catch(n){console.log("[Byse] Subtle fail")}console.log("[Byse] Usando motor Pure-JS para Hermes...");let o=$(r,s,a);return o?JSON.parse(o):null}catch(e){return console.error(`[Byse Decrypt] Error: ${e.message}`),null}})}function V(t){return p(this,null,function*(){try{let e=t.match(/\/e\/([a-zA-Z0-9]+)/);if(!e)return null;let r=e[1];console.log(`[Filemoon] Resolviendo: ${r}`);try{let n=new URL(t).hostname,c=yield(yield fetch(`https://${n}/api/videos/${r}`,{headers:{"User-Agent":x,Referer:t}})).json();if(c.playback){let l=yield ne(c.playback);if(l&&l.sources){let u=l.sources[0];return{url:u.url,quality:u.height?`${u.height}p`:"1080p",headers:{"User-Agent":x,Referer:"https://arbitrarydecisions.com/",Origin:"https://arbitrarydecisions.com"}}}}}catch(n){console.log(`[Filemoon] API Byse Failed: ${n.message}`)}let o=(yield(yield fetch(t,{headers:{"User-Agent":x,Referer:t}})).text()).match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);if(o){let i=re(o[1],parseInt(o[2]),parseInt(o[3]),o[4].split("|"),0,{}).match(/file\s*:\s*["']([^"']+)["']/);if(i)return{url:i[1],quality:"1080p",headers:{"User-Agent":x,Referer:"https://arbitrarydecisions.com/",Origin:"https://arbitrarydecisions.com"}}}return null}catch(e){return console.error(`[Filemoon] Error Global: ${e.message}`),null}})}var g=A(_());function q(t){return p(this,null,function*(){try{console.log("[VOE] Resolving: "+t);var e=yield(0,g.fetchHtml)(t,{headers:{"User-Agent":g.DEFAULT_UA}});if(e.indexOf("Redirecting")!==-1||e.length<1500){var r=e.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);r&&(e=yield(0,g.fetchHtml)(r[1],{headers:{"User-Agent":g.DEFAULT_UA}}))}var s=e.match(/<script type="application\/json">([\s\S]*?)<\/script>/);if(s)try{var a=JSON.parse(s[1].trim()),o=Array.isArray(a)?a[0]:a;if(typeof o!="string")return null;for(var n=o.replace(/[a-zA-Z]/g,function(v){var K=v.charCodeAt(0),G=v<="Z"?90:122,U=K+13;return String.fromCharCode(G>=U?U:U-26)}),i=["@$","^^","~@","%?","*~","!!","#&"],c=0;c<i.length;c++){var l=i[c];n=n.split(l).join("")}for(var u=w(n),f="",d=0;d<u.length;d++)f+=String.fromCharCode(u.charCodeAt(d)-3);var y=f.split("").reverse().join(""),h=JSON.parse(w(y));if(h&&h.source)return console.log("[VOE] -> m3u8 encontrado: "+h.source.substring(0,60)+"..."),{url:h.source,quality:"1080p",headers:{"User-Agent":g.DEFAULT_UA,Referer:t}}}catch(v){console.error("[VOE] Decryption failed:",v.message)}var R=e.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);return R?{url:R[1],quality:"1080p",headers:{"User-Agent":g.DEFAULT_UA,Referer:t}}:null}catch(v){return console.error("[VOE] Error resolviedo: "+v.message),null}})}var I=A(require("axios"));var D="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";function se(t){try{let e=t.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);if(!e)return null;let[r,s,a,o,n]=e;a=parseInt(a),o=parseInt(o),n=n.split("|");let i=(l,u)=>{let f="0123456789abcdefghijklmnopqrstuvwxyz",d="";for(;l>0;)d=f[l%u]+d,l=Math.floor(l/u);return d||"0"};return s.replace(/\b\w+\b/g,l=>{let u=parseInt(l,36);return u<n.length&&n[u]?n[u]:i(u,a)})}catch(e){return null}}function b(t){return p(this,null,function*(){try{console.log(`[VidHide] Resolviendo: ${t}`);let{data:e}=yield I.default.get(t,{timeout:15e3,maxRedirects:10,headers:{"User-Agent":D,Referer:"https://embed69.org/"}}),r=null,s=e.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);if(s){let o=se(s[0]);if(o){let n=o.match(/"hls[24]"\s*:\s*"([^"]+)"/);n&&(r=n[1])}}if(!r){let o=e.match(/"hls[24]"\s*:\s*"([^"]+)"/)||e.match(/file\s*:\s*["']([^"']+)["']/i);o&&(r=o[1])}if(!r)return console.log("[VidHide] No se encontr\xF3 URL de video"),null;r.startsWith("http")||(r=new URL(t).origin+r),console.log(`[VidHide] URL encontrada: ${r.substring(0,80)}...`);let a=new URL(t).origin;return{url:r,headers:{"User-Agent":D,Referer:a+"/",Origin:a}}}catch(e){return console.log(`[VidHide] Error: ${e.message}`),null}})}var ie="439c478a771f35c05022f9feabcca01c",ce="https://xupalace.org",P="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",le={"User-Agent":P,Accept:"text/html","Accept-Language":"es-MX,es;q=0.9",Connection:"keep-alive"},ue={"hglink.to":{fn:k,name:"StreamWish"},"vibuxer.com":{fn:k,name:"StreamWish"},"bysedikamoum.com":{fn:V,name:"Filemoon"},"voe.sx":{fn:q,name:"VOE"},"vidhidepro.com":{fn:b,name:"VidHide"},"vidhide.com":{fn:b,name:"VidHide"},"dintezuvio.com":{fn:b,name:"VidHide"},"filelions.to":{fn:b,name:"VidHide"}};function pe(t,e){return p(this,null,function*(){try{let r=`https://api.themoviedb.org/3/${e}/${t}/external_ids?api_key=${ie}`,{data:s}=yield W.default.get(r,{timeout:5e3,headers:{"User-Agent":P}});return s.imdb_id||null}catch(r){return null}})}function fe(t,e,r,s){return p(this,null,function*(){try{let a=e==="movie"?`/video/${t}/`:`/video/${t}-${r}x${String(s).padStart(2,"0")}/`,{data:o}=yield W.default.get(`${ce}${a}`,{timeout:8e3,headers:le}),n=[...o.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'[^)]+\)[^<]*data-lang="(\d+)"/g)];if(n.length===0){let c=[...o.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'/g)];return{0:[...new Set(c.map(l=>l[1]))]}}let i={};for(let c of n){let l=c[1],u=parseInt(c[2]);i[u]||(i[u]=[]),i[u].includes(l)||i[u].push(l)}return i}catch(a){return{}}})}function de(t,e,r,s){return p(this,null,function*(){if(!t)return[];let a={0:"Latino",1:"Espa\xF1ol",2:"Subtitulado"};try{let o=yield pe(t,e);if(!o)return[];let n=yield fe(o,e,r,s);if(Object.keys(n).length===0)return[];for(let i of[0,1,2]){let c=n[i];if(!c||c.length===0)continue;let u=(yield Promise.allSettled(c.map(f=>p(this,null,function*(){let d=new URL(f).hostname.replace("www.",""),y=ue[d];if(!y)return null;let h=yield y.fn(f);return h&&(h.server=y.name),h})))).filter(f=>f.status==="fulfilled"&&f.value).map(f=>({name:"XuPalace",title:`${f.value.quality||"1080p"} \xB7 ${a[i]} \xB7 ${f.value.server}`,url:f.value.url,quality:f.value.quality||"1080p",headers:f.value.headers||{}}));if(u.length>0)return u}return[]}catch(o){return console.log(`[XuPalace] Error: ${o.message}`),[]}})}
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve5, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve5(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/utils/http.js
+var require_http = __commonJS({
+  "src/utils/http.js"(exports, module2) {
+    var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+    function request(url, options) {
+      return __async(this, null, function* () {
+        var opt = options || {};
+        var headers = Object.assign({
+          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA2,
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+        }, opt.headers);
+        try {
+          var fetchOptions = Object.assign({}, opt, { headers });
+          var response = yield fetch(url, fetchOptions);
+          if (!response.ok && !opt.ignoreErrors) {
+            console.warn("[HTTP] Error " + response.status + " en " + url);
+          }
+          return response;
+        } catch (error) {
+          console.error("[HTTP] Error en " + url + ": " + error.message);
+          throw error;
+        }
+      });
+    }
+    function fetchHtml2(url, options) {
+      return __async(this, null, function* () {
+        var res = yield request(url, options);
+        return yield res.text();
+      });
+    }
+    function fetchJson(url, options) {
+      return __async(this, null, function* () {
+        var res = yield request(url, options);
+        return yield res.json();
+      });
+    }
+    module2.exports = {
+      request,
+      fetchHtml: fetchHtml2,
+      fetchJson,
+      DEFAULT_UA: DEFAULT_UA2,
+      MOBILE_UA
+    };
+  }
+});
+
+// src/xupalace/index.js
+var xupalace_exports = {};
+__export(xupalace_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(xupalace_exports);
+var import_axios3 = __toESM(require("axios"));
+
+// src/resolvers/hlswish.js
+var import_axios = __toESM(require("axios"));
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function unpackEval(payload, radix, symtab) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const unbase = (str) => {
+    let result = 0;
+    for (let i = 0; i < str.length; i++) {
+      const pos = chars.indexOf(str[i]);
+      if (pos === -1)
+        return NaN;
+      result = result * radix + pos;
+    }
+    return result;
+  };
+  return payload.replace(/\b([0-9a-zA-Z]+)\b/g, (match) => {
+    const idx = unbase(match);
+    if (isNaN(idx) || idx >= symtab.length)
+      return match;
+    return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+  });
+}
+var DOMAIN_MAP = {
+  "hglink.to": "vibuxer.com"
+};
+function resolve(url) {
+  return __async(this, null, function* () {
+    try {
+      let targetUrl = url;
+      for (const [old, replacement] of Object.entries(DOMAIN_MAP)) {
+        if (targetUrl.includes(old)) {
+          targetUrl = targetUrl.replace(old, replacement);
+          break;
+        }
+      }
+      console.log(`[HLSWish] Resolviendo: ${url}`);
+      const baseOrigin = (targetUrl.match(/^(https?:\/\/[^/]+)/) || [])[1] || "https://hlswish.com";
+      const { data: html } = yield import_axios.default.get(targetUrl, {
+        headers: {
+          "User-Agent": UA,
+          "Referer": "https://embed69.org/",
+          "Origin": "https://embed69.org"
+        },
+        timeout: 15e3,
+        maxRedirects: 5
+      });
+      let finalUrl = null;
+      const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
+      if (fileMatch) {
+        finalUrl = fileMatch[1];
+        if (finalUrl.startsWith("/"))
+          finalUrl = baseOrigin + finalUrl;
+      }
+      if (!finalUrl) {
+        const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+        if (packedMatch) {
+          const unpacked = unpackEval(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
+          const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i);
+          if (m3u8Match) {
+            finalUrl = m3u8Match[1];
+            if (finalUrl.startsWith("/"))
+              finalUrl = baseOrigin + finalUrl;
+          }
+        }
+      }
+      if (finalUrl) {
+        console.log(`[HLSWish] URL encontrada: ${finalUrl.substring(0, 80)}...`);
+        return {
+          url: finalUrl,
+          quality: "1080p",
+          headers: { "User-Agent": UA, "Referer": baseOrigin + "/" }
+        };
+      }
+      return null;
+    } catch (e) {
+      console.log(`[HLSWish] Error: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/utils/aes-gcm.js
+var import_crypto_js = __toESM(require("crypto-js"));
+function decryptGCM(key, iv, ciphertextWithTag) {
+  try {
+    const tagSize = 16;
+    const ciphertext = ciphertextWithTag.slice(0, -tagSize);
+    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
+    const ivCounter = new Uint8Array(16);
+    ivCounter.set(iv, 0);
+    ivCounter[15] = 2;
+    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
+    const decrypted = import_crypto_js.default.AES.decrypt(
+      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
+      keyWA,
+      {
+        iv: ivWA,
+        mode: import_crypto_js.default.mode.CTR,
+        padding: import_crypto_js.default.pad.NoPadding
+      }
+    );
+    return decrypted.toString(import_crypto_js.default.enc.Utf8);
+  } catch (e) {
+    console.error("[PureJS-GCM] Error Decrypting:", e.message);
+    return null;
+  }
+}
+
+// src/utils/string.js
+function base64Decode(input) {
+  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  var str = String(input).replace(/=+$/, "");
+  var output = "";
+  if (str.length % 4 === 1)
+    throw new Error("Base64 invalido");
+  var bc = 0, bs, buffer, idx = 0;
+  while (buffer = str.charAt(idx++)) {
+    buffer = chars.indexOf(buffer);
+    if (~buffer) {
+      bs = bc % 4 ? bs * 64 + buffer : buffer;
+      if (bc++ % 4) {
+        output += String.fromCharCode(255 & bs >> (-2 * bc & 6));
+      }
+    }
+  }
+  return output;
+}
+function utf8Decode(bytes) {
+  var out = "", i = 0;
+  while (i < bytes.length) {
+    var c = bytes[i++];
+    if (c < 128)
+      out += String.fromCharCode(c);
+    else if (c > 191 && c < 224)
+      out += String.fromCharCode((c & 31) << 6 | bytes[i++] & 63);
+    else
+      out += String.fromCharCode((c & 15) << 12 | (bytes[i++] & 63) << 6 | bytes[i++] & 63);
+  }
+  return out;
+}
+
+// src/resolvers/filemoon.js
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+function base64UrlDecode(input) {
+  let s = input.replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4)
+    s += "=";
+  const bin = base64Decode(s);
+  return new Uint8Array(bin.split("").map((c) => c.charCodeAt(0)));
+}
+function unpack(p, a, c, k, e, d) {
+  while (c--)
+    if (k[c])
+      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
+  return p;
+}
+function decryptByse(playback) {
+  return __async(this, null, function* () {
+    try {
+      const keyArr = [];
+      for (const p of playback.key_parts) {
+        base64UrlDecode(p).forEach((b) => keyArr.push(b));
+      }
+      const key = new Uint8Array(keyArr);
+      const iv = base64UrlDecode(playback.iv);
+      const ciphertextWithTag = base64UrlDecode(playback.payload);
+      if (typeof crypto !== "undefined" && crypto.subtle) {
+        try {
+          const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
+          const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
+          return JSON.parse(utf8Decode(new Uint8Array(decryptedArr)));
+        } catch (e) {
+          console.log("[Byse] Subtle fail");
+        }
+      }
+      console.log("[Byse] Usando motor Pure-JS para Hermes...");
+      const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
+      return decryptedStr ? JSON.parse(decryptedStr) : null;
+    } catch (e) {
+      console.error(`[Byse Decrypt] Error: ${e.message}`);
+      return null;
+    }
+  });
+}
+function resolve2(url) {
+  return __async(this, null, function* () {
+    try {
+      const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
+      if (!idMatch)
+        return null;
+      const id = idMatch[1];
+      console.log(`[Filemoon] Resolviendo: ${id}`);
+      try {
+        const hostname = new URL(url).hostname;
+        const apiRes = yield fetch(`https://${hostname}/api/videos/${id}`, {
+          headers: { "User-Agent": UA2, "Referer": url }
+        });
+        const data = yield apiRes.json();
+        if (data.playback) {
+          const decrypted = yield decryptByse(data.playback);
+          if (decrypted && decrypted.sources) {
+            const best = decrypted.sources[0];
+            return {
+              url: best.url,
+              quality: best.height ? `${best.height}p` : "1080p",
+              headers: {
+                "User-Agent": UA2,
+                "Referer": "https://arbitrarydecisions.com/",
+                "Origin": "https://arbitrarydecisions.com"
+              }
+            };
+          }
+        }
+      } catch (apiErr) {
+        console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
+      }
+      const res = yield fetch(url, { headers: { "User-Agent": UA2, "Referer": url } });
+      const html = yield res.text();
+      const evalMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+      if (evalMatch) {
+        const unpacked = unpack(evalMatch[1], parseInt(evalMatch[2]), parseInt(evalMatch[3]), evalMatch[4].split("|"), 0, {});
+        const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
+        if (fm) {
+          return {
+            url: fm[1],
+            quality: "1080p",
+            headers: {
+              "User-Agent": UA2,
+              "Referer": "https://arbitrarydecisions.com/",
+              "Origin": "https://arbitrarydecisions.com"
+            }
+          };
+        }
+      }
+      return null;
+    } catch (e) {
+      console.error(`[Filemoon] Error Global: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/voe.js
+var import_http = __toESM(require_http());
+function resolve3(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log("[VOE] Resolving: " + url);
+      var html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
+      if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
+        var rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+        if (rm) {
+          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
+        }
+      }
+      var jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+      if (jsonMatch) {
+        try {
+          var parsed = JSON.parse(jsonMatch[1].trim());
+          var encText = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (typeof encText !== "string")
+            return null;
+          var rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
+            var code = c.charCodeAt(0);
+            var limit = c <= "Z" ? 90 : 122;
+            var shifted = code + 13;
+            return String.fromCharCode(limit >= shifted ? shifted : shifted - 26);
+          });
+          var noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+          for (var i = 0; i < noise.length; i++) {
+            var n = noise[i];
+            rot13 = rot13.split(n).join("");
+          }
+          var b64_1 = base64Decode(rot13);
+          var shiftedStr = "";
+          for (var j = 0; j < b64_1.length; j++) {
+            shiftedStr += String.fromCharCode(b64_1.charCodeAt(j) - 3);
+          }
+          var reversed = shiftedStr.split("").reverse().join("");
+          var data = JSON.parse(base64Decode(reversed));
+          if (data && data.source) {
+            console.log("[VOE] -> m3u8 encontrado: " + data.source.substring(0, 60) + "...");
+            return {
+              url: data.source,
+              quality: "1080p",
+              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+            };
+          }
+        } catch (ex) {
+          console.error("[VOE] Decryption failed:", ex.message);
+        }
+      }
+      var m3u8MatchRaw = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+      if (m3u8MatchRaw) {
+        return {
+          url: m3u8MatchRaw[1],
+          quality: "1080p",
+          headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+        };
+      }
+      return null;
+    } catch (e) {
+      console.error("[VOE] Error resolviedo: " + e.message);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/vidhide.js
+var import_axios2 = __toESM(require("axios"));
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function unpackVidHide(script) {
+  try {
+    const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
+    if (!match)
+      return null;
+    let [full, p, a, c, k] = match;
+    a = parseInt(a);
+    c = parseInt(c);
+    k = k.split("|");
+    const decode = (l, s) => {
+      const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
+      let res = "";
+      while (l > 0) {
+        res = chars[l % s] + res;
+        l = Math.floor(l / s);
+      }
+      return res || "0";
+    };
+    const unpacked = p.replace(/\b\w+\b/g, (l) => {
+      const s = parseInt(l, 36);
+      return s < k.length && k[s] ? k[s] : decode(s, a);
+    });
+    return unpacked;
+  } catch (e) {
+    return null;
+  }
+}
+function resolve4(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[VidHide] Resolviendo: ${url}`);
+      const { data: html } = yield import_axios2.default.get(url, {
+        timeout: 15e3,
+        maxRedirects: 10,
+        headers: { "User-Agent": UA3, "Referer": "https://embed69.org/" }
+      });
+      let finalUrl = null;
+      const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
+      if (packedMatch) {
+        const unpacked = unpackVidHide(packedMatch[0]);
+        if (unpacked) {
+          const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
+          if (hlsMatch)
+            finalUrl = hlsMatch[1];
+        }
+      }
+      if (!finalUrl) {
+        const rawMatch = html.match(/"hls[24]"\s*:\s*"([^"]+)"/) || html.match(/file\s*:\s*["']([^"']+)["']/i);
+        if (rawMatch)
+          finalUrl = rawMatch[1];
+      }
+      if (!finalUrl) {
+        console.log("[VidHide] No se encontr\xF3 URL de video");
+        return null;
+      }
+      if (!finalUrl.startsWith("http")) {
+        finalUrl = new URL(url).origin + finalUrl;
+      }
+      console.log(`[VidHide] URL encontrada: ${finalUrl.substring(0, 80)}...`);
+      const origin = new URL(url).origin;
+      return {
+        url: finalUrl,
+        headers: {
+          "User-Agent": UA3,
+          "Referer": origin + "/",
+          "Origin": origin
+        }
+      };
+    } catch (e) {
+      console.log(`[VidHide] Error: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/xupalace/index.js
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var BASE_URL = "https://xupalace.org";
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var HTML_HEADERS = {
+  "User-Agent": UA4,
+  "Accept": "text/html",
+  "Accept-Language": "es-MX,es;q=0.9",
+  "Connection": "keep-alive"
+};
+var RESOLVER_MAP = {
+  "hglink.to": { fn: resolve, name: "StreamWish" },
+  "vibuxer.com": { fn: resolve, name: "StreamWish" },
+  "bysedikamoum.com": { fn: resolve2, name: "Filemoon" },
+  "voe.sx": { fn: resolve3, name: "VOE" },
+  "vidhidepro.com": { fn: resolve4, name: "VidHide" },
+  "vidhide.com": { fn: resolve4, name: "VidHide" },
+  "dintezuvio.com": { fn: resolve4, name: "VidHide" },
+  "filelions.to": { fn: resolve4, name: "VidHide" }
+};
+function getImdbId(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    try {
+      const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
+      const { data } = yield import_axios3.default.get(url, { timeout: 5e3, headers: { "User-Agent": UA4 } });
+      return data.imdb_id || null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function getEmbeds(imdbId, mediaType, season, episode) {
+  return __async(this, null, function* () {
+    try {
+      const path = mediaType === "movie" ? `/video/${imdbId}/` : `/video/${imdbId}-${season}x${String(episode).padStart(2, "0")}/`;
+      const { data: html } = yield import_axios3.default.get(`${BASE_URL}${path}`, { timeout: 8e3, headers: HTML_HEADERS });
+      const matches = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'[^)]+\)[^<]*data-lang="(\d+)"/g)];
+      if (matches.length === 0) {
+        const fallback = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'/g)];
+        return { 0: [...new Set(fallback.map((m) => m[1]))] };
+      }
+      const byLang = {};
+      for (const m of matches) {
+        const url = m[1];
+        const lang = parseInt(m[2]);
+        if (!byLang[lang])
+          byLang[lang] = [];
+        if (!byLang[lang].includes(url))
+          byLang[lang].push(url);
+      }
+      return byLang;
+    } catch (e) {
+      return {};
+    }
+  });
+}
+function getStreams(tmdbId, mediaType, season, episode) {
+  return __async(this, null, function* () {
+    if (!tmdbId)
+      return [];
+    const LANG_NAMES = { 0: "Latino", 1: "Espa\xF1ol", 2: "Subtitulado" };
+    try {
+      const imdbId = yield getImdbId(tmdbId, mediaType);
+      if (!imdbId)
+        return [];
+      const byLang = yield getEmbeds(imdbId, mediaType, season, episode);
+      if (Object.keys(byLang).length === 0)
+        return [];
+      for (const lang of [0, 1, 2]) {
+        const urls = byLang[lang];
+        if (!urls || urls.length === 0)
+          continue;
+        const results = yield Promise.allSettled(urls.map((url) => __async(this, null, function* () {
+          const domain = new URL(url).hostname.replace("www.", "");
+          const resolver = RESOLVER_MAP[domain];
+          if (!resolver)
+            return null;
+          const result = yield resolver.fn(url);
+          if (result)
+            result.server = resolver.name;
+          return result;
+        })));
+        const streams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => ({
+          name: "XuPalace",
+          title: `${r.value.quality || "1080p"} \xB7 ${LANG_NAMES[lang]} \xB7 ${r.value.server}`,
+          url: r.value.url,
+          quality: r.value.quality || "1080p",
+          headers: r.value.headers || {}
+        }));
+        if (streams.length > 0)
+          return streams;
+      }
+      return [];
+    } catch (e) {
+      console.log(`[XuPalace] Error: ${e.message}`);
+      return [];
+    }
+  });
+}

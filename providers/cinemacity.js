@@ -1,5 +1,172 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-08T21:17:14.641Z
+ * Generated: 2026-04-08T21:34:13.127Z
  */
-var H=Object.create;var g=Object.defineProperty;var L=Object.getOwnPropertyDescriptor;var T=Object.getOwnPropertyNames;var k=Object.getPrototypeOf,z=Object.prototype.hasOwnProperty;var I=(e,a)=>{for(var t in a)g(e,t,{get:a[t],enumerable:!0})},x=(e,a,t,r)=>{if(a&&typeof a=="object"||typeof a=="function")for(let c of T(a))!z.call(e,c)&&c!==t&&g(e,c,{get:()=>a[c],enumerable:!(r=L(a,c))||r.enumerable});return e};var D=(e,a,t)=>(t=e!=null?H(k(e)):{},x(a||!e||!e.__esModule?g(t,"default",{value:e,enumerable:!0}):t,e)),N=e=>x(g({},"__esModule",{value:!0}),e);var C=(e,a,t)=>new Promise((r,c)=>{var m=f=>{try{y(t.next(f))}catch(p){c(p)}},b=f=>{try{y(t.throw(f))}catch(p){c(p)}},y=f=>f.done?r(f.value):Promise.resolve(f.value).then(m,b);y((t=t.apply(e,a)).next())});var P={};I(P,{getStreams:()=>F});module.exports=N(P);var $=D(require("axios")),A=D(require("cheerio"));var q="https://cinemacity.cc",R="439c478a771f35c05022f9feabcca01c",W="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",w={"User-Agent":W,Cookie:"dle_user_id=32729; dle_password=894171c6a8dab18ee594d5c652009a35;",Referer:`${q}/`};function U(e){return e.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim()}function K(e){return Buffer.from(e,"base64").toString("binary")}function B(e,a){return C(this,null,function*(){try{let t=a==="movie"?"movie":"tv",{data:r}=yield $.default.get(`https://api.themoviedb.org/3/${t}/${e}?api_key=${R}&language=es-MX`);return{title:t==="movie"?r.title:r.name,year:(t==="movie"?r.release_date||"":r.first_air_date||"").slice(0,4)}}catch(t){return{title:null}}})}function F(e,a,t,r){return C(this,null,function*(){var c;try{let{title:m,year:b}=yield B(e,a);if(!m)return[];let y=`${q}/index.php?do=search&subaction=search&story=${encodeURIComponent(m)}`,{data:f}=yield $.default.get(y,{headers:w}),p=A.load(f),_=null;if(p("div.dar-short_item").each((i,d)=>{let u=p(d).find("a").first(),o=u.attr("href"),s=u.text().trim();if(o&&(U(s).includes(U(m))||s.includes(b)))return _=o,!1}),!_)return[];let{data:E}=yield $.default.get(_,{headers:w}),S=A.load(E),h=null;if(S("script").each((i,d)=>{let o=(S(d).html()||"").match(/atob\s*\(\s*['"](.*?)['"]\s*\)/);if(o){let s=K(o[1]),n=s.match(/file\s*:\s*(['"])(.*?)\1/)||s.match(/file\s*:\s*(\[.*?\])/);if(n){try{let l=n[2]||n[1];h=l.startsWith("[")?JSON.parse(l):l}catch(l){h=n[2]||n[1]}return!1}}}),!h)return[];let v=[],M=(i,d="HD")=>{if(i.includes("[")&&i.includes("]")){let u=i.match(/\[(.*?)\](.*)/);u&&v.push({url:u[2],q:u[1]})}else v.push({url:i,q:d})};if(a==="movie"){let i=Array.isArray(h)?h[0].file:h;M(i)}else{let i=`Season ${t}`,d=h.find(s=>{var n,l;return((n=s.title)==null?void 0:n.includes(i))||((l=s.title)==null?void 0:l.includes(`S${t}`))}),u=`Episode ${r}`,o=(c=d==null?void 0:d.folder)==null?void 0:c.find(s=>{var n,l;return((n=s.title)==null?void 0:n.includes(u))||((l=s.title)==null?void 0:l.includes(`E${r}`))});o!=null&&o.file&&M(o.file)}return v.map(i=>({name:"CinemaCity",title:`[Cinema] ${i.q} \xB7 Direct`,url:i.url,quality:i.q,headers:w}))}catch(m){return console.error("[CinemaCity] error:",m.message),[]}})}
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/cinemacity/index.js
+var cinemacity_exports = {};
+__export(cinemacity_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(cinemacity_exports);
+var import_axios = __toESM(require("axios"));
+var cheerio = __toESM(require("cheerio"));
+var MAIN_URL = "https://cinemacity.cc";
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var HEADERS = {
+  "User-Agent": UA,
+  "Cookie": "dle_user_id=32729; dle_password=894171c6a8dab18ee594d5c652009a35;",
+  "Referer": `${MAIN_URL}/`
+};
+function normalizeTitle(t) {
+  return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function atobPolyfill(str) {
+  return Buffer.from(str, "base64").toString("binary");
+}
+function getTmdbInfo(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    try {
+      const type = mediaType === "movie" ? "movie" : "tv";
+      const { data } = yield import_axios.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
+      return {
+        title: type === "movie" ? data.title : data.name,
+        year: (type === "movie" ? data.release_date || "" : data.first_air_date || "").slice(0, 4)
+      };
+    } catch (e) {
+      return { title: null };
+    }
+  });
+}
+function getStreams(tmdbId, mediaType, season, episode) {
+  return __async(this, null, function* () {
+    var _a;
+    try {
+      const { title, year } = yield getTmdbInfo(tmdbId, mediaType);
+      if (!title)
+        return [];
+      const searchUrl = `${MAIN_URL}/index.php?do=search&subaction=search&story=${encodeURIComponent(title)}`;
+      const { data: searchHtml } = yield import_axios.default.get(searchUrl, { headers: HEADERS });
+      const $search = cheerio.load(searchHtml);
+      let mediaUrl = null;
+      $search("div.dar-short_item").each((i, el) => {
+        const anchor = $search(el).find("a").first();
+        const href = anchor.attr("href");
+        const entryText = anchor.text().trim();
+        if (href && (normalizeTitle(entryText).includes(normalizeTitle(title)) || entryText.includes(year))) {
+          mediaUrl = href;
+          return false;
+        }
+      });
+      if (!mediaUrl)
+        return [];
+      const { data: pageHtml } = yield import_axios.default.get(mediaUrl, { headers: HEADERS });
+      const $page = cheerio.load(pageHtml);
+      let fileData = null;
+      $page("script").each((i, el) => {
+        const script = $page(el).html() || "";
+        const atobMatch = script.match(/atob\s*\(\s*['"](.*?)['"]\s*\)/);
+        if (atobMatch) {
+          const decoded = atobPolyfill(atobMatch[1]);
+          const fileMatch = decoded.match(/file\s*:\s*(['"])(.*?)\1/) || decoded.match(/file\s*:\s*(\[.*?\])/);
+          if (fileMatch) {
+            try {
+              const raw = fileMatch[2] || fileMatch[1];
+              fileData = raw.startsWith("[") ? JSON.parse(raw) : raw;
+            } catch (e) {
+              fileData = fileMatch[2] || fileMatch[1];
+            }
+            return false;
+          }
+        }
+      });
+      if (!fileData)
+        return [];
+      const streams = [];
+      const processStr = (str, quality = "HD") => {
+        if (str.includes("[") && str.includes("]")) {
+          const m = str.match(/\[(.*?)\](.*)/);
+          if (m)
+            streams.push({ url: m[2], q: m[1] });
+        } else {
+          streams.push({ url: str, q: quality });
+        }
+      };
+      if (mediaType === "movie") {
+        const movieFile = Array.isArray(fileData) ? fileData[0].file : fileData;
+        processStr(movieFile);
+      } else {
+        const seasonLabel = `Season ${season}`;
+        const sObj = fileData.find((s) => {
+          var _a2, _b;
+          return ((_a2 = s.title) == null ? void 0 : _a2.includes(seasonLabel)) || ((_b = s.title) == null ? void 0 : _b.includes(`S${season}`));
+        });
+        const epLabel = `Episode ${episode}`;
+        const eObj = (_a = sObj == null ? void 0 : sObj.folder) == null ? void 0 : _a.find((e) => {
+          var _a2, _b;
+          return ((_a2 = e.title) == null ? void 0 : _a2.includes(epLabel)) || ((_b = e.title) == null ? void 0 : _b.includes(`E${episode}`));
+        });
+        if (eObj == null ? void 0 : eObj.file)
+          processStr(eObj.file);
+      }
+      return streams.map((s) => ({
+        name: "CinemaCity",
+        title: `[Cinema] ${s.q} \xB7 Direct`,
+        url: s.url,
+        quality: s.q,
+        headers: HEADERS
+      }));
+    } catch (e) {
+      console.error("[CinemaCity] error:", e.message);
+      return [];
+    }
+  });
+}

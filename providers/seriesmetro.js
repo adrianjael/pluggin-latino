@@ -1,6 +1,391 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-08T21:17:14.922Z
+ * Generated: 2026-04-08T21:34:13.205Z
  */
-var N=Object.create;var w=Object.defineProperty,O=Object.defineProperties,D=Object.getOwnPropertyDescriptor,z=Object.getOwnPropertyDescriptors,G=Object.getOwnPropertyNames,T=Object.getOwnPropertySymbols,X=Object.getPrototypeOf,_=Object.prototype.hasOwnProperty,j=Object.prototype.propertyIsEnumerable;var q=(e,t,r)=>t in e?w(e,t,{enumerable:!0,configurable:!0,writable:!0,value:r}):e[t]=r,u=(e,t)=>{for(var r in t||(t={}))_.call(t,r)&&q(e,r,t[r]);if(T)for(var r of T(t))j.call(t,r)&&q(e,r,t[r]);return e},x=(e,t)=>O(e,z(t));var B=(e,t)=>()=>(t||e((t={exports:{}}).exports,t),t.exports),Q=(e,t)=>{for(var r in t)w(e,r,{get:t[r],enumerable:!0})},k=(e,t,r,n)=>{if(t&&typeof t=="object"||typeof t=="function")for(let a of G(t))!_.call(e,a)&&a!==r&&w(e,a,{get:()=>t[a],enumerable:!(n=D(t,a))||n.enumerable});return e};var S=(e,t,r)=>(r=e!=null?N(X(e)):{},k(t||!e||!e.__esModule?w(r,"default",{value:e,enumerable:!0}):r,e)),Y=e=>k(w({},"__esModule",{value:!0}),e);var l=(e,t,r)=>new Promise((n,a)=>{var s=i=>{try{c(r.next(i))}catch(p){a(p)}},o=i=>{try{c(r.throw(i))}catch(p){a(p)}},c=i=>i.done?n(i.value):Promise.resolve(i.value).then(s,o);c((r=r.apply(e,t)).next())});var W=B((ut,C)=>{var I="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",M="Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";function L(e,t){return l(this,null,function*(){var r=t||{},n=Object.assign({"User-Agent":r.mobile?M:I,Accept:"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8","Accept-Language":"es-MX,es;q=0.9,en;q=0.8"},r.headers);try{var a=Object.assign({},r,{headers:n}),s=yield fetch(e,a);return!s.ok&&!r.ignoreErrors&&console.warn("[HTTP] Error "+s.status+" en "+e),s}catch(o){throw console.error("[HTTP] Error en "+e+": "+o.message),o}})}function J(e,t){return l(this,null,function*(){var r=yield L(e,t);return yield r.text()})}function V(e,t){return l(this,null,function*(){var r=yield L(e,t);return yield r.json()})}C.exports={request:L,fetchHtml:J,fetchJson:V,DEFAULT_UA:I,MOBILE_UA:M}});var lt={};Q(lt,{getStreams:()=>ct});module.exports=Y(lt);var m=S(require("axios"));var f=S(W());var K=S(require("axios"));var Z="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";function U(r){return l(this,arguments,function*(e,t={}){try{if(!e||!e.includes(".m3u8"))return"1080p";let{data:n}=yield K.default.get(e,{timeout:5e3,headers:u({"User-Agent":Z},t),responseType:"text"});if(!n.includes("#EXT-X-STREAM-INF")){let o=e.match(/[_-](\d{3,4})p/i);return o?`${o[1]}p`:"1080p"}let a=0,s=n.split(`
-`);for(let o of s){let c=o.match(/RESOLUTION=\d+x(\d+)/i);if(c){let i=parseInt(c[1]);i>a&&(a=i)}}return a>0?a>=2160?"4K":a>=1080?"1080p":a>=720?"720p":a>=480?"480p":`${a}p`:"1080p"}catch(n){return"1080p"}})}function tt(e){var t=e.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);if(!t)return null;for(var r=t[1],n=parseInt(t[2]),a=parseInt(t[3]),s=t[4].split("|");a--;)s[a]&&(r=r.replace(new RegExp("\\b"+a.toString(n)+"\\b","g"),s[a]));return r}function P(e){return l(this,null,function*(){try{console.log("[Fastream] Resolviendo: "+e);var t=yield(0,f.fetchHtml)(e,{headers:{"User-Agent":f.DEFAULT_UA,Referer:"https://www3.seriesmetro.net/"}}),r=tt(t),n;if(!r){if(n=t.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/),n&&n[1]){var a=n[1],s=yield U(a,{Referer:"https://fastream.to/"});return{url:a,quality:s,headers:{"User-Agent":f.DEFAULT_UA,Referer:"https://fastream.to/"}}}return null}if(n=r.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/),!n||!n[1])return null;var o=n[1],c=yield U(o,{Referer:"https://fastream.to/"});return{url:o,quality:c,headers:{"User-Agent":f.DEFAULT_UA,Referer:"https://fastream.to/"}}}catch(i){return console.log("[Fastream] Error: "+i.message),null}})}var et="439c478a771f35c05022f9feabcca01c",E="https://www3.seriesmetro.net",rt="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",A={"User-Agent":rt,Accept:"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Accept-Language":"es-MX,es;q=0.9",Connection:"keep-alive","Upgrade-Insecure-Requests":"1"},F=["latino","lat","castellano","espa\xF1ol","esp","vose","sub","subtitulado"],at={latino:"Latino",lat:"Latino",castellano:"Espa\xF1ol",espa\u00F1ol:"Espa\xF1ol",esp:"Espa\xF1ol",vose:"Subtitulado",sub:"Subtitulado",subtitulado:"Subtitulado"};function H(e){return e.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9\s-]/g," ").replace(/\s+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"")}function nt(e,t){return l(this,null,function*(){let r=[{lang:"es-MX"},{lang:"en-US"}];for(let{lang:n}of r)try{let a=`https://api.themoviedb.org/3/${t}/${e}?api_key=${et}&language=${n}`,{data:s}=yield m.default.get(a,{timeout:5e3}),o=t==="movie"?s.title:s.name,c=t==="movie"?s.original_title:s.original_name;return{title:o,originalTitle:c}}catch(a){}return null})}function st(e,t){return l(this,null,function*(){let{title:r,originalTitle:n}=e,a=t==="movie"?"pelicula":"serie",s=[];r&&s.push(H(r)),n&&n!==r&&s.push(H(n));for(let o of s){let c=`${E}/${a}/${o}/`;try{let{data:i}=yield m.default.get(c,{timeout:8e3,headers:A});if(i.includes("trembed=")||i.includes("data-post="))return console.log(`[SeriesMetro] \u2713 Encontrado: /${a}/${o}/`),{url:c,html:i}}catch(i){}}return null})}function ot(e,t,r,n){return l(this,null,function*(){var s;let a=(s=t.match(/data-post="(\d+)"/))==null?void 0:s[1];if(!a)return null;try{let{data:o}=yield m.default.post(`${E}/wp-admin/admin-ajax.php`,new URLSearchParams({action:"action_select_season",post:a,season:String(r)}),{headers:x(u({},A),{"Content-Type":"application/x-www-form-urlencoded",Referer:e})});return[...o.matchAll(/href="([^"]+\/capitulo\/[^"]+)"/g)].map(i=>i[1]).find(i=>{let p=i.match(/temporada-(\d+)-capitulo-(\d+)/);return p&&parseInt(p[1])===r&&parseInt(p[2])===n})||null}catch(o){return null}})}function it(e,t){return l(this,null,function*(){var r;try{let{data:n}=yield m.default.get(e,{timeout:8e3,headers:x(u({},A),{Referer:t})}),a=[...n.matchAll(/href="#options-(\d+)"[^>]*>[\s\S]*?<span class="server">([\s\S]*?)<\/span>/g)],s=[...n.matchAll(/\?trembed=(\d+)(?:&#038;|&)trid=(\d+)(?:&#038;|&)trtype=(\d+)/g)];if(s.length===0||a.length===0)return[];let o=s[0][2],c=s[0][3],i=a.sort(([,,b],[,,y])=>{let R=b.replace(/<[^>]+>/g,"").split("-").pop().trim().toLowerCase(),v=y.replace(/<[^>]+>/g,"").split("-").pop().trim().toLowerCase(),d=F.indexOf(R),g=F.indexOf(v);return(d===-1?99:d)-(g===-1?99:g)}),p=[];for(let[,b,y]of i){let v=y.replace(/<[^>]+>/g,"").trim().split("-").pop().trim().toLowerCase(),d=at[v]||v;try{let{data:g}=yield m.default.get(`${E}/?trembed=${b}&trid=${o}&trtype=${c}`,{timeout:8e3,headers:x(u({},A),{Referer:e})}),$=(r=g.match(/<iframe[^>]*src="(https?:\/\/fastream\.to\/[^"]+)"/i))==null?void 0:r[1];if(!$)continue;let h=yield P($);if(h&&(p.push({name:"SeriesMetro",title:`${h.quality} \xB7 ${d} \xB7 Fastream`,url:h.url,quality:h.quality,headers:h.headers}),d==="Latino"))return p}catch(g){}}return p}catch(n){return[]}})}function ct(e,t,r,n){return l(this,null,function*(){if(!e||!t)return[];try{let a=yield nt(e,t);if(!a)return[];let s=yield st(a,t);if(!s)return[];let o=s.url;if(t==="tv"&&r&&n){let c=yield ot(s.url,s.html,r,n);if(!c)return[];o=c}return yield it(o,s.url)}catch(a){return console.log(`[SeriesMetro] Error: ${a.message}`),[]}})}
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve2, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve2(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/utils/http.js
+var require_http = __commonJS({
+  "src/utils/http.js"(exports, module2) {
+    var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+    function request(url, options) {
+      return __async(this, null, function* () {
+        var opt = options || {};
+        var headers = Object.assign({
+          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA2,
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+        }, opt.headers);
+        try {
+          var fetchOptions = Object.assign({}, opt, { headers });
+          var response = yield fetch(url, fetchOptions);
+          if (!response.ok && !opt.ignoreErrors) {
+            console.warn("[HTTP] Error " + response.status + " en " + url);
+          }
+          return response;
+        } catch (error) {
+          console.error("[HTTP] Error en " + url + ": " + error.message);
+          throw error;
+        }
+      });
+    }
+    function fetchHtml2(url, options) {
+      return __async(this, null, function* () {
+        var res = yield request(url, options);
+        return yield res.text();
+      });
+    }
+    function fetchJson(url, options) {
+      return __async(this, null, function* () {
+        var res = yield request(url, options);
+        return yield res.json();
+      });
+    }
+    module2.exports = {
+      request,
+      fetchHtml: fetchHtml2,
+      fetchJson,
+      DEFAULT_UA: DEFAULT_UA2,
+      MOBILE_UA
+    };
+  }
+});
+
+// src/seriesmetro/index.js
+var seriesmetro_exports = {};
+__export(seriesmetro_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(seriesmetro_exports);
+var import_axios2 = __toESM(require("axios"));
+
+// src/resolvers/fastream.js
+var import_http = __toESM(require_http());
+
+// src/resolvers/quality.js
+var import_axios = __toESM(require("axios"));
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function detectQuality(_0) {
+  return __async(this, arguments, function* (url, headers = {}) {
+    try {
+      if (!url || !url.includes(".m3u8"))
+        return "1080p";
+      const { data } = yield import_axios.default.get(url, {
+        timeout: 5e3,
+        headers: __spreadValues({
+          "User-Agent": UA
+        }, headers),
+        responseType: "text"
+      });
+      if (!data.includes("#EXT-X-STREAM-INF")) {
+        const match = url.match(/[_-](\d{3,4})p/i);
+        return match ? `${match[1]}p` : "1080p";
+      }
+      let maxRes = 0;
+      const lines = data.split("\n");
+      for (const line of lines) {
+        const match = line.match(/RESOLUTION=\d+x(\d+)/i);
+        if (match) {
+          const res = parseInt(match[1]);
+          if (res > maxRes)
+            maxRes = res;
+        }
+      }
+      if (maxRes > 0) {
+        if (maxRes >= 2160)
+          return "4K";
+        if (maxRes >= 1080)
+          return "1080p";
+        if (maxRes >= 720)
+          return "720p";
+        if (maxRes >= 480)
+          return "480p";
+        return `${maxRes}p`;
+      }
+      return "1080p";
+    } catch (e) {
+      return "1080p";
+    }
+  });
+}
+
+// src/resolvers/fastream.js
+function unpackPacker(data) {
+  var match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
+  if (!match)
+    return null;
+  var p = match[1];
+  var a = parseInt(match[2]);
+  var c = parseInt(match[3]);
+  var k = match[4].split("|");
+  while (c--) {
+    if (k[c])
+      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
+  }
+  return p;
+}
+function resolve(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log("[Fastream] Resolviendo: " + url);
+      var data = yield (0, import_http.fetchHtml)(url, {
+        headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://www3.seriesmetro.net/" }
+      });
+      var unpacked = unpackPacker(data);
+      var m3u8Match;
+      if (!unpacked) {
+        m3u8Match = data.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
+        if (m3u8Match && m3u8Match[1]) {
+          var url1 = m3u8Match[1];
+          var q1 = yield detectQuality(url1, { "Referer": "https://fastream.to/" });
+          return { url: url1, quality: q1, headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://fastream.to/" } };
+        }
+        return null;
+      }
+      m3u8Match = unpacked.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
+      if (!m3u8Match || !m3u8Match[1])
+        return null;
+      var m3u8Url = m3u8Match[1];
+      var quality = yield detectQuality(m3u8Url, { "Referer": "https://fastream.to/" });
+      return {
+        url: m3u8Url,
+        quality,
+        headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://fastream.to/" }
+      };
+    } catch (e) {
+      console.log("[Fastream] Error: " + e.message);
+      return null;
+    }
+  });
+}
+
+// src/seriesmetro/index.js
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var BASE = "https://www3.seriesmetro.net";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var HEADERS = {
+  "User-Agent": UA2,
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "es-MX,es;q=0.9",
+  "Connection": "keep-alive",
+  "Upgrade-Insecure-Requests": "1"
+};
+var LANG_PRIORITY = ["latino", "lat", "castellano", "espa\xF1ol", "esp", "vose", "sub", "subtitulado"];
+var LANG_MAP = {
+  "latino": "Latino",
+  "lat": "Latino",
+  "castellano": "Espa\xF1ol",
+  "espa\xF1ol": "Espa\xF1ol",
+  "esp": "Espa\xF1ol",
+  "vose": "Subtitulado",
+  "sub": "Subtitulado",
+  "subtitulado": "Subtitulado"
+};
+function buildSlug(title) {
+  return title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+function getTmdbData(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const attempts = [{ lang: "es-MX" }, { lang: "en-US" }];
+    for (const { lang } of attempts) {
+      try {
+        const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=${lang}`;
+        const { data } = yield import_axios2.default.get(url, { timeout: 5e3 });
+        const title = mediaType === "movie" ? data.title : data.name;
+        const originalTitle = mediaType === "movie" ? data.original_title : data.original_name;
+        return { title, originalTitle };
+      } catch (e) {
+      }
+    }
+    return null;
+  });
+}
+function findContentUrl(tmdbInfo, mediaType) {
+  return __async(this, null, function* () {
+    const { title, originalTitle } = tmdbInfo;
+    const category = mediaType === "movie" ? "pelicula" : "serie";
+    const slugs = [];
+    if (title)
+      slugs.push(buildSlug(title));
+    if (originalTitle && originalTitle !== title)
+      slugs.push(buildSlug(originalTitle));
+    for (const slug of slugs) {
+      const url = `${BASE}/${category}/${slug}/`;
+      try {
+        const { data } = yield import_axios2.default.get(url, { timeout: 8e3, headers: HEADERS });
+        if (data.includes("trembed=") || data.includes("data-post=")) {
+          console.log(`[SeriesMetro] \u2713 Encontrado: /${category}/${slug}/`);
+          return { url, html: data };
+        }
+      } catch (e) {
+      }
+    }
+    return null;
+  });
+}
+function getEpisodeUrl(serieUrl, serieHtml, season, episode) {
+  return __async(this, null, function* () {
+    var _a;
+    const dpost = (_a = serieHtml.match(/data-post="(\d+)"/)) == null ? void 0 : _a[1];
+    if (!dpost)
+      return null;
+    try {
+      const { data: epData } = yield import_axios2.default.post(
+        `${BASE}/wp-admin/admin-ajax.php`,
+        new URLSearchParams({ action: "action_select_season", post: dpost, season: String(season) }),
+        { headers: __spreadProps(__spreadValues({}, HEADERS), { "Content-Type": "application/x-www-form-urlencoded", "Referer": serieUrl }) }
+      );
+      const epUrls = [...epData.matchAll(/href="([^"]+\/capitulo\/[^"]+)"/g)].map((m) => m[1]);
+      return epUrls.find((u) => {
+        const m = u.match(/temporada-(\d+)-capitulo-(\d+)/);
+        return m && parseInt(m[1]) === season && parseInt(m[2]) === episode;
+      }) || null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function extractStreams(pageUrl, referer) {
+  return __async(this, null, function* () {
+    var _a;
+    try {
+      const { data } = yield import_axios2.default.get(pageUrl, { timeout: 8e3, headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": referer }) });
+      const options = [...data.matchAll(/href="#options-(\d+)"[^>]*>[\s\S]*?<span class="server">([\s\S]*?)<\/span>/g)];
+      const trids = [...data.matchAll(/\?trembed=(\d+)(?:&#038;|&)trid=(\d+)(?:&#038;|&)trtype=(\d+)/g)];
+      if (trids.length === 0 || options.length === 0)
+        return [];
+      const trid = trids[0][2];
+      const trtype = trids[0][3];
+      const sorted = options.sort(([, , a], [, , b]) => {
+        const aL = a.replace(/<[^>]+>/g, "").split("-").pop().trim().toLowerCase();
+        const bL = b.replace(/<[^>]+>/g, "").split("-").pop().trim().toLowerCase();
+        const ai = LANG_PRIORITY.indexOf(aL);
+        const bi = LANG_PRIORITY.indexOf(bL);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+      const streams = [];
+      for (const [, idx, srvRaw] of sorted) {
+        const srvText = srvRaw.replace(/<[^>]+>/g, "").trim();
+        const langRaw = srvText.split("-").pop().trim().toLowerCase();
+        const lang = LANG_MAP[langRaw] || langRaw;
+        try {
+          const { data: embedPage } = yield import_axios2.default.get(
+            `${BASE}/?trembed=${idx}&trid=${trid}&trtype=${trtype}`,
+            { timeout: 8e3, headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": pageUrl }) }
+          );
+          const fastreamUrl = (_a = embedPage.match(/<iframe[^>]*src="(https?:\/\/fastream\.to\/[^"]+)"/i)) == null ? void 0 : _a[1];
+          if (!fastreamUrl)
+            continue;
+          const stream = yield resolve(fastreamUrl);
+          if (stream) {
+            streams.push({
+              name: "SeriesMetro",
+              title: `${stream.quality} \xB7 ${lang} \xB7 Fastream`,
+              url: stream.url,
+              quality: stream.quality,
+              headers: stream.headers
+            });
+            if (lang === "Latino")
+              return streams;
+          }
+        } catch (e) {
+        }
+      }
+      return streams;
+    } catch (e) {
+      return [];
+    }
+  });
+}
+function getStreams(tmdbId, mediaType, season, episode) {
+  return __async(this, null, function* () {
+    if (!tmdbId || !mediaType)
+      return [];
+    try {
+      const tmdbInfo = yield getTmdbData(tmdbId, mediaType);
+      if (!tmdbInfo)
+        return [];
+      const found = yield findContentUrl(tmdbInfo, mediaType);
+      if (!found)
+        return [];
+      let targetUrl = found.url;
+      if (mediaType === "tv" && season && episode) {
+        const epUrl = yield getEpisodeUrl(found.url, found.html, season, episode);
+        if (!epUrl)
+          return [];
+        targetUrl = epUrl;
+      }
+      return yield extractStreams(targetUrl, found.url);
+    } catch (e) {
+      console.log(`[SeriesMetro] Error: ${e.message}`);
+      return [];
+    }
+  });
+}
