@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-08T22:34:35.747Z
+ * Generated: 2026-04-08T22:41:20.821Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -80,17 +80,17 @@ var require_http = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var fetchOptions = Object.assign({}, opt, { headers });
           var timeoutMs = opt.timeout || 5e3;
-          var timeoutPromise = new Promise((resolve, reject) => {
-            setTimeout(() => {
-              reject(new Error("Timeout after " + timeoutMs + "ms"));
-            }, timeoutMs);
+          var controller = new AbortController();
+          var timeoutId = setTimeout(() => {
+            controller.abort();
+          }, timeoutMs);
+          var fetchOptions = Object.assign({}, opt, {
+            headers,
+            signal: controller.signal
           });
-          var response = yield Promise.race([
-            fetch(url, fetchOptions),
-            timeoutPromise
-          ]);
+          var response = yield fetch(url, fetchOptions);
+          clearTimeout(timeoutId);
           if (!response.ok && !opt.ignoreErrors) {
             console.warn("[HTTP] Error " + response.status + " en " + url);
           }
