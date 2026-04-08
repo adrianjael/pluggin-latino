@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-08T18:37:47.685Z
+ * Generated: 2026-04-08T19:15:48.893Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -125,291 +125,6 @@ var require_http = __commonJS({
 
 // src/resolvers/voe.js
 var import_http = __toESM(require_http());
-function decodeBase64(input) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-  let str = String(input).replace(/=+$/, "");
-  let output = "";
-  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
-    buffer = chars.indexOf(buffer);
-  }
-  return output;
-}
-function resolve(url) {
-  return __async(this, null, function* () {
-    try {
-      console.log(`[VOE] Resolving: ${url}`);
-      let html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
-      if (html.includes("Redirecting") || html.length < 1500) {
-        const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
-        if (rm) {
-          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
-        }
-      }
-      const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
-      if (jsonMatch) {
-        try {
-          const parsed = JSON.parse(jsonMatch[1].trim());
-          let encText = Array.isArray(parsed) ? parsed[0] : parsed;
-          if (typeof encText !== "string")
-            return null;
-          let rot13 = encText.replace(/[a-zA-Z]/g, (c) => String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
-          const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
-          for (const n of noise)
-            rot13 = rot13.split(n).join("");
-          let b64_1 = decodeBase64(rot13);
-          let shifted = "";
-          for (let i = 0; i < b64_1.length; i++)
-            shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
-          let reversed = shifted.split("").reverse().join("");
-          let data = JSON.parse(decodeBase64(reversed));
-          if (data && data.source) {
-            console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
-            return {
-              url: data.source,
-              quality: "1080p",
-              isM3U8: true,
-              headers: { "User-Agent": UA, "Referer": url }
-            };
-          }
-        } catch (ex) {
-          console.error("[VOE] Decryption failed:", ex.message);
-        }
-      }
-      const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
-      if (m3u8Match) {
-        return {
-          url: m3u8Match[1],
-          quality: "1080p",
-          isM3U8: true,
-          headers: { "User-Agent": UA, "Referer": url }
-        };
-      }
-      return null;
-    } catch (e) {
-      console.error(`[VOE] Error resolviedo: ${e.message}`);
-      return null;
-    }
-  });
-}
-
-// src/resolvers/filemoon.js
-var import_http2 = __toESM(require_http());
-
-// src/utils/aes-gcm.js
-var CryptoJS = require("crypto-js");
-function decryptGCM(key, iv, ciphertextWithTag) {
-  try {
-    const tagSize = 16;
-    const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = CryptoJS.lib.WordArray.create(key);
-    const ivCounter = new Uint8Array(16);
-    ivCounter.set(iv, 0);
-    ivCounter[15] = 2;
-    const ivWA = CryptoJS.lib.WordArray.create(ivCounter);
-    const decrypted = CryptoJS.AES.decrypt(
-      { ciphertext: CryptoJS.lib.WordArray.create(ciphertext) },
-      keyWA,
-      {
-        iv: ivWA,
-        mode: CryptoJS.mode.CTR,
-        padding: CryptoJS.pad.NoPadding
-      }
-    );
-    return decrypted.toString(CryptoJS.enc.Utf8);
-  } catch (e) {
-    console.error("[PureJS-GCM] Error Decrypting:", e.message);
-    return null;
-  }
-}
-
-// src/resolvers/filemoon.js
-function base64UrlDecode(input) {
-  let s = input.replace(/-/g, "+").replace(/_/g, "/");
-  while (s.length % 4)
-    s += "=";
-  if (typeof Buffer !== "undefined")
-    return Buffer.from(s, "base64");
-  const bin = atob(s);
-  return new Uint8Array(bin.split("").map((c) => c.charCodeAt(0)));
-}
-function unpack(p, a, c, k, e, d) {
-  while (c--)
-    if (k[c])
-      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
-  return p;
-}
-function decryptByse(playback) {
-  return __async(this, null, function* () {
-    try {
-      const keyArr = [];
-      for (const p of playback.key_parts) {
-        base64UrlDecode(p).forEach((b) => keyArr.push(b));
-      }
-      const key = new Uint8Array(keyArr);
-      const iv = base64UrlDecode(playback.iv);
-      const ciphertextWithTag = base64UrlDecode(playback.payload);
-      if (typeof crypto !== "undefined" && crypto.subtle) {
-        try {
-          const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
-          const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
-          return JSON.parse(new TextDecoder().decode(decryptedArr));
-        } catch (e) {
-          console.log("[Byse] Subtle fail");
-        }
-      }
-      console.log("[Byse] Using Pure-JS motor for Hermes...");
-      const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
-      return decryptedStr ? JSON.parse(decryptedStr) : null;
-    } catch (e) {
-      console.error(`[Byse Decrypt] Error: ${e.message}`);
-      return null;
-    }
-  });
-}
-function resolve2(url) {
-  return __async(this, null, function* () {
-    try {
-      const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
-      if (!idMatch)
-        return null;
-      const id = idMatch[1];
-      console.log(`[Filemoon] Resolving: ${id}`);
-      try {
-        const hostname = new URL(url).hostname;
-        const data = yield (0, import_http2.fetchJson)(`https://${hostname}/api/videos/${id}`, {
-          headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": url }
-        });
-        if (data.playback) {
-          const decrypted = yield decryptByse(data.playback);
-          if (decrypted && decrypted.sources) {
-            const best = decrypted.sources[0];
-            return {
-              url: best.url,
-              quality: best.height ? `${best.height}p` : "1080p",
-              isM3U8: true,
-              headers: {
-                "User-Agent": import_http2.DEFAULT_UA,
-                "Referer": "https://arbitrarydecisions.com/",
-                "Origin": "https://arbitrarydecisions.com"
-              }
-            };
-          }
-        }
-      } catch (apiErr) {
-        console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
-      }
-      const html = yield (0, import_http2.fetchHtml)(url, { headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": url } });
-      const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
-      for (const match of evalMatches) {
-        const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
-        const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
-        if (fm)
-          return {
-            url: fm[1],
-            quality: "1080p",
-            isM3U8: true,
-            headers: {
-              "User-Agent": import_http2.DEFAULT_UA,
-              "Referer": "https://arbitrarydecisions.com/",
-              "Origin": "https://arbitrarydecisions.com"
-            }
-          };
-      }
-      return null;
-    } catch (e) {
-      console.error(`[Filemoon] Global Error: ${e.message}`);
-      return null;
-    }
-  });
-}
-
-// src/resolvers/vimeos.js
-var import_axios2 = __toESM(require("axios"));
-
-// src/resolvers/quality.js
-var import_axios = __toESM(require("axios"));
-
-// src/resolvers/vimeos.js
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-function resolve3(embedUrl) {
-  return __async(this, null, function* () {
-    var _a, _b, _c, _d, _e, _f, _g;
-    try {
-      console.log(`[Vimeos] Resolviendo Universal (v2.0): ${embedUrl}`);
-      const resp = yield import_axios2.default.get(embedUrl, {
-        headers: {
-          "User-Agent": UA2,
-          "Referer": "https://vimeos.net/",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-        },
-        timeout: 1e4
-      });
-      const html = resp.data;
-      const vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i) || embedUrl.match(/\/(\d{7,10})/);
-      if (vimeoIdMatch) {
-        const vimeoId = vimeoIdMatch[1];
-        console.log(`[Vimeos] ID Vimeo detectado: ${vimeoId}. Consultado API Config...`);
-        try {
-          const configRes = yield import_axios2.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
-            headers: { "User-Agent": UA2, "Referer": embedUrl }
-          });
-          const config = configRes.data;
-          const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
-          if (hlsUrl) {
-            console.log(`[Vimeos] \u2713 HLS Directo encontrado.`);
-            return {
-              url: hlsUrl,
-              quality: "1080p",
-              isM3U8: true,
-              headers: { "User-Agent": UA2, "Referer": "https://player.vimeo.com/" }
-            };
-          }
-          const progressive = (_g = (_f = config.request) == null ? void 0 : _f.files) == null ? void 0 : _g.progressive;
-          if (progressive && progressive.length > 0) {
-            const best = progressive.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0))[0];
-            console.log(`[Vimeos] \u2713 MP4 Directo encontrado (${best.quality}).`);
-            return {
-              url: best.url,
-              quality: best.quality ? `${best.quality}p` : "1080p",
-              headers: { "User-Agent": UA2, "Referer": "https://player.vimeo.com/" }
-            };
-          }
-        } catch (apiErr) {
-          console.log(`[Vimeos] API Config Fall\xF3: ${apiErr.message}`);
-        }
-      }
-      const packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        console.log(`[Vimeos] Usando Fallback Unpacker...`);
-        const payload = packMatch[1];
-        const radix = parseInt(packMatch[2]);
-        const symtab = packMatch[4].split("|");
-        const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const unbase = (str) => {
-          let result = 0;
-          for (let i = 0; i < str.length; i++)
-            result = result * radix + chars.indexOf(str[i]);
-          return result;
-        };
-        const unpacked = payload.replace(/\b(\w+)\b/g, (match) => {
-          const idx = unbase(match);
-          return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
-        });
-        const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
-        if (m3u8Match) {
-          const url = m3u8Match[1];
-          const finalHeaders = { "User-Agent": UA2, "Referer": "https://vimeos.net/" };
-          return { url, quality: "1080p", isM3U8: true, headers: finalHeaders };
-        }
-      }
-      console.log("[Vimeos] No se encontr\xF3 video directo.");
-      return null;
-    } catch (err) {
-      console.log(`[Vimeos] Error cr\xEDtico: ${err.message}`);
-      return null;
-    }
-  });
-}
 
 // src/utils/string.js
 var NOISE_WORDS = [
@@ -460,6 +175,312 @@ function calculateSimilarity(title1, title2) {
     return score * 0.5;
   }
   return score;
+}
+function base64Decode(input) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  let str = String(input).replace(/=+$/, "");
+  let output = "";
+  if (str.length % 4 === 1)
+    throw new Error("Base64 invalido");
+  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+function utf8Decode(bytes) {
+  let out = "", i = 0;
+  while (i < bytes.length) {
+    let c = bytes[i++];
+    if (c < 128)
+      out += String.fromCharCode(c);
+    else if (c > 191 && c < 224)
+      out += String.fromCharCode((c & 31) << 6 | bytes[i++] & 63);
+    else
+      out += String.fromCharCode((c & 15) << 12 | (bytes[i++] & 63) << 6 | bytes[i++] & 63);
+  }
+  return out;
+}
+function getHostname(url) {
+  if (!url)
+    return "";
+  const match = url.match(/^https?:\/\/([^\/]+)/);
+  return match ? match[1] : "";
+}
+
+// src/resolvers/voe.js
+function resolve(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[VOE] Resolving: ${url}`);
+      let html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
+      if (html.includes("Redirecting") || html.length < 1500) {
+        const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+        if (rm) {
+          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
+        }
+      }
+      const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[1].trim());
+          let encText = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (typeof encText !== "string")
+            return null;
+          let rot13 = encText.replace(/[a-zA-Z]/g, (c) => String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26));
+          const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+          for (const n of noise)
+            rot13 = rot13.split(n).join("");
+          let b64_1 = base64Decode(rot13);
+          let shifted = "";
+          for (let i = 0; i < b64_1.length; i++)
+            shifted += String.fromCharCode(b64_1.charCodeAt(i) - 3);
+          let reversed = shifted.split("").reverse().join("");
+          let data = JSON.parse(base64Decode(reversed));
+          if (data && data.source) {
+            console.log(`[VOE] -> m3u8 encontrado: ${data.source.substring(0, 60)}...`);
+            return {
+              url: data.source,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+            };
+          }
+        } catch (ex) {
+          console.error("[VOE] Decryption failed:", ex.message);
+        }
+      }
+      const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+      if (m3u8Match) {
+        return {
+          url: m3u8Match[1],
+          quality: "1080p",
+          isM3U8: true,
+          headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+        };
+      }
+      return null;
+    } catch (e) {
+      console.error(`[VOE] Error resolviedo: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/filemoon.js
+var import_http2 = __toESM(require_http());
+
+// src/utils/aes-gcm.js
+var import_crypto_js = __toESM(require("crypto-js"));
+function decryptGCM(key, iv, ciphertextWithTag) {
+  try {
+    const tagSize = 16;
+    const ciphertext = ciphertextWithTag.slice(0, -tagSize);
+    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
+    const ivCounter = new Uint8Array(16);
+    ivCounter.set(iv, 0);
+    ivCounter[15] = 2;
+    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
+    const decrypted = import_crypto_js.default.AES.decrypt(
+      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
+      keyWA,
+      {
+        iv: ivWA,
+        mode: import_crypto_js.default.mode.CTR,
+        padding: import_crypto_js.default.pad.NoPadding
+      }
+    );
+    return decrypted.toString(import_crypto_js.default.enc.Utf8);
+  } catch (e) {
+    console.error("[PureJS-GCM] Error Decrypting:", e.message);
+    return null;
+  }
+}
+
+// src/resolvers/filemoon.js
+function base64UrlDecode(input) {
+  let s = input.replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4)
+    s += "=";
+  const bin = base64Decode(s);
+  return new Uint8Array(bin.split("").map((c) => c.charCodeAt(0)));
+}
+function unpack(p, a, c, k, e, d) {
+  while (c--)
+    if (k[c])
+      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
+  return p;
+}
+function decryptByse(playback) {
+  return __async(this, null, function* () {
+    try {
+      const keyArr = [];
+      for (const p of playback.key_parts) {
+        base64UrlDecode(p).forEach((b) => keyArr.push(b));
+      }
+      const key = new Uint8Array(keyArr);
+      const iv = base64UrlDecode(playback.iv);
+      const ciphertextWithTag = base64UrlDecode(playback.payload);
+      if (typeof crypto !== "undefined" && crypto.subtle) {
+        try {
+          const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
+          const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
+          return JSON.parse(utf8Decode(new Uint8Array(decryptedArr)));
+        } catch (e) {
+          console.log("[Byse] Subtle fail");
+        }
+      }
+      console.log("[Byse] Using Pure-JS motor for Hermes...");
+      const decryptedStr = decryptGCM(key, iv, ciphertextWithTag);
+      return decryptedStr ? JSON.parse(decryptedStr) : null;
+    } catch (e) {
+      console.error(`[Byse Decrypt] Error: ${e.message}`);
+      return null;
+    }
+  });
+}
+function resolve2(url) {
+  return __async(this, null, function* () {
+    try {
+      const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
+      if (!idMatch)
+        return null;
+      const id = idMatch[1];
+      console.log(`[Filemoon] Resolving: ${id}`);
+      try {
+        const hostname = getHostname(url);
+        const data = yield (0, import_http2.fetchJson)(`https://${hostname}/api/videos/${id}`, {
+          headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": url }
+        });
+        if (data.playback) {
+          const decrypted = yield decryptByse(data.playback);
+          if (decrypted && decrypted.sources) {
+            const best = decrypted.sources[0];
+            return {
+              url: best.url,
+              quality: best.height ? `${best.height}p` : "1080p",
+              isM3U8: true,
+              headers: {
+                "User-Agent": import_http2.DEFAULT_UA,
+                "Referer": "https://arbitrarydecisions.com/",
+                "Origin": "https://arbitrarydecisions.com"
+              }
+            };
+          }
+        }
+      } catch (apiErr) {
+        console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
+      }
+      const html = yield (0, import_http2.fetchHtml)(url, { headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": url } });
+      const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
+      for (const match of Array.from(evalMatches)) {
+        const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
+        const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
+        if (fm)
+          return {
+            url: fm[1],
+            quality: "1080p",
+            isM3U8: true,
+            headers: {
+              "User-Agent": import_http2.DEFAULT_UA,
+              "Referer": "https://arbitrarydecisions.com/",
+              "Origin": "https://arbitrarydecisions.com"
+            }
+          };
+      }
+      return null;
+    } catch (e) {
+      console.error(`[Filemoon] Global Error: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/vimeos.js
+var import_axios2 = __toESM(require("axios"));
+
+// src/resolvers/quality.js
+var import_axios = __toESM(require("axios"));
+
+// src/resolvers/vimeos.js
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+function resolve3(embedUrl) {
+  return __async(this, null, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    try {
+      console.log(`[Vimeos] Resolviendo Universal (v2.0): ${embedUrl}`);
+      const resp = yield import_axios2.default.get(embedUrl, {
+        headers: {
+          "User-Agent": UA,
+          "Referer": "https://vimeos.net/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        },
+        timeout: 1e4
+      });
+      const html = resp.data;
+      const vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i) || embedUrl.match(/\/(\d{7,10})/);
+      if (vimeoIdMatch) {
+        const vimeoId = vimeoIdMatch[1];
+        console.log(`[Vimeos] ID Vimeo detectado: ${vimeoId}. Consultado API Config...`);
+        try {
+          const configRes = yield import_axios2.default.get(`https://player.vimeo.com/video/${vimeoId}/config`, {
+            headers: { "User-Agent": UA, "Referer": embedUrl }
+          });
+          const config = configRes.data;
+          const hlsUrl = (_e = (_d = (_c = (_b = (_a = config.request) == null ? void 0 : _a.files) == null ? void 0 : _b.hls) == null ? void 0 : _c.cdns) == null ? void 0 : _d.default) == null ? void 0 : _e.url;
+          if (hlsUrl) {
+            console.log(`[Vimeos] \u2713 HLS Directo encontrado.`);
+            return {
+              url: hlsUrl,
+              quality: "1080p",
+              isM3U8: true,
+              headers: { "User-Agent": UA, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+          const progressive = (_g = (_f = config.request) == null ? void 0 : _f.files) == null ? void 0 : _g.progressive;
+          if (progressive && progressive.length > 0) {
+            const best = progressive.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0))[0];
+            console.log(`[Vimeos] \u2713 MP4 Directo encontrado (${best.quality}).`);
+            return {
+              url: best.url,
+              quality: best.quality ? `${best.quality}p` : "1080p",
+              headers: { "User-Agent": UA, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+        } catch (apiErr) {
+          console.log(`[Vimeos] API Config Fall\xF3: ${apiErr.message}`);
+        }
+      }
+      const packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        console.log(`[Vimeos] Usando Fallback Unpacker...`);
+        const payload = packMatch[1];
+        const radix = parseInt(packMatch[2]);
+        const symtab = packMatch[4].split("|");
+        const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const unbase = (str) => {
+          let result = 0;
+          for (let i = 0; i < str.length; i++)
+            result = result * radix + chars.indexOf(str[i]);
+          return result;
+        };
+        const unpacked = payload.replace(/\b(\w+)\b/g, (match) => {
+          const idx = unbase(match);
+          return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+        });
+        const m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
+        if (m3u8Match) {
+          const url = m3u8Match[1];
+          const finalHeaders = { "User-Agent": UA, "Referer": "https://vimeos.net/" };
+          return { url, quality: "1080p", isM3U8: true, headers: finalHeaders };
+        }
+      }
+      console.log("[Vimeos] No se encontr\xF3 video directo.");
+      return null;
+    } catch (err) {
+      console.log(`[Vimeos] Error cr\xEDtico: ${err.message}`);
+      return null;
+    }
+  });
 }
 
 // src/cuevana_gs/extractor.js
