@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-08T22:48:46.182Z
+ * Generated: 2026-04-08T22:57:37.564Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -125,7 +125,6 @@ var require_http = __commonJS({
 
 // src/pelisplus/extractor.js
 var import_http2 = __toESM(require_http());
-var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
 
 // src/utils/string.js
 var NOISE_WORDS = [
@@ -358,14 +357,26 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         var query = uniqueTitles[j];
         var searchUrl = BASE_URL + "/search?s=" + encodeURIComponent(query);
         var searchHtml = yield (0, import_http2.fetchHtml)(searchUrl);
-        var $search = import_cheerio_without_node_native.default.load(searchHtml);
         var searchResults = [];
-        $search("a.Posters-link").each(function(idx, el) {
-          var el$ = $search(el);
-          var tText = el$.find("p").text().trim() || el$.attr("data-title") || "";
-          var hText = el$.attr("href") || "";
-          searchResults.push({ title: tText, href: hText });
-        });
+        var aRegex = /<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+        var m;
+        while ((m = aRegex.exec(searchHtml)) !== null) {
+          var href = m[1];
+          var inner = m[2];
+          if (!href.includes("/pelicula/") && !href.includes("/serie/"))
+            continue;
+          var title = "";
+          var pMatch = inner.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+          if (pMatch) {
+            title = pMatch[1].trim();
+          } else {
+            var tMatch = m[0].match(/data-title="([^"]+)"/i);
+            if (tMatch)
+              title = tMatch[1].trim();
+          }
+          if (title)
+            searchResults.push({ title, href });
+        }
         if (searchResults.length === 0)
           continue;
         var targetType = mediaType === "tv" ? "/serie/" : "/pelicula/";
@@ -398,16 +409,26 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         movieUrl = movieUrl.replace(/\/$/, "") + "/temporada/" + season + "/capitulo/" + episode;
       }
       var pageHtml = yield (0, import_http2.fetchHtml)(movieUrl, { headers: { Referer: BASE_URL } });
-      var $page = import_cheerio_without_node_native.default.load(pageHtml);
-      var pageTitle = $page("title").text() || "";
+      var pageTitle = "";
+      var titleMatch = pageHtml.match(/<title>([^<]+)<\/title>/i);
+      if (titleMatch)
+        pageTitle = titleMatch[1];
       var qualityMatch = pageTitle.match(/Online\s+[^-\s]+\s+([^-\s]+)\s+-/i) || pageTitle.match(/\s+([A-Z0-9]+)\s+-/i);
       var movieQuality = qualityMatch ? qualityMatch[1].trim() : "HD";
       var rawResults = [];
-      $page("li.playurl").each(function(idx, el) {
-        var $el = $page(el);
-        var serverUrl = $el.attr("data-url");
-        var language = $el.attr("data-name") || "Latino";
-        var serverNameRaw = $el.find("a").text().trim() || "Servidor";
+      var rawResults = [];
+      var liRegex = /<li[^>]*data-url="([^"]+)"[^>]*>([\s\S]*?)<\/li>/gi;
+      var liM;
+      while ((liM = liRegex.exec(pageHtml)) !== null) {
+        var serverUrl = liM[1];
+        var innerContent = liM[2];
+        var liTag = liM[0].replace(innerContent, "");
+        if (!liTag.includes("playurl"))
+          continue;
+        var nameMatch = liTag.match(/data-name="([^"]+)"/i);
+        var language = nameMatch ? nameMatch[1] : "Latino";
+        var aMatch = innerContent.match(/<a[^>]*>([\s\S]*?)<\/a>/i) || innerContent.match(/>([^<]+)<\/span>/i);
+        var serverNameRaw = aMatch ? aMatch[1].replace(/<[^>]+>/g, "").trim() : "Servidor";
         if (serverUrl && serverUrl.indexOf("http") === 0) {
           var name = serverNameRaw;
           if (serverUrl.indexOf("voe") !== -1)
@@ -420,7 +441,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             name = "Netu";
           rawResults.push({ serverUrl, serverName: name, language });
         }
-      });
+      }
       var finalStreams = [];
       for (var m = 0; m < rawResults.length; m++) {
         var res = rawResults[m];
