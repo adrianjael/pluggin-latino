@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-08T19:03:40.434Z
+ * Generated: 2026-04-08T19:07:15.229Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -150,6 +150,31 @@ function base64Decode(input) {
   }
   return output;
 }
+function utf8Decode(bytes) {
+  let out = "", i = 0;
+  while (i < bytes.length) {
+    let c = bytes[i++];
+    if (c < 128)
+      out += String.fromCharCode(c);
+    else if (c > 191 && c < 224)
+      out += String.fromCharCode((c & 31) << 6 | bytes[i++] & 63);
+    else
+      out += String.fromCharCode((c & 15) << 12 | (bytes[i++] & 63) << 6 | bytes[i++] & 63);
+  }
+  return out;
+}
+function getOrigin(url) {
+  if (!url)
+    return "";
+  const match = url.match(/^(https?:\/\/[^\/]+)/);
+  return match ? match[1] : "";
+}
+function getHostname(url) {
+  if (!url)
+    return "";
+  const match = url.match(/^https?:\/\/([^\/]+)/);
+  return match ? match[1] : "";
+}
 
 // src/resolvers/voe.js
 var import_http = __toESM(require_http());
@@ -246,9 +271,7 @@ function base64UrlDecode(input) {
   let s = input.replace(/-/g, "+").replace(/_/g, "/");
   while (s.length % 4)
     s += "=";
-  if (typeof Buffer !== "undefined")
-    return Buffer.from(s, "base64");
-  const bin = atob(s);
+  const bin = base64Decode(s);
   return new Uint8Array(bin.split("").map((c) => c.charCodeAt(0)));
 }
 function unpack(p, a, c, k, e, d) {
@@ -271,7 +294,7 @@ function decryptByse(playback) {
         try {
           const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
           const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
-          return JSON.parse(new TextDecoder().decode(decryptedArr));
+          return JSON.parse(utf8Decode(new Uint8Array(decryptedArr)));
         } catch (e) {
           console.log("[Byse] Subtle fail");
         }
@@ -294,7 +317,7 @@ function resolve2(url) {
       const id = idMatch[1];
       console.log(`[Filemoon] Resolving: ${id}`);
       try {
-        const hostname = new URL(url).hostname;
+        const hostname = getHostname(url);
         const data = yield (0, import_http2.fetchJson)(`https://${hostname}/api/videos/${id}`, {
           headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": url }
         });
@@ -319,7 +342,7 @@ function resolve2(url) {
       }
       const html = yield (0, import_http2.fetchHtml)(url, { headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": url } });
       const evalMatches = html.matchAll(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g);
-      for (const match of evalMatches) {
+      for (const match of Array.from(evalMatches)) {
         const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
         const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
         if (fm)
@@ -459,9 +482,9 @@ function resolve4(url) {
       if (!hlsMatch)
         return null;
       let finalUrl = hlsMatch[1];
+      const origin = getOrigin(url);
       if (!finalUrl.startsWith("http"))
-        finalUrl = new URL(url).origin + finalUrl;
-      const origin = new URL(url).origin;
+        finalUrl = origin + finalUrl;
       return {
         url: finalUrl,
         quality: "1080p",
@@ -649,14 +672,13 @@ function extract(tmdbId, mediaType, season, episode) {
       if (embedsToResolve.length === 0)
         continue;
       console.log(`[Embed69] Resolving ${embedsToResolve.length} embeds for ${lang}...`);
-      const results = yield Promise.allSettled(
-        embedsToResolve.map(
-          ({ url, resolver, lang: lang2, servername }) => Promise.race([
-            resolver(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { lang: lang2, servername }) : null),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), RESOLVER_TIMEOUT))
-          ])
-        )
+      const promises = embedsToResolve.map(
+        ({ url, resolver, lang: lang2, servername }) => Promise.race([
+          resolver(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { lang: lang2, servername }) : null),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), RESOLVER_TIMEOUT))
+        ]).then((value) => ({ status: "fulfilled", value })).catch((reason) => ({ status: "rejected", reason }))
       );
+      const results = yield Promise.all(promises);
       for (const res of results) {
         if (res.status === "fulfilled" && ((_c = res.value) == null ? void 0 : _c.url)) {
           const stream = res.value;
