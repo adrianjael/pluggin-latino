@@ -161,22 +161,27 @@ async function resolveVoesx(embedUrl) {
 export async function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
     try {
         console.log(`[PelisPlusHD] Estrayendo para: ${providedTitle || tmdbId} (${mediaType}) S${season}E${episode}`);
-        let searchTitle = providedTitle;
-        if (!searchTitle) {
-            const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
-            if (tmdbInfo && tmdbInfo.title) searchTitle = tmdbInfo.title;
+        const tmdbInfo = await getTmdbInfo(tmdbId, mediaType);
+        const titlesToTry = [];
+        
+        if (providedTitle) titlesToTry.push(providedTitle);
+        if (tmdbInfo) {
+            if (tmdbInfo.title) titlesToTry.push(tmdbInfo.title);
+            if (tmdbInfo.originalTitle && tmdbInfo.originalTitle !== tmdbInfo.title) titlesToTry.push(tmdbInfo.originalTitle);
         }
 
-        if (!searchTitle) {
-            console.log("[PelisPlusHD] No se pudo obtener el título para buscar.");
+        // Eliminar duplicados y títulos vacíos
+        const uniqueTitles = [...new Set(titlesToTry)].filter(t => t && t.length > 2);
+        
+        if (uniqueTitles.length === 0) {
+            console.log("[PelisPlusHD] No se pudo obtener ningún título para buscar.");
             return [];
         }
 
-        const titlesToTry = [searchTitle];
-        
         let movieUrl = null;
-        for (const query of titlesToTry) {
+        for (const query of uniqueTitles) {
             const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query)}`;
+            console.log(`[PelisPlusHD] Probando búsqueda: "${query}"`);
             const searchHtml = await fetchText(searchUrl);
             const $search = cheerio.load(searchHtml);
             
@@ -188,29 +193,31 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
                 results.push({ title, href });
             });
 
-            // 1. Priorizamos coincidencia exacta y por tipo
+            if (results.length === 0) continue;
+
             const targetType = mediaType === 'tv' ? '/serie/' : '/pelicula/';
             
-            // Intento 1: Título exacto + Tipo exacto
+            // Intento 1: Coincidencia casi-exacta
             let match = results.find(r => 
-                normalizeTitle(r.title) === normalizeTitle(query) && 
+                (normalizeTitle(r.title) === normalizeTitle(query) || r.title.toLowerCase().includes(query.toLowerCase())) && 
                 r.href.includes(targetType)
             );
 
-            // Intento 2: Título parecido mediante similitud (Fuzzy Match)
+            // Intento 2: Similitud Difusa (Fuzzy Match)
             if (!match) {
                 match = results.find(r => 
-                    isGoodMatch(query, r.title) && 
+                    isGoodMatch(query, r.title, 0.45) && 
                     r.href.includes(targetType)
                 );
             }
 
-            // Intento 3: Cualquier coincidencia de título con score mínimo
+            // Intento 3: Coincidencia muy relajada para estrenos (0.3)
             if (!match) {
-                match = results.find(r => isGoodMatch(query, r.title, 0.3));
+                match = results.find(r => isGoodMatch(query, r.title, 0.3) && r.href.includes(targetType));
             }
 
             if (match) {
+                console.log(`[PelisPlusHD] ¡Coincidencia encontrada!: "${match.title}" -> ${match.href}`);
                 movieUrl = BASE_URL + match.href;
                 break;
             }
@@ -237,22 +244,24 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
         }
 
         const rawResults = [];
-        $page('#link_url span').each((i, el) => {
-            const serverUrl = $page(el).attr('url');
+        $page('li.playurl').each((i, el) => {
+            const $el = $page(el);
+            const serverUrl = $el.attr('data-url');
+            const language = $el.attr('data-name') || "Latino";
+            const serverNameRaw = $el.find('a').text().trim() || "Servidor";
+
             if (serverUrl && serverUrl.startsWith('http')) {
-                let inferredName = "Servidor";
+                let inferredName = serverNameRaw;
+                // Normalizar nombres conocidos si es necesario
                 if (serverUrl.includes('voe')) inferredName = "Voe";
-                else if (serverUrl.includes('streamtape')) inferredName = "Streamtape";
-                else if (serverUrl.includes('netu') || serverUrl.includes('waaw')) inferredName = "Netu";
-                else if (serverUrl.includes('mixdrop')) inferredName = "Mixdrop";
-                else if (serverUrl.includes('filemoon')) inferredName = "Filemoon";
-                else if (serverUrl.includes('wishembed') || serverUrl.includes('streamwish') || serverUrl.includes('dwish') || serverUrl.includes('awish')) inferredName = "Streamwish";
-                else if (serverUrl.includes('vidhide') || serverUrl.includes('dintezuvio')) inferredName = "Vidhide";
+                else if (serverUrl.includes('streamwish') || serverUrl.includes('awish') || serverUrl.includes('dwish')) inferredName = "Streamwish";
+                else if (serverUrl.includes('vidhide')) inferredName = "Vidhide";
+                else if (serverUrl.includes('waaw') || serverUrl.includes('netu')) inferredName = "Netu";
                 
                 rawResults.push({ 
                     serverUrl, 
                     serverName: inferredName, 
-                    language: "Latino" 
+                    language 
                 });
             }
         });
