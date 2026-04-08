@@ -1,6 +1,6 @@
 /**
  * embed69_nuv - Built from src/embed69_nuv/
- * Generated: 2026-04-08T19:24:18.155Z
+ * Generated: 2026-04-08T20:24:39.123Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -492,6 +492,7 @@ var RESOLVER_MAP = {
   "filemoon.sx": resolve2,
   "filemoon.to": resolve2,
   "moonembed.pro": resolve2,
+  "moonalu.com": resolve2,
   "dintezuvio.com": resolve4,
   "vidhide.com": resolve4,
   "minochinos.com": resolve4
@@ -501,9 +502,9 @@ var BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567
 function b64decode(value) {
   if (!value)
     return "";
-  let input = String(value).replace(/=+$/, "");
-  let output = "";
-  let bc = 0, bs, buffer, idx = 0;
+  var input = String(value).replace(/=+$/, "");
+  var output = "";
+  var bc = 0, bs, buffer, idx = 0;
   while (buffer = input.charAt(idx++)) {
     buffer = BASE64_CHARS.indexOf(buffer);
     if (~buffer) {
@@ -516,21 +517,22 @@ function b64decode(value) {
 }
 function decodeJwtPayload(token) {
   try {
-    const parts = token.split(".");
+    var parts = token.split(".");
     if (parts.length < 2)
       return null;
-    let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    var payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     payload += "=".repeat((4 - payload.length % 4) % 4);
-    return JSON.parse(b64decode(payload));
+    var decoded = b64decode(payload);
+    return JSON.parse(decoded);
   } catch (e) {
     return null;
   }
 }
 function getImdbId(tmdbId, mediaType) {
   return __async(this, null, function* () {
-    const endpoint = mediaType === "movie" ? `https://api.themoviedb.org/3/movie/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
+    var endpoint = mediaType === "movie" ? "https://api.themoviedb.org/3/movie/" + tmdbId + "/external_ids?api_key=" + TMDB_API_KEY : "https://api.themoviedb.org/3/tv/" + tmdbId + "/external_ids?api_key=" + TMDB_API_KEY;
     try {
-      const data = yield (0, import_http5.fetchJson)(endpoint, { headers: { "User-Agent": import_http5.DEFAULT_UA } });
+      var data = yield (0, import_http5.fetchJson)(endpoint, { headers: { "User-Agent": import_http5.DEFAULT_UA } });
       return data.imdb_id || null;
     } catch (e) {
       return null;
@@ -539,26 +541,36 @@ function getImdbId(tmdbId, mediaType) {
 }
 function resolveBatch(embedsToResolve) {
   return __async(this, null, function* () {
-    var _a;
-    const promises = embedsToResolve.map(
-      ({ url, resolver, lang, servername }) => Promise.race([
-        resolver(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { lang, servername }) : null),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), RESOLVER_TIMEOUT))
-      ]).then((value) => ({ status: "fulfilled", value })).catch((reason) => ({ status: "rejected", reason }))
-    );
-    const results = yield Promise.all(promises);
-    const streams = [];
-    const seenUrls = /* @__PURE__ */ new Set();
-    for (const res of results) {
-      if (res.status === "fulfilled" && ((_a = res.value) == null ? void 0 : _a.url)) {
-        const stream = res.value;
+    var promises = embedsToResolve.map(function(item) {
+      return Promise.race([
+        item.resolver(item.url).then(function(r) {
+          return r ? Object.assign({}, r, { lang: item.lang, servername: item.servername }) : null;
+        }),
+        new Promise(function(_, reject) {
+          setTimeout(function() {
+            reject(new Error("timeout"));
+          }, RESOLVER_TIMEOUT);
+        })
+      ]).then(function(value) {
+        return { status: "fulfilled", value };
+      }).catch(function(reason) {
+        return { status: "rejected", reason };
+      });
+    });
+    var results = yield Promise.all(promises);
+    var streams = [];
+    var seenUrls = /* @__PURE__ */ new Set();
+    for (var i = 0; i < results.length; i++) {
+      var res = results[i];
+      if (res.status === "fulfilled" && res.value && res.value.url) {
+        var stream = res.value;
         if (seenUrls.has(stream.url))
           continue;
         seenUrls.add(stream.url);
-        const langLabel = stream.lang === "LAT" ? "Latino" : stream.lang === "ESP" ? "Espa\xF1ol" : stream.lang === "SUB" ? "Subtitulado" : stream.lang;
+        var langLabel = stream.lang === "LAT" ? "Latino" : stream.lang === "ESP" ? "Espa\xF1ol" : stream.lang === "SUB" ? "Subtitulado" : stream.lang;
         streams.push({
-          name: "Embed69",
-          title: `${stream.quality || "1080p"} \xB7 ${langLabel} \xB7 ${stream.servername}`,
+          name: "Embed69 Latino",
+          title: (stream.quality || "1080p") + " \xB7 " + langLabel + " \xB7 " + stream.servername,
           url: stream.url,
           quality: stream.quality || "1080p",
           headers: stream.headers || {}
@@ -571,42 +583,46 @@ function resolveBatch(embedsToResolve) {
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
-      console.log(`[Embed69 Latino] Buscando: ${title || tmdbId} (${mediaType})...`);
-      const imdbId = yield getImdbId(tmdbId, mediaType);
+      console.log("[Embed69 Latino] Buscando: " + (title || tmdbId) + " (" + mediaType + ")...");
+      var imdbId = yield getImdbId(tmdbId, mediaType);
       if (!imdbId)
         return [];
-      let embedUrl = `${BASE_URL}/f/${imdbId}`;
+      var embedUrl = BASE_URL + "/f/" + imdbId;
       if (mediaType === "tv" || mediaType === "series") {
-        const e = String(episode).padStart(2, "0");
-        embedUrl = `${BASE_URL}/f/${imdbId}-${parseInt(season)}x${e}`;
+        var e = String(episode).padStart(2, "0");
+        embedUrl = BASE_URL + "/f/" + imdbId + "-" + parseInt(season) + "x" + e;
       }
-      const html = yield (0, import_http5.fetchHtml)(embedUrl, {
+      var html = yield (0, import_http5.fetchHtml)(embedUrl, {
         headers: { "User-Agent": import_http5.DEFAULT_UA, "Referer": "https://sololatino.net/" }
       });
-      const dlMatch = html.match(/let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/);
+      var dlMatch = html.match(/let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/);
       if (!dlMatch)
         return [];
-      const dataLink = JSON.parse(dlMatch[1]);
-      const byLang = {};
-      for (const section of dataLink) {
+      var dataLink = JSON.parse(dlMatch[1]);
+      var byLang = {};
+      for (var j = 0; j < dataLink.length; j++) {
+        var section = dataLink[j];
         byLang[section.video_language || "LAT"] = section;
       }
-      const finalStreams = [];
-      for (const lang of LANG_PRIORITY) {
-        const section = byLang[lang];
-        if (!section)
+      var finalStreams = [];
+      for (var k = 0; k < LANG_PRIORITY.length; k++) {
+        var lang = LANG_PRIORITY[k];
+        var currentSection = byLang[lang];
+        if (!currentSection)
           continue;
-        const embedsToResolve = [];
-        for (const embed of section.sortedEmbeds || []) {
+        var embedsToResolve = [];
+        var sortedEmbeds = currentSection.sortedEmbeds || [];
+        for (var l = 0; l < sortedEmbeds.length; l++) {
+          var embed = sortedEmbeds[l];
           if (embed.servername === "download")
             continue;
-          const payload = decodeJwtPayload(embed.link);
+          var payload = decodeJwtPayload(embed.link);
           if (!payload || !payload.link)
             continue;
-          let resolver = null;
-          for (const [pattern, resFunc] of Object.entries(RESOLVER_MAP)) {
-            if (payload.link.includes(pattern)) {
-              resolver = resFunc;
+          var resolver = null;
+          for (var domain in RESOLVER_MAP) {
+            if (payload.link.indexOf(domain) !== -1) {
+              resolver = RESOLVER_MAP[domain];
               break;
             }
           }
@@ -615,18 +631,20 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           }
         }
         if (embedsToResolve.length > 0) {
-          console.log(`[Embed69 Latino] Resolviendo ${embedsToResolve.length} enlaces en ${lang}...`);
-          const resolved = yield resolveBatch(embedsToResolve);
+          console.log("[Embed69 Latino] Resolviendo enlaces en " + lang + "...");
+          var resolved = yield resolveBatch(embedsToResolve);
           if (resolved.length > 0) {
-            finalStreams.push(...resolved);
-            console.log(`[Embed69 Latino] \u2713 Streams encontrados en ${lang}.`);
+            for (var m = 0; m < resolved.length; m++) {
+              finalStreams.push(resolved[m]);
+            }
+            console.log("[Embed69 Latino] \u2713 Streams encontrados en " + lang + ".");
             break;
           }
         }
       }
       return finalStreams;
-    } catch (e) {
-      console.error(`[Embed69 Latino] Error: ${e.message}`);
+    } catch (err) {
+      console.error("[Embed69 Latino] Error: " + err.message);
       return [];
     }
   });
