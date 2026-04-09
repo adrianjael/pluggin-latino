@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-09T15:28:46.022Z
+ * Generated: 2026-04-09T21:11:57.143Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,9 +25,6 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -64,64 +61,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/utils/http.js
-var require_http = __commonJS({
-  "src/utils/http.js"(exports2, module2) {
-    var import_axios4 = __toESM(require("axios"));
-    var DEFAULT_UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-    var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-    function request(url, options) {
-      return __async(this, null, function* () {
-        var opt = options || {};
-        var headers = Object.assign({
-          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA4,
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
-        }, opt.headers);
-        try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
-          var fetchOptions = Object.assign({}, opt, {
-            headers,
-            signal: controller.signal
-          });
-          var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
-          if (!response.ok && !opt.ignoreErrors) {
-            console.warn("[HTTP] Error " + response.status + " en " + url);
-          }
-          return response;
-        } catch (error) {
-          console.error("[HTTP] Error en " + url + ": " + error.message);
-          throw error;
-        }
-      });
-    }
-    function fetchHtml4(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.text();
-      });
-    }
-    function fetchJson2(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.json();
-      });
-    }
-    module2.exports = {
-      request,
-      fetchHtml: fetchHtml4,
-      fetchJson: fetchJson2,
-      DEFAULT_UA: DEFAULT_UA4,
-      MOBILE_UA
-    };
-  }
-});
 
 // src/hackstore2/http.js
 var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -452,17 +391,63 @@ function resolve2(url) {
   });
 }
 
+// src/utils/http.js
+var import_axios3 = __toESM(require("axios"));
+var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+function request(url, options) {
+  return __async(this, null, function* () {
+    var opt = options || {};
+    var headers = Object.assign({
+      "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA2,
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+    }, opt.headers);
+    try {
+      var timeoutMs = opt.timeout || 5e3;
+      var controller = new AbortController();
+      var timeoutId = setTimeout(() => {
+        controller.abort();
+      }, timeoutMs);
+      var fetchOptions = Object.assign({}, opt, {
+        headers,
+        signal: controller.signal
+      });
+      var response = yield fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+      if (!response.ok && !opt.ignoreErrors) {
+        console.warn("[HTTP] Error " + response.status + " en " + url);
+      }
+      return response;
+    } catch (error) {
+      console.error("[HTTP] Error en " + url + ": " + error.message);
+      throw error;
+    }
+  });
+}
+function fetchHtml2(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.text();
+  });
+}
+function fetchJson(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.json();
+  });
+}
+
 // src/resolvers/voe.js
-var import_http = __toESM(require_http());
 function resolve3(url) {
   return __async(this, null, function* () {
     try {
       console.log("[VOE] Resolving: " + url);
-      var html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
+      var html = yield fetchHtml2(url, { headers: { "User-Agent": DEFAULT_UA2 } });
       if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
         var rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
+          html = yield fetchHtml2(rm[1], { headers: { "User-Agent": DEFAULT_UA2 } });
         }
       }
       var jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
@@ -495,7 +480,7 @@ function resolve3(url) {
             return {
               url: data.source,
               quality: "1080p",
-              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+              headers: { "User-Agent": DEFAULT_UA2, "Referer": url }
             };
           }
         } catch (ex) {
@@ -507,7 +492,7 @@ function resolve3(url) {
         return {
           url: m3u8MatchRaw[1],
           quality: "1080p",
-          headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+          headers: { "User-Agent": DEFAULT_UA2, "Referer": url }
         };
       }
       return null;
@@ -519,14 +504,13 @@ function resolve3(url) {
 }
 
 // src/resolvers/vimeos.js
-var import_http2 = __toESM(require_http());
 function resolve4(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log("[Vimeos] Resolviendo Universal (v2.0): " + embedUrl);
-      var html = yield (0, import_http2.fetchHtml)(embedUrl, {
+      var html = yield fetchHtml2(embedUrl, {
         headers: {
-          "User-Agent": import_http2.DEFAULT_UA,
+          "User-Agent": DEFAULT_UA2,
           "Referer": "https://vimeos.net/",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         }
@@ -538,8 +522,8 @@ function resolve4(embedUrl) {
         var vimeoId = vimeoIdMatch[1];
         console.log("[Vimeos] ID Vimeo detectado: " + vimeoId + ". Consultado API Config...");
         try {
-          var config = yield (0, import_http2.fetchJson)("https://player.vimeo.com/video/" + vimeoId + "/config", {
-            headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": embedUrl }
+          var config = yield fetchJson("https://player.vimeo.com/video/" + vimeoId + "/config", {
+            headers: { "User-Agent": DEFAULT_UA2, "Referer": embedUrl }
           });
           var hlsUrl = null;
           if (config && config.request && config.request.files && config.request.files.hls && config.request.files.hls.cdns && config.request.files.hls.cdns.default) {
@@ -550,7 +534,7 @@ function resolve4(embedUrl) {
             return {
               url: hlsUrl,
               quality: "1080p",
-              headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
+              headers: { "User-Agent": DEFAULT_UA2, "Referer": "https://player.vimeo.com/" }
             };
           }
           var progressive = config && config.request && config.request.files ? config.request.files.progressive : null;
@@ -562,7 +546,7 @@ function resolve4(embedUrl) {
             return {
               url: best.url,
               quality: best.quality ? best.quality + "p" : "1080p",
-              headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
+              headers: { "User-Agent": DEFAULT_UA2, "Referer": "https://player.vimeo.com/" }
             };
           }
         } catch (apiErr) {
@@ -592,7 +576,7 @@ function resolve4(embedUrl) {
           return {
             url,
             quality: "1080p",
-            headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": "https://vimeos.net/" }
+            headers: { "User-Agent": DEFAULT_UA2, "Referer": "https://vimeos.net/" }
           };
         }
       }
@@ -734,9 +718,6 @@ function resolve5(url) {
 }
 
 // src/hackstore2/extractor.js
-function isGoodMatch(query, result, minScore = 0.4) {
-  return calculateSimilarity(query, result) >= minScore;
-}
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
@@ -773,28 +754,47 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         console.log("[HackStore2] Pelicula no encontrada (TMDB Scrape fall\xF3 y no hay t\xEDtulo).");
         return [];
       }
-      console.log(`[HackStore2] Searching API for: ${searchTitle}`);
       const postType = mediaType === "movie" ? "movies" : "tvshows";
-      const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${postType}&query=${encodeURIComponent(searchTitle)}`;
-      const searchRes = yield fetch(searchUrl);
-      const searchData = yield searchRes.json();
-      if (!searchData || searchData.error || !searchData.data || !searchData.data.posts || searchData.data.posts.length === 0) {
-        console.log("[HackStore2] Not found in search results.");
-        return [];
-      }
+      const queriesToTry = [
+        searchTitle,
+        searchTitle.replace(/[:\-–]/g, " "),
+        searchTitle.split(" ").slice(0, 2).join(" ")
+      ].filter((v, i, a) => a.indexOf(v) === i && v.length > 2);
+      let matchedPost = null;
+      const cleanYear = (s) => s.replace(/\(\d{4}\)/g, "").trim();
       const checkSequel = (query, target) => {
-        const getNum = (s) => (s.match(/\b(\d+|I|II|III|IV|V)\b$/i) || [null, ""])[1];
+        const clean = (s) => s.replace(/\(\d{4}\)/g, "").trim();
+        const getNum = (s) => (clean(s).match(/\b(\d+|I|II|III|IV|V)\b$/i) || [null, ""])[1];
         const qNum = getNum(query);
         const tNum = getNum(target);
         return qNum === tNum;
       };
-      let matchedPost = searchData.data.posts.find(
-        (p) => calculateSimilarity(searchTitle, p.title) > 0.85 && checkSequel(searchTitle, p.title)
-      );
-      if (!matchedPost && searchYear) {
-        matchedPost = searchData.data.posts.find(
-          (p) => isGoodMatch(searchTitle, p.title) && p.years && p.years.toString().includes(searchYear)
-        );
+      for (const query of queriesToTry) {
+        console.log(`[HackStore2] Searching API for: ${query}`);
+        const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${postType}&query=${encodeURIComponent(query)}`;
+        try {
+          const searchRes = yield fetch(searchUrl);
+          const searchData = yield searchRes.json();
+          if (!searchData || searchData.error || !searchData.data || !searchData.data.posts)
+            continue;
+          matchedPost = searchData.data.posts.find((p) => {
+            const similarity = calculateSimilarity(searchTitle, cleanYear(p.title));
+            const sequelMatch = checkSequel(searchTitle, p.title);
+            return similarity > 0.7 && sequelMatch;
+          });
+          if (!matchedPost && searchYear) {
+            matchedPost = searchData.data.posts.find((p) => {
+              const similarity = calculateSimilarity(searchTitle, cleanYear(p.title));
+              return similarity > 0.4 && p.years && p.years.toString().includes(searchYear);
+            });
+          }
+          if (matchedPost) {
+            console.log(`[HackStore2] Best Match found with query "${query}": ${matchedPost.title}`);
+            break;
+          }
+        } catch (e) {
+          console.warn(`[HackStore2] Search fail for query "${query}":`, e.message);
+        }
       }
       if (!matchedPost) {
         console.log(`[HackStore2] No strict match found for "${searchTitle}" (${searchYear || "Any Year"}). Skipping...`);
@@ -876,7 +876,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
 }
 
 // src/utils/m3u8.js
-var import_axios3 = __toESM(require("axios"));
+var import_axios4 = __toESM(require("axios"));
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -916,12 +917,14 @@ function validateStream(stream) {
       return stream;
     const { url, headers } = stream;
     try {
-      const response = yield import_axios3.default.get(url, {
-        timeout: 4e3,
+      const response = yield import_axios4.default.get(url, {
+        timeout: 8e3,
         responseType: "text",
         headers: __spreadProps(__spreadValues({}, headers || {}), {
           "Accept": "*/*",
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
+          "Range": "bytes=0-4096",
+          // Pedir solo los primeros 4KB
+          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || UA4
         })
       });
       if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
@@ -1020,7 +1023,7 @@ function finalizeStreams(streams, providerName) {
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        title: `${q}${check} | ${lang} | ${server}`,
         url: s.url,
         quality: q,
         headers: s.headers || {}
