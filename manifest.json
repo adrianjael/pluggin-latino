@@ -1,6 +1,6 @@
 {
   "name": "AdrianJael",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "scrapers": [
     {
       "id": "embed69",
@@ -52,7 +52,7 @@
       "id": "pelisplus",
       "name": "PelisPlusHD",
       "description": "Películas y series en espanol latino desde PelisPlusHD.la",
-      "version": "1.4.1",
+      "version": "1.4.2",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
