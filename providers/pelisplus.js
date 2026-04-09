@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-09T21:00:23.608Z
+ * Generated: 2026-04-09T21:31:10.747Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -411,6 +411,79 @@ function resolve3(url) {
   });
 }
 
+// src/utils/m3u8.js
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function getQualityFromHeight(height) {
+  if (!height)
+    return "Auto";
+  const h = parseInt(height);
+  if (h >= 2160)
+    return "4K";
+  if (h >= 1440)
+    return "1440p";
+  if (h >= 1080)
+    return "1080p";
+  if (h >= 720)
+    return "720p";
+  if (h >= 480)
+    return "480p";
+  if (h >= 360)
+    return "360p";
+  return "240p";
+}
+function parseBestQuality(content) {
+  const lines = content.split("\n");
+  let bestHeight = 0;
+  for (const line of lines) {
+    if (line.includes("RESOLUTION=")) {
+      const match = line.match(/RESOLUTION=\d+x(\d+)/);
+      if (match) {
+        const height = parseInt(match[1]);
+        if (height > bestHeight)
+          bestHeight = height;
+      }
+    }
+  }
+  return bestHeight > 0 ? getQualityFromHeight(bestHeight) : "720p";
+}
+function validateStream(stream) {
+  return __async(this, null, function* () {
+    if (!stream || !stream.url)
+      return stream;
+    const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
+    try {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
+          "Accept": "*/*",
+          "Range": "bytes=0-8192",
+          "User-Agent": UA3
+        }, headers || {})
+      });
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text);
+        return __spreadProps(__spreadValues({}, stream), {
+          quality: realQuality,
+          verified: true
+        });
+      }
+      return __spreadProps(__spreadValues({}, stream), { verified: true });
+    } catch (error) {
+      clearTimeout(timeout);
+      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
+      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
+    }
+  });
+}
+
 // src/pelisplus/extractor.js
 function normalizeTitle(t) {
   if (!t)
@@ -609,9 +682,7 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
         }
       }
       console.log(`[PelisPlusHD] Found ${rawResults.length} raw sources.`);
-      rawResults.forEach((r, i) => console.log(`  [${i}] Server: ${r.serverName}, Lang: ${r.language}, URL: ${r.serverUrl}`));
-      const streams = [];
-      for (const res of rawResults) {
+      const streamPromises = rawResults.map((res) => __async(this, null, function* () {
         let finalUrl = null;
         const url = res.serverUrl;
         try {
@@ -625,7 +696,7 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
           if (finalUrl) {
             const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
             if (directUrl) {
-              streams.push({
+              const vStream = yield validateStream({
                 name: "PelisPlusHD",
                 url: directUrl,
                 quality: "HD",
@@ -633,83 +704,22 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
                 serverLabel: res.serverName,
                 headers: typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL }
               });
+              if (vStream.verified) {
+                vStream.quality = `(${vStream.quality} \u2713)`;
+              }
+              return vStream;
             }
           }
         } catch (e) {
           console.error(`[PelisPlusHD] Error resolving ${url}:`, e.message);
         }
-      }
-      return streams;
+        return null;
+      }));
+      const results = yield Promise.all(streamPromises);
+      return results.filter((s) => s !== null);
     } catch (error) {
       console.error("[PelisPlusHD] extractStreams Error:", error.message);
       return [];
-    }
-  });
-}
-
-// src/utils/m3u8.js
-var import_axios4 = __toESM(require("axios"));
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-function getQualityFromHeight(height) {
-  if (!height)
-    return "Auto";
-  const h = parseInt(height);
-  if (h >= 2160)
-    return "4K";
-  if (h >= 1440)
-    return "1440p";
-  if (h >= 1080)
-    return "1080p";
-  if (h >= 720)
-    return "720p";
-  if (h >= 480)
-    return "480p";
-  if (h >= 360)
-    return "360p";
-  return "240p";
-}
-function parseBestQuality(content) {
-  const lines = content.split("\n");
-  let bestHeight = 0;
-  for (const line of lines) {
-    if (line.includes("RESOLUTION=")) {
-      const match = line.match(/RESOLUTION=\d+x(\d+)/);
-      if (match) {
-        const height = parseInt(match[1]);
-        if (height > bestHeight)
-          bestHeight = height;
-      }
-    }
-  }
-  return bestHeight > 0 ? getQualityFromHeight(bestHeight) : "720p";
-}
-function validateStream(stream) {
-  return __async(this, null, function* () {
-    if (!stream || !stream.url)
-      return stream;
-    const { url, headers } = stream;
-    try {
-      const response = yield import_axios4.default.get(url, {
-        timeout: 8e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
-          "Accept": "*/*",
-          "Range": "bytes=0-4096",
-          // Pedir solo los primeros 4KB
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || UA3
-        })
-      });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
-        return __spreadProps(__spreadValues({}, stream), {
-          quality: realQuality,
-          verified: true
-          // <--- Marcamos como verificado
-        });
-      }
-      return __spreadProps(__spreadValues({}, stream), { verified: true });
-    } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
     }
   });
 }

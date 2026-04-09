@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-09T21:21:47.614Z
+ * Generated: 2026-04-09T21:31:09.475Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -718,7 +718,6 @@ function resolve5(url) {
 }
 
 // src/utils/m3u8.js
-var import_axios4 = __toESM(require("axios"));
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
@@ -758,28 +757,35 @@ function validateStream(stream) {
     if (!stream || !stream.url)
       return stream;
     const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
     try {
-      const response = yield import_axios4.default.get(url, {
-        timeout: 8e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
           "Accept": "*/*",
-          "Range": "bytes=0-4096",
-          // Pedir solo los primeros 4KB
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || UA4
-        })
+          "Range": "bytes=0-8192",
+          "User-Agent": UA4
+        }, headers || {})
       });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
-          // <--- Marcamos como verificado
         });
       }
       return __spreadProps(__spreadValues({}, stream), { verified: true });
     } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
+      clearTimeout(timeout);
+      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
+      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
     }
   });
 }
@@ -933,7 +939,11 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           }
         });
         if (verifiedStream.verified) {
-          verifiedStream.quality = `${verifiedStream.quality} \u2713`;
+          console.log(`[HackStore2] Stream verified: ${verifiedStream.url.substring(0, 40)}...`);
+          verifiedStream.quality = `(${verifiedStream.quality} \u2713)`;
+        } else {
+          console.log(`[HackStore2] Stream verification failed (fallback to HD): ${verifiedStream.url.substring(0, 40)}...`);
+          verifiedStream.quality = verifiedStream.quality || "HD";
         }
         return verifiedStream;
       }));

@@ -1,12 +1,12 @@
 {
   "name": "AdrianJael",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "scrapers": [
     {
       "id": "embed69",
       "name": "Embed69",
       "description": "Peliculas y series via embed69.org (V1.5.0)",
-      "version": "1.6.2",
+      "version": "1.6.3",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -29,7 +29,7 @@
       "id": "pelisgo",
       "name": "PelisGo",
       "description": "Descargas directas y streaming de alta fidelidad.",
-      "version": "1.3.0",
+      "version": "1.3.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -49,9 +49,10 @@
       "supportsExternalPlayer": true
     },
     {
+      "id": "pelisplus",
       "name": "PelisPlusHD",
       "description": "Películas y series en espanol latino desde PelisPlusHD.la",
-      "version": "1.5.4",
+      "version": "1.5.5",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -74,7 +75,7 @@
       "id": "hackstore2",
       "name": "HackStore2",
       "description": "API Nativa de Películas en HD",
-      "version": "1.2.2",
+      "version": "1.2.4",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -97,7 +98,7 @@
       "id": "pelispanda",
       "name": "PelisPanda",
       "description": "Películas y series directo desde pelispanda.org",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -120,7 +121,7 @@
       "id": "cuevana_gs",
       "name": "Cuevana.gs",
       "description": "Películas y series en alta definición (Latino) con servidores estables",
-      "version": "1.3.5",
+      "version": "1.3.6",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -143,7 +144,7 @@
       "id": "cinecalidad",
       "name": "CineCalidad",
       "description": "Películas en HD (Latino) con servidores rápidos como Voe y Filemoon",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie"
@@ -165,7 +166,7 @@
       "id": "lamovie",
       "name": "LaMovie",
       "description": "Películas, series y anime en HD (Latino) con servidores rÃƒÂ¡pidos",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
