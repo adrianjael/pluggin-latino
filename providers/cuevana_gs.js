@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-09T22:04:50.844Z
+ * Generated: 2026-04-09T22:07:01.453Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -601,20 +601,19 @@ function resolveEmbed(embedUrl, server) {
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
-      var url = "https://www.themoviedb.org/" + mediaType + "/" + tmdbId + "?language=es-MX";
-      var html = yield fetchHtml(url);
-      var title = "";
-      var year = "";
-      var titleMatch = html.match(/<title>(.*?)(?:\s+[\-—|]|\s+—|\s+\()/i);
-      if (titleMatch) {
-        title = titleMatch[1].replace(/—/g, "-").split(" - ")[0].trim();
+      var url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?api_key=af69ae976722f483b879a83a042e616f&language=es-MX";
+      var json = yield fetchJson(url);
+      if (json && !json.success === false) {
+        var title = json.title || json.name || "";
+        var year = "";
+        var date = json.release_date || json.first_air_date || "";
+        if (date)
+          year = date.split("-")[0];
+        console.log('[Cuevana.gs] TMDB API - T\xEDtulo: "' + title + '" | A\xF1o: ' + year);
+        return { title, year };
       }
-      var yearMatch = html.match(/\((\d{4})\)/);
-      if (yearMatch)
-        year = yearMatch[1];
-      return { title, year };
     } catch (e) {
-      console.warn("[Cuevana.gs] Failed to fetch TMDB info: " + e.message);
+      console.warn("[Cuevana.gs] Failed to fetch TMDB API info: " + e.message);
     }
     return { title: null, year: "" };
   });
