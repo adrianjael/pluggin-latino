@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-09T15:28:46.061Z
+ * Generated: 2026-04-09T16:28:54.279Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -21,9 +21,6 @@ var __spreadValues = (a, b) => {
         __defNormalProp(a, prop, b[prop]);
     }
   return a;
-};
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -61,64 +58,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/utils/http.js
-var require_http = __commonJS({
-  "src/utils/http.js"(exports2, module2) {
-    var import_axios3 = __toESM(require("axios"));
-    var DEFAULT_UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-    var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-    function request(url, options) {
-      return __async(this, null, function* () {
-        var opt = options || {};
-        var headers = Object.assign({
-          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA3,
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
-        }, opt.headers);
-        try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
-          var fetchOptions = Object.assign({}, opt, {
-            headers,
-            signal: controller.signal
-          });
-          var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
-          if (!response.ok && !opt.ignoreErrors) {
-            console.warn("[HTTP] Error " + response.status + " en " + url);
-          }
-          return response;
-        } catch (error) {
-          console.error("[HTTP] Error en " + url + ": " + error.message);
-          throw error;
-        }
-      });
-    }
-    function fetchHtml3(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.text();
-      });
-    }
-    function fetchJson(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.json();
-      });
-    }
-    module2.exports = {
-      request,
-      fetchHtml: fetchHtml3,
-      fetchJson,
-      DEFAULT_UA: DEFAULT_UA3,
-      MOBILE_UA
-    };
-  }
-});
 
 // src/pelisplus/http.js
 var BASE_URL = "https://www.pelisplushd.la";
@@ -331,8 +270,46 @@ function resolve2(url) {
   });
 }
 
-// src/resolvers/voe.js
-var import_http = __toESM(require_http());
+// src/utils/http.js
+var import_axios3 = __toESM(require("axios"));
+var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+function request(url, options) {
+  return __async(this, null, function* () {
+    var opt = options || {};
+    var headers = Object.assign({
+      "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA2,
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+    }, opt.headers);
+    try {
+      var timeoutMs = opt.timeout || 5e3;
+      var controller = new AbortController();
+      var timeoutId = setTimeout(() => {
+        controller.abort();
+      }, timeoutMs);
+      var fetchOptions = Object.assign({}, opt, {
+        headers,
+        signal: controller.signal
+      });
+      var response = yield fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+      if (!response.ok && !opt.ignoreErrors) {
+        console.warn("[HTTP] Error " + response.status + " en " + url);
+      }
+      return response;
+    } catch (error) {
+      console.error("[HTTP] Error en " + url + ": " + error.message);
+      throw error;
+    }
+  });
+}
+function fetchHtml(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.text();
+  });
+}
 
 // src/utils/string.js
 function base64Decode(input) {
@@ -359,11 +336,11 @@ function resolve3(url) {
   return __async(this, null, function* () {
     try {
       console.log("[VOE] Resolving: " + url);
-      var html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
+      var html = yield fetchHtml(url, { headers: { "User-Agent": DEFAULT_UA2 } });
       if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
         var rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
+          html = yield fetchHtml(rm[1], { headers: { "User-Agent": DEFAULT_UA2 } });
         }
       }
       var jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
@@ -396,7 +373,7 @@ function resolve3(url) {
             return {
               url: data.source,
               quality: "1080p",
-              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+              headers: { "User-Agent": DEFAULT_UA2, "Referer": url }
             };
           }
         } catch (ex) {
@@ -408,7 +385,7 @@ function resolve3(url) {
         return {
           url: m3u8MatchRaw[1],
           quality: "1080p",
-          headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+          headers: { "User-Agent": DEFAULT_UA2, "Referer": url }
         };
       }
       return null;
@@ -425,207 +402,236 @@ function normalizeTitle(t) {
     return "";
   return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
-function titleMatch(queryTitle, resultTitle) {
-  const q = normalizeTitle(queryTitle);
-  const r = normalizeTitle(resultTitle);
-  if (!q || !r)
+function titleMatch(query, target) {
+  const q = normalizeTitle(query);
+  const t = normalizeTitle(target);
+  if (!q || !t)
     return false;
-  if (r === q || r.includes(q) || q.includes(r))
+  if (q === t || t.includes(q) || q.includes(t))
     return true;
   const qWords = q.split(" ").filter((w) => w.length > 2);
-  const rWords = r.split(" ");
+  const tWords = t.split(" ");
   if (qWords.length === 0)
     return false;
-  return qWords.every((w) => rWords.includes(w));
+  return qWords.every((w) => tWords.includes(w));
 }
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
+    var _a, _b;
     try {
-      let typePath = mediaType === "tv" ? "tv" : "movie";
+      const typePath = mediaType === "tv" ? "tv" : "movie";
+      let url = `https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
       if (String(tmdbId).startsWith("tt")) {
-        const url = `https://api.themoviedb.org/3/find/${tmdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=es-MX`;
-        const res = yield fetch(url);
-        const findData = yield res.json();
-        if (mediaType === "movie" && findData.movie_results && findData.movie_results.length > 0) {
+        url = `https://api.themoviedb.org/3/find/${tmdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=es-MX`;
+        const res2 = yield fetch(url);
+        const findData = yield res2.json();
+        const result = mediaType === "movie" ? (_a = findData.movie_results) == null ? void 0 : _a[0] : (_b = findData.tv_results) == null ? void 0 : _b[0];
+        if (result) {
           return {
-            title: findData.movie_results[0].title || "",
-            originalTitle: findData.movie_results[0].original_title || ""
-          };
-        } else if (mediaType === "tv" && findData.tv_results && findData.tv_results.length > 0) {
-          return {
-            title: findData.tv_results[0].name || "",
-            originalTitle: findData.tv_results[0].original_name || ""
-          };
-        }
-      } else {
-        const res = yield fetch(`https://api.themoviedb.org/3/${typePath}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
-        const data = yield res.json();
-        if (mediaType === "movie") {
-          return {
-            title: data.title || "",
-            originalTitle: data.original_title || data.title || ""
-          };
-        } else {
-          return {
-            title: data.name || "",
-            originalTitle: data.original_name || data.name || ""
+            title: result.title || result.name || "",
+            originalTitle: result.original_title || result.original_name || "",
+            year: (result.release_date || result.first_air_date || "").split("-")[0]
           };
         }
       }
+      const res = yield fetch(url);
+      const data = yield res.json();
+      return {
+        title: data.title || data.name || "",
+        originalTitle: data.original_title || data.original_name || "",
+        year: (data.release_date || data.first_air_date || "").split("-")[0]
+      };
     } catch (error) {
+      console.error("[PelisPlusHD] TMDB Error:", error.message);
       return null;
     }
   });
 }
-function extractStreams(tmdbId, mediaType, season, episode) {
+function extractStreams(query, tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
+      console.log(`[PelisPlusHD] Extracting: ${query} (TMDB: ${tmdbId}, Type: ${mediaType})`);
       const tmdb = yield getTmdbInfo(tmdbId, mediaType);
-      if (!tmdb || !tmdb.title)
-        return [];
-      const titlesToTry = [tmdb.title];
-      if (tmdb.originalTitle && tmdb.originalTitle !== tmdb.title) {
-        titlesToTry.push(tmdb.originalTitle);
+      const titlesToTry = [query];
+      if (tmdb) {
+        if (tmdb.title)
+          titlesToTry.push(tmdb.title);
+        if (tmdb.originalTitle)
+          titlesToTry.push(tmdb.originalTitle);
       }
       let movieUrl = null;
-      for (const query of titlesToTry) {
-        const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(query)}`;
+      for (const q of titlesToTry) {
+        if (!q)
+          continue;
+        const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(q)}`;
+        console.log(`[PelisPlusHD] Searching: ${searchUrl}`);
         const searchHtml = yield fetchText(searchUrl);
-        var aRegex = /<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-        var m;
+        const aRegex = /<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+        let m;
         while ((m = aRegex.exec(searchHtml)) !== null) {
-          var href = m[1];
-          var inner = m[2];
-          if (!href.includes("/pelicula/") && !href.includes("/serie/"))
+          const href = m[1];
+          const inner = m[2];
+          if (mediaType === "movie" && !href.includes("/pelicula/"))
             continue;
-          var resultTitle = "";
-          var pMatch = inner.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+          if (mediaType === "tv" && !href.includes("/serie/"))
+            continue;
+          let resultTitle = "";
+          const pMatch = inner.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
           if (pMatch)
             resultTitle = pMatch[1].trim();
           else {
-            var tMatch = m[0].match(/data-title="([^"]+)"/i);
+            const tMatch = m[0].match(/data-title="([^"]+)"/i);
             if (tMatch)
               resultTitle = tMatch[1].trim();
           }
-          if (titleMatch(query, resultTitle) || titleMatch(tmdb.title, resultTitle)) {
+          if (titleMatch(q, resultTitle) || tmdb && (titleMatch(tmdb.title, resultTitle) || titleMatch(tmdb.originalTitle, resultTitle))) {
             movieUrl = BASE_URL + href;
+            console.log(`[PelisPlusHD] Found Base URL: ${movieUrl}`);
             break;
           }
         }
         if (movieUrl)
           break;
       }
-      if (!movieUrl)
+      if (!movieUrl) {
+        console.log(`[PelisPlusHD] No matches found for ${tmdbId}`);
         return [];
+      }
       if (mediaType === "tv") {
+        if (movieUrl.endsWith("/"))
+          movieUrl = movieUrl.slice(0, -1);
         movieUrl = `${movieUrl}/temporada/${season}/capitulo/${episode}`;
+        console.log(`[PelisPlusHD] Episode URL: ${movieUrl}`);
       }
       const pageHtml = yield fetchText(movieUrl);
-      const pageTitleMatch = pageHtml.match(/<title>([^<]+)<\/title>/i);
-      const pageTitle = pageTitleMatch ? pageTitleMatch[1] : "";
-      const qualityMatch = pageTitle.match(/Online\s+[^-\s]+\s+([^-\s]+)\s+-/i) || pageTitle.match(/\s+([A-Z0-9]+)\s+-/i);
-      let movieQuality = qualityMatch ? qualityMatch[1].trim() : "HD";
       const rawResults = [];
-      var liRegex = /<li[^>]*data-url="([^"]+)"[^>]*>([\s\S]*?)<\/li>/gi;
-      var liM;
-      while ((liM = liRegex.exec(pageHtml)) !== null) {
-        var serverUrl = liM[1];
-        var innerContent = liM[2];
-        var liTag = liM[0].replace(innerContent, "");
-        if (!liTag.includes("playurl"))
-          continue;
-        var nameMatch = liTag.match(/data-name="([^"]+)"/i);
-        var language = nameMatch ? nameMatch[1] : "Espa\xF1ol Latino";
-        var aMatch = innerContent.match(/<a[^>]*>([\s\S]*?)<\/a>/i) || innerContent.match(/>([^<]+)<\/span>/i);
-        var serverName = aMatch ? aMatch[1].replace(/<[^>]+>/g, "").trim() : "Servidor";
-        if (serverUrl && (language.includes("Latino") || language.includes("Espa\xF1ol"))) {
-          rawResults.push({ serverUrl, serverName, language });
-        }
-      }
-      const optMatch = pageHtml.match(/var options = ({[\s\S]+?});/);
-      if (optMatch) {
+      const optionsRegex = /var\s+options\s*=\s*({[\s\S]*?});/i;
+      const optionsMatch = pageHtml.match(optionsRegex);
+      if (optionsMatch) {
+        console.log("[PelisPlusHD] Found 'var options' JSON.");
         try {
-          const options = JSON.parse(optMatch[1]);
-          for (const langKey in options) {
-            const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
-            if (!langLabel.includes("Latino") && !langLabel.includes("Espa\xF1ol") && !langLabel.includes("Espana"))
-              continue;
-            const players = options[langKey];
-            if (Array.isArray(players)) {
-              players.forEach((p) => {
-                if (p.link && p.link.startsWith("http")) {
-                  rawResults.push({
-                    serverUrl: p.link,
-                    serverName: p.server || "Servidor",
-                    language: langLabel
-                  });
-                }
+          let jsonStr = optionsMatch[1].replace(/,\s*}/g, "}").replace(/,\s*]/g, "]").replace(/\/\/.*/g, "").replace(/'/g, '"');
+          const options = JSON.parse(jsonStr);
+          for (const key in options) {
+            const list = options[key];
+            if (Array.isArray(list)) {
+              list.forEach((item) => {
+                if (item.url)
+                  rawResults.push({ serverUrl: item.url, serverName: item.name || key, language: key });
               });
             }
           }
         } catch (e) {
-          const optionsRaw = optMatch[1];
-          const urlRegex = /"(option\d+)":\s*"([^"]+)"/g;
-          let match;
-          while ((match = urlRegex.exec(optionsRaw)) !== null) {
-            const optId = match[1];
-            const serverUrl2 = match[2];
-            const serverNameMatch = pageHtml.match(new RegExp(`<a[^>]*href="#${optId}"[^>]*>([^<]+)</a>`, "i"));
-            const serverName2 = serverNameMatch ? serverNameMatch[1].trim() : "Servidor";
-            if (serverUrl2 && serverUrl2.startsWith("http")) {
-              rawResults.push({ serverUrl: serverUrl2, serverName: serverName2, language: "Espa\xF1ol Latino" });
-            }
+          console.warn("[PelisPlusHD] JSON parse failed, trying regex on options.");
+          const linkRegex = /"url":\s*"([^"]+)"/g;
+          let linkM;
+          while ((linkM = linkRegex.exec(optionsMatch[1])) !== null) {
+            rawResults.push({ serverUrl: linkM[1], serverName: "Server", language: "Latino" });
           }
         }
       }
-      const streams = yield Promise.all(rawResults.map((res) => __async(this, null, function* () {
-        let finalData = null;
-        const isStreamwish = /streamwish|strwish|wishembed|playnixes|niramirus|awish|dwish|fmoon|pstream|hglamioz|hlswish|embedwish|sswish|fullwish/i.test(res.serverUrl);
-        const isVidhide = /vidhide|dintezuvio|callistanise|acek-cdn|vadisov/i.test(res.serverUrl);
-        const isVoesx = /voe\.sx|voe-sx|jefferycontrolmodel/i.test(res.serverUrl);
-        if (isStreamwish)
-          finalData = yield resolve(res.serverUrl);
-        else if (isVidhide)
-          finalData = yield resolve2(res.serverUrl);
-        else if (isVoesx)
-          finalData = yield resolve3(res.serverUrl);
-        if (!finalData || !finalData.url)
-          return null;
-        if (!finalData.url.includes(".m3u8") && !finalData.url.includes(".mp4"))
-          return null;
-        const cleanServerName = res.serverName.replace(/\s*\(.*?\)\s*/g, "").trim();
-        return {
-          name: "PelisPlusHD",
-          title: `${movieQuality} \u2713
-${cleanServerName} - ${res.language.includes("Latino") ? "Latino" : "Espa\xF1ol"}`,
-          url: finalData.url,
-          quality: movieQuality,
-          headers: finalData.headers || {
-            "Referer": res.serverUrl,
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      if (rawResults.length === 0) {
+        console.log("[PelisPlusHD] No sources in 'options', checking spans/links fallback...");
+        const spanRegex = /<span[^>]*lid="(\d+)"[^>]*url="([^"]+)"/gi;
+        let sM;
+        while ((sM = spanRegex.exec(pageHtml)) !== null) {
+          const id = sM[1];
+          const serverUrl = sM[2];
+          let serverName = "Server";
+          const liRegex = new RegExp(`<li[^>]*data-id="${id}"[^>]*>[\\s\\S]*?<a[^>]*>(.*?)</a>`, "i");
+          const liMatch = pageHtml.match(liRegex);
+          if (liMatch) {
+            serverName = liMatch[1].trim();
           }
-        };
-      })));
-      return streams.filter((s) => s !== null);
+          rawResults.push({ serverUrl, serverName, language: "Latino" });
+        }
+        if (rawResults.length === 0) {
+          const liRegex = /<li[^>]*data-url="([^"]+)"[^>]*data-name="([^"]*)"/gi;
+          let liM;
+          while ((liM = liRegex.exec(pageHtml)) !== null) {
+            rawResults.push({ serverUrl: liM[1], serverName: "Server", language: liM[2] || "Latino" });
+          }
+        }
+      }
+      console.log(`[PelisPlusHD] Found ${rawResults.length} raw sources.`);
+      const streams = [];
+      for (const res of rawResults) {
+        let finalUrl = null;
+        const url = res.serverUrl;
+        try {
+          if (url.includes("hlswish") || url.includes("hglamioz.com") || url.includes("streamwish")) {
+            finalUrl = yield resolve(url);
+          } else if (url.includes("vidhide")) {
+            finalUrl = yield resolve2(url);
+          } else if (url.includes("voe")) {
+            finalUrl = yield resolve3(url);
+          }
+          if (finalUrl) {
+            const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
+            if (directUrl) {
+              streams.push({
+                name: "PelisPlusHD",
+                title: `HD - ${res.serverName} (${res.language})`,
+                url: directUrl,
+                quality: "HD",
+                headers: typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL }
+              });
+            }
+          }
+        } catch (e) {
+          console.error(`[PelisPlusHD] Error resolving ${url}:`, e.message);
+        }
+      }
+      return streams;
     } catch (error) {
+      console.error("[PelisPlusHD] extractStreams Error:", error.message);
       return [];
     }
   });
 }
 
 // src/pelisplus/index.js
-function getStreams(tmdbId, mediaType, season, episode) {
+var TMDB_API_KEY2 = "329ff07ab18731d6861cb7ffc013fac3";
+function cleanTitleTMDB(title) {
+  if (!title)
+    return "";
+  return title.replace(/[áàäâ]/gi, "a").replace(/[éèëê]/gi, "e").replace(/[íìïî]/gi, "i").replace(/[óòöô]/gi, "o").replace(/[úùüû]/gi, "u").replace(/ñ/gi, "n").replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function getStreams(req) {
   return __async(this, null, function* () {
     try {
-      console.log(`[PelisPlusHD] Request: ${mediaType} ${tmdbId}`);
-      const streams = yield extractStreams(tmdbId, mediaType, season, episode);
-      if (streams.length === 0) {
-        console.log(`[PelisPlusHD] No matches found for ${tmdbId}`);
+      let tmdbTitle = "";
+      const parts = req.query.split(":");
+      const id = parts[0];
+      const season = parts.length >= 3 ? parseInt(parts[1]) : null;
+      const episode = parts.length >= 3 ? parseInt(parts[2]) : null;
+      console.log(`[PelisPlusHD] Request type=${req.type} id=${id} season=${season} episode=${episode}`);
+      const isTv = req.type === "series" || req.type === "tv";
+      const tmdbUrl = id.startsWith("tt") ? `https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_API_KEY2}&language=es-MX&external_source=imdb_id` : isTv ? `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY2}&language=es-MX` : `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY2}&language=es-MX`;
+      const response = yield fetch(tmdbUrl);
+      const data = yield response.json();
+      if (id.startsWith("tt")) {
+        const tvResults = data.tv_results || [];
+        const movieResults = data.movie_results || [];
+        if (tvResults.length > 0)
+          tmdbTitle = tvResults[0].name || "";
+        else if (movieResults.length > 0)
+          tmdbTitle = movieResults[0].title || "";
+      } else if (isTv) {
+        tmdbTitle = data.name || "";
+      } else {
+        tmdbTitle = data.title || "";
       }
-      return streams;
-    } catch (error) {
-      console.error(`[PelisPlusHD] Fatal Error in index: ${error.message}`);
+      if (!tmdbTitle) {
+        console.log(`[PelisPlusHD] No TMDB title found for ${id}`);
+        return [];
+      }
+      const formattedTitle = cleanTitleTMDB(tmdbTitle);
+      console.log(`[PelisPlusHD] Searching: "${formattedTitle}" (${req.type})`);
+      return yield extractStreams(formattedTitle, id, req.type, season, episode);
+    } catch (e) {
+      console.error("[PelisPlusHD] Fatal Error:", e.message);
       return [];
     }
   });
