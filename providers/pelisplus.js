@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-09T20:01:13.353Z
+ * Generated: 2026-04-09T20:09:03.910Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -111,7 +111,7 @@ function fetchText(_0) {
 
 // src/resolvers/hlswish.js
 var import_axios = __toESM(require("axios"));
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackEval(payload, radix, symtab) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const unbase = (str) => {
@@ -149,7 +149,7 @@ function resolve(url) {
         try {
           console.log(`[StreamWish] Probando espejo: ${mirror}`);
           const response = yield import_axios.default.get(mirror, {
-            headers: { "User-Agent": UA, "Referer": "https://embed69.org/" },
+            headers: { "User-Agent": UA2, "Referer": "https://embed69.org/" },
             timeout: 8e3
           });
           html = response.data;
@@ -193,7 +193,7 @@ function resolve(url) {
           url: finalUrl,
           quality: "HD",
           headers: {
-            "User-Agent": UA,
+            "User-Agent": UA2,
             "Referer": baseOrigin + "/",
             "Origin": baseOrigin
           }
@@ -209,7 +209,7 @@ function resolve(url) {
 
 // src/resolvers/vidhide.js
 var import_axios2 = __toESM(require("axios"));
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpackVidHide(script) {
   try {
     const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
@@ -244,7 +244,7 @@ function resolve2(url) {
       const { data: html } = yield import_axios2.default.get(url, {
         timeout: 15e3,
         maxRedirects: 10,
-        headers: { "User-Agent": UA2, "Referer": "https://embed69.org/" }
+        headers: { "User-Agent": UA3, "Referer": "https://embed69.org/" }
       });
       let finalUrl = null;
       const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
@@ -273,7 +273,7 @@ function resolve2(url) {
       return {
         url: finalUrl,
         headers: {
-          "User-Agent": UA2,
+          "User-Agent": UA3,
           "Referer": origin + "/",
           "Origin": origin
         }
@@ -549,44 +549,47 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
           }
         } catch (e) {
           console.warn("[PelisPlusHD] JSON parse failed, trying regex on options.");
-          const linkRegex = /"url":\s*"([^"]+)"/g;
+          const linkRegex = /"url":\s*"([^"]+)"[^{}]*"name":\s*"([^"]+)"/g;
           let linkM;
           while ((linkM = linkRegex.exec(optionsMatch[1])) !== null) {
-            rawResults.push({ serverUrl: linkM[1], serverName: "Server", language: "Latino" });
+            const url = linkM[1];
+            const label = linkM[2] || "Latino";
+            if (!isSubtitled(label)) {
+              rawResults.push({ serverUrl: url, serverName: label, language: label });
+            }
           }
         }
       }
-      if (rawResults.length === 0) {
-        console.log("[PelisPlusHD] No sources in 'options', checking spans/links fallback...");
-        const spanRegex = /<span[^>]*lid="(\d+)"[^>]*url="([^"]+)"/gi;
-        let sM;
-        while ((sM = spanRegex.exec(pageHtml)) !== null) {
-          const id = sM[1];
-          const serverUrl = sM[2];
-          let serverName = "Server";
-          const liRegex = new RegExp(`<li[^>]*data-id="${id}"[^>]*>[\\s\\S]*?<a[^>]*>(.*?)</a>`, "i");
-          const liMatch = pageHtml.match(liRegex);
-          if (liMatch) {
-            serverName = liMatch[1].trim();
-          }
-          rawResults.push({ serverUrl, serverName, language: "Latino" });
+      console.log("[PelisPlusHD] Checking LIs and spans...");
+      const liRegex = /<li[^>]*data-url="([^"]+)"[^>]*data-name="([^"]+)"[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/gi;
+      let liM;
+      while ((liM = liRegex.exec(pageHtml)) !== null) {
+        const url = liM[1];
+        const lang = liM[2] || "Latino";
+        const serverName = liM[3].replace(/<[^>]+>/g, "").trim() || "Server";
+        if (!isSubtitled(lang)) {
+          rawResults.push({ serverUrl: url, serverName, language: lang });
+          console.log(`[PelisPlusHD] Found LI result: ${serverName} (${lang})`);
         }
-        if (rawResults.length === 0) {
-          const liRegex = /<li[^>]*data-url="([^"]+)"[^>]*data-name="([^"]+)"[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/gi;
-          let liM;
-          while ((liM = liRegex.exec(pageHtml)) !== null) {
-            const url = liM[1];
-            const lang = liM[2] || "Latino";
-            const sName = liM[3].trim().toLowerCase();
-            if (isSubtitled(lang)) {
-              console.log(`[PelisPlusHD] Skipping subtitled fallback: ${lang}`);
-              continue;
-            }
-            rawResults.push({ serverUrl: url, serverName: sName, language: lang });
-          }
+      }
+      const spanRegex = /<span[^>]*lid="(\d+)"[^>]*url="([^"]+)"/gi;
+      let sM;
+      while ((sM = spanRegex.exec(pageHtml)) !== null) {
+        const id = sM[1];
+        const serverUrl = sM[2];
+        let serverName = "Server";
+        const nameRegex = new RegExp(`<li[^>]*data-id="${id}"[^>]*>[\\s\\S]*?<a[^>]*>(.*?)</a>`, "i");
+        const nameMatch = pageHtml.match(nameRegex);
+        if (nameMatch) {
+          serverName = nameMatch[1].replace(/<[^>]+>/g, "").trim();
+        }
+        if (!isSubtitled(serverName)) {
+          rawResults.push({ serverUrl, serverName, language: "Latino" });
+          console.log(`[PelisPlusHD] Found Span result: ${serverName}`);
         }
       }
       console.log(`[PelisPlusHD] Found ${rawResults.length} raw sources.`);
+      rawResults.forEach((r, i) => console.log(`  [${i}] Server: ${r.serverName}, Lang: ${r.language}, URL: ${r.serverUrl}`));
       const streams = [];
       for (const res of rawResults) {
         let finalUrl = null;
@@ -666,11 +669,13 @@ function validateStream(stream) {
     const { url, headers } = stream;
     try {
       const response = yield import_axios4.default.get(url, {
-        timeout: 4e3,
+        timeout: 8e3,
         responseType: "text",
         headers: __spreadProps(__spreadValues({}, headers || {}), {
           "Accept": "*/*",
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
+          "Range": "bytes=0-4096",
+          // Pedir solo los primeros 4KB
+          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || UA
         })
       });
       if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
