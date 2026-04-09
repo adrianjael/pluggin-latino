@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-09T21:31:10.747Z
+ * Generated: 2026-04-09T21:39:13.281Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -682,10 +682,11 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
         }
       }
       console.log(`[PelisPlusHD] Found ${rawResults.length} raw sources.`);
+      const results = [];
       const streamPromises = rawResults.map((res) => __async(this, null, function* () {
-        let finalUrl = null;
-        const url = res.serverUrl;
         try {
+          let finalUrl = null;
+          const url = res.serverUrl;
           if (url.includes("hlswish") || url.includes("hglamioz.com") || url.includes("streamwish")) {
             finalUrl = yield resolve(url);
           } else if (url.includes("vidhide")) {
@@ -696,27 +697,32 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
           if (finalUrl) {
             const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
             if (directUrl) {
-              const vStream = yield validateStream({
+              const streamData = {
                 name: "PelisPlusHD",
                 url: directUrl,
                 quality: "HD",
                 langLabel: res.language,
                 serverLabel: res.serverName,
                 headers: typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL }
-              });
-              if (vStream.verified) {
-                vStream.quality = `(${vStream.quality} \u2713)`;
+              };
+              try {
+                const vStream = yield validateStream(streamData);
+                if (vStream.verified) {
+                  vStream.quality = `(${vStream.quality} \u2713)`;
+                }
+                return vStream;
+              } catch (e) {
+                return streamData;
               }
-              return vStream;
             }
           }
         } catch (e) {
-          console.error(`[PelisPlusHD] Error resolving ${url}:`, e.message);
+          console.error(`[PelisPlusHD] Error resolving ${res.serverUrl}:`, e.message);
         }
         return null;
       }));
-      const results = yield Promise.all(streamPromises);
-      return results.filter((s) => s !== null);
+      const allResults = yield Promise.all(streamPromises);
+      return allResults.filter((s) => s !== null);
     } catch (error) {
       console.error("[PelisPlusHD] extractStreams Error:", error.message);
       return [];

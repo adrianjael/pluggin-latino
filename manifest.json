@@ -1,12 +1,12 @@
 {
   "name": "AdrianJael",
-  "version": "1.6.6",
+  "version": "1.6.7",
   "scrapers": [
     {
       "id": "embed69",
       "name": "Embed69",
       "description": "Peliculas y series via embed69.org (V1.5.0)",
-      "version": "1.6.3",
+      "version": "1.6.4",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -52,7 +52,7 @@
       "id": "pelisplus",
       "name": "PelisPlusHD",
       "description": "Películas y series en espanol latino desde PelisPlusHD.la",
-      "version": "1.5.5",
+      "version": "1.5.6",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -75,7 +75,7 @@
       "id": "hackstore2",
       "name": "HackStore2",
       "description": "API Nativa de Películas en HD",
-      "version": "1.2.4",
+      "version": "1.2.5",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
