@@ -179,6 +179,13 @@ export async function extractStreams(tmdbId, mediaType, season, episode, provide
 
         // 6. Resolve links IN PARALLEL (Speed optimization)
         const streamPromises = playerData.data.map(async (player) => {
+            const lang = player.lang || "Latino";
+
+            // Filtro estricto: No subtitulados
+            if (lang.toLowerCase().includes('sub') || lang.toLowerCase().includes('vose')) {
+                return null;
+            }
+
             let serverName = "Desconocido";
             let rawUrl = player.url || "";
             let finalUrl = rawUrl;

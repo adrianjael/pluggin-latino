@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-09T21:41:16.307Z
+ * Generated: 2026-04-09T21:49:06.325Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -902,6 +902,10 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         return [];
       }
       const streamPromises = playerData.data.map((player) => __async(this, null, function* () {
+        const lang = player.lang || "Latino";
+        if (lang.toLowerCase().includes("sub") || lang.toLowerCase().includes("vose")) {
+          return null;
+        }
         let serverName = "Desconocido";
         let rawUrl = player.url || "";
         let finalUrl = rawUrl;
