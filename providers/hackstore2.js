@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-09T21:11:57.143Z
+ * Generated: 2026-04-09T21:21:47.614Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -717,6 +717,73 @@ function resolve5(url) {
   });
 }
 
+// src/utils/m3u8.js
+var import_axios4 = __toESM(require("axios"));
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+function getQualityFromHeight(height) {
+  if (!height)
+    return "Auto";
+  const h = parseInt(height);
+  if (h >= 2160)
+    return "4K";
+  if (h >= 1440)
+    return "1440p";
+  if (h >= 1080)
+    return "1080p";
+  if (h >= 720)
+    return "720p";
+  if (h >= 480)
+    return "480p";
+  if (h >= 360)
+    return "360p";
+  return "240p";
+}
+function parseBestQuality(content) {
+  const lines = content.split("\n");
+  let bestHeight = 0;
+  for (const line of lines) {
+    if (line.includes("RESOLUTION=")) {
+      const match = line.match(/RESOLUTION=\d+x(\d+)/);
+      if (match) {
+        const height = parseInt(match[1]);
+        if (height > bestHeight)
+          bestHeight = height;
+      }
+    }
+  }
+  return bestHeight > 0 ? getQualityFromHeight(bestHeight) : "720p";
+}
+function validateStream(stream) {
+  return __async(this, null, function* () {
+    if (!stream || !stream.url)
+      return stream;
+    const { url, headers } = stream;
+    try {
+      const response = yield import_axios4.default.get(url, {
+        timeout: 8e3,
+        responseType: "text",
+        headers: __spreadProps(__spreadValues({}, headers || {}), {
+          "Accept": "*/*",
+          "Range": "bytes=0-4096",
+          // Pedir solo los primeros 4KB
+          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || UA4
+        })
+      });
+      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(response.data);
+        return __spreadProps(__spreadValues({}, stream), {
+          quality: realQuality,
+          verified: true
+          // <--- Marcamos como verificado
+        });
+      }
+      return __spreadProps(__spreadValues({}, stream), { verified: true });
+    } catch (error) {
+      return __spreadProps(__spreadValues({}, stream), { verified: false });
+    }
+  });
+}
+
 // src/hackstore2/extractor.js
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
@@ -855,7 +922,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           resolvedData = yield resolve5(finalUrl);
         if (!resolvedData || !resolvedData.url)
           return null;
-        return {
+        const verifiedStream = yield validateStream({
           langLabel: player.lang || "Latino",
           serverLabel: serverName,
           url: resolvedData.url,
@@ -864,80 +931,17 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Referer": rawUrl
           }
-        };
+        });
+        if (verifiedStream.verified) {
+          verifiedStream.quality = `${verifiedStream.quality} \u2713`;
+        }
+        return verifiedStream;
       }));
       const playerResults = yield Promise.all(streamPromises);
       return playerResults.filter((s) => s !== null);
     } catch (error) {
       console.error(`[HackStore2] Error: ${error.message}`);
       return [];
-    }
-  });
-}
-
-// src/utils/m3u8.js
-var import_axios4 = __toESM(require("axios"));
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-function getQualityFromHeight(height) {
-  if (!height)
-    return "Auto";
-  const h = parseInt(height);
-  if (h >= 2160)
-    return "4K";
-  if (h >= 1440)
-    return "1440p";
-  if (h >= 1080)
-    return "1080p";
-  if (h >= 720)
-    return "720p";
-  if (h >= 480)
-    return "480p";
-  if (h >= 360)
-    return "360p";
-  return "240p";
-}
-function parseBestQuality(content) {
-  const lines = content.split("\n");
-  let bestHeight = 0;
-  for (const line of lines) {
-    if (line.includes("RESOLUTION=")) {
-      const match = line.match(/RESOLUTION=\d+x(\d+)/);
-      if (match) {
-        const height = parseInt(match[1]);
-        if (height > bestHeight)
-          bestHeight = height;
-      }
-    }
-  }
-  return bestHeight > 0 ? getQualityFromHeight(bestHeight) : "720p";
-}
-function validateStream(stream) {
-  return __async(this, null, function* () {
-    if (!stream || !stream.url)
-      return stream;
-    const { url, headers } = stream;
-    try {
-      const response = yield import_axios4.default.get(url, {
-        timeout: 8e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
-          "Accept": "*/*",
-          "Range": "bytes=0-4096",
-          // Pedir solo los primeros 4KB
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || UA4
-        })
-      });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
-        return __spreadProps(__spreadValues({}, stream), {
-          quality: realQuality,
-          verified: true
-          // <--- Marcamos como verificado
-        });
-      }
-      return __spreadProps(__spreadValues({}, stream), { verified: true });
-    } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
     }
   });
 }
