@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-09T19:32:20.630Z
+ * Generated: 2026-04-09T19:37:19.789Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -850,19 +850,28 @@ function getImdbId(tmdbId, mediaType) {
     }
   });
 }
-var SEASON_OFFSETS = {
-  "tt40197357": 9
-  // Scrubs (2025) -> S1 en Nuvio es S10 en Embed69 (continuación de la serie de 2001)
+var SERIES_MAPPINGS = {
+  "tt40197357": {
+    replacementId: "tt0285403",
+    // Usar ID de la serie original (Scrubs 2001)
+    offset: 9
+    // S1 en Nuvio corresponde a S10 en Embed69
+  }
 };
 function buildEmbedUrl(imdbId, mediaType, season, episode) {
   if (mediaType === "movie" || mediaType === "movies")
     return `${BASE_URL}/f/${imdbId}`;
+  let targetId = imdbId;
   let s = parseInt(season) || 1;
-  if (SEASON_OFFSETS[imdbId]) {
-    s += SEASON_OFFSETS[imdbId];
+  const mapping = SERIES_MAPPINGS[imdbId];
+  if (mapping) {
+    if (mapping.replacementId)
+      targetId = mapping.replacementId;
+    if (mapping.offset)
+      s += mapping.offset;
   }
   const e = String(episode || 1).padStart(2, "0");
-  return `${BASE_URL}/f/${imdbId}-${s}x${e}`;
+  return `${BASE_URL}/f/${targetId}-${s}x${e}`;
 }
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
