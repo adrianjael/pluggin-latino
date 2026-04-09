@@ -1,6 +1,6 @@
 {
   "name": "AdrianJael",
-  "version": "1.6.9",
+  "version": "1.6.10",
   "scrapers": [
     {
       "id": "embed69",
@@ -121,7 +121,7 @@
       "id": "cuevana_gs",
       "name": "Cuevana.gs",
       "description": "Películas y series en alta definición (Latino) con servidores estables",
-      "version": "1.3.6",
+      "version": "1.4.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
