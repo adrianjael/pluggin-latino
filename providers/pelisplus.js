@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-09T19:53:00.674Z
+ * Generated: 2026-04-09T20:01:13.353Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -572,15 +572,17 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
           rawResults.push({ serverUrl, serverName, language: "Latino" });
         }
         if (rawResults.length === 0) {
-          const liRegex = /<li[^>]*data-url="([^"]+)"[^>]*data-name="([^"]*)"/gi;
+          const liRegex = /<li[^>]*data-url="([^"]+)"[^>]*data-name="([^"]+)"[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/gi;
           let liM;
           while ((liM = liRegex.exec(pageHtml)) !== null) {
+            const url = liM[1];
             const lang = liM[2] || "Latino";
+            const sName = liM[3].trim().toLowerCase();
             if (isSubtitled(lang)) {
               console.log(`[PelisPlusHD] Skipping subtitled fallback: ${lang}`);
               continue;
             }
-            rawResults.push({ serverUrl: liM[1], serverName: "Server", language: lang });
+            rawResults.push({ serverUrl: url, serverName: sName, language: lang });
           }
         }
       }
