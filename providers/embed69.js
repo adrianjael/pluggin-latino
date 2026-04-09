@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-09T15:28:46.007Z
+ * Generated: 2026-04-09T19:32:20.630Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,9 +25,6 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -65,66 +62,8 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/utils/http.js
-var require_http = __commonJS({
-  "src/utils/http.js"(exports2, module2) {
-    var import_axios7 = __toESM(require("axios"));
-    var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-    var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-    function request(url, options) {
-      return __async(this, null, function* () {
-        var opt = options || {};
-        var headers = Object.assign({
-          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA2,
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
-        }, opt.headers);
-        try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
-          var fetchOptions = Object.assign({}, opt, {
-            headers,
-            signal: controller.signal
-          });
-          var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
-          if (!response.ok && !opt.ignoreErrors) {
-            console.warn("[HTTP] Error " + response.status + " en " + url);
-          }
-          return response;
-        } catch (error) {
-          console.error("[HTTP] Error en " + url + ": " + error.message);
-          throw error;
-        }
-      });
-    }
-    function fetchHtml2(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.text();
-      });
-    }
-    function fetchJson(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.json();
-      });
-    }
-    module2.exports = {
-      request,
-      fetchHtml: fetchHtml2,
-      fetchJson,
-      DEFAULT_UA: DEFAULT_UA2,
-      MOBILE_UA
-    };
-  }
-});
-
 // src/embed69/index.js
-var import_axios6 = __toESM(require("axios"));
+var import_axios7 = __toESM(require("axios"));
 
 // src/utils/m3u8.js
 var import_axios = __toESM(require("axios"));
@@ -280,8 +219,46 @@ function finalizeStreams(streams, providerName) {
   });
 }
 
-// src/resolvers/voe.js
-var import_http = __toESM(require_http());
+// src/utils/http.js
+var import_axios2 = __toESM(require("axios"));
+var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+function request(url, options) {
+  return __async(this, null, function* () {
+    var opt = options || {};
+    var headers = Object.assign({
+      "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA,
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+    }, opt.headers);
+    try {
+      var timeoutMs = opt.timeout || 5e3;
+      var controller = new AbortController();
+      var timeoutId = setTimeout(() => {
+        controller.abort();
+      }, timeoutMs);
+      var fetchOptions = Object.assign({}, opt, {
+        headers,
+        signal: controller.signal
+      });
+      var response = yield fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+      if (!response.ok && !opt.ignoreErrors) {
+        console.warn("[HTTP] Error " + response.status + " en " + url);
+      }
+      return response;
+    } catch (error) {
+      console.error("[HTTP] Error en " + url + ": " + error.message);
+      throw error;
+    }
+  });
+}
+function fetchHtml(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.text();
+  });
+}
 
 // src/utils/string.js
 function base64Decode(input) {
@@ -321,11 +298,11 @@ function resolve(url) {
   return __async(this, null, function* () {
     try {
       console.log("[VOE] Resolving: " + url);
-      var html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
+      var html = yield fetchHtml(url, { headers: { "User-Agent": DEFAULT_UA } });
       if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
         var rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
+          html = yield fetchHtml(rm[1], { headers: { "User-Agent": DEFAULT_UA } });
         }
       }
       var jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
@@ -358,7 +335,7 @@ function resolve(url) {
             return {
               url: data.source,
               quality: "1080p",
-              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+              headers: { "User-Agent": DEFAULT_UA, "Referer": url }
             };
           }
         } catch (ex) {
@@ -370,7 +347,7 @@ function resolve(url) {
         return {
           url: m3u8MatchRaw[1],
           quality: "1080p",
-          headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+          headers: { "User-Agent": DEFAULT_UA, "Referer": url }
         };
       }
       return null;
@@ -510,7 +487,7 @@ function resolve2(url) {
 }
 
 // src/resolvers/hlswish.js
-var import_axios2 = __toESM(require("axios"));
+var import_axios3 = __toESM(require("axios"));
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackEval(payload, radix, symtab) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -548,7 +525,7 @@ function resolve3(url) {
       for (const mirror of mirrors) {
         try {
           console.log(`[StreamWish] Probando espejo: ${mirror}`);
-          const response = yield import_axios2.default.get(mirror, {
+          const response = yield import_axios3.default.get(mirror, {
             headers: { "User-Agent": UA2, "Referer": "https://embed69.org/" },
             timeout: 8e3
           });
@@ -608,7 +585,7 @@ function resolve3(url) {
 }
 
 // src/resolvers/vidhide.js
-var import_axios3 = __toESM(require("axios"));
+var import_axios4 = __toESM(require("axios"));
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpackVidHide(script) {
   try {
@@ -641,7 +618,7 @@ function resolve4(url) {
   return __async(this, null, function* () {
     try {
       console.log(`[VidHide] Resolviendo: ${url}`);
-      const { data: html } = yield import_axios3.default.get(url, {
+      const { data: html } = yield import_axios4.default.get(url, {
         timeout: 15e3,
         maxRedirects: 10,
         headers: { "User-Agent": UA3, "Referer": "https://embed69.org/" }
@@ -686,17 +663,17 @@ function resolve4(url) {
 }
 
 // src/resolvers/goodstream.js
-var import_axios5 = __toESM(require("axios"));
+var import_axios6 = __toESM(require("axios"));
 
 // src/resolvers/quality.js
-var import_axios4 = __toESM(require("axios"));
+var import_axios5 = __toESM(require("axios"));
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function detectQuality(_0) {
   return __async(this, arguments, function* (url, headers = {}) {
     try {
       if (!url || !url.includes(".m3u8"))
         return "1080p";
-      const { data } = yield import_axios4.default.get(url, {
+      const { data } = yield import_axios5.default.get(url, {
         timeout: 5e3,
         headers: __spreadValues({
           "User-Agent": UA4
@@ -741,7 +718,7 @@ function resolve5(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log(`[GoodStream] Resolviendo: ${embedUrl}`);
-      const response = yield import_axios5.default.get(embedUrl, {
+      const response = yield import_axios6.default.get(embedUrl, {
         headers: {
           "User-Agent": UA5,
           "Referer": "https://goodstream.one",
@@ -862,7 +839,7 @@ function getImdbId(tmdbId, mediaType) {
     const tId = tmdbId.toString();
     const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${tId}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tId}/external_ids?api_key=${TMDB_API_KEY}`;
     try {
-      const { data } = yield import_axios6.default.get(endpoint, {
+      const { data } = yield import_axios7.default.get(endpoint, {
         timeout: 5e3,
         headers: { "User-Agent": UA6 }
       });
@@ -873,10 +850,17 @@ function getImdbId(tmdbId, mediaType) {
     }
   });
 }
+var SEASON_OFFSETS = {
+  "tt40197357": 9
+  // Scrubs (2025) -> S1 en Nuvio es S10 en Embed69 (continuación de la serie de 2001)
+};
 function buildEmbedUrl(imdbId, mediaType, season, episode) {
   if (mediaType === "movie" || mediaType === "movies")
     return `${BASE_URL}/f/${imdbId}`;
-  const s = parseInt(season) || 1;
+  let s = parseInt(season) || 1;
+  if (SEASON_OFFSETS[imdbId]) {
+    s += SEASON_OFFSETS[imdbId];
+  }
   const e = String(episode || 1).padStart(2, "0");
   return `${BASE_URL}/f/${imdbId}-${s}x${e}`;
 }
@@ -904,7 +888,10 @@ function getStreams(tmdbId, mediaType, season, episode) {
         }
         return embeds;
       };
-      const imdbId = yield getImdbId(tmdbId, mediaType);
+      let imdbId = tmdbId.toString().startsWith("tt") ? tmdbId : null;
+      if (!imdbId) {
+        imdbId = yield getImdbId(tmdbId, mediaType);
+      }
       if (!imdbId) {
         console.log("[Embed69] No se encontr\xF3 IMDB ID");
         return [];
@@ -912,7 +899,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       console.log(`[Embed69] IMDB ID: ${imdbId}`);
       const embedUrl = buildEmbedUrl(imdbId, mediaType, season, episode);
       console.log(`[Embed69] Fetching: ${embedUrl}`);
-      const { data: html } = yield import_axios6.default.get(embedUrl, {
+      const { data: html } = yield import_axios7.default.get(embedUrl, {
         timeout: 1e4,
         headers: {
           "User-Agent": UA6,
