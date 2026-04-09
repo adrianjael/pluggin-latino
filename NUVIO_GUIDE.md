@@ -105,6 +105,14 @@ Para que Nuvio acepte un enlace, este debe ser **Directo** (`.m3u8` o `.mp4`).
     - Series: `"TMDBID:temporada:episodio"` (ej: `"211089:1:1"`)
 - **Solución**: El `index.js` debe hacer `parts = req.query.split(":")` y luego consultar TMDB con `parts[0]` para obtener el título correcto antes de llamar al extractor.
 
+### [2026-04-09] PelisGo: Búsqueda Resiliente y Escapado JSON
+- **Problema**: El proveedor no encontraba resultados para títulos largos con ":" o cuando el sitio usaba Next.js con JSON escapado.
+- **Lección 1 (Búsqueda Fallback)**: Los buscadores de sitios como PelisGo a veces fallan con títulos exactos largos. 
+    - **Solución**: Se implementó una lógica donde, si la búsqueda principal falla, se intenta con la primera palabra del título. Esto aumenta la probabilidad de éxito drásticamente sin perder precisión (gracias al chequeo de similitud posterior).
+- **Lección 2 (JSON Escapado en Next.js)**: En algunas actualizaciones, los datos de `videoLinks` vienen dentro de un string JSON ya escapado (`\"url\":\"...\"`). 
+    - **Solución**: El regex anterior `url:"(.*?)"` fallaba porque buscaba comillas reales. El nuevo regex utiliza `["\\]+` para ser agnóstico al tipo de comilla o al carácter de escape `\`.
+- **Lección 3 (Git Desktop)**: La ruta de `git.exe` dentro de `AppData\Local\GitHubDesktop` cambia con cada actualización de la app (ej: `app-3.5.7`). Siempre se debe verificar el nombre de la carpeta `app-*` antes de lanzar comandos.
+
 ---
 
 *(Actualizar con cada nuevo descubrimiento)*
