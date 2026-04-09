@@ -52,7 +52,7 @@
       "id": "pelisplus",
       "name": "PelisPlusHD",
       "description": "Películas y series en espanol latino desde PelisPlusHD.la",
-      "version": "1.5.2",
+      "version": "1.5.3",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",

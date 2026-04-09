@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-09T20:09:03.910Z
+ * Generated: 2026-04-09T20:45:34.941Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -111,7 +111,7 @@ function fetchText(_0) {
 
 // src/resolvers/hlswish.js
 var import_axios = __toESM(require("axios"));
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackEval(payload, radix, symtab) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const unbase = (str) => {
@@ -149,7 +149,7 @@ function resolve(url) {
         try {
           console.log(`[StreamWish] Probando espejo: ${mirror}`);
           const response = yield import_axios.default.get(mirror, {
-            headers: { "User-Agent": UA2, "Referer": "https://embed69.org/" },
+            headers: { "User-Agent": UA, "Referer": "https://embed69.org/" },
             timeout: 8e3
           });
           html = response.data;
@@ -193,7 +193,7 @@ function resolve(url) {
           url: finalUrl,
           quality: "HD",
           headers: {
-            "User-Agent": UA2,
+            "User-Agent": UA,
             "Referer": baseOrigin + "/",
             "Origin": baseOrigin
           }
@@ -209,7 +209,7 @@ function resolve(url) {
 
 // src/resolvers/vidhide.js
 var import_axios2 = __toESM(require("axios"));
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpackVidHide(script) {
   try {
     const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
@@ -244,7 +244,7 @@ function resolve2(url) {
       const { data: html } = yield import_axios2.default.get(url, {
         timeout: 15e3,
         maxRedirects: 10,
-        headers: { "User-Agent": UA3, "Referer": "https://embed69.org/" }
+        headers: { "User-Agent": UA2, "Referer": "https://embed69.org/" }
       });
       let finalUrl = null;
       const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
@@ -273,7 +273,7 @@ function resolve2(url) {
       return {
         url: finalUrl,
         headers: {
-          "User-Agent": UA3,
+          "User-Agent": UA2,
           "Referer": origin + "/",
           "Origin": origin
         }
@@ -629,6 +629,7 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
 
 // src/utils/m3u8.js
 var import_axios4 = __toESM(require("axios"));
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -675,7 +676,7 @@ function validateStream(stream) {
           "Accept": "*/*",
           "Range": "bytes=0-4096",
           // Pedir solo los primeros 4KB
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || UA
+          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || UA3
         })
       });
       if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
@@ -774,7 +775,7 @@ function finalizeStreams(streams, providerName) {
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        title: `${q}${check} | ${lang} | ${server}`,
         url: s.url,
         quality: q,
         headers: s.headers || {}

@@ -3,6 +3,8 @@
  */
 import axios from 'axios';
 
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
 /**
  * Determine quality from resolution (height)
  */
@@ -60,7 +62,6 @@ export async function validateStream(stream) {
             }
         });
 
-        // Solo si tenemos contenido y parece un M3U8, intentamos detectar calidad
         if (response.data && typeof response.data === 'string' && (url.includes('.m3u8') || response.data.includes('#EXTM3U'))) {
             const realQuality = parseBestQuality(response.data);
             return { 
