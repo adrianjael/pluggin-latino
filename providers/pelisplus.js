@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-09T20:45:34.941Z
+ * Generated: 2026-04-09T21:00:23.608Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -490,6 +490,7 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
         const searchHtml = yield fetchText(searchUrl);
         const aRegex = /<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
         let m;
+        const matches = [];
         while ((m = aRegex.exec(searchHtml)) !== null) {
           const href = m[1];
           const inner = m[2];
@@ -507,13 +508,18 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
               resultTitle = tMatch[1].trim();
           }
           if (titleMatch(q, resultTitle) || tmdb && (titleMatch(tmdb.title, resultTitle) || titleMatch(tmdb.originalTitle, resultTitle))) {
-            movieUrl = BASE_URL + href;
-            console.log(`[PelisPlusHD] Found Base URL: ${movieUrl}`);
-            break;
+            const normalizedQ = normalizeTitle(q);
+            const normalizedT = normalizeTitle(resultTitle);
+            const score = Math.abs(normalizedQ.length - normalizedT.length);
+            matches.push({ href: BASE_URL + href, title: resultTitle, score });
           }
         }
-        if (movieUrl)
+        if (matches.length > 0) {
+          matches.sort((a, b) => a.score - b.score);
+          movieUrl = matches[0].href;
+          console.log(`[PelisPlusHD] Best Match: ${matches[0].title} (${movieUrl})`);
           break;
+        }
       }
       if (!movieUrl) {
         console.log(`[PelisPlusHD] No matches found for ${tmdbId}`);
@@ -560,32 +566,46 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
           }
         }
       }
-      console.log("[PelisPlusHD] Checking LIs and spans...");
-      const liRegex = /<li[^>]*data-url="([^"]+)"[^>]*data-name="([^"]+)"[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/gi;
-      let liM;
-      while ((liM = liRegex.exec(pageHtml)) !== null) {
-        const url = liM[1];
-        const lang = liM[2] || "Latino";
-        const serverName = liM[3].replace(/<[^>]+>/g, "").trim() || "Server";
-        if (!isSubtitled(lang)) {
-          rawResults.push({ serverUrl: url, serverName, language: lang });
-          console.log(`[PelisPlusHD] Found LI result: ${serverName} (${lang})`);
+      console.log("[PelisPlusHD] Analyzing player blocks...");
+      const playerBlocks = pageHtml.split('<div class="player">');
+      playerBlocks.shift();
+      for (const block of playerBlocks) {
+        const langMatch = block.match(/<a[^>]*class="divseason"[^>]*>([\s\S]*?)<\/a>/i);
+        const lang = langMatch ? langMatch[1].replace(/<[^>]+>/g, "").trim() : "Latino";
+        if (isSubtitled(lang)) {
+          console.log(`[PelisPlusHD] Skipping subtitled block: ${lang}`);
+          continue;
         }
-      }
-      const spanRegex = /<span[^>]*lid="(\d+)"[^>]*url="([^"]+)"/gi;
-      let sM;
-      while ((sM = spanRegex.exec(pageHtml)) !== null) {
-        const id = sM[1];
-        const serverUrl = sM[2];
-        let serverName = "Server";
-        const nameRegex = new RegExp(`<li[^>]*data-id="${id}"[^>]*>[\\s\\S]*?<a[^>]*>(.*?)</a>`, "i");
-        const nameMatch = pageHtml.match(nameRegex);
-        if (nameMatch) {
-          serverName = nameMatch[1].replace(/<[^>]+>/g, "").trim();
+        const iframeMatch = block.match(/<iframe[^>]*src="([^"]+)"/i);
+        if (iframeMatch) {
+          const url = iframeMatch[1];
+          if (!rawResults.some((r) => r.serverUrl === url)) {
+            rawResults.push({ serverUrl: url, serverName: "Active Player", language: lang });
+          }
         }
-        if (!isSubtitled(serverName)) {
-          rawResults.push({ serverUrl, serverName, language: "Latino" });
-          console.log(`[PelisPlusHD] Found Span result: ${serverName}`);
+        const liUrlRegex = /<li[^>]*data-url="([^"]+)"[^>]*data-name="([^"]+)"[^>]*>([\s\S]*?)<\/li>/gi;
+        let m;
+        while ((m = liUrlRegex.exec(block)) !== null) {
+          const url = m[1];
+          const resLang = m[2] || lang;
+          const serverName = m[3].replace(/<[^>]+>/g, "").trim() || "Server";
+          if (!isSubtitled(resLang) && !rawResults.some((r) => r.serverUrl === url)) {
+            rawResults.push({ serverUrl: url, serverName, language: resLang });
+          }
+        }
+        const liIdRegex = /<li[^>]*data-id="(\d+)"[^>]*>([\s\S]*?)<\/li>/gi;
+        let mId;
+        while ((mId = liIdRegex.exec(block)) !== null) {
+          const id = mId[1];
+          const serverName = mId[2].replace(/<[^>]+>/g, "").trim() || "Server";
+          const linkRegex = new RegExp(`<span[^>]*lid="${id}"[^>]*url="([^"]+)"`, "i");
+          const linkMatch = pageHtml.match(linkRegex);
+          if (linkMatch) {
+            const url = linkMatch[1];
+            if (!rawResults.some((r) => r.serverUrl === url)) {
+              rawResults.push({ serverUrl: url, serverName, language: lang });
+            }
+          }
         }
       }
       console.log(`[PelisPlusHD] Found ${rawResults.length} raw sources.`);
