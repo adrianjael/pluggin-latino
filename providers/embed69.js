@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-09T19:37:19.789Z
+ * Generated: 2026-04-09T19:45:37.143Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,6 +25,10 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -41,6 +45,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
@@ -63,6 +68,11 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/embed69/index.js
+var embed69_exports = {};
+__export(embed69_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(embed69_exports);
 var import_axios7 = __toESM(require("axios"));
 
 // src/utils/m3u8.js
@@ -873,7 +883,7 @@ function buildEmbedUrl(imdbId, mediaType, season, episode) {
   const e = String(episode || 1).padStart(2, "0");
   return `${BASE_URL}/f/${targetId}-${s}x${e}`;
 }
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId || !mediaType)
       return [];
@@ -979,4 +989,3 @@ function getStreams(tmdbId, mediaType, season, episode) {
     }
   });
 }
-module.exports = { getStreams };
