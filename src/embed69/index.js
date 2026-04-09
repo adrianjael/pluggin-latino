@@ -290,7 +290,14 @@ export async function getStreams(tmdbId, mediaType, season, episode, title) {
       });
 
       const validatedBatch = await Promise.all(vPromises);
-      streams.push(...validatedBatch.filter(s => s !== null));
+      const newStreams = validatedBatch.filter(s => s !== null);
+      streams.push(...newStreams);
+
+      // Lógica de Cascada: Si encontramos resultados en este idioma prioritario, paramos.
+      if (newStreams.length > 0) {
+        console.log(`[Embed69] Finalizando búsqueda tras encontrar resultados en: ${lang}`);
+        break; 
+      }
     }
 
     // 6. Procesar resultados finales a través del motor central

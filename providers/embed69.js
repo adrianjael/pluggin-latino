@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-09T21:41:16.170Z
+ * Generated: 2026-04-09T21:42:56.711Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -999,7 +999,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           }
         }));
         const validatedBatch = yield Promise.all(vPromises);
-        streams.push(...validatedBatch.filter((s) => s !== null));
+        const newStreams = validatedBatch.filter((s) => s !== null);
+        streams.push(...newStreams);
+        if (newStreams.length > 0) {
+          console.log(`[Embed69] Finalizando b\xFAsqueda tras encontrar resultados en: ${lang}`);
+          break;
+        }
       }
       return yield finalizeStreams(streams, "Embed69");
     } catch (e) {
