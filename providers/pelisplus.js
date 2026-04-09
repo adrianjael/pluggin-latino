@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-09T14:17:22.648Z
+ * Generated: 2026-04-09T15:28:46.061Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -519,7 +519,7 @@ function extractStreams(tmdbId, mediaType, season, episode) {
       if (!movieUrl)
         return [];
       if (mediaType === "tv") {
-        movieUrl = movieUrl.replace("/serie/", "/episodio/") + `-${season}x${episode}`;
+        movieUrl = `${movieUrl}/temporada/${season}/capitulo/${episode}`;
       }
       const pageHtml = yield fetchText(movieUrl);
       const pageTitleMatch = pageHtml.match(/<title>([^<]+)<\/title>/i);
@@ -543,18 +543,39 @@ function extractStreams(tmdbId, mediaType, season, episode) {
           rawResults.push({ serverUrl, serverName, language });
         }
       }
-      const optMatch = pageHtml.match(/var options = {([\s\S]+?)};/);
+      const optMatch = pageHtml.match(/var options = ({[\s\S]+?});/);
       if (optMatch) {
-        const optionsRaw = optMatch[1];
-        const urlRegex = /"(option\d+)":\s*"([^"]+)"/g;
-        let match;
-        while ((match = urlRegex.exec(optionsRaw)) !== null) {
-          const optId = match[1];
-          const serverUrl2 = match[2];
-          const serverNameMatch = pageHtml.match(new RegExp(`<a[^>]*href="#${optId}"[^>]*>([^<]+)</a>`, "i"));
-          const serverName2 = serverNameMatch ? serverNameMatch[1].trim() : "Servidor";
-          if (serverUrl2 && serverUrl2.startsWith("http")) {
-            rawResults.push({ serverUrl: serverUrl2, serverName: serverName2, language: "Espa\xF1ol Latino" });
+        try {
+          const options = JSON.parse(optMatch[1]);
+          for (const langKey in options) {
+            const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
+            if (!langLabel.includes("Latino") && !langLabel.includes("Espa\xF1ol") && !langLabel.includes("Espana"))
+              continue;
+            const players = options[langKey];
+            if (Array.isArray(players)) {
+              players.forEach((p) => {
+                if (p.link && p.link.startsWith("http")) {
+                  rawResults.push({
+                    serverUrl: p.link,
+                    serverName: p.server || "Servidor",
+                    language: langLabel
+                  });
+                }
+              });
+            }
+          }
+        } catch (e) {
+          const optionsRaw = optMatch[1];
+          const urlRegex = /"(option\d+)":\s*"([^"]+)"/g;
+          let match;
+          while ((match = urlRegex.exec(optionsRaw)) !== null) {
+            const optId = match[1];
+            const serverUrl2 = match[2];
+            const serverNameMatch = pageHtml.match(new RegExp(`<a[^>]*href="#${optId}"[^>]*>([^<]+)</a>`, "i"));
+            const serverName2 = serverNameMatch ? serverNameMatch[1].trim() : "Servidor";
+            if (serverUrl2 && serverUrl2.startsWith("http")) {
+              rawResults.push({ serverUrl: serverUrl2, serverName: serverName2, language: "Espa\xF1ol Latino" });
+            }
           }
         }
       }
