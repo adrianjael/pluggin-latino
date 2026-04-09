@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-09T21:59:44.460Z
+ * Generated: 2026-04-09T22:04:50.844Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -605,9 +605,10 @@ function getTmdbInfo(tmdbId, mediaType) {
       var html = yield fetchHtml(url);
       var title = "";
       var year = "";
-      var titleMatch = html.match(/<title>(.*?)(?:\s+&\#8212;|\s+-|\s+\()/);
-      if (titleMatch)
-        title = titleMatch[1].trim();
+      var titleMatch = html.match(/<title>(.*?)(?:\s+[\-—|]|\s+—|\s+\()/i);
+      if (titleMatch) {
+        title = titleMatch[1].replace(/—/g, "-").split(" - ")[0].trim();
+      }
       var yearMatch = html.match(/\((\d{4})\)/);
       if (yearMatch)
         year = yearMatch[1];
@@ -643,26 +644,36 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           }
         });
       };
-      var searchJson = yield performSearch(searchTitle + " " + year);
-      if ((searchJson.error || !searchJson.data || !searchJson.data.posts || searchJson.data.posts.length === 0) && tmdbInfo.title) {
-        searchJson = yield performSearch(tmdbInfo.title);
+      var queriesToTry = [
+        (searchTitle + " " + year).trim(),
+        searchTitle,
+        searchTitle.replace(/[:\-–]/g, " ").trim(),
+        searchTitle.split(" ").slice(0, 2).join(" ").trim()
+        // Solo las primeras 2 palabras para máxima relax
+      ].filter((v, i2, a) => a.indexOf(v) === i2 && v.length > 2);
+      var searchJson = { error: true };
+      for (var q = 0; q < queriesToTry.length; q++) {
+        searchJson = yield performSearch(queriesToTry[q]);
+        if (!searchJson.error && searchJson.data && searchJson.data.posts && searchJson.data.posts.length > 0) {
+          console.log('[Cuevana.gs] Resultados encontrados con la consulta: "' + queriesToTry[q] + '"');
+          break;
+        }
       }
       if (searchJson.error || !searchJson.data || !searchJson.data.posts || searchJson.data.posts.length === 0) {
-        searchJson = yield performSearch(searchTitle);
-      }
-      if (searchJson.error || !searchJson.data || !searchJson.data.posts || searchJson.data.posts.length === 0) {
-        console.log("[Cuevana.gs] No results found.");
+        console.log("[Cuevana.gs] No results found after trying relaxed queries.");
         return [];
       }
       var posts = searchJson.data.posts;
-      var targetTitle = tmdbInfo.title || searchTitle;
+      var targetTitle = providedTitle || tmdbInfo.title || searchTitle;
+      console.log('[Cuevana.gs] Matcher - Objetivo: "' + targetTitle + '"');
       var matches = [];
       for (var i = 0; i < posts.length; i++) {
         var p = posts[i];
         if (p.type === targetType) {
           var score = calculateSimilarity(targetTitle, p.title);
-          if (score >= 0.45) {
-            matches.push(Object.assign({}, p, { score }));
+          console.log('[Cuevana.gs] Matcher - Analizando: "' + p.title + '" | Score: ' + score.toFixed(2));
+          if (score >= 0.4 || p.title.toLowerCase().includes(targetTitle.toLowerCase()) || targetTitle.toLowerCase().includes(p.title.toLowerCase())) {
+            matches.push(Object.assign({}, p, { score: Math.max(score, 0.5) }));
           }
         }
       }
