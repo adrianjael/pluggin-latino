@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-10T15:09:38.861Z
+ * Generated: 2026-04-10T15:13:30.803Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -207,13 +207,14 @@ function normalizeServer(server, url = "") {
     return "Servidor";
   }
   const s = server.toLowerCase();
-  if (s.includes("voe") || s.includes("jessicaclearout"))
+  const u = url.toLowerCase();
+  if (s.includes("voe") || s.includes("jessicaclearout") || u.includes("ugc-cdn") || u.includes("cloudwindow"))
     return "VOE";
   if (s.includes("filemoon"))
     return "Filemoon";
-  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish"))
+  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || u.includes("embedwish"))
     return "StreamWish";
-  if (s.includes("vidhide") || s.includes("dintezuvio"))
+  if (s.includes("vidhide") || s.includes("dintezuvio") || u.includes("acek-cdn") || u.includes("premilkyway"))
     return "VidHide";
   if (s.includes("waaw") || s.includes("netu"))
     return "Netu";
