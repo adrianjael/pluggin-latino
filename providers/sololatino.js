@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:04:26.859Z
+ * Generated: 2026-04-10T22:06:32.372Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1290,10 +1290,10 @@ var HEADERS = {
   "Referer": "https://sololatino.net/",
   "Connection": "keep-alive"
 };
-function getPlayerToken(imdbId) {
+function getPlayerToken(slug) {
   return __async(this, null, function* () {
     try {
-      const url = `${BASE_URL}/f/${imdbId}`;
+      const url = `${BASE_URL}/f/${slug}`;
       const { data: html } = yield import_axios10.default.get(url, { timeout: 8e3, headers: HEADERS });
       const match = html.match(/(?:const|var)\s+_t\s*=\s*['"]([^'"]+)['"]/);
       return match ? match[1] : null;
@@ -1306,94 +1306,56 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
+    console.log(`[SoloLatino] Buscando: ${tmdbId} (${mediaType}) S${season}E${episode}`);
     try {
-      const parts = tmdbId.toString().split(":");
-      const realId = parts[0].trim();
-      const s = parts[1] || season;
-      const e = parts[2] || episode;
-      let imdbId = null;
-      if (realId.startsWith("tt")) {
-        imdbId = realId;
-      } else {
-        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-        const idData = yield getCorrectImdbId(realId, type);
-        imdbId = idData ? idData.imdbId : null;
-      }
+      const idData = yield getCorrectImdbId(tmdbId, mediaType);
+      const imdbId = idData ? idData.imdbId : null;
       if (!imdbId) {
-        console.log(`[SoloLatino] Error: No se pudo obtener IMDb ID para ${realId}`);
+        console.log(`[SoloLatino] Error: No se pudo mapear ID ${tmdbId}`);
         return [];
       }
-      const isEpisode = mediaType === "tv" || mediaType === "series" || s !== void 0 && e !== void 0;
-      let playerPath = `/f/${imdbId}`;
-      if (isEpisode) {
-        const seasonNum = s || 1;
-        const episodeNum = (e || 1).toString().padStart(2, "0");
-        playerPath = `/f/${imdbId}-${seasonNum}x${episodeNum}`;
+      let slug = imdbId;
+      const isTV = mediaType === "tv" || mediaType === "series" || season && episode;
+      if (isTV) {
+        const s = season || 1;
+        const e = (episode || 1).toString().padStart(2, "0");
+        slug = `${imdbId}-${s}x${e}`;
       }
-      const token = yield getPlayerToken(playerPath.replace("/f/", ""));
-      if (!token) {
-        console.log(`[SoloLatino] Error: No se pudo obtener el token para ${playerPath}`);
+      const token = yield getPlayerToken(slug);
+      if (!token)
         return [];
-      }
-      const apiHeaders = __spreadProps(__spreadValues({}, HEADERS), {
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        "Referer": `${BASE_URL}${playerPath}`,
-        "X-Requested-With": "XMLHttpRequest"
-      });
-      const scanParams = new URLSearchParams({ a: "1", tok: token });
-      const { data: scanData } = yield import_axios10.default.post(`${BASE_URL}/s.php`, scanParams.toString(), {
-        headers: apiHeaders,
-        timeout: 8e3
-      });
-      if (!scanData || !scanData.langs_s || !scanData.langs_s.LAT) {
+      const { data: scanData } = yield import_axios10.default.post(
+        `${BASE_URL}/s.php`,
+        new URLSearchParams({ a: "1", tok: token }).toString(),
+        { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": `${BASE_URL}/f/${slug}`, "X-Requested-With": "XMLHttpRequest" }) }
+      );
+      if (!scanData || !scanData.langs_s || !scanData.langs_s.LAT)
         return [];
-      }
-      const clickParams = new URLSearchParams({ a: "click", tok: token });
-      yield import_axios10.default.post(`${BASE_URL}/s.php`, clickParams.toString(), { headers: apiHeaders });
-      const latinoServers = scanData.langs_s.LAT;
-      const streams = [];
-      const results = yield Promise.allSettled(latinoServers.map((_0) => __async(this, [_0], function* ([name, serverId]) {
-        try {
-          const resolveParams = new URLSearchParams({ a: "2", v: serverId, tok: token });
-          const { data: resData } = yield import_axios10.default.post(`${BASE_URL}/s.php`, resolveParams.toString(), {
-            headers: apiHeaders,
-            timeout: 1e4
-          });
-          if (resData && resData.u) {
-            if (resData.type === "iframe") {
-              const resolved = yield resolveEmbed(resData.u);
-              if (resolved && resolved.url) {
-                return {
-                  langLabel: "Latino",
-                  serverLabel: resolved.serverName || name.replace(/[^\w\s+]/g, "").trim(),
-                  url: resolved.url,
-                  quality: resolved.quality || "1080p",
-                  headers: resolved.headers || {}
-                };
-              }
-            } else if (resData.type === "mp4" || resData.u.includes(".m3u8") || resData.u.includes(".mp4")) {
-              return {
+      const latinoEmbeds = scanData.langs_s.LAT;
+      console.log(`[SoloLatino] ${latinoEmbeds.length} embeds encontrados. Resolviendo...`);
+      const resolvedResults = yield Promise.allSettled(
+        latinoEmbeds.map((embed) => __async(this, null, function* () {
+          try {
+            const resolved = yield resolveEmbed(embed.url);
+            if (resolved) {
+              return __spreadProps(__spreadValues({}, resolved), {
                 langLabel: "Latino",
-                serverLabel: name.replace(/[^\w\s+]/g, "").trim(),
-                url: resData.u,
-                quality: "1080p",
-                headers: { "User-Agent": UA10, "Referer": BASE_URL }
-              };
+                serverLabel: embed.server || "Online"
+              });
             }
+            return null;
+          } catch (e) {
+            return null;
           }
-        } catch (err) {
-        }
-        return null;
-      })));
-      results.forEach((r) => {
-        if (r.status === "fulfilled" && r.value)
-          streams.push(r.value);
-      });
-      return yield finalizeStreams(streams, "SoloLatino");
+        }))
+      );
+      const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+      const finalized = yield finalizeStreams(rawStreams, "SoloLatino");
+      console.log(`[SoloLatino] \u2713 ${finalized.length} streams finales devueltos.`);
+      return finalized;
     } catch (e) {
-      console.log(`[SoloLatino] Error general: ${e.message}`);
+      console.log(`[SoloLatino] Error Cr\xEDtico: ${e.message}`);
       return [];
     }
   });
 }
-module.exports = { getStreams };
