@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:45:02.161Z
+ * Generated: 2026-04-10T22:52:13.472Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1270,7 +1270,7 @@ function getCorrectImdbId(tmdbId, mediaType) {
 }
 
 // src/sololatino/index.js
-var BASE_URL = "https://player.pelisserieshoy.com";
+var BASE_URL = "https://embed69.org";
 var UA10 = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36";
 var HEADERS = {
   "user-agent": UA10,
