@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T23:07:21.145Z
+ * Generated: 2026-04-10T23:12:37.330Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -313,7 +313,7 @@ var HEADERS = {
   "referer": "https://sololatino.net/",
   "x-requested-with": "XMLHttpRequest"
 };
-function registerClick(token, cookie) {
+function registerClick(token, cookie, playerUrl) {
   return __async(this, null, function* () {
     try {
       const body = new URLSearchParams({ a: "click", tok: token }).toString();
@@ -321,7 +321,7 @@ function registerClick(token, cookie) {
         headers: __spreadProps(__spreadValues({}, HEADERS), {
           "cookie": cookie,
           "origin": BASE_URL,
-          "referer": `${BASE_URL}/f/`,
+          "referer": playerUrl,
           "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
         })
       });
@@ -331,7 +331,7 @@ function registerClick(token, cookie) {
     }
   });
 }
-function getDirectStream(serverId, token, cookie) {
+function getDirectStream(serverId, token, cookie, playerUrl) {
   return __async(this, null, function* () {
     try {
       const body = new URLSearchParams({
@@ -343,6 +343,7 @@ function getDirectStream(serverId, token, cookie) {
         headers: __spreadProps(__spreadValues({}, HEADERS), {
           "cookie": cookie,
           "origin": BASE_URL,
+          "referer": playerUrl,
           "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
         })
       });
@@ -369,10 +370,10 @@ function getSessionData(slug) {
       const cookie = Array.isArray(setCookie) ? setCookie.join("; ") : setCookie || "";
       const tokenMatch = html.match(/(?:const|var)\s+_t\s*=\s*['"]([^'"]+)['"]/);
       const token = tokenMatch ? tokenMatch[1] : null;
-      return { token, cookie };
+      return { token, cookie, playerUrl: url };
     } catch (e) {
       console.log("[SoloLatino] Fallo al iniciar sesi\xF3n:", e.message);
-      return { token: null, cookie: "" };
+      return { token: null, cookie: "", playerUrl: "" };
     }
   });
 }
@@ -383,15 +384,16 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const startTime = Date.now();
     const slug = mediaType === "movie" || mediaType === "movies" ? tmdbId : `${tmdbId}-${season || 1}x${(episode || 1).toString().padStart(2, "0")}`;
     try {
-      const { token, cookie } = yield getSessionData(slug);
+      const { token, cookie, playerUrl } = yield getSessionData(slug);
       if (!token)
         return [];
-      yield registerClick(token, cookie);
+      yield registerClick(token, cookie, playerUrl);
       const scanBody = new URLSearchParams({ a: "1", tok: token }).toString();
       const { data: scanData } = yield import_axios10.default.post(`${BASE_URL}/s.php`, scanBody, {
         headers: __spreadProps(__spreadValues({}, HEADERS), {
           "cookie": cookie,
           "origin": BASE_URL,
+          "referer": playerUrl,
           "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
         })
       });
@@ -402,7 +404,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const streamResults = yield Promise.allSettled(
         latinServers.slice(0, 5).map((s) => __async(this, null, function* () {
           const [name, id] = Array.isArray(s) ? s : [s[0], s[1]];
-          const direct = yield getDirectStream(id, token, cookie);
+          const direct = yield getDirectStream(id, token, cookie, playerUrl);
           if (direct) {
             return {
               url: direct.url,
@@ -424,4 +426,3 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
-module.exports = { getStreams };
