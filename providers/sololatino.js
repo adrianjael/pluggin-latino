@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:00:41.781Z
+ * Generated: 2026-04-10T22:02:22.292Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1307,14 +1307,22 @@ function getStreams(tmdbId, mediaType, season, episode) {
     if (!tmdbId)
       return [];
     try {
-      const idData = yield getCorrectImdbId(tmdbId, mediaType);
-      const imdbId = idData ? idData.imdbId : null;
+      const tIdStr = tmdbId.toString().trim();
+      let imdbId = null;
+      if (tIdStr.startsWith("tt")) {
+        imdbId = tIdStr;
+      } else {
+        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+        const idData = yield getCorrectImdbId(tIdStr, type);
+        imdbId = idData ? idData.imdbId : null;
+      }
       if (!imdbId) {
-        console.log(`[SoloLatino] Error: No se pudo mapear el ID ${tmdbId} a IMDb.`);
+        console.log(`[SoloLatino] Error: No se pudo obtener IMDb ID para ${tIdStr}`);
         return [];
       }
+      const isEpisode = mediaType === "tv" || mediaType === "series" || mediaType === "show" || season !== void 0 && episode !== void 0;
       let playerPath = `/f/${imdbId}`;
-      if (mediaType === "tv" || season && episode) {
+      if (isEpisode) {
         const s = season || 1;
         const e = (episode || 1).toString().padStart(2, "0");
         playerPath = `/f/${imdbId}-${s}x${e}`;
