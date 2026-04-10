@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-10T20:43:58.240Z
+ * Generated: 2026-04-10T20:46:04.056Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1235,13 +1235,6 @@ var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 var RESOLVER_TIMEOUT = 12e3;
-var SERVER_LABELS = {
-  "voe": "VOE",
-  "streamwish": "StreamWish",
-  "filemoon": "Filemoon",
-  "vidhide": "VidHide",
-  "goodstream": "GoodStream"
-};
 var LANG_PRIORITY = ["LAT"];
 function decodeJwtPayload(token) {
   try {
@@ -1315,7 +1308,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     console.log(`[Embed69] Buscando: TMDB ${tmdbId} (${mediaType})${season ? ` S${season}E${episode}` : ""}`);
     try {
       let getEmbeds = function(section) {
-        const lang = section.video_language || "LAT";
+        const langLabel = section.video_language || "Latino";
         const embeds = [];
         for (const embed of section.sortedEmbeds || []) {
           if (embed.servername === "download")
@@ -1325,7 +1318,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             continue;
           embeds.push({
             url: payload.link,
-            langLabel: lang,
+            langLabel,
             serverLabel: embed.servername
           });
         }
@@ -1360,12 +1353,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       for (const section of dataLink) {
         byLang[section.video_language || "UNKNOWN"] = section;
       }
-      function resolveBatch(embeds) {
+      function resolveBatch(embedList) {
         return __async(this, null, function* () {
           const results = yield Promise.allSettled(
-            embeds.map(
-              ({ url, lang, servername }) => Promise.race([
-                resolveEmbed(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { lang, servername }) : null),
+            embedList.map(
+              ({ url, langLabel, serverLabel }) => Promise.race([
+                resolveEmbed(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { langLabel, serverLabel }) : null),
                 new Promise(
                   (_, reject) => setTimeout(() => reject(new Error("timeout")), RESOLVER_TIMEOUT)
                 )
@@ -1380,25 +1373,23 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }
       const streams = [];
       const seenUrls = /* @__PURE__ */ new Set();
-      for (const lang of LANG_PRIORITY) {
-        const section = byLang[lang];
+      for (const langKey of LANG_PRIORITY) {
+        const section = byLang[langKey];
         if (!section)
           continue;
         const embeds = getEmbeds(section);
         if (embeds.length === 0)
           continue;
-        console.log(`[Embed69] Resolviendo ${embeds.length} embeds (${lang})...`);
+        console.log(`[Embed69] Resolviendo ${embeds.length} embeds (${langKey})...`);
         const resolved = yield resolveBatch(embeds);
         const vPromises = resolved.map((res) => __async(this, null, function* () {
           if (seenUrls.has(res.url))
             return null;
           seenUrls.add(res.url);
-          const langLabel = res.lang === "LAT" ? "Latino" : res.lang === "ESP" ? "Espa\xF1ol" : "Subtitulado";
-          const serverLabel = SERVER_LABELS[res.servername] || res.servername;
           const streamData = {
             name: "Embed69",
-            langLabel,
-            serverLabel,
+            langLabel: res.langLabel,
+            serverLabel: res.serverLabel,
             url: res.url,
             quality: res.quality || "1080p",
             headers: res.headers || {}
@@ -1417,7 +1408,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const newStreams = validatedBatch.filter((s) => s !== null);
         streams.push(...newStreams);
         if (newStreams.length > 0) {
-          console.log(`[Embed69] Finalizando b\xFAsqueda tras encontrar resultados en: ${lang}`);
+          console.log(`[Embed69] Finalizando b\xFAsqueda tras encontrar resultados en: ${langKey}`);
           break;
         }
       }
