@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T21:47:47.823Z
+ * Generated: 2026-04-10T21:57:46.433Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1262,14 +1262,20 @@ function getStreams(tmdbId, mediaType, season, episode) {
     if (!imdbId)
       return [];
     try {
-      const token = yield getPlayerToken(imdbId);
+      let playerPath = `/f/${imdbId}`;
+      if (mediaType === "tv") {
+        const s = season;
+        const e = episode.toString().padStart(2, "0");
+        playerPath = `/f/${imdbId}-${s}x${e}`;
+      }
+      const token = yield getPlayerToken(playerPath.replace("/f/", ""));
       if (!token) {
-        console.log("[SoloLatino] Error: No se pudo obtener el token de seguridad.");
+        console.log(`[SoloLatino] Error: No se pudo obtener el token para ${playerPath}`);
         return [];
       }
       const apiHeaders = __spreadProps(__spreadValues({}, HEADERS), {
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        "Referer": `${BASE_URL}/f/${imdbId}`,
+        "Referer": `${BASE_URL}${playerPath}`,
         "X-Requested-With": "XMLHttpRequest"
       });
       const scanParams = new URLSearchParams({ a: "1", tok: token });
