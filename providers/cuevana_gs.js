@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T16:47:20.701Z
+ * Generated: 2026-04-10T20:08:40.509Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -175,12 +175,6 @@ function utf8Decode(bytes) {
       out += String.fromCharCode((c & 15) << 12 | (bytes[i++] & 63) << 6 | bytes[i++] & 63);
   }
   return out;
-}
-function getHostname(url) {
-  if (!url)
-    return "";
-  var match = url.match(/^https?:\/\/([^\/]+)/);
-  return match ? match[1] : "";
 }
 
 // src/utils/http.js
@@ -1297,144 +1291,166 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       }
       var performSearch = function(query) {
         return __async(this, null, function* () {
-          console.log('[Cuevana3.nu] Searching: "' + query + '"...');
-          var searchUrl = BASE_URL + "/?s=" + encodeURIComponent(query).replace(/%20/g, "+");
+          console.log('[Cuevana3.nu] Searching API: "' + query + '"...');
+          var searchUrl = BASE_URL + "/wp-json/cuevana/v1/search?q=" + encodeURIComponent(query);
           try {
-            var html = yield fetchHtml(searchUrl);
-            var $ = import_cheerio_without_node_native.default.load(html);
+            var responseText = yield fetchHtml(searchUrl);
+            var json = JSON.parse(responseText);
             var results = [];
-            $("li.TPostMv").each((i, el) => {
-              var href = $(el).find("a").attr("href") || "";
-              var title = $(el).find("h2.Title").text() || "";
-              var yearPost = $(el).find("span.Year").text() || "";
-              if (href && title) {
-                var isMovie = !href.includes("/serie/");
-                results.push({
-                  title: title.trim(),
+            if (json && json.data && Array.isArray(json.data)) {
+              results = json.data.map((item) => {
+                const info = item.info || {};
+                const isMovie = info.type === "movie" || !item.link.includes("/series-online/");
+                return {
+                  title: item.title.trim(),
+                  originalTitle: info.original_title || "",
                   type: isMovie ? "movies" : "tvshows",
-                  slug: href,
-                  year: yearPost
+                  slug: item.link,
+                  year: info.release ? info.release.split("-")[0] : "",
+                  id: info._id || ""
+                };
+              });
+            }
+            console.log("[Cuevana3.nu] API returned " + results.length + " candidates.");
+            var filtered = results.filter((r) => {
+              const typeMatch = isSeries ? r.type === "tvshows" : r.type === "movies";
+              const simSpanish = calculateSimilarity(searchTitle, r.title);
+              const simOriginal = calculateSimilarity(searchTitle, r.originalTitle);
+              const maxSim = Math.max(simSpanish, simOriginal);
+              console.log(`[Cuevana3.nu] Checking candidate: "${r.title}" | Sim: ${maxSim.toFixed(2)} | Type: ${r.type} | Year: ${r.year}`);
+              const titleMatch = maxSim > 0.4;
+              var yearMatch = true;
+              if (year && r.year && maxSim < 0.9) {
+                yearMatch = Math.abs(parseInt(year) - parseInt(r.year)) <= 2;
+                if (!yearMatch)
+                  console.log(`   [Cuevana3.nu] Year mismatch: ${year} vs ${r.year}`);
+              }
+              return typeMatch && titleMatch && yearMatch;
+            });
+            filtered.sort((a, b) => {
+              const simA = Math.max(calculateSimilarity(searchTitle, a.title), calculateSimilarity(searchTitle, a.originalTitle));
+              const simB = Math.max(calculateSimilarity(searchTitle, b.title), calculateSimilarity(searchTitle, b.originalTitle));
+              return simB - simA;
+            });
+            return filtered;
+          } catch (err) {
+            console.error("[Cuevana3.nu] Search API error: " + err.message);
+            return [];
+          }
+        });
+      };
+      var searchResults = [];
+      var queriesToTry = [
+        searchTitle,
+        providedTitle,
+        (searchTitle || "").split(":")[0],
+        (searchTitle || "").split(" ").sort((a, b) => b.length - a.length)[0]
+        // Palabra más larga
+      ].filter((v, i, a) => v && a.indexOf(v) === i);
+      for (var q of queriesToTry) {
+        if (searchResults.length > 0)
+          break;
+        console.log('[Cuevana3.nu] Trying search query: "' + q + '"');
+        searchResults = yield performSearch(q);
+      }
+      if (searchResults.length === 0) {
+        console.warn("[Cuevana3.nu] No accurate match found after multiple attempts for: " + searchTitle);
+        return [];
+      }
+      searchResults.sort((a, b) => {
+        const simA = Math.max(calculateSimilarity(searchTitle, a.title), calculateSimilarity(searchTitle, a.originalTitle));
+        const simB = Math.max(calculateSimilarity(searchTitle, b.title), calculateSimilarity(searchTitle, b.originalTitle));
+        if (Math.abs(simA - simB) > 0.1)
+          return simB - simA;
+        if (year) {
+          const distA = Math.abs(parseInt(year) - (parseInt(a.year) || 0));
+          const distB = Math.abs(parseInt(year) - (parseInt(b.year) || 0));
+          return distA - distB;
+        }
+        return 0;
+      });
+      var match = searchResults[0];
+      var mediaInfo = {
+        title: match.title,
+        slug: match.slug,
+        type: match.type,
+        _id: match.id
+      };
+      console.log("[Cuevana3.nu] Match found: " + match.title + " (ID: " + match.id + ") [" + match.type + "]");
+      var getOnlineStreams = function(url) {
+        return __async(this, null, function* () {
+          console.log("[Cuevana3.nu] API Extraction for: " + url);
+          try {
+            var id = mediaInfo._id;
+            if (!id) {
+              var matchId = url.match(/\/(\d+)\//);
+              id = matchId ? matchId[1] : null;
+            }
+            if (!id) {
+              console.error("[Cuevana3.nu] Could not determine ID for API call");
+              return { error: true };
+            }
+            var apiUrl = "";
+            if (isSeries) {
+              var s = season || 1;
+              var e = episode || 1;
+              apiUrl = BASE_URL + "/wp-json/cuevana/v1/episode/" + id + "/" + s + "/" + e;
+            } else {
+              apiUrl = BASE_URL + "/wp-json/cuevana/v1/player/" + id;
+            }
+            console.log("[Cuevana3.nu] Calling API: " + apiUrl);
+            var response = yield fetchHtml(apiUrl);
+            var json = JSON.parse(response);
+            if (!json || !json.data || !json.data.embeds) {
+              console.error("[Cuevana3.nu] API returned no embeds");
+              return { data: [] };
+            }
+            var streams2 = [];
+            json.data.embeds.forEach((embed) => {
+              if (embed.url) {
+                var lang = "Latino";
+                var audio = (embed.audio || "").toLowerCase();
+                if (audio.includes("spanish") || audio.includes("castellano"))
+                  lang = "Castellano";
+                if (audio.includes("english") || audio.includes("ingles"))
+                  lang = "Ingl\xE9s";
+                if (audio.includes("latino"))
+                  lang = "Latino";
+                streams2.push({
+                  url: embed.url,
+                  label: embed.server || embed.service_name || "Server",
+                  lang
                 });
               }
             });
-            return { data: { posts: results } };
+            console.log("[Cuevana3.nu] API successfully returned " + streams2.length + " streams");
+            return { data: streams2 };
           } catch (err) {
-            console.error("[Cuevana3.nu] Search Error: " + err.message);
+            console.error("[Cuevana3.nu] API Extraction Error: " + err.message);
             return { error: true };
           }
         });
       };
-      var queriesToTry = [
-        (searchTitle + " " + year).trim(),
-        searchTitle.trim(),
-        searchTitle.split(":")[0].trim()
-      ].filter((q2) => q2.length > 2);
-      var posts = [];
-      for (var q of queriesToTry) {
-        var searchRes = yield performSearch(q);
-        if (searchRes.data && searchRes.data.posts.length > 0) {
-          posts = searchRes.data.posts;
-          break;
-        }
-      }
-      if (posts.length === 0) {
-        console.log("[Cuevana3.nu] No results found.");
+      var streamResult = yield getOnlineStreams(BASE_URL + (isSeries ? mediaInfo.episodeSlug : mediaInfo.slug));
+      if (streamResult.error)
         return [];
-      }
-      var match = posts.find((p) => {
-        var score = calculateSimilarity(p.title, searchTitle);
-        return score >= 0.4;
-      });
-      if (!match) {
-        console.log("[Cuevana3.nu] No high-quality matches found.");
-        return [];
-      }
-      console.log("[Cuevana3.nu] Match found: " + match.title + " (" + match.slug + ")");
-      var mediaInfo = {
-        title: match.title,
-        slug: match.slug,
-        type: match.type
-      };
-      if (isSeries) {
-        console.log("[Cuevana3.nu] Extracting episodes for series...");
-        var serieHtml = yield fetchHtml(BASE_URL + match.slug);
-        var $serie = import_cheerio_without_node_native.default.load(serieHtml);
-        var episodes = [];
-        $serie("ul.episodios li").each((i, el) => {
-          var href = $serie(el).find("a").attr("href");
-          var epTitle = $serie(el).find("a").text();
-          if (href) {
-            var parts = epTitle.split("x");
-            episodes.push({
-              season: parseInt(parts[0]),
-              episode: parseInt(parts[1]),
-              slug: href
-            });
-          }
-        });
-        var targetEp = episodes.find((e) => e.season === season && e.episode === episode);
-        if (!targetEp) {
-          console.error("[Cuevana3.nu] Episode " + season + "x" + episode + " not found.");
-          return [];
-        }
-        mediaInfo.episodeSlug = targetEp.slug;
-      }
-      var pageToFetch = isSeries ? mediaInfo.episodeSlug : mediaInfo.slug;
-      console.log("[Cuevana3.nu] Fetching streams from: " + pageToFetch);
-      var contentHtml = yield fetchHtml(BASE_URL + pageToFetch);
-      var $content = import_cheerio_without_node_native.default.load(contentHtml);
-      var streams = [];
-      var qualityMap = {};
-      $content("li.clili").each((i, el) => {
-        var id = $content(el).attr("data-tplayernv");
-        var text = $content(el).find("span.cdtr span").text().toUpperCase();
-        if (id && text) {
-          if (text.includes("CAM"))
-            qualityMap[id] = "CAM";
-          else if (text.includes("TS"))
-            qualityMap[id] = "TS";
-          else if (text.includes("DVD"))
-            qualityMap[id] = "DVD";
-        }
-      });
-      $content("div.TPlayerTb iframe").each((i, el) => {
-        var url = $content(el).attr("data-src") || $content(el).attr("src") || "";
-        var id = $content(el).parent().attr("id") || "";
-        if (url) {
-          if (url.startsWith("//"))
-            url = "https:" + url;
-          var lang = "Latino";
-          if (id.startsWith("OptE2"))
-            lang = "Subtitulado";
-          else if (id.startsWith("OptE3"))
-            lang = "Espa\xF1ol";
-          var server = getHostname(url);
-          streams.push({
-            id,
-            server,
-            url,
-            lang
-          });
-        }
-      });
-      console.log("[Cuevana3.nu] Extracted " + streams.length + " raw streams.");
+      var streams = streamResult.data;
+      console.log("[Cuevana3.nu] Processing " + streams.length + " streams for resolution...");
       var rawResults = [];
-      for (var stream of streams) {
+      for (const stream of streams) {
         try {
-          var resolved = yield resolveEmbed(stream.url);
+          const resolved = yield resolveEmbed(stream.url);
           if (resolved && resolved.url) {
             rawResults.push({
               url: resolved.url,
               quality: resolved.quality,
-              // No forzamos 1080p
-              siteQuality: qualityMap[stream.id],
+              serverLabel: stream.label,
               langLabel: stream.lang,
-              serverLabel: resolved.serverName || stream.server,
               headers: resolved.headers || {}
             });
           }
         } catch (e) {
-          console.error("[Cuevana3.nu] Resolve error: " + e.message);
+          console.error("[Cuevana3.nu] Resolution Error for " + stream.label + ": " + e.message);
         }
       }
       return yield finalizeStreams(rawResults, "Cuevana3.to");
