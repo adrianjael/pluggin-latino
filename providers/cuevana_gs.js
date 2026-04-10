@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T20:08:40.509Z
+ * Generated: 2026-04-10T20:19:58.691Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1266,11 +1266,12 @@ function getTmdbInfo(tmdbId, mediaType) {
       const json = yield res.json();
       if (json && json.id) {
         var title = json.title || json.name || "";
+        var originalTitle = json.original_title || json.original_name || "";
         var year = "";
         var date = json.release_date || json.first_air_date || "";
         if (date)
           year = date.split("-")[0];
-        return { title, year };
+        return { title, originalTitle, year };
       }
     } catch (e) {
     }
@@ -1284,6 +1285,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
     try {
       var tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
       var searchTitle = providedTitle || tmdbInfo.title;
+      var originalTitle = tmdbInfo.originalTitle || "";
       var year = tmdbInfo.year;
       if (!searchTitle) {
         console.error("[Cuevana3.nu] No search title found.");
@@ -1315,7 +1317,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             var filtered = results.filter((r) => {
               const typeMatch = isSeries ? r.type === "tvshows" : r.type === "movies";
               const simSpanish = calculateSimilarity(searchTitle, r.title);
-              const simOriginal = calculateSimilarity(searchTitle, r.originalTitle);
+              const simOriginal = calculateSimilarity(originalTitle, r.originalTitle);
               const maxSim = Math.max(simSpanish, simOriginal);
               console.log(`[Cuevana3.nu] Checking candidate: "${r.title}" | Sim: ${maxSim.toFixed(2)} | Type: ${r.type} | Year: ${r.year}`);
               const titleMatch = maxSim > 0.4;
@@ -1342,6 +1344,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       var searchResults = [];
       var queriesToTry = [
         searchTitle,
+        originalTitle,
+        // Intentar con el título original (importante para traducciones)
         providedTitle,
         (searchTitle || "").split(":")[0],
         (searchTitle || "").split(" ").sort((a, b) => b.length - a.length)[0]
@@ -1358,8 +1362,16 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         return [];
       }
       searchResults.sort((a, b) => {
-        const simA = Math.max(calculateSimilarity(searchTitle, a.title), calculateSimilarity(searchTitle, a.originalTitle));
-        const simB = Math.max(calculateSimilarity(searchTitle, b.title), calculateSimilarity(searchTitle, b.originalTitle));
+        const simA = Math.max(
+          calculateSimilarity(searchTitle, a.title),
+          calculateSimilarity(searchTitle, a.originalTitle),
+          calculateSimilarity(originalTitle, a.originalTitle)
+        );
+        const simB = Math.max(
+          calculateSimilarity(searchTitle, b.title),
+          calculateSimilarity(searchTitle, b.originalTitle),
+          calculateSimilarity(originalTitle, b.originalTitle)
+        );
         if (Math.abs(simA - simB) > 0.1)
           return simB - simA;
         if (year) {
@@ -1370,6 +1382,16 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         return 0;
       });
       var match = searchResults[0];
+      const finalSim = Math.max(
+        calculateSimilarity(searchTitle, match.title),
+        calculateSimilarity(originalTitle, match.originalTitle)
+      );
+      const isPremiere = year && parseInt(year) >= 2025;
+      const yearPerfectMatch = year && match.year && parseInt(year) === parseInt(match.year);
+      if (finalSim < 0.2 && !(isPremiere && yearPerfectMatch)) {
+        console.warn("[Cuevana3.nu] Top match has very low similarity: " + finalSim);
+        return [];
+      }
       var mediaInfo = {
         title: match.title,
         slug: match.slug,
