@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-09T22:07:01.453Z
+ * Generated: 2026-04-10T14:25:41.322Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -577,6 +577,7 @@ function validateStream(stream) {
 }
 
 // src/cuevana_gs/extractor.js
+var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
 var BASE_URL = "https://cuevana.gs";
 function resolveEmbed(embedUrl, server) {
   return __async(this, null, function* () {
@@ -601,7 +602,7 @@ function resolveEmbed(embedUrl, server) {
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
-      var url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?api_key=af69ae976722f483b879a83a042e616f&language=es-MX";
+      var url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?api_key=439c478a771f35c05022f9feabcca01c&language=es-MX";
       var json = yield fetchJson(url);
       if (json && !json.success === false) {
         var title = json.title || json.name || "";
@@ -633,14 +634,55 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       }
       var performSearch = function(query) {
         return __async(this, null, function* () {
-          console.log('[Cuevana.gs] Searching: "' + query + '"');
-          var encodedQuery = encodeURIComponent(query);
-          var searchUrl = BASE_URL + "/wp-api/v1/search?postType=any&q=" + encodedQuery + "&postsPerPage=10";
+          console.log('[Cuevana.gs] HTML Searching: "' + query + '"');
+          var searchUrl = BASE_URL + "/search/" + encodeURIComponent(query).replace(/%20/g, "+");
           try {
-            return yield fetchJson(searchUrl, { headers: { Referer: BASE_URL } });
+            var html = yield fetchHtml(searchUrl, {
+              headers: {
+                "Referer": BASE_URL + "/",
+                "User-Agent": DEFAULT_UA,
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin"
+              }
+            });
+            var $ = import_cheerio_without_node_native.default.load(html);
+            var searchResults = [];
+            $("a[data-tooltip-id]").each((i2, el) => {
+              var href = $(el).attr("href") || "";
+              var idAttr = $(el).attr("data-tooltip-id") || "";
+              var id = idAttr.replace("tooltip-", "");
+              var title = $(el).parent().find("h3").text() || $(el).find("img").attr("alt") || "";
+              if (id && href) {
+                var isMovie2 = href.includes("/peliculas/");
+                searchResults.push({
+                  _id: id,
+                  title: title.trim(),
+                  type: isMovie2 ? "movies" : "tvshows",
+                  slug: href
+                });
+              }
+            });
+            console.log("[Cuevana.gs] Found " + searchResults.length + " posts via HTML search.");
+            return { data: { posts: searchResults } };
           } catch (err) {
+            console.error("[Cuevana.gs] HTML Search Error: " + err.message);
             return { error: true };
           }
+        });
+      };
+      var cuevanaRequest = function(url) {
+        return __async(this, null, function* () {
+          var headers = {
+            "Origin": BASE_URL,
+            "Referer": BASE_URL + "/",
+            "X-Requested-With": "XMLHttpRequest",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Accept": "application/json, text/plain, */*"
+          };
+          return yield fetchJson(url, { headers });
         });
       };
       var queriesToTry = [
@@ -688,7 +730,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       if (!isMovie && season && episode) {
         try {
           var episodesUrl = BASE_URL + "/wp-api/v1/single/episodes/list?_id=" + postId + "&season=" + season + "&postsPerPage=100";
-          var epJson = yield fetchJson(episodesUrl, { headers: { Referer: BASE_URL } });
+          var epJson = yield cuevanaRequest(episodesUrl);
           if (epJson && !epJson.error && epJson.data && epJson.data.posts) {
             var epPosts = epJson.data.posts;
             var epMatch = null;
@@ -710,7 +752,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         }
       }
       var playerUrl = BASE_URL + "/wp-api/v1/player?postId=" + postId + "&demo=0";
-      var playerJson = yield fetchJson(playerUrl, { headers: { Referer: BASE_URL } });
+      var playerJson = yield cuevanaRequest(playerUrl);
       if (!playerJson || playerJson.error || !playerJson.data || !playerJson.data.embeds || playerJson.data.embeds.length === 0) {
         console.log("[Cuevana.gs] No embeds found.");
         return [];
