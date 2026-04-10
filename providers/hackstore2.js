@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-10T14:50:51.888Z
+ * Generated: 2026-04-10T14:54:25.591Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -915,7 +915,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
           serverName = "vidhide";
         else if (rawUrl.includes("filemoon"))
           serverName = "filemoon";
-        else if (rawUrl.includes("voe"))
+        else if (rawUrl.includes("voe") || rawUrl.includes("jessicaclearout"))
           serverName = "voe";
         else if (rawUrl.includes("vimeos"))
           serverName = "vimeos";

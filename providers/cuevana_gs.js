@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T14:50:51.867Z
+ * Generated: 2026-04-10T14:54:25.570Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -588,9 +588,10 @@ var BASE_URL = "https://ww9.cuevana3.to";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 function resolveGeneric(url) {
   return __async(this, null, function* () {
-    var server = getHostname(url);
-    if (server.includes("voe"))
+    var server = getHostname(url).toLowerCase();
+    if (server.includes("voe") || server.includes("jessicaclearout")) {
       return yield resolve(url);
+    }
     if (server.includes("filemoon"))
       return yield resolve2(url);
     if (server.includes("netu") || server.includes("waaw"))

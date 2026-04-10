@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-10T14:50:51.919Z
+ * Generated: 2026-04-10T14:54:25.624Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -691,7 +691,7 @@ function extractStreams(query, tmdbId, mediaType, season, episode) {
             finalUrl = yield resolve(url);
           } else if (url.includes("vidhide")) {
             finalUrl = yield resolve2(url);
-          } else if (url.includes("voe")) {
+          } else if (url.includes("voe") || url.includes("jessicaclearout")) {
             finalUrl = yield resolve3(url);
           }
           if (finalUrl) {

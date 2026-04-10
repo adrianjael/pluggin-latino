@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-10T14:50:51.912Z
+ * Generated: 2026-04-10T14:54:25.616Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -834,7 +834,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           serverName = "vidhide";
         else if (finalUrl.includes("filemoon"))
           serverName = "filemoon";
-        else if (finalUrl.includes("voe"))
+        else if (finalUrl.includes("voe") || finalUrl.includes("jessicaclearout"))
           serverName = "voe";
         else if (finalUrl.includes("vimeos") || finalUrl.includes("vms.sh") || finalUrl.includes("vimeo"))
           serverName = "vimeos";
