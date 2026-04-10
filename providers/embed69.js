@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-10T14:55:52.874Z
+ * Generated: 2026-04-10T15:02:48.977Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -47,7 +47,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve6, reject) => {
+  return new Promise((resolve10, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -62,7 +62,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve6(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve10(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -73,7 +73,7 @@ __export(embed69_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(embed69_exports);
-var import_axios6 = __toESM(require("axios"));
+var import_axios8 = __toESM(require("axios"));
 
 // src/utils/m3u8.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -276,6 +276,12 @@ function fetchHtml(url, options) {
   return __async(this, null, function* () {
     var res = yield request(url, options);
     return yield res.text();
+  });
+}
+function fetchJson(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.json();
   });
 }
 
@@ -681,6 +687,92 @@ function resolve4(url) {
   });
 }
 
+// src/resolvers/vimeos.js
+function resolve5(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log("[Vimeos] Resolviendo Universal (v2.0): " + embedUrl);
+      var html = yield fetchHtml(embedUrl, {
+        headers: {
+          "User-Agent": DEFAULT_UA,
+          "Referer": "https://vimeos.net/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        }
+      });
+      var vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i);
+      if (!vimeoIdMatch)
+        vimeoIdMatch = embedUrl.match(/\/(\d{7,10})/);
+      if (vimeoIdMatch) {
+        var vimeoId = vimeoIdMatch[1];
+        console.log("[Vimeos] ID Vimeo detectado: " + vimeoId + ". Consultado API Config...");
+        try {
+          var config = yield fetchJson("https://player.vimeo.com/video/" + vimeoId + "/config", {
+            headers: { "User-Agent": DEFAULT_UA, "Referer": embedUrl }
+          });
+          var hlsUrl = null;
+          if (config && config.request && config.request.files && config.request.files.hls && config.request.files.hls.cdns && config.request.files.hls.cdns.default) {
+            hlsUrl = config.request.files.hls.cdns.default.url;
+          }
+          if (hlsUrl) {
+            console.log("[Vimeos] \u2713 HLS Directo encontrado.");
+            return {
+              url: hlsUrl,
+              quality: "1080p",
+              headers: { "User-Agent": DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+          var progressive = config && config.request && config.request.files ? config.request.files.progressive : null;
+          if (progressive && progressive.length > 0) {
+            var best = progressive.sort(function(a, b) {
+              return (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0);
+            })[0];
+            console.log("[Vimeos] \u2713 MP4 Directo encontrado (" + best.quality + ").");
+            return {
+              url: best.url,
+              quality: best.quality ? best.quality + "p" : "1080p",
+              headers: { "User-Agent": DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
+            };
+          }
+        } catch (apiErr) {
+          console.log("[Vimeos] API Config Fall\xF3: " + apiErr.message);
+        }
+      }
+      var packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
+      if (packMatch) {
+        console.log("[Vimeos] Usando Fallback Unpacker...");
+        var payload = packMatch[1];
+        var radix = parseInt(packMatch[2]);
+        var symtab = packMatch[4].split("|");
+        var chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        var unbase = function(str) {
+          var result = 0;
+          for (var i = 0; i < str.length; i++)
+            result = result * radix + chars.indexOf(str[i]);
+          return result;
+        };
+        var unpacked = payload.replace(/\b(\w+)\b/g, function(match) {
+          var idx = unbase(match);
+          return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+        });
+        var m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
+        if (m3u8Match) {
+          var url = m3u8Match[1];
+          return {
+            url,
+            quality: "1080p",
+            headers: { "User-Agent": DEFAULT_UA, "Referer": "https://vimeos.net/" }
+          };
+        }
+      }
+      console.log("[Vimeos] No se encontr\xF3 video directo.");
+      return null;
+    } catch (err) {
+      console.log("[Vimeos] Error cr\xEDtico: " + err.message);
+      return null;
+    }
+  });
+}
+
 // src/resolvers/goodstream.js
 var import_axios5 = __toESM(require("axios"));
 
@@ -733,7 +825,7 @@ function detectQuality(_0) {
 
 // src/resolvers/goodstream.js
 var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
-function resolve5(embedUrl) {
+function resolve6(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log(`[GoodStream] Resolviendo: ${embedUrl}`);
@@ -771,46 +863,173 @@ function resolve5(embedUrl) {
   });
 }
 
+// src/resolvers/fastream.js
+function unpackPacker(data) {
+  var match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
+  if (!match)
+    return null;
+  var p = match[1];
+  var a = parseInt(match[2]);
+  var c = parseInt(match[3]);
+  var k = match[4].split("|");
+  while (c--) {
+    if (k[c])
+      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
+  }
+  return p;
+}
+function resolve7(url) {
+  return __async(this, null, function* () {
+    try {
+      console.log("[Fastream] Resolviendo: " + url);
+      var data = yield fetchHtml(url, {
+        headers: { "User-Agent": DEFAULT_UA, "Referer": "https://www3.seriesmetro.net/" }
+      });
+      var unpacked = unpackPacker(data);
+      var m3u8Match;
+      if (!unpacked) {
+        m3u8Match = data.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
+        if (m3u8Match && m3u8Match[1]) {
+          var url1 = m3u8Match[1];
+          var q1 = yield detectQuality(url1, { "Referer": "https://fastream.to/" });
+          return { url: url1, quality: q1, headers: { "User-Agent": DEFAULT_UA, "Referer": "https://fastream.to/" } };
+        }
+        return null;
+      }
+      m3u8Match = unpacked.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
+      if (!m3u8Match || !m3u8Match[1])
+        return null;
+      var m3u8Url = m3u8Match[1];
+      var quality = yield detectQuality(m3u8Url, { "Referer": "https://fastream.to/" });
+      return {
+        url: m3u8Url,
+        quality,
+        headers: { "User-Agent": DEFAULT_UA, "Referer": "https://fastream.to/" }
+      };
+    } catch (e) {
+      console.log("[Fastream] Error: " + e.message);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/okru.js
+var import_axios6 = __toESM(require("axios"));
+var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function resolve8(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[OkRu] Resolviendo: ${embedUrl}`);
+      const { data: raw } = yield import_axios6.default.get(embedUrl, {
+        timeout: 1e4,
+        headers: {
+          "User-Agent": UA7,
+          "Accept": "text/html",
+          "Referer": "https://ok.ru/"
+        }
+      });
+      if (raw.includes("copyrightsRestricted") || raw.includes("COPYRIGHTS_RESTRICTED") || raw.includes("LIMITED_ACCESS") || raw.includes("notFound") || !raw.includes("urls")) {
+        console.log("[OkRu] Video no disponible o eliminado");
+        return null;
+      }
+      const data = raw.replace(/\\&quot;/g, '"').replace(/\\u0026/g, "&").replace(/\\/g, "");
+      const matches = [...data.matchAll(/"name":"([^"]+)","url":"([^"]+)"/g)];
+      const QUALITY_ORDER = ["full", "hd", "sd", "low", "lowest"];
+      const videos = matches.map((m) => ({ type: m[1], url: m[2] })).filter((v) => !v.type.toLowerCase().includes("mobile") && v.url.startsWith("http"));
+      if (videos.length === 0) {
+        console.log("[OkRu] No se encontraron URLs");
+        return null;
+      }
+      const sorted = videos.sort((a, b) => {
+        const ai = QUALITY_ORDER.findIndex((q) => a.type.toLowerCase().includes(q));
+        const bi = QUALITY_ORDER.findIndex((q) => b.type.toLowerCase().includes(q));
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+      const best = sorted[0];
+      console.log(`[OkRu] URL encontrada (${best.type}): ${best.url.substring(0, 80)}...`);
+      const QUALITY_MAP = { full: "1080p", hd: "720p", sd: "480p", low: "360p", lowest: "240p" };
+      return {
+        url: best.url,
+        quality: QUALITY_MAP[best.type] || best.type,
+        headers: { "User-Agent": UA7, "Referer": "https://ok.ru/" }
+      };
+    } catch (e) {
+      console.log(`[OkRu] Error: ${e.message}`);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/turbovid.js
+var import_axios7 = __toESM(require("axios"));
+var UA8 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+function resolve9(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      const { data: html } = yield import_axios7.default.get(embedUrl, {
+        headers: {
+          "User-Agent": UA8,
+          "Referer": "https://www.fuegocine.com/"
+        },
+        timeout: 8e3
+      });
+      const hashMatch = html.match(/data-hash="([^"]+\.m3u8[^"]*)"/);
+      if (hashMatch) {
+        return {
+          url: hashMatch[1],
+          quality: "HD",
+          headers: { "Referer": embedUrl }
+        };
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+
+// src/utils/resolvers.js
+function resolveEmbed(url) {
+  return __async(this, null, function* () {
+    if (!url)
+      return null;
+    const s = url.toLowerCase();
+    if (s.includes("voe") || s.includes("jessicaclearout")) {
+      return yield resolve(url);
+    }
+    if (s.includes("hlswish") || s.includes("streamwish") || s.includes("hglamioz") || s.includes("embedwish") || s.includes("awish") || s.includes("dwish")) {
+      return yield resolve3(url);
+    }
+    if (s.includes("vidhide") || s.includes("dintezuvio")) {
+      return yield resolve4(url);
+    }
+    if (s.includes("filemoon")) {
+      return yield resolve2(url);
+    }
+    if (s.includes("vimeos") || s.includes("vms.sh") || s.includes("waaw") || s.includes("netu") || s.includes("vimeo.")) {
+      return yield resolve5(url);
+    }
+    if (s.includes("fastream")) {
+      return yield resolve7(url);
+    }
+    if (s.includes("ok.ru")) {
+      return yield resolve8(url);
+    }
+    if (s.includes("goodstream")) {
+      return yield resolve6(url);
+    }
+    if (s.includes("turbovid")) {
+      return yield resolve9(url);
+    }
+    return null;
+  });
+}
+
 // src/embed69/index.js
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 var RESOLVER_TIMEOUT = 12e3;
-var RESOLVER_MAP = {
-  "voe.sx": resolve,
-  "voe-sx.com": resolve,
-  "voex.sx": resolve,
-  "voe.to": resolve,
-  "hglink.to": resolve3,
-  // streamwish
-  "streamwish.com": resolve3,
-  "streamwish.to": resolve3,
-  "wishembed.online": resolve3,
-  "audinifer.com": resolve3,
-  // streamwish alias
-  "filelions.com": resolve3,
-  "bysedikamoum.com": resolve2,
-  // filemoon alias
-  "filemoon.sx": resolve2,
-  "filemoon.to": resolve2,
-  "moonembed.pro": resolve2,
-  "moonalu.com": resolve2,
-  "dintezuvio.com": resolve4,
-  // vidhide
-  "vidhide.com": resolve4,
-  "vidhide.pro": resolve4,
-  "vidhide.bz": resolve4,
-  "vidhide.net": resolve4,
-  "vidhide.top": resolve4,
-  "vadisov.com": resolve4,
-  "callistanise.com": resolve4,
-  "amusemre.com": resolve4,
-  "acek-cdn.xyz": resolve4,
-  "vedonm.com": resolve4,
-  "minochinos.com": resolve4,
-  "vaiditv.com": resolve4,
-  "goodstream.one": resolve5
-};
 var SERVER_LABELS = {
   "voe": "VOE",
   "streamwish": "StreamWish",
@@ -844,23 +1063,14 @@ function parseDataLink(html) {
     return null;
   }
 }
-function getResolver(url) {
-  if (!url)
-    return null;
-  for (const [pattern, resolver] of Object.entries(RESOLVER_MAP)) {
-    if (url.includes(pattern))
-      return resolver;
-  }
-  return null;
-}
 function getImdbId(tmdbId, mediaType) {
   return __async(this, null, function* () {
     const tId = tmdbId.toString();
     const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${tId}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tId}/external_ids?api_key=${TMDB_API_KEY}`;
     try {
-      const { data } = yield import_axios6.default.get(endpoint, {
+      const { data } = yield import_axios8.default.get(endpoint, {
         timeout: 5e3,
-        headers: { "User-Agent": UA7 }
+        headers: { "User-Agent": UA9 }
       });
       return data.imdb_id || null;
     } catch (e) {
@@ -908,11 +1118,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           const payload = decodeJwtPayload(embed.link);
           if (!payload || !payload.link)
             continue;
-          const resolver = getResolver(payload.link);
-          if (!resolver) {
-            continue;
-          }
-          embeds.push({ url: payload.link, resolver, lang, servername: embed.servername });
+          embeds.push({ url: payload.link, lang, servername: embed.servername });
         }
         return embeds;
       };
@@ -927,10 +1133,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       console.log(`[Embed69] IMDB ID: ${imdbId}`);
       const embedUrl = buildEmbedUrl(imdbId, mediaType, season, episode);
       console.log(`[Embed69] Fetching: ${embedUrl}`);
-      const { data: html } = yield import_axios6.default.get(embedUrl, {
+      const { data: html } = yield import_axios8.default.get(embedUrl, {
         timeout: 1e4,
         headers: {
-          "User-Agent": UA7,
+          "User-Agent": UA9,
           "Referer": "https://sololatino.net/",
           "Accept": "text/html,application/xhtml+xml"
         }
@@ -949,8 +1155,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         return __async(this, null, function* () {
           const results = yield Promise.allSettled(
             embeds.map(
-              ({ url, resolver, lang, servername }) => Promise.race([
-                resolver(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { lang, servername }) : null),
+              ({ url, lang, servername }) => Promise.race([
+                resolveEmbed(url).then((r) => r ? __spreadProps(__spreadValues({}, r), { lang, servername }) : null),
                 new Promise(
                   (_, reject) => setTimeout(() => reject(new Error("timeout")), RESOLVER_TIMEOUT)
                 )
