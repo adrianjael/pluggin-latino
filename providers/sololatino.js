@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:31:03.064Z
+ * Generated: 2026-04-10T22:45:02.161Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1271,31 +1271,29 @@ function getCorrectImdbId(tmdbId, mediaType) {
 
 // src/sololatino/index.js
 var BASE_URL = "https://player.pelisserieshoy.com";
-var UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
+var UA10 = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36";
 var HEADERS = {
-  "User-Agent": UA10,
-  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-  "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
-  "Origin": BASE_URL,
-  "Referer": "https://sololatino.net/",
-  "Connection": "keep-alive"
+  "user-agent": UA10,
+  "accept": "*/*",
+  "accept-language": "es-US,es;q=0.9,en-US;q=0.8,en;q=0.7,es-419;q=0.6",
+  "origin": BASE_URL,
+  "referer": BASE_URL + "/",
+  "x-requested-with": "XMLHttpRequest"
 };
-function extractDirectVideo(playerUrl, referer) {
+function getDirectStream(serverId, token, referer) {
   return __async(this, null, function* () {
     try {
-      const res = yield import_axios10.default.get(playerUrl, {
-        timeout: 6e3,
+      const postData = `a=2&v=${serverId}&tok=${encodeURIComponent(token)}`;
+      const res = yield import_axios10.default.post(`${BASE_URL}/s.php`, postData, {
         headers: __spreadProps(__spreadValues({}, HEADERS), {
-          "Referer": referer
-        })
+          "referer": referer,
+          "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
+        }),
+        timeout: 8e3
       });
-      const html = res.data;
-      const fileMatch = html.match(/["']?file["']?\s*:\s*["'](https?:\/\/[^"']+\.m3u8[^"']*)["']/i) || html.match(/["']?src["']?\s*:\s*["'](https?:\/\/[^"']+\.m3u8[^"']*)["']/i);
-      if (fileMatch)
-        return fileMatch[1];
-      const anyM3u8 = html.match(/https?:\/\/[^"']+\.m3u8[^"']*/i);
-      if (anyM3u8)
-        return anyM3u8[0];
+      if (res.data && res.data.u) {
+        return res.data.u;
+      }
       return null;
     } catch (e) {
       return null;
@@ -1306,7 +1304,7 @@ function getPlayerToken(slug) {
   return __async(this, null, function* () {
     try {
       const url = `${BASE_URL}/f/${slug}`;
-      const res = yield import_axios10.default.get(url, { timeout: 8e3, headers: HEADERS });
+      const res = yield import_axios10.default.get(url, { headers: HEADERS, timeout: 1e4 });
       const html = res.data;
       const match = html.match(/(?:const|var)\s+_t\s*=\s*['"]([^'"]+)['"]/);
       return match ? match[1] : null;
@@ -1335,41 +1333,44 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const token = yield getPlayerToken(slug);
       if (!token)
         return [];
-      const postBody = "a=1&tok=" + encodeURIComponent(token);
-      const scanRes = yield import_axios10.default.post(`${BASE_URL}/s.php`, postBody, {
+      const playerRef = `${BASE_URL}/f/${slug}`;
+      const scanData = `a=1&tok=${encodeURIComponent(token)}`;
+      const scanRes = yield import_axios10.default.post(`${BASE_URL}/s.php`, scanData, {
         headers: __spreadProps(__spreadValues({}, HEADERS), {
-          "Referer": `${BASE_URL}/f/${slug}`,
-          "X-Requested-With": "XMLHttpRequest",
-          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+          "referer": playerRef,
+          "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
         })
       });
-      const scanData = scanRes.data;
-      if (scanData && scanData.langs_s && scanData.langs_s.LAT) {
-        const latinoEmbeds = scanData.langs_s.LAT;
+      if (scanRes.data && scanRes.data.langs_s && scanRes.data.langs_s.LAT) {
+        const latinoEmbeds = scanRes.data.langs_s.LAT;
         const resolvedResults = yield Promise.allSettled(
           latinoEmbeds.map((embed) => __async(this, null, function* () {
-            let url = embed.url;
-            if (!url)
-              return null;
-            if (url.startsWith("//"))
-              url = "https:" + url;
-            else if (url.startsWith("/"))
-              url = BASE_URL + url;
-            const serverName = embed.server || "Online";
-            try {
-              const resolved = yield resolveEmbed(url);
-              if (resolved) {
-                return __spreadProps(__spreadValues({}, resolved), { langLabel: "Latino", serverLabel: serverName });
-              }
-            } catch (e) {
+            let serverName = "Online";
+            let serverId = null;
+            if (Array.isArray(embed)) {
+              serverName = embed[0] || "Online";
+              serverId = embed[1];
+            } else {
+              serverName = embed.server || "Online";
+              serverId = embed.url || embed.link || embed.file;
             }
-            const directUrl = yield extractDirectVideo(url, `${BASE_URL}/f/${slug}`);
+            if (!serverId)
+              return null;
+            if (serverId.startsWith("http")) {
+              try {
+                const resolved = yield resolveEmbed(serverId);
+                if (resolved)
+                  return __spreadProps(__spreadValues({}, resolved), { langLabel: "Latino", serverLabel: serverName });
+              } catch (e) {
+              }
+            }
+            const directUrl = yield getDirectStream(serverId, token, playerRef);
             if (directUrl) {
               return {
                 url: directUrl,
                 langLabel: "Latino",
                 serverLabel: serverName,
-                quality: "1080p",
+                quality: directUrl.includes("1080") ? "1080p" : "720p",
                 verified: true
               };
             }
