@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:06:32.372Z
+ * Generated: 2026-04-10T22:09:22.222Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1284,7 +1284,7 @@ var BASE_URL = "https://player.pelisserieshoy.com";
 var UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
 var HEADERS = {
   "User-Agent": UA10,
-  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
   "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
   "Origin": BASE_URL,
   "Referer": "https://sololatino.net/",
@@ -1306,14 +1306,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
-    console.log(`[SoloLatino] Buscando: ${tmdbId} (${mediaType}) S${season}E${episode}`);
     try {
       const idData = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = idData ? idData.imdbId : null;
-      if (!imdbId) {
-        console.log(`[SoloLatino] Error: No se pudo mapear ID ${tmdbId}`);
+      if (!imdbId)
         return [];
-      }
       let slug = imdbId;
       const isTV = mediaType === "tv" || mediaType === "series" || season && episode;
       if (isTV) {
@@ -1332,29 +1329,36 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       if (!scanData || !scanData.langs_s || !scanData.langs_s.LAT)
         return [];
       const latinoEmbeds = scanData.langs_s.LAT;
-      console.log(`[SoloLatino] ${latinoEmbeds.length} embeds encontrados. Resolviendo...`);
       const resolvedResults = yield Promise.allSettled(
         latinoEmbeds.map((embed) => __async(this, null, function* () {
+          const sLabel = (embed.server || "Online").toLowerCase();
+          const url = embed.url;
+          if (sLabel.includes("player+") || sLabel.includes("premium") || sLabel.includes("vip") || sLabel.includes("pro")) {
+            return {
+              url,
+              langLabel: "Latino",
+              serverLabel: embed.server || "Player+",
+              quality: "1080p",
+              verified: true
+            };
+          }
           try {
-            const resolved = yield resolveEmbed(embed.url);
+            const resolved = yield resolveEmbed(url);
             if (resolved) {
               return __spreadProps(__spreadValues({}, resolved), {
                 langLabel: "Latino",
-                serverLabel: embed.server || "Online"
+                serverLabel: embed.server || "Servidor"
               });
             }
-            return null;
           } catch (e) {
-            return null;
           }
+          return null;
         }))
       );
       const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      const finalized = yield finalizeStreams(rawStreams, "SoloLatino");
-      console.log(`[SoloLatino] \u2713 ${finalized.length} streams finales devueltos.`);
-      return finalized;
+      return yield finalizeStreams(rawStreams, "SoloLatino");
     } catch (e) {
-      console.log(`[SoloLatino] Error Cr\xEDtico: ${e.message}`);
+      console.log(`[SoloLatino] Error: ${e.message}`);
       return [];
     }
   });
