@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-10T20:46:04.056Z
+ * Generated: 2026-04-10T20:51:01.654Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1278,6 +1278,10 @@ function getImdbId(tmdbId, mediaType) {
   });
 }
 var SERIES_MAPPINGS = {
+  // Miénteme (Lie to Me)
+  "1439": { replacementId: "tt1235099" },
+  "tt1235099": { replacementId: "tt1235099" },
+  // Scrubs Offset Case
   "tt40197357": {
     replacementId: "tt0285403",
     // Usar ID de la serie original (Scrubs 2001)
@@ -1285,16 +1289,16 @@ var SERIES_MAPPINGS = {
     // S1 en Nuvio corresponde a S10 en Embed69
   }
 };
-function buildEmbedUrl(imdbId, mediaType, season, episode) {
+function buildEmbedUrl(imdbId, mediaType, season, episode, offset = 0) {
   if (mediaType === "movie" || mediaType === "movies")
     return `${BASE_URL}/f/${imdbId}`;
   let targetId = imdbId;
-  let s = parseInt(season) || 1;
+  let s = (parseInt(season) || 1) + offset;
   const mapping = SERIES_MAPPINGS[imdbId];
   if (mapping) {
     if (mapping.replacementId)
       targetId = mapping.replacementId;
-    if (mapping.offset)
+    if (mapping.offset && offset === 0)
       s += mapping.offset;
   }
   const e = String(episode || 1).padStart(2, "0");
@@ -1304,8 +1308,9 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId || !mediaType)
       return [];
+    const tIdStr = tmdbId.toString();
     const startTime = Date.now();
-    console.log(`[Embed69] Buscando: TMDB ${tmdbId} (${mediaType})${season ? ` S${season}E${episode}` : ""}`);
+    console.log(`[Embed69] Buscando: TMDB ${tIdStr} (${mediaType})${season ? ` S${season}E${episode}` : ""}`);
     try {
       let getEmbeds = function(section) {
         const langLabel = section.video_language || "Latino";
@@ -1324,16 +1329,23 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         }
         return embeds;
       };
-      let imdbId = tmdbId.toString().startsWith("tt") ? tmdbId : null;
+      let imdbId = null;
+      let sOffset = 0;
+      const mapping = SERIES_MAPPINGS[tIdStr];
+      if (mapping) {
+        imdbId = mapping.replacementId;
+        sOffset = mapping.offset || 0;
+        console.log(`[Embed69] Usando mapeo manual: ${tIdStr} -> ${imdbId} (Offset: ${sOffset})`);
+      }
       if (!imdbId) {
-        imdbId = yield getImdbId(tmdbId, mediaType);
+        imdbId = tIdStr.startsWith("tt") ? tIdStr : yield getImdbId(tmdbId, mediaType);
       }
       if (!imdbId) {
         console.log("[Embed69] No se encontr\xF3 IMDB ID");
         return [];
       }
       console.log(`[Embed69] IMDB ID: ${imdbId}`);
-      const embedUrl = buildEmbedUrl(imdbId, mediaType, season, episode);
+      const embedUrl = buildEmbedUrl(imdbId, mediaType, season, episode, sOffset);
       console.log(`[Embed69] Fetching: ${embedUrl}`);
       const { data: html } = yield import_axios9.default.get(embedUrl, {
         timeout: 1e4,
