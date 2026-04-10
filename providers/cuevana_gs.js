@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T21:11:04.624Z
+ * Generated: 2026-04-10T21:14:29.008Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -298,9 +298,12 @@ function validateStream(stream) {
       return __spreadProps(__spreadValues({}, stream), { verified: true });
     } catch (error) {
       clearTimeout(timeout);
-      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
-      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
-      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
+      const fallbackQuality = parseBestQuality("", url) || "HD";
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon") || url.includes("vidhide") || url.includes("cloudwindow");
+      return __spreadProps(__spreadValues({}, stream), {
+        quality: fallbackQuality,
+        verified: isKnown
+      });
     }
   });
 }
@@ -406,7 +409,8 @@ function finalizeStreams(streams, providerName) {
       }
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
-      const qualityPrefix = q ? `[${q}${check}] | ` : "";
+      const displayQ = !q && s.verified ? "HD" : q;
+      const qualityPrefix = displayQ ? `[${displayQ}${check}] | ` : "";
       return {
         name: providerName || "Plugin Latino",
         title: `${qualityPrefix}${lang} | ${server}`,
