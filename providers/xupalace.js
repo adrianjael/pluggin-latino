@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-10T15:28:04.429Z
+ * Generated: 2026-04-10T16:02:35.928Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -47,7 +47,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve10, reject) => {
+  return new Promise((resolve12, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -62,7 +62,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve10(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve12(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -1069,6 +1069,79 @@ function resolve9(embedUrl) {
   });
 }
 
+// src/resolvers/pixeldrain.js
+function resolve10(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log("[Pixeldrain] Resolviendo: " + embedUrl);
+      const idMatch = embedUrl.match(/\/(u|l|api\/file)\/([a-zA-Z0-9]+)/i);
+      if (!idMatch) {
+        console.log("[Pixeldrain] No se pudo encontrar un ID v\xE1lido en la URL.");
+        return null;
+      }
+      const fileId = idMatch[2];
+      const directUrl = `https://pixeldrain.com/api/file/${fileId}`;
+      console.log("[Pixeldrain] \u2713 URL Directa generada.");
+      return {
+        url: directUrl,
+        quality: "1080p",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Referer": "https://pixeldrain.com/"
+        }
+      };
+    } catch (e) {
+      console.error("[Pixeldrain] Error cr\xEDtico: " + e.message);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/buzzheavier.js
+function resolve11(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log("[Buzzheavier] Resolviendo: " + embedUrl);
+      const html = yield fetchHtml(embedUrl, {
+        headers: {
+          "User-Agent": DEFAULT_UA,
+          "Referer": "https://pelisgo.online/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        }
+      });
+      let directUrl = null;
+      const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i);
+      if (sourceMatch) {
+        directUrl = sourceMatch[1];
+      }
+      if (!directUrl) {
+        const staticMatch = html.match(/window\.fileUrl\s*=\s*["']([^"']+)["']/i);
+        if (staticMatch)
+          directUrl = staticMatch[1];
+      }
+      if (!directUrl && embedUrl.includes("/f/")) {
+        directUrl = embedUrl.replace("/f/", "/v/");
+      }
+      if (directUrl) {
+        console.log("[Buzzheavier] \u2713 Enlace directo identificado.");
+        return {
+          url: directUrl,
+          quality: "1080p",
+          headers: {
+            "User-Agent": DEFAULT_UA,
+            "Referer": embedUrl
+          }
+        };
+      }
+      console.log("[Buzzheavier] No se pudo extraer el video directo.");
+      return null;
+    } catch (e) {
+      console.error("[Buzzheavier] Error: " + e.message);
+      return null;
+    }
+  });
+}
+
 // src/utils/resolvers.js
 function resolveEmbed(url) {
   return __async(this, null, function* () {
@@ -1101,6 +1174,12 @@ function resolveEmbed(url) {
     }
     if (s.includes("turbovid")) {
       return yield resolve9(url);
+    }
+    if (s.includes("pixeldrain.com")) {
+      return yield resolve10(url);
+    }
+    if (s.includes("buzzheavier.com")) {
+      return yield resolve11(url);
     }
     return null;
   });

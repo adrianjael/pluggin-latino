@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-10T15:28:04.387Z
+ * Generated: 2026-04-10T16:02:35.880Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,6 +25,10 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -41,8 +45,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve10, reject) => {
+  return new Promise((resolve12, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -57,10 +62,17 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve10(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve12(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
+
+// src/pelisgo/index.js
+var pelisgo_exports = {};
+__export(pelisgo_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(pelisgo_exports);
 
 // src/utils/string.js
 var NOISE_WORDS = [
@@ -1138,6 +1150,79 @@ function resolve9(embedUrl) {
   });
 }
 
+// src/resolvers/pixeldrain.js
+function resolve10(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log("[Pixeldrain] Resolviendo: " + embedUrl);
+      const idMatch = embedUrl.match(/\/(u|l|api\/file)\/([a-zA-Z0-9]+)/i);
+      if (!idMatch) {
+        console.log("[Pixeldrain] No se pudo encontrar un ID v\xE1lido en la URL.");
+        return null;
+      }
+      const fileId = idMatch[2];
+      const directUrl = `https://pixeldrain.com/api/file/${fileId}`;
+      console.log("[Pixeldrain] \u2713 URL Directa generada.");
+      return {
+        url: directUrl,
+        quality: "1080p",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Referer": "https://pixeldrain.com/"
+        }
+      };
+    } catch (e) {
+      console.error("[Pixeldrain] Error cr\xEDtico: " + e.message);
+      return null;
+    }
+  });
+}
+
+// src/resolvers/buzzheavier.js
+function resolve11(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log("[Buzzheavier] Resolviendo: " + embedUrl);
+      const html = yield fetchHtml(embedUrl, {
+        headers: {
+          "User-Agent": DEFAULT_UA,
+          "Referer": "https://pelisgo.online/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        }
+      });
+      let directUrl = null;
+      const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i);
+      if (sourceMatch) {
+        directUrl = sourceMatch[1];
+      }
+      if (!directUrl) {
+        const staticMatch = html.match(/window\.fileUrl\s*=\s*["']([^"']+)["']/i);
+        if (staticMatch)
+          directUrl = staticMatch[1];
+      }
+      if (!directUrl && embedUrl.includes("/f/")) {
+        directUrl = embedUrl.replace("/f/", "/v/");
+      }
+      if (directUrl) {
+        console.log("[Buzzheavier] \u2713 Enlace directo identificado.");
+        return {
+          url: directUrl,
+          quality: "1080p",
+          headers: {
+            "User-Agent": DEFAULT_UA,
+            "Referer": embedUrl
+          }
+        };
+      }
+      console.log("[Buzzheavier] No se pudo extraer el video directo.");
+      return null;
+    } catch (e) {
+      console.error("[Buzzheavier] Error: " + e.message);
+      return null;
+    }
+  });
+}
+
 // src/utils/resolvers.js
 function resolveEmbed(url) {
   return __async(this, null, function* () {
@@ -1170,6 +1255,12 @@ function resolveEmbed(url) {
     }
     if (s.includes("turbovid")) {
       return yield resolve9(url);
+    }
+    if (s.includes("pixeldrain.com")) {
+      return yield resolve10(url);
+    }
+    if (s.includes("buzzheavier.com")) {
+      return yield resolve11(url);
     }
     return null;
   });
@@ -1291,6 +1382,12 @@ function getOnlineStreams(rawHtml) {
           if (seenUrls.has(cleanUrl))
             continue;
           seenUrls.add(cleanUrl);
+          if (cleanUrl.includes("embedseek.com"))
+            continue;
+          if (cleanUrl.includes("hqq.tv"))
+            continue;
+          if (cleanUrl.includes("desu"))
+            continue;
           let label = "PelisGo";
           let direct = null;
           const result = yield resolveEmbed(cleanUrl);
@@ -1332,13 +1429,17 @@ function getOnlineStreams(rawHtml) {
         }
         if (directUrl && !seenUrls.has(directUrl)) {
           seenUrls.add(directUrl);
-          streams.push({
-            name: "PelisGo",
-            langLabel: "Latino",
-            serverLabel: serverName,
-            url: directUrl,
-            quality: "1080p"
-          });
+          const resolved = yield resolveEmbed(directUrl);
+          if (resolved && resolved.url) {
+            streams.push({
+              name: "PelisGo",
+              langLabel: "Latino",
+              serverLabel: serverName,
+              url: resolved.url,
+              quality: resolved.quality || "1080p",
+              headers: resolved.headers || { "User-Agent": UA9, "Referer": directUrl }
+            });
+          }
         }
       }
     } catch (e) {
@@ -1415,4 +1516,3 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
   });
 }
-module.exports = { getStreams };
