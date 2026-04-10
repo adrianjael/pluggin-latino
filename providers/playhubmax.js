@@ -1,6 +1,6 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-10T14:54:25.632Z
+ * Generated: 2026-04-10T14:55:52.926Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -191,7 +191,7 @@ function normalizeServer(server) {
   if (!server)
     return "Servidor";
   const s = server.toLowerCase();
-  if (s.includes("voe"))
+  if (s.includes("voe") || s.includes("jessicaclearout"))
     return "VOE";
   if (s.includes("filemoon"))
     return "Filemoon";
