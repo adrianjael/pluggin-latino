@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-10T15:13:30.803Z
+ * Generated: 2026-04-10T15:16:34.606Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -208,18 +208,21 @@ function normalizeServer(server, url = "") {
   }
   const s = server.toLowerCase();
   const u = url.toLowerCase();
-  if (s.includes("voe") || s.includes("jessicaclearout") || u.includes("ugc-cdn") || u.includes("cloudwindow"))
+  if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || u.includes("ugc-cdn") || u.includes("cloudwindow") || u.includes("shonydar"))
     return "VOE";
   if (s.includes("filemoon"))
     return "Filemoon";
-  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || u.includes("embedwish"))
+  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud"))
     return "StreamWish";
-  if (s.includes("vidhide") || s.includes("dintezuvio") || u.includes("acek-cdn") || u.includes("premilkyway"))
+  if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
     return "VidHide";
-  if (s.includes("waaw") || s.includes("netu"))
+  if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || u.includes("waaw") || u.includes("vms.sh"))
     return "Netu";
-  if (s.includes("fastream"))
+  if (s.includes("fastream") || s.includes("fastplay"))
     return "Fastream";
+  if (/^[a-zA-Z0-9-]{15,}$/.test(server) || server.includes("cdn-caching")) {
+    return "Servidor Privado";
+  }
   return server;
 }
 function finalizeStreams(streams, providerName) {
