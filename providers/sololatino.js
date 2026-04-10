@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:02:22.292Z
+ * Generated: 2026-04-10T22:04:26.859Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1302,30 +1302,33 @@ function getPlayerToken(imdbId) {
     }
   });
 }
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
     try {
-      const tIdStr = tmdbId.toString().trim();
+      const parts = tmdbId.toString().split(":");
+      const realId = parts[0].trim();
+      const s = parts[1] || season;
+      const e = parts[2] || episode;
       let imdbId = null;
-      if (tIdStr.startsWith("tt")) {
-        imdbId = tIdStr;
+      if (realId.startsWith("tt")) {
+        imdbId = realId;
       } else {
         const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-        const idData = yield getCorrectImdbId(tIdStr, type);
+        const idData = yield getCorrectImdbId(realId, type);
         imdbId = idData ? idData.imdbId : null;
       }
       if (!imdbId) {
-        console.log(`[SoloLatino] Error: No se pudo obtener IMDb ID para ${tIdStr}`);
+        console.log(`[SoloLatino] Error: No se pudo obtener IMDb ID para ${realId}`);
         return [];
       }
-      const isEpisode = mediaType === "tv" || mediaType === "series" || mediaType === "show" || season !== void 0 && episode !== void 0;
+      const isEpisode = mediaType === "tv" || mediaType === "series" || s !== void 0 && e !== void 0;
       let playerPath = `/f/${imdbId}`;
       if (isEpisode) {
-        const s = season || 1;
-        const e = (episode || 1).toString().padStart(2, "0");
-        playerPath = `/f/${imdbId}-${s}x${e}`;
+        const seasonNum = s || 1;
+        const episodeNum = (e || 1).toString().padStart(2, "0");
+        playerPath = `/f/${imdbId}-${seasonNum}x${episodeNum}`;
       }
       const token = yield getPlayerToken(playerPath.replace("/f/", ""));
       if (!token) {
