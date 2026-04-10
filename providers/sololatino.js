@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:11:53.892Z
+ * Generated: 2026-04-10T22:14:23.529Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1431,13 +1431,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     if (!tmdbId)
       return [];
     const rawStreams = [];
-    rawStreams.push({
-      url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-      langLabel: "Latino",
-      serverLabel: "DEBUG-SOLOLATINO-ACTIVO",
-      quality: "1080p",
-      verified: true
-    });
     try {
       const idData = yield getCorrectImdbId2(tmdbId, mediaType);
       const imdbId = idData ? idData.imdbId : null;
