@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-10T15:25:23.704Z
+ * Generated: 2026-04-10T15:28:04.394Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1341,8 +1341,8 @@ function finalizeStreams(streams, providerName) {
         name: providerName || s.name || "Provider",
         title: `${qualityPrefix}${lang} | ${server}`,
         url: s.url,
-        quality: q || "HD",
-        // Mantener metadato interno para el reproductor
+        quality: q || "",
+        // Vacío para evitar etiquetas 'HD' automáticas en la App
         headers: s.headers || {}
       };
     });
