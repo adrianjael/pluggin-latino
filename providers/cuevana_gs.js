@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T20:19:58.691Z
+ * Generated: 2026-04-10T20:30:02.005Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1427,24 +1427,44 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
               console.error("[Cuevana3.nu] API returned no embeds");
               return { data: [] };
             }
-            var streams2 = [];
-            json.data.embeds.forEach((embed) => {
-              if (embed.url) {
-                var lang = "Latino";
-                var audio = (embed.audio || "").toLowerCase();
-                if (audio.includes("spanish") || audio.includes("castellano"))
-                  lang = "Castellano";
-                if (audio.includes("english") || audio.includes("ingles"))
-                  lang = "Ingl\xE9s";
-                if (audio.includes("latino"))
-                  lang = "Latino";
-                streams2.push({
-                  url: embed.url,
-                  label: embed.server || embed.service_name || "Server",
-                  lang
-                });
+            const bypassDooLat = (url2) => __async(this, null, function* () {
+              if (!url2.includes("doo.lat/fakeplayer.php"))
+                return url2;
+              try {
+                const html = yield fetchHtml(url2);
+                const match2 = html.match(/var\s+url\s*=\s*'([^']+)'/);
+                if (match2 && match2[1]) {
+                  console.log("[Cuevana3.nu] Bypassed doo.lat -> " + match2[1]);
+                  return match2[1];
+                }
+                return url2;
+              } catch (e2) {
+                return url2;
               }
             });
+            var streams2 = [];
+            for (const embed of json.data.embeds) {
+              if (embed.url) {
+                var audio = (embed.audio || "").toLowerCase();
+                var lang = "UNK";
+                if (audio.includes("latino") || audio.includes("latin")) {
+                  lang = "Latino";
+                } else if (audio.includes("spanish") || audio.includes("castellano") || audio.includes("espa\xF1a")) {
+                  lang = "Castellano";
+                } else if (audio.includes("english") || audio.includes("ingles") || audio.includes("subbed")) {
+                  lang = "Ingl\xE9s";
+                }
+                if (lang !== "Latino")
+                  continue;
+                const finalUrl = yield bypassDooLat(embed.url);
+                streams2.push({
+                  url: finalUrl,
+                  label: (embed.server || embed.service_name || "Server").toUpperCase(),
+                  lang: "LAT"
+                  // Normalizado para Nuvio
+                });
+              }
+            }
             console.log("[Cuevana3.nu] API successfully returned " + streams2.length + " streams");
             return { data: streams2 };
           } catch (err) {

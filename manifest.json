@@ -1,6 +1,6 @@
 {
   "name": "AdrianJael",
-  "version": "1.6.21",
+  "version": "1.6.22",
   "scrapers": [
     {
       "id": "embed69",
@@ -121,7 +121,7 @@
       "id": "cuevana_gs",
       "name": "Cuevana3.to",
       "description": "Nueva versión estable migrada a Cuevana3.to (Sin Cloudflare)",
-      "version": "1.7.1",
+      "version": "1.7.2",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
