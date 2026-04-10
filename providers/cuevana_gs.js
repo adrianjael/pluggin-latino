@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T20:51:01.643Z
+ * Generated: 2026-04-10T20:57:37.493Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -336,11 +336,11 @@ function sortStreamsByQuality(streams) {
 // src/utils/engine.js
 function normalizeLanguage(lang) {
   const l = (lang || "").toLowerCase();
-  if (l.includes("latino") || l.includes("lat"))
+  if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual"))
     return "Latino";
-  if (l.includes("espa\xF1ol") || l.includes("castellano") || l.includes("esp"))
+  if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
     return "Espa\xF1ol";
-  if (l.includes("sub") || l.includes("vose"))
+  if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
     return "Subtitulado";
   return lang || "Latino";
 }
@@ -1301,12 +1301,63 @@ function resolveEmbed(url) {
 
 // src/cuevana_gs/extractor.js
 var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
-var BASE_URL = "https://cue.cuevana3.nu";
+
+// src/utils/id_mapper.js
+var import_axios9 = __toESM(require("axios"));
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var SERIES_MAPPINGS = {
+  // Miénteme (Lie to Me)
+  "1439": { replacementId: "tt1235099", title: "Mi\xE9nteme" },
+  "tt1235099": { replacementId: "tt1235099", title: "Mi\xE9nteme" },
+  // Scrubs Offset Case
+  "tt40197357": {
+    replacementId: "tt0285403",
+    title: "Scrubs",
+    offset: 9
+  }
+};
+function getCorrectImdbId(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const tIdStr = tmdbId.toString();
+    const mapping = SERIES_MAPPINGS[tIdStr];
+    if (mapping && mapping.replacementId) {
+      console.log(`[IDMapper] Usando mapeo manual: ${tIdStr} -> ${mapping.replacementId}`);
+      return {
+        imdbId: mapping.replacementId,
+        offset: mapping.offset || 0,
+        title: mapping.title || null,
+        fromMapping: true
+      };
+    }
+    if (tIdStr.startsWith("tt")) {
+      return { imdbId: tIdStr, offset: 0, fromMapping: false };
+    }
+    try {
+      const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${tIdStr}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tIdStr}/external_ids?api_key=${TMDB_API_KEY}`;
+      const { data } = yield import_axios9.default.get(endpoint, {
+        timeout: 5e3,
+        headers: { "User-Agent": UA9 }
+      });
+      return {
+        imdbId: data.imdb_id || null,
+        offset: 0,
+        fromMapping: false
+      };
+    } catch (e) {
+      console.error(`[IDMapper] TMDB error para ${tIdStr}: ${e.message}`);
+      return { imdbId: null, offset: 0, fromMapping: false };
+    }
+  });
+}
+
+// src/cuevana_gs/extractor.js
+var BASE_URL = "https://cue.cuevana3.nu";
+var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
-      var url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?api_key=" + TMDB_API_KEY + "&language=es-MX";
+      var url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?api_key=" + TMDB_API_KEY2 + "&language=es-MX";
       const res = yield fetch(url);
       const json = yield res.json();
       if (json && json.id) {
@@ -1328,8 +1379,9 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
     var isSeries = mediaType === "tv";
     console.log("[Cuevana3.nu] Extracting: " + (providedTitle || tmdbId) + " (" + mediaType + ")");
     try {
+      const mapperResult = yield getCorrectImdbId(tmdbId, mediaType);
       var tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-      var searchTitle = providedTitle || tmdbInfo.title;
+      var searchTitle = mapperResult.title || providedTitle || tmdbInfo.title;
       var originalTitle = tmdbInfo.originalTitle || "";
       var year = tmdbInfo.year;
       if (!searchTitle) {
