@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-10T15:22:56.622Z
+ * Generated: 2026-04-10T15:25:23.678Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1233,24 +1233,17 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         resolvedData = yield resolveEmbed(finalUrl);
         if (!resolvedData || !resolvedData.url)
           return null;
-        const verifiedStream = yield validateStream({
+        return {
+          url: resolvedData.url,
+          quality: resolvedData.quality,
+          siteQuality: player.quality || null,
           langLabel: player.lang || "Latino",
           serverLabel: serverName,
-          url: resolvedData.url,
-          quality: resolvedData.quality || player.quality || "HD",
           headers: resolvedData.headers || {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Referer": rawUrl
           }
-        });
-        if (verifiedStream.verified) {
-          console.log(`[HackStore2] Stream verified: ${verifiedStream.url.substring(0, 40)}...`);
-          verifiedStream.quality = `(${verifiedStream.quality} \u2713)`;
-        } else {
-          console.log(`[HackStore2] Stream verification failed (fallback to HD): ${verifiedStream.url.substring(0, 40)}...`);
-          verifiedStream.quality = verifiedStream.quality || "HD";
-        }
-        return verifiedStream;
+        };
       }));
       const playerResults = yield Promise.all(streamPromises);
       return playerResults.filter((s) => s !== null);
@@ -1349,18 +1342,24 @@ function finalizeStreams(streams, providerName) {
     }
     const sorted = sortStreamsByQuality(validated);
     return sorted.map((s) => {
-      let q = s.quality || "HD";
+      let q = "";
       if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
+        q = s.siteQuality;
+      } else if (s.verified) {
+        q = s.quality;
+      } else if (s.siteQuality) {
         q = s.siteQuality;
       }
       const lang = normalizeLanguage(s.langLabel || s.language);
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
+      const qualityPrefix = q ? `${q}${check} | ` : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} | ${lang} | ${server}`,
+        title: `${qualityPrefix}${lang} | ${server}`,
         url: s.url,
-        quality: q,
+        quality: q || "HD",
+        // Mantener metadato interno para el reproductor
         headers: s.headers || {}
       };
     });

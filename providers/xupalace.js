@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-10T15:22:56.685Z
+ * Generated: 2026-04-10T15:25:23.737Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -244,18 +244,24 @@ function finalizeStreams(streams, providerName) {
     }
     const sorted = sortStreamsByQuality(validated);
     return sorted.map((s) => {
-      let q = s.quality || "HD";
+      let q = "";
       if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
+        q = s.siteQuality;
+      } else if (s.verified) {
+        q = s.quality;
+      } else if (s.siteQuality) {
         q = s.siteQuality;
       }
       const lang = normalizeLanguage(s.langLabel || s.language);
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
+      const qualityPrefix = q ? `${q}${check} | ` : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} | ${lang} | ${server}`,
+        title: `${qualityPrefix}${lang} | ${server}`,
         url: s.url,
-        quality: q,
+        quality: q || "HD",
+        // Mantener metadato interno para el reproductor
         headers: s.headers || {}
       };
     });
