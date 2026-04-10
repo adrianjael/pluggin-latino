@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T21:57:46.433Z
+ * Generated: 2026-04-10T22:00:41.781Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -73,7 +73,7 @@ __export(sololatino_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(sololatino_exports);
-var import_axios9 = __toESM(require("axios"));
+var import_axios10 = __toESM(require("axios"));
 
 // src/utils/m3u8.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -1233,11 +1233,57 @@ function resolveEmbed(url) {
   });
 }
 
+// src/utils/id_mapper.js
+var import_axios9 = __toESM(require("axios"));
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var SERIES_MAPPINGS = {
+  // Scrubs Offset Case
+  "tt40197357": {
+    replacementId: "tt0285403",
+    title: "Scrubs",
+    offset: 9
+  }
+};
+function getCorrectImdbId(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const tIdStr = tmdbId.toString();
+    const mapping = SERIES_MAPPINGS[tIdStr];
+    if (mapping && mapping.replacementId) {
+      console.log(`[IDMapper] Usando mapeo manual: ${tIdStr} -> ${mapping.replacementId}`);
+      return {
+        imdbId: mapping.replacementId,
+        offset: mapping.offset || 0,
+        title: mapping.title || null,
+        fromMapping: true
+      };
+    }
+    if (tIdStr.startsWith("tt")) {
+      return { imdbId: tIdStr, offset: 0, fromMapping: false };
+    }
+    try {
+      const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${tIdStr}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tIdStr}/external_ids?api_key=${TMDB_API_KEY}`;
+      const { data } = yield import_axios9.default.get(endpoint, {
+        timeout: 5e3,
+        headers: { "User-Agent": UA9 }
+      });
+      return {
+        imdbId: data.imdb_id || null,
+        offset: 0,
+        fromMapping: false
+      };
+    } catch (e) {
+      console.error(`[IDMapper] TMDB error para ${tIdStr}: ${e.message}`);
+      return { imdbId: null, offset: 0, fromMapping: false };
+    }
+  });
+}
+
 // src/sololatino/index.js
 var BASE_URL = "https://player.pelisserieshoy.com";
-var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
+var UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
 var HEADERS = {
-  "User-Agent": UA9,
+  "User-Agent": UA10,
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
   "Origin": BASE_URL,
@@ -1248,7 +1294,7 @@ function getPlayerToken(imdbId) {
   return __async(this, null, function* () {
     try {
       const url = `${BASE_URL}/f/${imdbId}`;
-      const { data: html } = yield import_axios9.default.get(url, { timeout: 8e3, headers: HEADERS });
+      const { data: html } = yield import_axios10.default.get(url, { timeout: 8e3, headers: HEADERS });
       const match = html.match(/(?:const|var)\s+_t\s*=\s*['"]([^'"]+)['"]/);
       return match ? match[1] : null;
     } catch (e) {
@@ -1258,14 +1304,19 @@ function getPlayerToken(imdbId) {
 }
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
-    let imdbId = tmdbId;
-    if (!imdbId)
+    if (!tmdbId)
       return [];
     try {
+      const idData = yield getCorrectImdbId(tmdbId, mediaType);
+      const imdbId = idData ? idData.imdbId : null;
+      if (!imdbId) {
+        console.log(`[SoloLatino] Error: No se pudo mapear el ID ${tmdbId} a IMDb.`);
+        return [];
+      }
       let playerPath = `/f/${imdbId}`;
-      if (mediaType === "tv") {
-        const s = season;
-        const e = episode.toString().padStart(2, "0");
+      if (mediaType === "tv" || season && episode) {
+        const s = season || 1;
+        const e = (episode || 1).toString().padStart(2, "0");
         playerPath = `/f/${imdbId}-${s}x${e}`;
       }
       const token = yield getPlayerToken(playerPath.replace("/f/", ""));
@@ -1279,7 +1330,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
         "X-Requested-With": "XMLHttpRequest"
       });
       const scanParams = new URLSearchParams({ a: "1", tok: token });
-      const { data: scanData } = yield import_axios9.default.post(`${BASE_URL}/s.php`, scanParams.toString(), {
+      const { data: scanData } = yield import_axios10.default.post(`${BASE_URL}/s.php`, scanParams.toString(), {
         headers: apiHeaders,
         timeout: 8e3
       });
@@ -1287,13 +1338,13 @@ function getStreams(tmdbId, mediaType, season, episode) {
         return [];
       }
       const clickParams = new URLSearchParams({ a: "click", tok: token });
-      yield import_axios9.default.post(`${BASE_URL}/s.php`, clickParams.toString(), { headers: apiHeaders });
+      yield import_axios10.default.post(`${BASE_URL}/s.php`, clickParams.toString(), { headers: apiHeaders });
       const latinoServers = scanData.langs_s.LAT;
       const streams = [];
       const results = yield Promise.allSettled(latinoServers.map((_0) => __async(this, [_0], function* ([name, serverId]) {
         try {
           const resolveParams = new URLSearchParams({ a: "2", v: serverId, tok: token });
-          const { data: resData } = yield import_axios9.default.post(`${BASE_URL}/s.php`, resolveParams.toString(), {
+          const { data: resData } = yield import_axios10.default.post(`${BASE_URL}/s.php`, resolveParams.toString(), {
             headers: apiHeaders,
             timeout: 1e4
           });
@@ -1315,7 +1366,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
                 serverLabel: name.replace(/[^\w\s+]/g, "").trim(),
                 url: resData.u,
                 quality: "1080p",
-                headers: { "User-Agent": UA9, "Referer": BASE_URL }
+                headers: { "User-Agent": UA10, "Referer": BASE_URL }
               };
             }
           }
