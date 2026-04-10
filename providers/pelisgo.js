@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-10T16:05:26.118Z
+ * Generated: 2026-04-10T16:36:16.227Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1375,18 +1375,22 @@ function getOnlineStreams(rawHtml) {
       const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
       if (videoLinksMatch) {
         const rawLinksJson = videoLinksMatch[1];
-        const objRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\\"' ,}]+)[^{}]*?\}/gi;
-        let m;
-        while ((m = objRegex.exec(rawLinksJson)) !== null) {
-          const serverName = m[1].replace(/\\/g, "");
-          let cleanUrl = m[2].replace(/\\/g, "");
+        const objects = rawLinksJson.match(/\{[^{}]*?\}/g) || [];
+        for (const obj of objects) {
+          const serverMatch = obj.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          const urlMatch = obj.match(/url[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          if (!serverMatch || !urlMatch)
+            continue;
+          const serverName = serverMatch[1].replace(/\\/g, "");
+          const cleanUrl = urlMatch[1].replace(/\\/g, "");
           if (seenUrls.has(cleanUrl))
             continue;
           seenUrls.add(cleanUrl);
           const lowerServer = serverName.toLowerCase();
-          if (lowerServer.includes("hqq") || lowerServer.includes("prueba") || lowerServer.includes("embedseek") || lowerServer.includes("desu"))
+          const lowerUrl = cleanUrl.toLowerCase();
+          if (lowerServer.includes("hqq") || lowerServer.includes("netu") || lowerServer.includes("prueba") || lowerServer.includes("embedseek") || lowerServer.includes("desu"))
             continue;
-          if (cleanUrl.includes("embedseek.com") || cleanUrl.includes("hqq.tv") || cleanUrl.includes("desu"))
+          if (lowerUrl.includes("hqq.tv") || lowerUrl.includes("waaw.to") || lowerUrl.includes("embedseek.com") || lowerUrl.includes("desu"))
             continue;
           const result = yield resolveEmbed(cleanUrl);
           if (result && result.url) {
