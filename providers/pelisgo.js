@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-10T16:02:35.880Z
+ * Generated: 2026-04-10T16:05:26.118Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1375,21 +1375,19 @@ function getOnlineStreams(rawHtml) {
       const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
       if (videoLinksMatch) {
         const rawLinksJson = videoLinksMatch[1];
-        const urlRegex = /url[\\"' ]+:[\\"' ]+([^\s"'\\]+)[\\"' ]+/gi;
+        const objRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\\"' ,}]+)[^{}]*?\}/gi;
         let m;
-        while ((m = urlRegex.exec(rawLinksJson)) !== null) {
-          let cleanUrl = m[1].replace(/\\/g, "");
+        while ((m = objRegex.exec(rawLinksJson)) !== null) {
+          const serverName = m[1].replace(/\\/g, "");
+          let cleanUrl = m[2].replace(/\\/g, "");
           if (seenUrls.has(cleanUrl))
             continue;
           seenUrls.add(cleanUrl);
-          if (cleanUrl.includes("embedseek.com"))
+          const lowerServer = serverName.toLowerCase();
+          if (lowerServer.includes("hqq") || lowerServer.includes("prueba") || lowerServer.includes("embedseek") || lowerServer.includes("desu"))
             continue;
-          if (cleanUrl.includes("hqq.tv"))
+          if (cleanUrl.includes("embedseek.com") || cleanUrl.includes("hqq.tv") || cleanUrl.includes("desu"))
             continue;
-          if (cleanUrl.includes("desu"))
-            continue;
-          let label = "PelisGo";
-          let direct = null;
           const result = yield resolveEmbed(cleanUrl);
           if (result && result.url) {
             streams.push({
