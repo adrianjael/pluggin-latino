@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-10T21:07:04.698Z
+ * Generated: 2026-04-10T21:11:04.635Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -257,13 +257,12 @@ function finalizeStreams(streams, providerName) {
       }
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
-      const qualityPrefix = q ? `${q}${check} | ` : "";
+      const qualityPrefix = q ? `[${q}${check}] | ` : "";
       return {
-        name: providerName || s.name || "Provider",
+        name: providerName || "Plugin Latino",
         title: `${qualityPrefix}${lang} | ${server}`,
         url: s.url,
         quality: q || "",
-        // Vacío para evitar etiquetas 'HD' automáticas en la App
         headers: s.headers || {}
       };
     });
@@ -1373,7 +1372,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         }))
       );
       const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      const finalized = yield finalizeStreams(rawStreams, title);
+      const finalized = yield finalizeStreams(rawStreams, "Embed69");
       const elapsed = ((Date.now() - startTime) / 1e3).toFixed(2);
       console.log(`[Embed69] \u2713 ${finalized.length} streams v\xE1lidos en ${elapsed}s`);
       return finalized;

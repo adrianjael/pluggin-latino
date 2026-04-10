@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-10T21:07:04.719Z
+ * Generated: 2026-04-10T21:11:04.656Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1476,13 +1476,12 @@ function finalizeStreams(streams, providerName) {
       }
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
-      const qualityPrefix = q ? `${q}${check} | ` : "";
+      const qualityPrefix = q ? `[${q}${check}] | ` : "";
       return {
-        name: providerName || s.name || "Provider",
+        name: providerName || "Plugin Latino",
         title: `${qualityPrefix}${lang} | ${server}`,
         url: s.url,
         quality: q || "",
-        // Vacío para evitar etiquetas 'HD' automáticas en la App
         headers: s.headers || {}
       };
     });
