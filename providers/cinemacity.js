@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-10T20:39:10.377Z
+ * Generated: 2026-04-10T20:43:58.224Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -245,7 +245,7 @@ function finalizeStreams(streams, providerName) {
     }
     const sorted = sortStreamsByQuality(validated);
     const processed = sorted.map((s) => {
-      const lang = normalizeLanguage(s.langLabel || s.language);
+      const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
       if (lang !== "Latino")
         return null;
       let q = "";

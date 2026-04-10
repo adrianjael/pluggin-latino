@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-10T20:39:10.396Z
+ * Generated: 2026-04-10T20:43:58.240Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -244,7 +244,7 @@ function finalizeStreams(streams, providerName) {
     }
     const sorted = sortStreamsByQuality(validated);
     const processed = sorted.map((s) => {
-      const lang = normalizeLanguage(s.langLabel || s.language);
+      const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
       if (lang !== "Latino")
         return null;
       let q = "";
@@ -1323,8 +1323,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           const payload = decodeJwtPayload(embed.link);
           if (!payload || !payload.link)
             continue;
-          const normalizedUrl = normalizeEmbedUrl(payload.link);
-          embeds.push({ url: normalizedUrl, lang, servername: embed.servername });
+          embeds.push({
+            url: payload.link,
+            langLabel: lang,
+            serverLabel: embed.servername
+          });
         }
         return embeds;
       };

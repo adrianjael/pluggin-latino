@@ -1,6 +1,6 @@
 {
   "name": "AdrianJael",
-  "version": "1.6.24",
+  "version": "1.6.25",
   "scrapers": [
     {
       "id": "embed69",
@@ -75,7 +75,7 @@
       "id": "hackstore2",
       "name": "HackStore2",
       "description": "API Nativa de Películas en HD",
-      "version": "1.2.6",
+      "version": "1.2.7",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
