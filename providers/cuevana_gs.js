@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T21:05:43.224Z
+ * Generated: 2026-04-10T21:07:04.688Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1317,7 +1317,6 @@ var SERIES_MAPPINGS = {
 function getCorrectImdbId(tmdbId, mediaType) {
   return __async(this, null, function* () {
     const tIdStr = tmdbId.toString();
-    console.log(`[IDMapper] DIAGN\xD3STICO -> Nuvio envi\xF3 ID: ${tIdStr} (${mediaType})`);
     const mapping = SERIES_MAPPINGS[tIdStr];
     if (mapping && mapping.replacementId) {
       console.log(`[IDMapper] Usando mapeo manual: ${tIdStr} -> ${mapping.replacementId}`);
