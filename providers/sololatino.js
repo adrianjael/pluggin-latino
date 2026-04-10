@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:09:22.222Z
+ * Generated: 2026-04-10T22:11:53.892Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,6 +25,9 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -67,16 +70,7 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/sololatino/index.js
-var sololatino_exports = {};
-__export(sololatino_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(sololatino_exports);
-var import_axios10 = __toESM(require("axios"));
-
 // src/utils/m3u8.js
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -158,19 +152,14 @@ function validateStream(stream) {
     }
   });
 }
+var UA;
+var init_m3u8 = __esm({
+  "src/utils/m3u8.js"() {
+    UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+  }
+});
 
 // src/utils/sorting.js
-var QUALITY_SCORE = {
-  "4K": 100,
-  "1440p": 90,
-  "1080p": 80,
-  "720p": 70,
-  "480p": 60,
-  "360p": 50,
-  "240p": 40,
-  "Auto": 30,
-  "Unknown": 0
-};
 function sortStreamsByQuality(streams) {
   if (!Array.isArray(streams))
     return [];
@@ -186,8 +175,28 @@ function sortStreamsByQuality(streams) {
     return scoreB - scoreA;
   });
 }
+var QUALITY_SCORE;
+var init_sorting = __esm({
+  "src/utils/sorting.js"() {
+    QUALITY_SCORE = {
+      "4K": 100,
+      "1440p": 90,
+      "1080p": 80,
+      "720p": 70,
+      "480p": 60,
+      "360p": 50,
+      "240p": 40,
+      "Auto": 30,
+      "Unknown": 0
+    };
+  }
+});
 
 // src/utils/engine.js
+var engine_exports = {};
+__export(engine_exports, {
+  finalizeStreams: () => finalizeStreams
+});
 function normalizeLanguage(lang) {
   const l = (lang || "").toLowerCase();
   if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual"))
@@ -273,14 +282,14 @@ function finalizeStreams(streams, providerName) {
     return processed.filter((s) => s !== null);
   });
 }
-
-// src/utils/resolvers.js
-var import_axios8 = __toESM(require("axios"));
+var init_engine = __esm({
+  "src/utils/engine.js"() {
+    init_m3u8();
+    init_sorting();
+  }
+});
 
 // src/utils/http.js
-var import_axios = __toESM(require("axios"));
-var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
 function request(url, options) {
   return __async(this, null, function* () {
     var opt = options || {};
@@ -323,6 +332,14 @@ function fetchJson(url, options) {
     return yield res.json();
   });
 }
+var import_axios, DEFAULT_UA, MOBILE_UA;
+var init_http = __esm({
+  "src/utils/http.js"() {
+    import_axios = __toESM(require("axios"));
+    DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+  }
+});
 
 // src/utils/string.js
 function base64Decode(input) {
@@ -356,6 +373,10 @@ function utf8Decode(bytes) {
   }
   return out;
 }
+var init_string = __esm({
+  "src/utils/string.js"() {
+  }
+});
 
 // src/resolvers/voe.js
 function resolve(url) {
@@ -445,9 +466,14 @@ function resolve(url) {
     }
   });
 }
+var init_voe = __esm({
+  "src/resolvers/voe.js"() {
+    init_http();
+    init_string();
+  }
+});
 
 // src/utils/aes-gcm.js
-var import_crypto_js = __toESM(require("crypto-js"));
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
@@ -472,9 +498,14 @@ function decryptGCM(key, iv, ciphertextWithTag) {
     return null;
   }
 }
+var import_crypto_js;
+var init_aes_gcm = __esm({
+  "src/utils/aes-gcm.js"() {
+    import_crypto_js = __toESM(require("crypto-js"));
+  }
+});
 
 // src/resolvers/filemoon.js
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function base64UrlDecode(input) {
   let s = input.replace(/-/g, "+").replace(/_/g, "/");
   while (s.length % 4)
@@ -579,10 +610,16 @@ function resolve2(url) {
     }
   });
 }
+var UA2;
+var init_filemoon = __esm({
+  "src/resolvers/filemoon.js"() {
+    init_aes_gcm();
+    init_string();
+    UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+  }
+});
 
 // src/resolvers/hlswish.js
-var import_axios2 = __toESM(require("axios"));
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackEval(payload, radix, symtab) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const unbase = (str) => {
@@ -682,10 +719,15 @@ function resolve3(url) {
     }
   });
 }
+var import_axios2, UA3;
+var init_hlswish = __esm({
+  "src/resolvers/hlswish.js"() {
+    import_axios2 = __toESM(require("axios"));
+    UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+  }
+});
 
 // src/resolvers/vidhide.js
-var import_axios3 = __toESM(require("axios"));
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpackVidHide(script) {
   try {
     const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
@@ -770,6 +812,13 @@ function resolve4(url) {
     }
   });
 }
+var import_axios3, UA4;
+var init_vidhide = __esm({
+  "src/resolvers/vidhide.js"() {
+    import_axios3 = __toESM(require("axios"));
+    UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/vimeos.js
 function resolve5(embedUrl) {
@@ -856,13 +905,13 @@ function resolve5(embedUrl) {
     }
   });
 }
-
-// src/resolvers/goodstream.js
-var import_axios5 = __toESM(require("axios"));
+var init_vimeos = __esm({
+  "src/resolvers/vimeos.js"() {
+    init_http();
+  }
+});
 
 // src/resolvers/quality.js
-var import_axios4 = __toESM(require("axios"));
-var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function detectQuality(_0) {
   return __async(this, arguments, function* (url, headers = {}) {
     try {
@@ -906,9 +955,15 @@ function detectQuality(_0) {
     }
   });
 }
+var import_axios4, UA5;
+var init_quality = __esm({
+  "src/resolvers/quality.js"() {
+    import_axios4 = __toESM(require("axios"));
+    UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/goodstream.js
-var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve6(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -947,6 +1002,14 @@ function resolve6(embedUrl) {
     }
   });
 }
+var import_axios5, UA6;
+var init_goodstream = __esm({
+  "src/resolvers/goodstream.js"() {
+    import_axios5 = __toESM(require("axios"));
+    init_quality();
+    UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/fastream.js
 function unpackPacker(data) {
@@ -1002,10 +1065,14 @@ function resolve7(url) {
     }
   });
 }
+var init_fastream = __esm({
+  "src/resolvers/fastream.js"() {
+    init_http();
+    init_quality();
+  }
+});
 
 // src/resolvers/okru.js
-var import_axios6 = __toESM(require("axios"));
-var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve8(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -1049,10 +1116,15 @@ function resolve8(embedUrl) {
     }
   });
 }
+var import_axios6, UA7;
+var init_okru = __esm({
+  "src/resolvers/okru.js"() {
+    import_axios6 = __toESM(require("axios"));
+    UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/turbovid.js
-var import_axios7 = __toESM(require("axios"));
-var UA8 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve9(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -1077,6 +1149,13 @@ function resolve9(embedUrl) {
     }
   });
 }
+var import_axios7, UA8;
+var init_turbovid = __esm({
+  "src/resolvers/turbovid.js"() {
+    import_axios7 = __toESM(require("axios"));
+    UA8 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/pixeldrain.js
 function resolve10(embedUrl) {
@@ -1105,6 +1184,10 @@ function resolve10(embedUrl) {
     }
   });
 }
+var init_pixeldrain = __esm({
+  "src/resolvers/pixeldrain.js"() {
+  }
+});
 
 // src/resolvers/buzzheavier.js
 function resolve11(embedUrl) {
@@ -1150,15 +1233,17 @@ function resolve11(embedUrl) {
     }
   });
 }
+var init_buzzheavier = __esm({
+  "src/resolvers/buzzheavier.js"() {
+    init_http();
+  }
+});
 
 // src/utils/resolvers.js
-var MIRROR_MAP = {
-  "minochinos.com": "vidhidepro.com/v/",
-  "hglink.to": "streamwish.to/e/",
-  "bysedikamoum.com": "filemoon.sx/e/",
-  "hglamioz.com": "streamwish.to/e/",
-  "embedwish.com": "streamwish.to/e/"
-};
+var resolvers_exports = {};
+__export(resolvers_exports, {
+  resolveEmbed: () => resolveEmbed
+});
 function preProcessUrl(url) {
   return __async(this, null, function* () {
     if (!url)
@@ -1232,19 +1317,37 @@ function resolveEmbed(url) {
     return null;
   });
 }
+var import_axios8, MIRROR_MAP;
+var init_resolvers = __esm({
+  "src/utils/resolvers.js"() {
+    import_axios8 = __toESM(require("axios"));
+    init_voe();
+    init_filemoon();
+    init_hlswish();
+    init_vidhide();
+    init_vimeos();
+    init_goodstream();
+    init_fastream();
+    init_okru();
+    init_turbovid();
+    init_pixeldrain();
+    init_buzzheavier();
+    MIRROR_MAP = {
+      "minochinos.com": "vidhidepro.com/v/",
+      "hglink.to": "streamwish.to/e/",
+      "bysedikamoum.com": "filemoon.sx/e/",
+      "hglamioz.com": "streamwish.to/e/",
+      "embedwish.com": "streamwish.to/e/"
+    };
+  }
+});
 
 // src/utils/id_mapper.js
-var import_axios9 = __toESM(require("axios"));
-var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-var SERIES_MAPPINGS = {
-  // Scrubs Offset Case
-  "tt40197357": {
-    replacementId: "tt0285403",
-    title: "Scrubs",
-    offset: 9
-  }
-};
+var id_mapper_exports = {};
+__export(id_mapper_exports, {
+  SERIES_MAPPINGS: () => SERIES_MAPPINGS,
+  getCorrectImdbId: () => getCorrectImdbId
+});
 function getCorrectImdbId(tmdbId, mediaType) {
   return __async(this, null, function* () {
     const tIdStr = tmdbId.toString();
@@ -1278,8 +1381,28 @@ function getCorrectImdbId(tmdbId, mediaType) {
     }
   });
 }
+var import_axios9, TMDB_API_KEY, UA9, SERIES_MAPPINGS;
+var init_id_mapper = __esm({
+  "src/utils/id_mapper.js"() {
+    import_axios9 = __toESM(require("axios"));
+    TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    SERIES_MAPPINGS = {
+      // Scrubs Offset Case
+      "tt40197357": {
+        replacementId: "tt0285403",
+        title: "Scrubs",
+        offset: 9
+      }
+    };
+  }
+});
 
 // src/sololatino/index.js
+var axios10 = require("axios");
+var { finalizeStreams: finalizeStreams2 } = (init_engine(), __toCommonJS(engine_exports));
+var { resolveEmbed: resolveEmbed2 } = (init_resolvers(), __toCommonJS(resolvers_exports));
+var { getCorrectImdbId: getCorrectImdbId2 } = (init_id_mapper(), __toCommonJS(id_mapper_exports));
 var BASE_URL = "https://player.pelisserieshoy.com";
 var UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
 var HEADERS = {
@@ -1294,7 +1417,8 @@ function getPlayerToken(slug) {
   return __async(this, null, function* () {
     try {
       const url = `${BASE_URL}/f/${slug}`;
-      const { data: html } = yield import_axios10.default.get(url, { timeout: 8e3, headers: HEADERS });
+      const res = yield axios10.get(url, { timeout: 8e3, headers: HEADERS });
+      const html = res.data;
       const match = html.match(/(?:const|var)\s+_t\s*=\s*['"]([^'"]+)['"]/);
       return match ? match[1] : null;
     } catch (e) {
@@ -1306,60 +1430,77 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
+    const rawStreams = [];
+    rawStreams.push({
+      url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      langLabel: "Latino",
+      serverLabel: "DEBUG-SOLOLATINO-ACTIVO",
+      quality: "1080p",
+      verified: true
+    });
     try {
-      const idData = yield getCorrectImdbId(tmdbId, mediaType);
+      const idData = yield getCorrectImdbId2(tmdbId, mediaType);
       const imdbId = idData ? idData.imdbId : null;
-      if (!imdbId)
-        return [];
-      let slug = imdbId;
-      const isTV = mediaType === "tv" || mediaType === "series" || season && episode;
-      if (isTV) {
-        const s = season || 1;
-        const e = (episode || 1).toString().padStart(2, "0");
-        slug = `${imdbId}-${s}x${e}`;
+      if (imdbId) {
+        let slug = imdbId;
+        const isTV = mediaType === "tv" || mediaType === "series" || season && episode;
+        if (isTV) {
+          const s = season || 1;
+          const e = (episode || 1).toString().padStart(2, "0");
+          slug = `${imdbId}-${s}x${e}`;
+        }
+        const token = yield getPlayerToken(slug);
+        if (token) {
+          const postBody = "a=1&tok=" + encodeURIComponent(token);
+          const scanRes = yield axios10.post(`${BASE_URL}/s.php`, postBody, {
+            headers: __spreadProps(__spreadValues({}, HEADERS), {
+              "Referer": `${BASE_URL}/f/${slug}`,
+              "X-Requested-With": "XMLHttpRequest",
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+            })
+          });
+          const scanData = scanRes.data;
+          if (scanData && scanData.langs_s && scanData.langs_s.LAT) {
+            const latinoEmbeds = scanData.langs_s.LAT;
+            const resolvedResults = yield Promise.allSettled(
+              latinoEmbeds.map((embed) => __async(this, null, function* () {
+                const sLabel = (embed.server || "Online").toLowerCase();
+                const url = embed.url;
+                if (sLabel.includes("player+") || sLabel.includes("premium") || sLabel.includes("vip") || sLabel.includes("pro")) {
+                  return {
+                    url,
+                    langLabel: "Latino",
+                    serverLabel: embed.server || "Player+",
+                    quality: "1080p",
+                    verified: true
+                  };
+                }
+                try {
+                  const resolved = yield resolveEmbed2(url);
+                  if (resolved) {
+                    return __spreadProps(__spreadValues({}, resolved), {
+                      langLabel: "Latino",
+                      serverLabel: embed.server || "Servidor"
+                    });
+                  }
+                } catch (e) {
+                }
+                return null;
+              }))
+            );
+            resolvedResults.forEach((r) => {
+              if (r.status === "fulfilled" && r.value) {
+                rawStreams.push(r.value);
+              }
+            });
+          }
+        }
       }
-      const token = yield getPlayerToken(slug);
-      if (!token)
-        return [];
-      const { data: scanData } = yield import_axios10.default.post(
-        `${BASE_URL}/s.php`,
-        new URLSearchParams({ a: "1", tok: token }).toString(),
-        { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": `${BASE_URL}/f/${slug}`, "X-Requested-With": "XMLHttpRequest" }) }
-      );
-      if (!scanData || !scanData.langs_s || !scanData.langs_s.LAT)
-        return [];
-      const latinoEmbeds = scanData.langs_s.LAT;
-      const resolvedResults = yield Promise.allSettled(
-        latinoEmbeds.map((embed) => __async(this, null, function* () {
-          const sLabel = (embed.server || "Online").toLowerCase();
-          const url = embed.url;
-          if (sLabel.includes("player+") || sLabel.includes("premium") || sLabel.includes("vip") || sLabel.includes("pro")) {
-            return {
-              url,
-              langLabel: "Latino",
-              serverLabel: embed.server || "Player+",
-              quality: "1080p",
-              verified: true
-            };
-          }
-          try {
-            const resolved = yield resolveEmbed(url);
-            if (resolved) {
-              return __spreadProps(__spreadValues({}, resolved), {
-                langLabel: "Latino",
-                serverLabel: embed.server || "Servidor"
-              });
-            }
-          } catch (e) {
-          }
-          return null;
-        }))
-      );
-      const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      return yield finalizeStreams(rawStreams, "SoloLatino");
+      return yield finalizeStreams2(rawStreams, "SoloLatino");
     } catch (e) {
       console.log(`[SoloLatino] Error: ${e.message}`);
-      return [];
+      return yield finalizeStreams2(rawStreams, "SoloLatino");
     }
   });
 }
+module.exports = { getStreams };
