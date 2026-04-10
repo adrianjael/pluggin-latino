@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-10T20:30:02.075Z
+ * Generated: 2026-04-10T20:39:10.456Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -108,6 +108,9 @@ function fetchText(_0) {
     }
   });
 }
+
+// src/utils/resolvers.js
+var import_axios8 = __toESM(require("axios"));
 
 // src/utils/http.js
 var import_axios = __toESM(require("axios"));
@@ -984,34 +987,73 @@ function resolve11(embedUrl) {
 }
 
 // src/utils/resolvers.js
+var MIRROR_MAP = {
+  "minochinos.com": "vidhidepro.com/v/",
+  "hglink.to": "streamwish.to/e/",
+  "bysedikamoum.com": "filemoon.sx/e/",
+  "hglamioz.com": "streamwish.to/e/",
+  "embedwish.com": "streamwish.to/e/"
+};
+function preProcessUrl(url) {
+  return __async(this, null, function* () {
+    if (!url)
+      return url;
+    let s = url.toLowerCase();
+    if (s.includes("doo.lat/fakeplayer.php") || s.includes("fakeplayer.php")) {
+      try {
+        const { data: html } = yield import_axios8.default.get(url, { timeout: 8e3 });
+        const match = html.match(/var\s+url\s*=\s*'([^']+)'/);
+        if (match && match[1]) {
+          console.log(`[UniversalResolver] Bypassed protector -> ${match[1]}`);
+          return yield preProcessUrl(match[1]);
+        }
+      } catch (e) {
+        console.warn(`[UniversalResolver] Bypass failed for ${url}: ${e.message}`);
+      }
+    }
+    try {
+      const urlObj = new URL(url);
+      const host = urlObj.hostname;
+      if (MIRROR_MAP[host]) {
+        const id = urlObj.pathname.split("/").pop();
+        const newUrl = `https://${MIRROR_MAP[host]}${id}`;
+        console.log(`[UniversalResolver] Unmasked mirror: ${host} -> ${newUrl}`);
+        return newUrl;
+      }
+    } catch (e) {
+    }
+    return url;
+  });
+}
 function resolveEmbed(url) {
   return __async(this, null, function* () {
     if (!url)
       return null;
-    const s = url.toLowerCase();
+    const targetUrl = yield preProcessUrl(url);
+    const s = targetUrl.toLowerCase();
     if (s.includes("voe") || s.includes("jessicaclearout")) {
-      return yield resolve(url);
+      return yield resolve(targetUrl);
     }
     if (s.includes("hlswish") || s.includes("streamwish") || s.includes("hglamioz") || s.includes("embedwish") || s.includes("awish") || s.includes("dwish")) {
-      return yield resolve3(url);
+      return yield resolve3(targetUrl);
     }
     if (s.includes("vidhide") || s.includes("dintezuvio")) {
-      return yield resolve4(url);
+      return yield resolve4(targetUrl);
     }
     if (s.includes("filemoon")) {
-      return yield resolve2(url);
+      return yield resolve2(targetUrl);
     }
     if (s.includes("vimeos") || s.includes("vms.sh") || s.includes("waaw") || s.includes("netu") || s.includes("vimeo.")) {
-      return yield resolve5(url);
+      return yield resolve5(targetUrl);
     }
     if (s.includes("fastream")) {
-      return yield resolve7(url);
+      return yield resolve7(targetUrl);
     }
     if (s.includes("ok.ru")) {
-      return yield resolve8(url);
+      return yield resolve8(targetUrl);
     }
     if (s.includes("goodstream")) {
-      return yield resolve6(url);
+      return yield resolve6(targetUrl);
     }
     if (s.includes("turbovid")) {
       return yield resolve9(url);
@@ -1434,7 +1476,10 @@ function finalizeStreams(streams, providerName) {
       console.error(`[Engine] Validation error: ${e.message}`);
     }
     const sorted = sortStreamsByQuality(validated);
-    return sorted.map((s) => {
+    const processed = sorted.map((s) => {
+      const lang = normalizeLanguage(s.langLabel || s.language);
+      if (lang !== "Latino")
+        return null;
       let q = "";
       if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
         q = s.siteQuality;
@@ -1443,7 +1488,6 @@ function finalizeStreams(streams, providerName) {
       } else if (s.siteQuality) {
         q = s.siteQuality;
       }
-      const lang = normalizeLanguage(s.langLabel || s.language);
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
       const qualityPrefix = q ? `${q}${check} | ` : "";
@@ -1456,6 +1500,7 @@ function finalizeStreams(streams, providerName) {
         headers: s.headers || {}
       };
     });
+    return processed.filter((s) => s !== null);
   });
 }
 

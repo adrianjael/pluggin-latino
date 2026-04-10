@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-10T20:30:01.998Z
+ * Generated: 2026-04-10T20:39:10.377Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -244,7 +244,10 @@ function finalizeStreams(streams, providerName) {
       console.error(`[Engine] Validation error: ${e.message}`);
     }
     const sorted = sortStreamsByQuality(validated);
-    return sorted.map((s) => {
+    const processed = sorted.map((s) => {
+      const lang = normalizeLanguage(s.langLabel || s.language);
+      if (lang !== "Latino")
+        return null;
       let q = "";
       if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
         q = s.siteQuality;
@@ -253,7 +256,6 @@ function finalizeStreams(streams, providerName) {
       } else if (s.siteQuality) {
         q = s.siteQuality;
       }
-      const lang = normalizeLanguage(s.langLabel || s.language);
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
       const qualityPrefix = q ? `${q}${check} | ` : "";
@@ -266,6 +268,7 @@ function finalizeStreams(streams, providerName) {
         headers: s.headers || {}
       };
     });
+    return processed.filter((s) => s !== null);
   });
 }
 

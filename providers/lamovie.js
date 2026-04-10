@@ -1,6 +1,6 @@
 /**
  * lamovie - Built from src/lamovie/
- * Generated: 2026-04-10T20:30:02.047Z
+ * Generated: 2026-04-10T20:39:10.427Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -73,7 +73,7 @@ __export(lamovie_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(lamovie_exports);
-var import_axios8 = __toESM(require("axios"));
+var import_axios9 = __toESM(require("axios"));
 
 // src/utils/m3u8.js
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -243,7 +243,10 @@ function finalizeStreams(streams, providerName) {
       console.error(`[Engine] Validation error: ${e.message}`);
     }
     const sorted = sortStreamsByQuality(validated);
-    return sorted.map((s) => {
+    const processed = sorted.map((s) => {
+      const lang = normalizeLanguage(s.langLabel || s.language);
+      if (lang !== "Latino")
+        return null;
       let q = "";
       if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
         q = s.siteQuality;
@@ -252,7 +255,6 @@ function finalizeStreams(streams, providerName) {
       } else if (s.siteQuality) {
         q = s.siteQuality;
       }
-      const lang = normalizeLanguage(s.langLabel || s.language);
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
       const qualityPrefix = q ? `${q}${check} | ` : "";
@@ -265,8 +267,12 @@ function finalizeStreams(streams, providerName) {
         headers: s.headers || {}
       };
     });
+    return processed.filter((s) => s !== null);
   });
 }
+
+// src/utils/resolvers.js
+var import_axios8 = __toESM(require("axios"));
 
 // src/utils/http.js
 var import_axios = __toESM(require("axios"));
@@ -1143,34 +1149,73 @@ function resolve11(embedUrl) {
 }
 
 // src/utils/resolvers.js
+var MIRROR_MAP = {
+  "minochinos.com": "vidhidepro.com/v/",
+  "hglink.to": "streamwish.to/e/",
+  "bysedikamoum.com": "filemoon.sx/e/",
+  "hglamioz.com": "streamwish.to/e/",
+  "embedwish.com": "streamwish.to/e/"
+};
+function preProcessUrl(url) {
+  return __async(this, null, function* () {
+    if (!url)
+      return url;
+    let s = url.toLowerCase();
+    if (s.includes("doo.lat/fakeplayer.php") || s.includes("fakeplayer.php")) {
+      try {
+        const { data: html } = yield import_axios8.default.get(url, { timeout: 8e3 });
+        const match = html.match(/var\s+url\s*=\s*'([^']+)'/);
+        if (match && match[1]) {
+          console.log(`[UniversalResolver] Bypassed protector -> ${match[1]}`);
+          return yield preProcessUrl(match[1]);
+        }
+      } catch (e) {
+        console.warn(`[UniversalResolver] Bypass failed for ${url}: ${e.message}`);
+      }
+    }
+    try {
+      const urlObj = new URL(url);
+      const host = urlObj.hostname;
+      if (MIRROR_MAP[host]) {
+        const id = urlObj.pathname.split("/").pop();
+        const newUrl = `https://${MIRROR_MAP[host]}${id}`;
+        console.log(`[UniversalResolver] Unmasked mirror: ${host} -> ${newUrl}`);
+        return newUrl;
+      }
+    } catch (e) {
+    }
+    return url;
+  });
+}
 function resolveEmbed(url) {
   return __async(this, null, function* () {
     if (!url)
       return null;
-    const s = url.toLowerCase();
+    const targetUrl = yield preProcessUrl(url);
+    const s = targetUrl.toLowerCase();
     if (s.includes("voe") || s.includes("jessicaclearout")) {
-      return yield resolve(url);
+      return yield resolve(targetUrl);
     }
     if (s.includes("hlswish") || s.includes("streamwish") || s.includes("hglamioz") || s.includes("embedwish") || s.includes("awish") || s.includes("dwish")) {
-      return yield resolve3(url);
+      return yield resolve3(targetUrl);
     }
     if (s.includes("vidhide") || s.includes("dintezuvio")) {
-      return yield resolve4(url);
+      return yield resolve4(targetUrl);
     }
     if (s.includes("filemoon")) {
-      return yield resolve2(url);
+      return yield resolve2(targetUrl);
     }
     if (s.includes("vimeos") || s.includes("vms.sh") || s.includes("waaw") || s.includes("netu") || s.includes("vimeo.")) {
-      return yield resolve5(url);
+      return yield resolve5(targetUrl);
     }
     if (s.includes("fastream")) {
-      return yield resolve7(url);
+      return yield resolve7(targetUrl);
     }
     if (s.includes("ok.ru")) {
-      return yield resolve8(url);
+      return yield resolve8(targetUrl);
     }
     if (s.includes("goodstream")) {
-      return yield resolve6(url);
+      return yield resolve6(targetUrl);
     }
     if (s.includes("turbovid")) {
       return yield resolve9(url);
@@ -1227,7 +1272,7 @@ function getTmdbData(tmdbId, mediaType) {
     for (const { lang } of attempts) {
       try {
         const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=${lang}`;
-        const { data } = yield import_axios8.default.get(url, { timeout: 5e3, headers: HEADERS });
+        const { data } = yield import_axios9.default.get(url, { timeout: 5e3, headers: HEADERS });
         const title = mediaType === "movie" ? data.title : data.name;
         const originalTitle = mediaType === "movie" ? data.original_title : data.original_name;
         return {
@@ -1247,7 +1292,7 @@ function getIdBySlug(category, slug) {
   return __async(this, null, function* () {
     const url = `${BASE_URL}/${category}/${slug}/`;
     try {
-      const { data: html } = yield import_axios8.default.get(url, {
+      const { data: html } = yield import_axios9.default.get(url, {
         timeout: 8e3,
         headers: { "User-Agent": UA9, "Accept": "text/html" },
         validateStatus: (s) => s === 200
@@ -1287,7 +1332,7 @@ function getEpisodeId(seriesId, seasonNum, episodeNum) {
     var _a;
     const url = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${seriesId}&season=${seasonNum}&page=1&postsPerPage=50`;
     try {
-      const { data } = yield import_axios8.default.get(url, { timeout: 12e3, headers: HEADERS });
+      const { data } = yield import_axios9.default.get(url, { timeout: 12e3, headers: HEADERS });
       if (!((_a = data == null ? void 0 : data.data) == null ? void 0 : _a.posts))
         return null;
       const ep = data.data.posts.find((e) => e.season_number == seasonNum && e.episode_number == episodeNum);
@@ -1317,7 +1362,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
           return [];
         targetId = epId;
       }
-      const { data } = yield import_axios8.default.get(`${BASE_URL}/wp-api/v1/player?postId=${targetId}&demo=0`, { timeout: 6e3, headers: HEADERS });
+      const { data } = yield import_axios9.default.get(`${BASE_URL}/wp-api/v1/player?postId=${targetId}&demo=0`, { timeout: 6e3, headers: HEADERS });
       if (!((_a = data == null ? void 0 : data.data) == null ? void 0 : _a.embeds))
         return [];
       const streams = (yield Promise.allSettled(data.data.embeds.map((embed) => __async(this, null, function* () {
