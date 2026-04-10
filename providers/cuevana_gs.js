@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T15:16:34.585Z
+ * Generated: 2026-04-10T15:22:56.594Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -399,10 +399,13 @@ function finalizeStreams(streams, providerName) {
     }
     const sorted = sortStreamsByQuality(validated);
     return sorted.map((s) => {
-      const q = s.quality || "HD";
+      let q = s.quality || "HD";
+      if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
+        q = s.siteQuality;
+      }
       const lang = normalizeLanguage(s.langLabel || s.language);
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
-      const check = s.verified ? " \u2713" : "";
+      const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
         title: `${q}${check} | ${lang} | ${server}`,
@@ -1296,6 +1299,19 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       var contentHtml = yield fetchHtml(BASE_URL + pageToFetch);
       var $content = import_cheerio_without_node_native.default.load(contentHtml);
       var streams = [];
+      var qualityMap = {};
+      $content("li.clili").each((i, el) => {
+        var id = $content(el).attr("data-tplayernv");
+        var text = $content(el).find("span.cdtr span").text().toUpperCase();
+        if (id && text) {
+          if (text.includes("CAM"))
+            qualityMap[id] = "CAM";
+          else if (text.includes("TS"))
+            qualityMap[id] = "TS";
+          else if (text.includes("DVD"))
+            qualityMap[id] = "DVD";
+        }
+      });
       $content("div.TPlayerTb iframe").each((i, el) => {
         var url = $content(el).attr("data-src") || $content(el).attr("src") || "";
         var id = $content(el).parent().attr("id") || "";
@@ -1309,6 +1325,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             lang = "Espa\xF1ol";
           var server = getHostname(url);
           streams.push({
+            id,
             server,
             url,
             lang
@@ -1323,7 +1340,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           if (resolved && resolved.url) {
             rawResults.push({
               url: resolved.url,
-              quality: resolved.quality || "720p",
+              quality: resolved.quality || "1080p",
+              siteQuality: qualityMap[stream.id],
               langLabel: stream.lang,
               serverLabel: resolved.serverName || stream.server,
               headers: resolved.headers || {}

@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-10T15:16:34.614Z
+ * Generated: 2026-04-10T15:22:56.622Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1349,10 +1349,13 @@ function finalizeStreams(streams, providerName) {
     }
     const sorted = sortStreamsByQuality(validated);
     return sorted.map((s) => {
-      const q = s.quality || "HD";
+      let q = s.quality || "HD";
+      if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
+        q = s.siteQuality;
+      }
       const lang = normalizeLanguage(s.langLabel || s.language);
       const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
-      const check = s.verified ? " \u2713" : "";
+      const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
         title: `${q}${check} | ${lang} | ${server}`,
