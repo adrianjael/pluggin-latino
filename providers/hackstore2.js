@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-10T23:14:35.673Z
+ * Generated: 2026-04-10T23:20:26.392Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1098,10 +1098,32 @@ function preProcessUrl(url) {
     return url;
   });
 }
+function getDirectCdnHeaders(url) {
+  const s = url.toLowerCase();
+  const UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+  if (s.includes("acek-cdn.com") || s.includes("minochinos.com") || s.includes("masukestin.com")) {
+    return { "User-Agent": UA9, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
+  }
+  if (s.includes("r66nv9ed.com") || s.includes("filemoon")) {
+    return { "User-Agent": UA9, "Referer": "https://arbitrarydecisions.com/", "Origin": "https://arbitrarydecisions.com" };
+  }
+  if (s.includes("cloudwindow-route.com") || s.includes("awish.pro") || s.includes("streamwish")) {
+    return { "User-Agent": UA9, "Referer": "https://streamwish.to/", "Origin": "https://streamwish.to" };
+  }
+  return null;
+}
 function resolveEmbed(url) {
   return __async(this, null, function* () {
     if (!url)
       return null;
+    const directHeaders = getDirectCdnHeaders(url);
+    if (directHeaders && (url.includes(".m3u8") || url.includes(".mp4") || url.includes(".txt"))) {
+      return {
+        url,
+        quality: "HD",
+        headers: directHeaders
+      };
+    }
     const targetUrl = yield preProcessUrl(url);
     const s = targetUrl.toLowerCase();
     if (s.includes("voe") || s.includes("jessicaclearout")) {
