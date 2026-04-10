@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-10T20:57:37.504Z
+ * Generated: 2026-04-10T21:05:43.235Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1235,9 +1235,6 @@ var import_axios9 = __toESM(require("axios"));
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var SERIES_MAPPINGS = {
-  // Miénteme (Lie to Me)
-  "1439": { replacementId: "tt1235099", title: "Mi\xE9nteme" },
-  "tt1235099": { replacementId: "tt1235099", title: "Mi\xE9nteme" },
   // Scrubs Offset Case
   "tt40197357": {
     replacementId: "tt0285403",
@@ -1248,6 +1245,7 @@ var SERIES_MAPPINGS = {
 function getCorrectImdbId(tmdbId, mediaType) {
   return __async(this, null, function* () {
     const tIdStr = tmdbId.toString();
+    console.log(`[IDMapper] DIAGN\xD3STICO -> Nuvio envi\xF3 ID: ${tIdStr} (${mediaType})`);
     const mapping = SERIES_MAPPINGS[tIdStr];
     if (mapping && mapping.replacementId) {
       console.log(`[IDMapper] Usando mapeo manual: ${tIdStr} -> ${mapping.replacementId}`);
