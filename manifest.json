@@ -173,7 +173,7 @@
         "tv"
       ],
       "filename": "providers/lamovie.js",
-      "enabled": true,
+      "enabled": false,
       "logo": "https://la.movie/wp-content/uploads/2025/05/cropped-La.movie_-192x192.png",
       "contentLanguage": [
         "es"
