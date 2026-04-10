@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T23:12:37.330Z
+ * Generated: 2026-04-10T23:14:35.740Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -303,12 +303,55 @@ var import_axios7 = __toESM(require("axios"));
 
 // src/utils/id_mapper.js
 var import_axios9 = __toESM(require("axios"));
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var SERIES_MAPPINGS = {
+  // Scrubs Offset Case
+  "tt40197357": {
+    replacementId: "tt0285403",
+    title: "Scrubs",
+    offset: 9
+  }
+};
+function getCorrectImdbId(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const tIdStr = tmdbId.toString();
+    const mapping = SERIES_MAPPINGS[tIdStr];
+    if (mapping && mapping.replacementId) {
+      console.log(`[IDMapper] Usando mapeo manual: ${tIdStr} -> ${mapping.replacementId}`);
+      return {
+        imdbId: mapping.replacementId,
+        offset: mapping.offset || 0,
+        title: mapping.title || null,
+        fromMapping: true
+      };
+    }
+    if (tIdStr.startsWith("tt")) {
+      return { imdbId: tIdStr, offset: 0, fromMapping: false };
+    }
+    try {
+      const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${tIdStr}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tIdStr}/external_ids?api_key=${TMDB_API_KEY}`;
+      const { data } = yield import_axios9.default.get(endpoint, {
+        timeout: 5e3,
+        headers: { "User-Agent": UA2 }
+      });
+      return {
+        imdbId: data.imdb_id || null,
+        offset: 0,
+        fromMapping: false
+      };
+    } catch (e) {
+      console.error(`[IDMapper] TMDB error para ${tIdStr}: ${e.message}`);
+      return { imdbId: null, offset: 0, fromMapping: false };
+    }
+  });
+}
 
 // src/sololatino/index.js
 var BASE_URL = "https://player.pelisserieshoy.com";
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var HEADERS = {
-  "user-agent": UA2,
+  "user-agent": UA3,
   "accept": "*/*",
   "referer": "https://sololatino.net/",
   "x-requested-with": "XMLHttpRequest"
@@ -379,11 +422,19 @@ function getSessionData(slug) {
 }
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
-    if (!tmdbId)
+    if (!tmdbId || !mediaType)
       return [];
     const startTime = Date.now();
-    const slug = mediaType === "movie" || mediaType === "movies" ? tmdbId : `${tmdbId}-${season || 1}x${(episode || 1).toString().padStart(2, "0")}`;
     try {
+      const { imdbId, offset: sOffset } = yield getCorrectImdbId(tmdbId, mediaType);
+      if (!imdbId) {
+        console.log("[SoloLatino] No se encontr\xF3 ID de IMDB para traducir.");
+        return [];
+      }
+      const s = (parseInt(season) || 1) + (sOffset || 0);
+      const e = (episode || 1).toString().padStart(2, "0");
+      const slug = mediaType === "movie" || mediaType === "movies" ? imdbId : `${imdbId}-${s}x${e}`;
+      console.log(`[SoloLatino] Iniciando sesi\xF3n para: ${slug} (Original TMDB: ${tmdbId})`);
       const { token, cookie, playerUrl } = yield getSessionData(slug);
       if (!token)
         return [];
@@ -402,8 +453,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         return [];
       console.log(`[SoloLatino] ${latinServers.length} servidores encontrados.`);
       const streamResults = yield Promise.allSettled(
-        latinServers.slice(0, 5).map((s) => __async(this, null, function* () {
-          const [name, id] = Array.isArray(s) ? s : [s[0], s[1]];
+        latinServers.slice(0, 5).map((s2) => __async(this, null, function* () {
+          const [name, id] = Array.isArray(s2) ? s2 : [s2[0], s2[1]];
           const direct = yield getDirectStream(id, token, cookie, playerUrl);
           if (direct) {
             return {
