@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:18:19.533Z
+ * Generated: 2026-04-10T22:21:22.944Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1298,78 +1298,66 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     if (!tmdbId)
       return [];
     const rawStreams = [];
-    rawStreams.push({ serverLabel: "STEP-0-LOADED", url: "http://t.co", langLabel: "Latino" });
     try {
       const idData = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = idData ? idData.imdbId : null;
-      if (imdbId) {
-        rawStreams.push({ serverLabel: `STEP-1-IMDB-OK-${imdbId}`, url: "http://t.co", langLabel: "Latino" });
-        let slug = imdbId;
-        const isTV = mediaType === "tv" || mediaType === "series" || season && episode;
-        if (isTV) {
-          const s = season || 1;
-          const e = (episode || 1).toString().padStart(2, "0");
-          slug = `${imdbId}-${s}x${e}`;
-        }
-        const token = yield getPlayerToken(slug);
-        if (token) {
-          rawStreams.push({ serverLabel: `STEP-2-TOKEN-OK-${token.substring(0, 4)}`, url: "http://t.co", langLabel: "Latino" });
-          const postBody = "a=1&tok=" + encodeURIComponent(token);
-          const scanRes = yield import_axios10.default.post(`${BASE_URL}/s.php`, postBody, {
-            headers: __spreadProps(__spreadValues({}, HEADERS), {
-              "Referer": `${BASE_URL}/f/${slug}`,
-              "X-Requested-With": "XMLHttpRequest",
-              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-            })
-          });
-          const scanData = scanRes.data;
-          if (scanData && scanData.langs_s && scanData.langs_s.LAT) {
-            const latinoEmbeds = scanData.langs_s.LAT;
-            rawStreams.push({ serverLabel: `STEP-3-SCAN-OK-${latinoEmbeds.length}`, url: "http://t.co", langLabel: "Latino" });
-            const resolvedResults = yield Promise.allSettled(
-              latinoEmbeds.map((embed) => __async(this, null, function* () {
-                const sLabel = (embed.server || "Online").toLowerCase();
-                const url = embed.url;
-                if (sLabel.includes("player+") || sLabel.includes("premium") || sLabel.includes("vip") || sLabel.includes("pro")) {
-                  return {
-                    url,
-                    langLabel: "Latino",
-                    serverLabel: embed.server || "Player+",
-                    quality: "1080p",
-                    verified: true
-                  };
-                }
-                try {
-                  const resolved = yield resolveEmbed(url);
-                  if (resolved) {
-                    return __spreadProps(__spreadValues({}, resolved), {
-                      langLabel: "Latino",
-                      serverLabel: embed.server || "Servidor"
-                    });
-                  }
-                } catch (e) {
-                }
-                return null;
-              }))
-            );
-            resolvedResults.forEach((r) => {
-              if (r.status === "fulfilled" && r.value) {
-                rawStreams.push(r.value);
+      if (!imdbId)
+        return [];
+      let slug = imdbId;
+      const isTV = mediaType === "tv" || mediaType === "series" || season && episode;
+      if (isTV) {
+        const s = season || 1;
+        const e = (episode || 1).toString().padStart(2, "0");
+        slug = `${imdbId}-${s}x${e}`;
+      }
+      const token = yield getPlayerToken(slug);
+      if (!token)
+        return [];
+      const postBody = "a=1&tok=" + encodeURIComponent(token);
+      const scanRes = yield import_axios10.default.post(`${BASE_URL}/s.php`, postBody, {
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Referer": `${BASE_URL}/f/${slug}`,
+          "X-Requested-With": "XMLHttpRequest",
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+        })
+      });
+      const scanData = scanRes.data;
+      if (scanData && scanData.langs_s && scanData.langs_s.LAT) {
+        const latinoEmbeds = scanData.langs_s.LAT;
+        const resolvedResults = yield Promise.allSettled(
+          latinoEmbeds.map((embed) => __async(this, null, function* () {
+            const url = embed.url;
+            const serverName = embed.server || "Online";
+            const sLabel = serverName.toLowerCase();
+            try {
+              const resolved = yield resolveEmbed(url);
+              if (resolved) {
+                return __spreadProps(__spreadValues({}, resolved), {
+                  langLabel: "Latino",
+                  serverLabel: serverName
+                });
               }
-            });
-          } else {
-            rawStreams.push({ serverLabel: "STEP-3-SCAN-EMPTY", url: "http://t.co", langLabel: "Latino" });
+            } catch (e) {
+            }
+            return {
+              url,
+              langLabel: "Latino",
+              serverLabel: serverName,
+              quality: "1080p",
+              verified: true
+            };
+          }))
+        );
+        resolvedResults.forEach((r) => {
+          if (r.status === "fulfilled" && r.value) {
+            rawStreams.push(r.value);
           }
-        } else {
-          rawStreams.push({ serverLabel: "STEP-2-TOKEN-FAILED", url: "http://t.co", langLabel: "Latino" });
-        }
-      } else {
-        rawStreams.push({ serverLabel: "STEP-1-IMDB-MISSING", url: "http://t.co", langLabel: "Latino" });
+        });
       }
       return yield finalizeStreams(rawStreams, "SoloLatino");
     } catch (e) {
-      rawStreams.push({ serverLabel: "STEP-ERROR-" + e.message.substring(0, 10), url: "http://t.co", langLabel: "Latino" });
-      return yield finalizeStreams(rawStreams, "SoloLatino");
+      console.log(`[SoloLatino] Error: ${e.message}`);
+      return [];
     }
   });
 }
