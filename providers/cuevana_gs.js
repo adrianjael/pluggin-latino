@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T14:46:26.300Z
+ * Generated: 2026-04-10T14:50:51.867Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -747,8 +747,27 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             var isM3U8 = finalUrl.includes(".m3u8") || finalUrl.includes("/playlist");
             var isMP4 = finalUrl.includes(".mp4");
             if (isM3U8 || isMP4) {
-              var isValid = yield validateStream(finalUrl);
-              if (isValid) {
+              var streamData = {
+                title: "Cuevana3.to",
+                url: finalUrl,
+                quality: "HD",
+                lang: stream.lang,
+                type: isM3U8 ? "hls" : "mp4"
+              };
+              try {
+                const vStream = yield validateStream(streamData);
+                var displayQuality = vStream.quality;
+                if (vStream.verified) {
+                  displayQuality = `${vStream.quality} \u2713`;
+                }
+                results.push({
+                  title: "Cuevana3.to (" + stream.lang + ")",
+                  url: finalUrl,
+                  quality: displayQuality,
+                  lang: stream.lang,
+                  type: isM3U8 ? "hls" : "mp4"
+                });
+              } catch (vErr) {
                 results.push({
                   title: "Cuevana3.to (" + stream.lang + ")",
                   url: finalUrl,
