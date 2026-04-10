@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-09T21:42:56.711Z
+ * Generated: 2026-04-10T14:46:26.310Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -818,7 +818,7 @@ var SERVER_LABELS = {
   "vidhide": "VidHide",
   "goodstream": "GoodStream"
 };
-var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
+var LANG_PRIORITY = ["LAT", "ESP"];
 function decodeJwtPayload(token) {
   try {
     const parts = token.split(".");

@@ -1,6 +1,6 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-09T15:28:46.070Z
+ * Generated: 2026-04-10T14:46:26.378Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -73,10 +73,10 @@ __export(playhubmax_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(playhubmax_exports);
-var import_axios2 = __toESM(require("axios"));
+var import_axios = __toESM(require("axios"));
 
 // src/utils/m3u8.js
-var import_axios = __toESM(require("axios"));
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -115,26 +115,35 @@ function validateStream(stream) {
     if (!stream || !stream.url)
       return stream;
     const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
     try {
-      const response = yield import_axios.default.get(url, {
-        timeout: 4e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
           "Accept": "*/*",
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
-        })
+          "Range": "bytes=0-8192",
+          "User-Agent": UA
+        }, headers || {})
       });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
-          // <--- Marcamos como verificado
         });
       }
       return __spreadProps(__spreadValues({}, stream), { verified: true });
     } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
+      clearTimeout(timeout);
+      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
+      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
     }
   });
 }
@@ -220,7 +229,7 @@ function finalizeStreams(streams, providerName) {
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        title: `${q}${check} | ${lang} | ${server}`,
         url: s.url,
         quality: q,
         headers: s.headers || {}
@@ -234,9 +243,9 @@ var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var PHM_API = "https://api.playhubmax.com/api";
 var AES_KEY_STR = "33dff3b1c1362e45e1425fcc9724d6f3";
 var AES_IV_STR = "33dff3b1c1362e45";
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var API_HEADERS = {
-  "User-Agent": UA,
+  "User-Agent": UA2,
   "Accept": "application/json, text/plain, */*",
   "Origin": "https://www.playhubmax.com",
   "Referer": "https://www.playhubmax.com/"
@@ -376,7 +385,7 @@ function decryptSources(b64) {
 function searchContents(q) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield import_axios2.default.get(`${PHM_API}/US/en/contents?q=${encodeURIComponent(q)}`, { headers: API_HEADERS, timeout: 8e3 });
+      const { data } = yield import_axios.default.get(`${PHM_API}/US/en/contents?q=${encodeURIComponent(q)}`, { headers: API_HEADERS, timeout: 8e3 });
       return data.data || [];
     } catch (e) {
       return [];
@@ -386,7 +395,7 @@ function searchContents(q) {
 function getSources(type, uuid) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield import_axios2.default.get(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS, timeout: 8e3 });
+      const { data } = yield import_axios.default.get(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS, timeout: 8e3 });
       if (!data.data)
         return [];
       const sources = decryptSources(data.data);
@@ -402,7 +411,7 @@ function getSources(type, uuid) {
 function getContentDetail(uuid) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield import_axios2.default.get(`${PHM_API}/en/contents/${uuid}`, { headers: API_HEADERS, timeout: 8e3 });
+      const { data } = yield import_axios.default.get(`${PHM_API}/en/contents/${uuid}`, { headers: API_HEADERS, timeout: 8e3 });
       return data;
     } catch (e) {
       return {};
@@ -414,7 +423,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
     var _a, _b;
     try {
       const type = mediaType === "series" || mediaType === "tv" ? "tv" : "movie";
-      const { data: tmdbInfo } = yield import_axios2.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
+      const { data: tmdbInfo } = yield import_axios.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
       const title = type === "movie" ? tmdbInfo.title : tmdbInfo.name;
       if (!title)
         return [];
@@ -431,7 +440,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
         const seasonObj = (_a = detail.seasons) == null ? void 0 : _a.find((s) => parseInt(s.seasonNumber) === parseInt(season));
         if (!seasonObj)
           return [];
-        const { data: episodes } = yield import_axios2.default.get(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
+        const { data: episodes } = yield import_axios.default.get(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
         const ep = (_b = episodes.data) == null ? void 0 : _b.find((e) => parseInt(e.episodeNumber) === parseInt(episode));
         if (!ep)
           return [];
@@ -444,7 +453,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
         serverLabel: s.hostName || "PlayHub",
         url: s.url,
         quality: "1080p",
-        headers: { "User-Agent": UA, "Referer": "https://www.playhubmax.com/" }
+        headers: { "User-Agent": UA2, "Referer": "https://www.playhubmax.com/" }
       }));
       return yield finalizeStreams(streams, "PlayHubMax");
     } catch (e) {

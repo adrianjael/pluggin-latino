@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-09T15:28:46.077Z
+ * Generated: 2026-04-10T14:46:26.385Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,9 +25,6 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -70,64 +67,6 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/utils/http.js
-var require_http = __commonJS({
-  "src/utils/http.js"(exports, module2) {
-    var import_axios4 = __toESM(require("axios"));
-    var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-    var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-    function request(url, options) {
-      return __async(this, null, function* () {
-        var opt = options || {};
-        var headers = Object.assign({
-          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA2,
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
-        }, opt.headers);
-        try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
-          var fetchOptions = Object.assign({}, opt, {
-            headers,
-            signal: controller.signal
-          });
-          var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
-          if (!response.ok && !opt.ignoreErrors) {
-            console.warn("[HTTP] Error " + response.status + " en " + url);
-          }
-          return response;
-        } catch (error) {
-          console.error("[HTTP] Error en " + url + ": " + error.message);
-          throw error;
-        }
-      });
-    }
-    function fetchHtml2(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.text();
-      });
-    }
-    function fetchJson(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.json();
-      });
-    }
-    module2.exports = {
-      request,
-      fetchHtml: fetchHtml2,
-      fetchJson,
-      DEFAULT_UA: DEFAULT_UA2,
-      MOBILE_UA
-    };
-  }
-});
-
 // src/seriesmetro/index.js
 var seriesmetro_exports = {};
 __export(seriesmetro_exports, {
@@ -137,7 +76,7 @@ module.exports = __toCommonJS(seriesmetro_exports);
 var import_axios3 = __toESM(require("axios"));
 
 // src/utils/m3u8.js
-var import_axios = __toESM(require("axios"));
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -176,26 +115,35 @@ function validateStream(stream) {
     if (!stream || !stream.url)
       return stream;
     const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
     try {
-      const response = yield import_axios.default.get(url, {
-        timeout: 4e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
           "Accept": "*/*",
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
-        })
+          "Range": "bytes=0-8192",
+          "User-Agent": UA
+        }, headers || {})
       });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
-          // <--- Marcamos como verificado
         });
       }
       return __spreadProps(__spreadValues({}, stream), { verified: true });
     } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
+      clearTimeout(timeout);
+      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
+      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
     }
   });
 }
@@ -281,7 +229,7 @@ function finalizeStreams(streams, providerName) {
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        title: `${q}${check} | ${lang} | ${server}`,
         url: s.url,
         quality: q,
         headers: s.headers || {}
@@ -290,12 +238,50 @@ function finalizeStreams(streams, providerName) {
   });
 }
 
-// src/resolvers/fastream.js
-var import_http = __toESM(require_http());
+// src/utils/http.js
+var import_axios = __toESM(require("axios"));
+var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+function request(url, options) {
+  return __async(this, null, function* () {
+    var opt = options || {};
+    var headers = Object.assign({
+      "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA,
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+    }, opt.headers);
+    try {
+      var timeoutMs = opt.timeout || 5e3;
+      var controller = new AbortController();
+      var timeoutId = setTimeout(() => {
+        controller.abort();
+      }, timeoutMs);
+      var fetchOptions = Object.assign({}, opt, {
+        headers,
+        signal: controller.signal
+      });
+      var response = yield fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+      if (!response.ok && !opt.ignoreErrors) {
+        console.warn("[HTTP] Error " + response.status + " en " + url);
+      }
+      return response;
+    } catch (error) {
+      console.error("[HTTP] Error en " + url + ": " + error.message);
+      throw error;
+    }
+  });
+}
+function fetchHtml(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.text();
+  });
+}
 
 // src/resolvers/quality.js
 var import_axios2 = __toESM(require("axios"));
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function detectQuality(_0) {
   return __async(this, arguments, function* (url, headers = {}) {
     try {
@@ -304,7 +290,7 @@ function detectQuality(_0) {
       const { data } = yield import_axios2.default.get(url, {
         timeout: 5e3,
         headers: __spreadValues({
-          "User-Agent": UA
+          "User-Agent": UA2
         }, headers),
         responseType: "text"
       });
@@ -359,8 +345,8 @@ function resolve(url) {
   return __async(this, null, function* () {
     try {
       console.log("[Fastream] Resolviendo: " + url);
-      var data = yield (0, import_http.fetchHtml)(url, {
-        headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://www3.seriesmetro.net/" }
+      var data = yield fetchHtml(url, {
+        headers: { "User-Agent": DEFAULT_UA, "Referer": "https://www3.seriesmetro.net/" }
       });
       var unpacked = unpackPacker(data);
       var m3u8Match;
@@ -369,7 +355,7 @@ function resolve(url) {
         if (m3u8Match && m3u8Match[1]) {
           var url1 = m3u8Match[1];
           var q1 = yield detectQuality(url1, { "Referer": "https://fastream.to/" });
-          return { url: url1, quality: q1, headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://fastream.to/" } };
+          return { url: url1, quality: q1, headers: { "User-Agent": DEFAULT_UA, "Referer": "https://fastream.to/" } };
         }
         return null;
       }
@@ -381,7 +367,7 @@ function resolve(url) {
       return {
         url: m3u8Url,
         quality,
-        headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://fastream.to/" }
+        headers: { "User-Agent": DEFAULT_UA, "Referer": "https://fastream.to/" }
       };
     } catch (e) {
       console.log("[Fastream] Error: " + e.message);
@@ -393,9 +379,9 @@ function resolve(url) {
 // src/seriesmetro/index.js
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var BASE = "https://www3.seriesmetro.net";
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var HEADERS = {
-  "User-Agent": UA2,
+  "User-Agent": UA3,
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Accept-Language": "es-MX,es;q=0.9",
   "Connection": "keep-alive",

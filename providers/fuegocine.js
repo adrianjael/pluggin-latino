@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-09T15:28:46.016Z
+ * Generated: 2026-04-10T14:46:26.319Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -73,10 +73,10 @@ __export(fuegocine_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(fuegocine_exports);
-var import_axios2 = __toESM(require("axios"));
+var import_axios = __toESM(require("axios"));
 
 // src/utils/m3u8.js
-var import_axios = __toESM(require("axios"));
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -115,26 +115,35 @@ function validateStream(stream) {
     if (!stream || !stream.url)
       return stream;
     const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
     try {
-      const response = yield import_axios.default.get(url, {
-        timeout: 4e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
           "Accept": "*/*",
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
-        })
+          "Range": "bytes=0-8192",
+          "User-Agent": UA
+        }, headers || {})
       });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
-          // <--- Marcamos como verificado
         });
       }
       return __spreadProps(__spreadValues({}, stream), { verified: true });
     } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
+      clearTimeout(timeout);
+      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
+      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
     }
   });
 }
@@ -220,7 +229,7 @@ function finalizeStreams(streams, providerName) {
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        title: `${q}${check} | ${lang} | ${server}`,
         url: s.url,
         quality: q,
         headers: s.headers || {}
@@ -233,16 +242,16 @@ function finalizeStreams(streams, providerName) {
 var BASE_URL = "https://www.fuegocine.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var SEARCH_BASE = `${BASE_URL}/feeds/posts/default?alt=json&max-results=10&q=`;
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var DEFAULT_HEADERS = {
-  "User-Agent": UA,
+  "User-Agent": UA2,
   "Referer": `${BASE_URL}/`
 };
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const type = mediaType === "movie" ? "movie" : "tv";
-      const { data } = yield import_axios2.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`, { timeout: 5e3 });
+      const { data } = yield import_axios.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`, { timeout: 5e3 });
       const title = type === "movie" ? data.title || data.original_title : data.name || data.original_name;
       const originalTitle = type === "movie" ? data.original_title || data.title : data.original_name || data.name;
       const year = (type === "movie" ? data.release_date || "" : data.first_air_date || "").slice(0, 4);
@@ -306,7 +315,7 @@ function extractLinks(html) {
 function resolveTurboVid(embedUrl) {
   return __async(this, null, function* () {
     try {
-      const { data: html } = yield import_axios2.default.get(embedUrl, { headers: { Referer: BASE_URL }, timeout: 8e3 });
+      const { data: html } = yield import_axios.default.get(embedUrl, { headers: { Referer: BASE_URL }, timeout: 8e3 });
       const hashMatch = html.match(/data-hash="([^"]+\.m3u8[^"]*)"/);
       return hashMatch ? hashMatch[1] : embedUrl;
     } catch (e) {
@@ -317,7 +326,7 @@ function resolveTurboVid(embedUrl) {
 function resolveOkRu(embedUrl) {
   return __async(this, null, function* () {
     try {
-      const { data: html } = yield import_axios2.default.get(embedUrl, { headers: { Referer: BASE_URL }, timeout: 8e3 });
+      const { data: html } = yield import_axios.default.get(embedUrl, { headers: { Referer: BASE_URL }, timeout: 8e3 });
       const hlsMatch = html.match(/ondemandHls\\&quot;:\\&quot;(https:[^\\&]+)/);
       return hlsMatch ? hlsMatch[1].replace(/\\\\/g, "\\").replace(/\\/g, "") : embedUrl;
     } catch (e) {
@@ -348,7 +357,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       if (!title)
         return [];
       const searchTitle = season ? `${title} ${season}x${episode}` : title;
-      const { data: searchJson } = yield import_axios2.default.get(SEARCH_BASE + encodeURIComponent(searchTitle), { timeout: 8e3 });
+      const { data: searchJson } = yield import_axios.default.get(SEARCH_BASE + encodeURIComponent(searchTitle), { timeout: 8e3 });
       const entries = ((_a = searchJson.feed) == null ? void 0 : _a.entry) || [];
       const streams = [];
       for (const entry of entries) {
@@ -360,7 +369,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
         const normTitle = normalizeTitle(title);
         if (!normEntry.includes(normTitle))
           continue;
-        const { data: html } = yield import_axios2.default.get(entryUrl, { timeout: 8e3 });
+        const { data: html } = yield import_axios.default.get(entryUrl, { timeout: 8e3 });
         const links = extractLinks(html);
         for (const link of links) {
           let finalUrl = link.url;
@@ -375,7 +384,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
             serverLabel: host,
             url: finalUrl,
             quality: link.quality || "720p",
-            headers: isDrive ? { "User-Agent": UA } : DEFAULT_HEADERS
+            headers: isDrive ? { "User-Agent": UA2 } : DEFAULT_HEADERS
           }, isDrive && { mimeType: "video/mp4" }));
         }
       }

@@ -119,9 +119,9 @@
     },
     {
       "id": "cuevana_gs",
-      "name": "Cuevana.gs",
-      "description": "Películas y series en alta definición (Latino) con servidores estables",
-      "version": "1.4.0",
+      "name": "Cuevana3.to",
+      "description": "Nueva versión estable migrada a Cuevana3.to (Sin Cloudflare)",
+      "version": "1.6.16",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",

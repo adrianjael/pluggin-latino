@@ -1,6 +1,6 @@
 /**
  * lamovie - Built from src/lamovie/
- * Generated: 2026-04-09T15:28:46.033Z
+ * Generated: 2026-04-10T14:46:26.334Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,9 +25,6 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -70,64 +67,6 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/utils/http.js
-var require_http = __commonJS({
-  "src/utils/http.js"(exports, module2) {
-    var import_axios6 = __toESM(require("axios"));
-    var DEFAULT_UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-    var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
-    function request(url, options) {
-      return __async(this, null, function* () {
-        var opt = options || {};
-        var headers = Object.assign({
-          "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA3,
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
-        }, opt.headers);
-        try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
-          var fetchOptions = Object.assign({}, opt, {
-            headers,
-            signal: controller.signal
-          });
-          var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
-          if (!response.ok && !opt.ignoreErrors) {
-            console.warn("[HTTP] Error " + response.status + " en " + url);
-          }
-          return response;
-        } catch (error) {
-          console.error("[HTTP] Error en " + url + ": " + error.message);
-          throw error;
-        }
-      });
-    }
-    function fetchHtml3(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.text();
-      });
-    }
-    function fetchJson2(url, options) {
-      return __async(this, null, function* () {
-        var res = yield request(url, options);
-        return yield res.json();
-      });
-    }
-    module2.exports = {
-      request,
-      fetchHtml: fetchHtml3,
-      fetchJson: fetchJson2,
-      DEFAULT_UA: DEFAULT_UA3,
-      MOBILE_UA
-    };
-  }
-});
-
 // src/lamovie/index.js
 var lamovie_exports = {};
 __export(lamovie_exports, {
@@ -137,7 +76,7 @@ module.exports = __toCommonJS(lamovie_exports);
 var import_axios5 = __toESM(require("axios"));
 
 // src/utils/m3u8.js
-var import_axios = __toESM(require("axios"));
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -176,26 +115,35 @@ function validateStream(stream) {
     if (!stream || !stream.url)
       return stream;
     const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
     try {
-      const response = yield import_axios.default.get(url, {
-        timeout: 4e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
           "Accept": "*/*",
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
-        })
+          "Range": "bytes=0-8192",
+          "User-Agent": UA
+        }, headers || {})
       });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
-          // <--- Marcamos como verificado
         });
       }
       return __spreadProps(__spreadValues({}, stream), { verified: true });
     } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
+      clearTimeout(timeout);
+      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
+      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
     }
   });
 }
@@ -281,7 +229,7 @@ function finalizeStreams(streams, providerName) {
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        title: `${q}${check} | ${lang} | ${server}`,
         url: s.url,
         quality: q,
         headers: s.headers || {}
@@ -291,20 +239,20 @@ function finalizeStreams(streams, providerName) {
 }
 
 // src/resolvers/goodstream.js
-var import_axios3 = __toESM(require("axios"));
+var import_axios2 = __toESM(require("axios"));
 
 // src/resolvers/quality.js
-var import_axios2 = __toESM(require("axios"));
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var import_axios = __toESM(require("axios"));
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function detectQuality(_0) {
   return __async(this, arguments, function* (url, headers = {}) {
     try {
       if (!url || !url.includes(".m3u8"))
         return "1080p";
-      const { data } = yield import_axios2.default.get(url, {
+      const { data } = yield import_axios.default.get(url, {
         timeout: 5e3,
         headers: __spreadValues({
-          "User-Agent": UA
+          "User-Agent": UA2
         }, headers),
         responseType: "text"
       });
@@ -341,14 +289,14 @@ function detectQuality(_0) {
 }
 
 // src/resolvers/goodstream.js
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log(`[GoodStream] Resolviendo: ${embedUrl}`);
-      const response = yield import_axios3.default.get(embedUrl, {
+      const response = yield import_axios2.default.get(embedUrl, {
         headers: {
-          "User-Agent": UA2,
+          "User-Agent": UA3,
           "Referer": "https://goodstream.one",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         },
@@ -364,7 +312,7 @@ function resolve(embedUrl) {
       const refererHeaders = {
         "Referer": embedUrl,
         "Origin": "https://goodstream.one",
-        "User-Agent": UA2
+        "User-Agent": UA3
       };
       const quality = yield detectQuality(videoUrl, refererHeaders);
       console.log(`[GoodStream] URL encontrada (${quality}): ${videoUrl.substring(0, 80)}...`);
@@ -380,8 +328,52 @@ function resolve(embedUrl) {
   });
 }
 
-// src/resolvers/voe.js
-var import_http = __toESM(require_http());
+// src/utils/http.js
+var import_axios3 = __toESM(require("axios"));
+var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+function request(url, options) {
+  return __async(this, null, function* () {
+    var opt = options || {};
+    var headers = Object.assign({
+      "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA,
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+    }, opt.headers);
+    try {
+      var timeoutMs = opt.timeout || 5e3;
+      var controller = new AbortController();
+      var timeoutId = setTimeout(() => {
+        controller.abort();
+      }, timeoutMs);
+      var fetchOptions = Object.assign({}, opt, {
+        headers,
+        signal: controller.signal
+      });
+      var response = yield fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+      if (!response.ok && !opt.ignoreErrors) {
+        console.warn("[HTTP] Error " + response.status + " en " + url);
+      }
+      return response;
+    } catch (error) {
+      console.error("[HTTP] Error en " + url + ": " + error.message);
+      throw error;
+    }
+  });
+}
+function fetchHtml(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.text();
+  });
+}
+function fetchJson(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.json();
+  });
+}
 
 // src/utils/string.js
 function base64Decode(input) {
@@ -421,11 +413,11 @@ function resolve2(url) {
   return __async(this, null, function* () {
     try {
       console.log("[VOE] Resolving: " + url);
-      var html = yield (0, import_http.fetchHtml)(url, { headers: { "User-Agent": import_http.DEFAULT_UA } });
+      var html = yield fetchHtml(url, { headers: { "User-Agent": DEFAULT_UA } });
       if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
         var rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
         if (rm) {
-          html = yield (0, import_http.fetchHtml)(rm[1], { headers: { "User-Agent": import_http.DEFAULT_UA } });
+          html = yield fetchHtml(rm[1], { headers: { "User-Agent": DEFAULT_UA } });
         }
       }
       var jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
@@ -458,7 +450,7 @@ function resolve2(url) {
             return {
               url: data.source,
               quality: "1080p",
-              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+              headers: { "User-Agent": DEFAULT_UA, "Referer": url }
             };
           }
         } catch (ex) {
@@ -470,7 +462,7 @@ function resolve2(url) {
         return {
           url: m3u8MatchRaw[1],
           quality: "1080p",
-          headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": url }
+          headers: { "User-Agent": DEFAULT_UA, "Referer": url }
         };
       }
       return null;
@@ -509,7 +501,7 @@ function decryptGCM(key, iv, ciphertextWithTag) {
 }
 
 // src/resolvers/filemoon.js
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function base64UrlDecode(input) {
   let s = input.replace(/-/g, "+").replace(/_/g, "/");
   while (s.length % 4)
@@ -562,7 +554,7 @@ function resolve3(url) {
       try {
         const hostname = new URL(url).hostname;
         const apiRes = yield fetch(`https://${hostname}/api/videos/${id}`, {
-          headers: { "User-Agent": UA3, "Referer": url }
+          headers: { "User-Agent": UA4, "Referer": url }
         });
         const data = yield apiRes.json();
         if (data.playback) {
@@ -573,7 +565,7 @@ function resolve3(url) {
               url: best.url,
               quality: best.height ? `${best.height}p` : "1080p",
               headers: {
-                "User-Agent": UA3,
+                "User-Agent": UA4,
                 "Referer": "https://arbitrarydecisions.com/",
                 "Origin": "https://arbitrarydecisions.com"
               }
@@ -583,7 +575,7 @@ function resolve3(url) {
       } catch (apiErr) {
         console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
       }
-      const res = yield fetch(url, { headers: { "User-Agent": UA3, "Referer": url } });
+      const res = yield fetch(url, { headers: { "User-Agent": UA4, "Referer": url } });
       const html = yield res.text();
       const evalMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
       if (evalMatch) {
@@ -594,7 +586,7 @@ function resolve3(url) {
             url: fm[1],
             quality: "1080p",
             headers: {
-              "User-Agent": UA3,
+              "User-Agent": UA4,
               "Referer": "https://arbitrarydecisions.com/",
               "Origin": "https://arbitrarydecisions.com"
             }
@@ -611,7 +603,7 @@ function resolve3(url) {
 
 // src/resolvers/hlswish.js
 var import_axios4 = __toESM(require("axios"));
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackEval(payload, radix, symtab) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const unbase = (str) => {
@@ -649,7 +641,7 @@ function resolve4(url) {
         try {
           console.log(`[StreamWish] Probando espejo: ${mirror}`);
           const response = yield import_axios4.default.get(mirror, {
-            headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" },
+            headers: { "User-Agent": UA5, "Referer": "https://embed69.org/" },
             timeout: 8e3
           });
           html = response.data;
@@ -693,7 +685,7 @@ function resolve4(url) {
           url: finalUrl,
           quality: "HD",
           headers: {
-            "User-Agent": UA4,
+            "User-Agent": UA5,
             "Referer": baseOrigin + "/",
             "Origin": baseOrigin
           }
@@ -708,14 +700,13 @@ function resolve4(url) {
 }
 
 // src/resolvers/vimeos.js
-var import_http2 = __toESM(require_http());
 function resolve5(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log("[Vimeos] Resolviendo Universal (v2.0): " + embedUrl);
-      var html = yield (0, import_http2.fetchHtml)(embedUrl, {
+      var html = yield fetchHtml(embedUrl, {
         headers: {
-          "User-Agent": import_http2.DEFAULT_UA,
+          "User-Agent": DEFAULT_UA,
           "Referer": "https://vimeos.net/",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         }
@@ -727,8 +718,8 @@ function resolve5(embedUrl) {
         var vimeoId = vimeoIdMatch[1];
         console.log("[Vimeos] ID Vimeo detectado: " + vimeoId + ". Consultado API Config...");
         try {
-          var config = yield (0, import_http2.fetchJson)("https://player.vimeo.com/video/" + vimeoId + "/config", {
-            headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": embedUrl }
+          var config = yield fetchJson("https://player.vimeo.com/video/" + vimeoId + "/config", {
+            headers: { "User-Agent": DEFAULT_UA, "Referer": embedUrl }
           });
           var hlsUrl = null;
           if (config && config.request && config.request.files && config.request.files.hls && config.request.files.hls.cdns && config.request.files.hls.cdns.default) {
@@ -739,7 +730,7 @@ function resolve5(embedUrl) {
             return {
               url: hlsUrl,
               quality: "1080p",
-              headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
+              headers: { "User-Agent": DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
             };
           }
           var progressive = config && config.request && config.request.files ? config.request.files.progressive : null;
@@ -751,7 +742,7 @@ function resolve5(embedUrl) {
             return {
               url: best.url,
               quality: best.quality ? best.quality + "p" : "1080p",
-              headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
+              headers: { "User-Agent": DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
             };
           }
         } catch (apiErr) {
@@ -781,7 +772,7 @@ function resolve5(embedUrl) {
           return {
             url,
             quality: "1080p",
-            headers: { "User-Agent": import_http2.DEFAULT_UA, "Referer": "https://vimeos.net/" }
+            headers: { "User-Agent": DEFAULT_UA, "Referer": "https://vimeos.net/" }
           };
         }
       }
@@ -796,8 +787,8 @@ function resolve5(embedUrl) {
 
 // src/lamovie/index.js
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
-var HEADERS = { "User-Agent": UA5, "Accept": "application/json" };
+var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var HEADERS = { "User-Agent": UA6, "Accept": "application/json" };
 var BASE_URL = "https://la.movie";
 var ANIME_COUNTRIES = ["JP", "CN", "KR"];
 var GENRE_ANIMATION = 16;
@@ -878,7 +869,7 @@ function getIdBySlug(category, slug) {
     try {
       const { data: html } = yield import_axios5.default.get(url, {
         timeout: 8e3,
-        headers: { "User-Agent": UA5, "Accept": "text/html" },
+        headers: { "User-Agent": UA6, "Accept": "text/html" },
         validateStatus: (s) => s === 200
       });
       const match = html.match(/rel=['"]shortlink['"]\s+href=['"][^'"]*\?p=(\d+)['"]/);

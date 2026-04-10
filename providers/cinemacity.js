@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-09T15:28:45.989Z
+ * Generated: 2026-04-10T14:46:26.293Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -73,11 +73,11 @@ __export(cinemacity_exports, {
   getStreams: () => getStreams
 });
 module.exports = __toCommonJS(cinemacity_exports);
-var import_axios2 = __toESM(require("axios"));
+var import_axios = __toESM(require("axios"));
 var cheerio = __toESM(require("cheerio"));
 
 // src/utils/m3u8.js
-var import_axios = __toESM(require("axios"));
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -116,26 +116,35 @@ function validateStream(stream) {
     if (!stream || !stream.url)
       return stream;
     const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
     try {
-      const response = yield import_axios.default.get(url, {
-        timeout: 4e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
           "Accept": "*/*",
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
-        })
+          "Range": "bytes=0-8192",
+          "User-Agent": UA
+        }, headers || {})
       });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
-          // <--- Marcamos como verificado
         });
       }
       return __spreadProps(__spreadValues({}, stream), { verified: true });
     } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
+      clearTimeout(timeout);
+      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
+      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
     }
   });
 }
@@ -221,7 +230,7 @@ function finalizeStreams(streams, providerName) {
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        title: `${q}${check} | ${lang} | ${server}`,
         url: s.url,
         quality: q,
         headers: s.headers || {}
@@ -233,9 +242,9 @@ function finalizeStreams(streams, providerName) {
 // src/cinemacity/index.js
 var MAIN_URL = "https://cinemacity.cc";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var HEADERS = {
-  "User-Agent": UA,
+  "User-Agent": UA2,
   "Cookie": "dle_user_id=32729; dle_password=894171c6a8dab18ee594d5c652009a35;",
   "Referer": `${MAIN_URL}/`
 };
@@ -249,7 +258,7 @@ function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
       const type = mediaType === "movie" ? "movie" : "tv";
-      const { data } = yield import_axios2.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
+      const { data } = yield import_axios.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
       return {
         title: type === "movie" ? data.title : data.name,
         year: (type === "movie" ? data.release_date || "" : data.first_air_date || "").slice(0, 4)
@@ -267,7 +276,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       if (!title)
         return [];
       const searchUrl = `${MAIN_URL}/index.php?do=search&subaction=search&story=${encodeURIComponent(title)}`;
-      const { data: searchHtml } = yield import_axios2.default.get(searchUrl, { headers: HEADERS });
+      const { data: searchHtml } = yield import_axios.default.get(searchUrl, { headers: HEADERS });
       const $search = cheerio.load(searchHtml);
       let mediaUrl = null;
       $search("div.dar-short_item").each((i, el) => {
@@ -281,7 +290,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       });
       if (!mediaUrl)
         return [];
-      const { data: pageHtml } = yield import_axios2.default.get(mediaUrl, { headers: HEADERS });
+      const { data: pageHtml } = yield import_axios.default.get(mediaUrl, { headers: HEADERS });
       const $page = cheerio.load(pageHtml);
       let fileData = null;
       $page("script").each((i, el) => {

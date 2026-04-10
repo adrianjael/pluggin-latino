@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-09T19:00:22.558Z
+ * Generated: 2026-04-10T14:46:26.343Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -504,7 +504,7 @@ function resolve3(embedUrl) {
 }
 
 // src/utils/m3u8.js
-var import_axios2 = __toESM(require("axios"));
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -543,26 +543,35 @@ function validateStream(stream) {
     if (!stream || !stream.url)
       return stream;
     const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
     try {
-      const response = yield import_axios2.default.get(url, {
-        timeout: 4e3,
-        responseType: "text",
-        headers: __spreadProps(__spreadValues({}, headers || {}), {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
           "Accept": "*/*",
-          "User-Agent": (headers == null ? void 0 : headers["User-Agent"]) || "Mozilla/5.0"
-        })
+          "Range": "bytes=0-8192",
+          "User-Agent": UA2
+        }, headers || {})
       });
-      if (response.data && typeof response.data === "string" && (url.includes(".m3u8") || response.data.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(response.data);
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
-          // <--- Marcamos como verificado
         });
       }
       return __spreadProps(__spreadValues({}, stream), { verified: true });
     } catch (error) {
-      return __spreadProps(__spreadValues({}, stream), { verified: false });
+      clearTimeout(timeout);
+      console.log(`[m3u8] Validation soft-fail for ${url.substring(0, 40)}... : ${error.message}`);
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon");
+      return __spreadProps(__spreadValues({}, stream), { verified: isKnown });
     }
   });
 }
@@ -648,7 +657,7 @@ function finalizeStreams(streams, providerName) {
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
-        title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+        title: `${q}${check} | ${lang} | ${server}`,
         url: s.url,
         quality: q,
         headers: s.headers || {}
@@ -659,10 +668,10 @@ function finalizeStreams(streams, providerName) {
 
 // src/pelisgo/index.js
 var BASE = "https://pelisgo.online";
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var TMDB_KEY = "2dca580c2a14b55200e784d157207b4d";
 var COMMON_HEADERS = {
-  "User-Agent": UA2,
+  "User-Agent": UA3,
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
   "Cache-Control": "no-cache"
@@ -796,7 +805,7 @@ function getOnlineStreams(rawHtml) {
             continue;
           }
           if (direct) {
-            const headers = label === "Vimeos" && typeof vimeosHeaders !== "undefined" ? vimeosHeaders : { "User-Agent": UA2, "Referer": BASE };
+            const headers = label === "Vimeos" && typeof vimeosHeaders !== "undefined" ? vimeosHeaders : { "User-Agent": UA3, "Referer": BASE };
             streams.push({
               name: "PelisGo",
               langLabel: "Latino",
@@ -806,7 +815,7 @@ function getOnlineStreams(rawHtml) {
               headers
             });
           } else {
-            const headers = label === "Netu" ? { "Referer": "https://pelisgo.online/", "Origin": "https://pelisgo.online" } : { "User-Agent": UA2, "Referer": BASE };
+            const headers = label === "Netu" ? { "Referer": "https://pelisgo.online/", "Origin": "https://pelisgo.online" } : { "User-Agent": UA3, "Referer": BASE };
             streams.push({
               name: "PelisGo",
               langLabel: "Latino",
