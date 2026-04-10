@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T16:36:16.178Z
+ * Generated: 2026-04-10T16:47:20.701Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1262,7 +1262,7 @@ function resolveEmbed(url) {
 
 // src/cuevana_gs/extractor.js
 var import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
-var BASE_URL = "https://ww9.cuevana3.to";
+var BASE_URL = "https://cue.cuevana3.nu";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
@@ -1286,18 +1286,18 @@ function getTmdbInfo(tmdbId, mediaType) {
 function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
   return __async(this, null, function* () {
     var isSeries = mediaType === "tv";
-    console.log("[Cuevana3.to] Extracting: " + (providedTitle || tmdbId) + " (" + mediaType + ")");
+    console.log("[Cuevana3.nu] Extracting: " + (providedTitle || tmdbId) + " (" + mediaType + ")");
     try {
       var tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
       var searchTitle = providedTitle || tmdbInfo.title;
       var year = tmdbInfo.year;
       if (!searchTitle) {
-        console.error("[Cuevana3.to] No search title found.");
+        console.error("[Cuevana3.nu] No search title found.");
         return [];
       }
       var performSearch = function(query) {
         return __async(this, null, function* () {
-          console.log('[Cuevana3.to] Searching: "' + query + '"...');
+          console.log('[Cuevana3.nu] Searching: "' + query + '"...');
           var searchUrl = BASE_URL + "/?s=" + encodeURIComponent(query).replace(/%20/g, "+");
           try {
             var html = yield fetchHtml(searchUrl);
@@ -1319,7 +1319,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             });
             return { data: { posts: results } };
           } catch (err) {
-            console.error("[Cuevana3.to] Search Error: " + err.message);
+            console.error("[Cuevana3.nu] Search Error: " + err.message);
             return { error: true };
           }
         });
@@ -1338,7 +1338,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         }
       }
       if (posts.length === 0) {
-        console.log("[Cuevana3.to] No results found.");
+        console.log("[Cuevana3.nu] No results found.");
         return [];
       }
       var match = posts.find((p) => {
@@ -1346,17 +1346,17 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         return score >= 0.4;
       });
       if (!match) {
-        console.log("[Cuevana3.to] No high-quality matches found.");
+        console.log("[Cuevana3.nu] No high-quality matches found.");
         return [];
       }
-      console.log("[Cuevana3.to] Match found: " + match.title + " (" + match.slug + ")");
+      console.log("[Cuevana3.nu] Match found: " + match.title + " (" + match.slug + ")");
       var mediaInfo = {
         title: match.title,
         slug: match.slug,
         type: match.type
       };
       if (isSeries) {
-        console.log("[Cuevana3.to] Extracting episodes for series...");
+        console.log("[Cuevana3.nu] Extracting episodes for series...");
         var serieHtml = yield fetchHtml(BASE_URL + match.slug);
         var $serie = import_cheerio_without_node_native.default.load(serieHtml);
         var episodes = [];
@@ -1374,13 +1374,13 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
         });
         var targetEp = episodes.find((e) => e.season === season && e.episode === episode);
         if (!targetEp) {
-          console.error("[Cuevana3.to] Episode " + season + "x" + episode + " not found.");
+          console.error("[Cuevana3.nu] Episode " + season + "x" + episode + " not found.");
           return [];
         }
         mediaInfo.episodeSlug = targetEp.slug;
       }
       var pageToFetch = isSeries ? mediaInfo.episodeSlug : mediaInfo.slug;
-      console.log("[Cuevana3.to] Fetching streams from: " + pageToFetch);
+      console.log("[Cuevana3.nu] Fetching streams from: " + pageToFetch);
       var contentHtml = yield fetchHtml(BASE_URL + pageToFetch);
       var $content = import_cheerio_without_node_native.default.load(contentHtml);
       var streams = [];
@@ -1417,7 +1417,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
           });
         }
       });
-      console.log("[Cuevana3.to] Extracted " + streams.length + " raw streams.");
+      console.log("[Cuevana3.nu] Extracted " + streams.length + " raw streams.");
       var rawResults = [];
       for (var stream of streams) {
         try {
@@ -1434,12 +1434,12 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             });
           }
         } catch (e) {
-          console.error("[Cuevana3.to] Resolve error: " + e.message);
+          console.error("[Cuevana3.nu] Resolve error: " + e.message);
         }
       }
       return yield finalizeStreams(rawResults, "Cuevana3.to");
     } catch (err) {
-      console.error("[Cuevana3.to] Global Error: " + err.message);
+      console.error("[Cuevana3.nu] Global Error: " + err.message);
       return [];
     }
   });
