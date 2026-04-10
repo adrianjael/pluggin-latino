@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-10T15:02:49.055Z
+ * Generated: 2026-04-10T15:09:38.930Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -95,12 +95,12 @@ function getQualityFromHeight(height) {
     return "360p";
   return "240p";
 }
-function parseBestQuality(content) {
+function parseBestQuality(content, url = "") {
   const lines = content.split("\n");
   let bestHeight = 0;
   for (const line of lines) {
     if (line.includes("RESOLUTION=")) {
-      const match = line.match(/RESOLUTION=\d+x(\d+)/);
+      const match = line.match(/RESOLUTION=\d+x(\d+)/i);
       if (match) {
         const height = parseInt(match[1]);
         if (height > bestHeight)
@@ -108,7 +108,15 @@ function parseBestQuality(content) {
       }
     }
   }
-  return bestHeight > 0 ? getQualityFromHeight(bestHeight) : "720p";
+  if (bestHeight > 0)
+    return getQualityFromHeight(bestHeight);
+  const urlPattern = url.match(/[_-](\d{3,4})[pP]?/);
+  if (urlPattern) {
+    const h = parseInt(urlPattern[1]);
+    if (h >= 360 && h <= 4320)
+      return getQualityFromHeight(h);
+  }
+  return "720p";
 }
 function validateStream(stream) {
   return __async(this, null, function* () {
@@ -132,7 +140,7 @@ function validateStream(stream) {
       }
       const text = yield response.text();
       if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(text);
+        const realQuality = parseBestQuality(text, url);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
@@ -187,9 +195,18 @@ function normalizeLanguage(lang) {
     return "Subtitulado";
   return lang || "Latino";
 }
-function normalizeServer(server) {
-  if (!server)
+function normalizeServer(server, url = "") {
+  if (!server || server === "Servidor" || server === "Server") {
+    if (url && url.startsWith("http")) {
+      try {
+        const domain = new URL(url).hostname.replace("www.", "").split(".")[0];
+        return domain.charAt(0).toUpperCase() + domain.slice(1);
+      } catch (e) {
+        return "Servidor";
+      }
+    }
     return "Servidor";
+  }
   const s = server.toLowerCase();
   if (s.includes("voe") || s.includes("jessicaclearout"))
     return "VOE";
@@ -225,7 +242,7 @@ function finalizeStreams(streams, providerName) {
     return sorted.map((s) => {
       const q = s.quality || "HD";
       const lang = normalizeLanguage(s.langLabel || s.language);
-      const server = normalizeServer(s.serverLabel || s.serverName || s.servername);
+      const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
@@ -355,11 +372,29 @@ function resolve(url) {
           }
           var reversed = shiftedStr.split("").reverse().join("");
           var data = JSON.parse(base64Decode(reversed));
-          if (data && data.source) {
-            console.log("[VOE] -> m3u8 encontrado: " + data.source.substring(0, 60) + "...");
+          if (data && (data.source || data.mp4)) {
+            const finalUrl = data.source || data.mp4;
+            console.log("[VOE] -> video encontrado: " + finalUrl.substring(0, 60) + "...");
+            let q = "1080p";
+            if (data.video_height) {
+              const h = parseInt(data.video_height);
+              if (h >= 1080)
+                q = "1080p";
+              else if (h >= 720)
+                q = "720p";
+              else if (h >= 480)
+                q = "480p";
+              else
+                q = h + "p";
+            } else {
+              const urlMatch = finalUrl.match(/[_-](\d{3,4})[pP]?/);
+              if (urlMatch)
+                q = urlMatch[1] + "p";
+            }
             return {
-              url: data.source,
-              quality: "1080p",
+              url: finalUrl,
+              quality: q,
+              serverName: "VOE",
               headers: { "User-Agent": DEFAULT_UA, "Referer": url }
             };
           }
@@ -369,9 +404,15 @@ function resolve(url) {
       }
       var m3u8MatchRaw = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
       if (m3u8MatchRaw) {
+        const finalUrl = m3u8MatchRaw[1];
+        let q = "1080p";
+        const urlMatch = finalUrl.match(/[_-](\d{3,4})[pP]?/);
+        if (urlMatch)
+          q = urlMatch[1] + "p";
         return {
-          url: m3u8MatchRaw[1],
-          quality: "1080p",
+          url: finalUrl,
+          quality: q,
+          serverName: "VOE",
           headers: { "User-Agent": DEFAULT_UA, "Referer": url }
         };
       }
@@ -474,6 +515,7 @@ function resolve2(url) {
             return {
               url: best.url,
               quality: best.height ? `${best.height}p` : "1080p",
+              serverName: "Filemoon",
               headers: {
                 "User-Agent": UA2,
                 "Referer": "https://arbitrarydecisions.com/",
@@ -492,9 +534,14 @@ function resolve2(url) {
         const unpacked = unpack(evalMatch[1], parseInt(evalMatch[2]), parseInt(evalMatch[3]), evalMatch[4].split("|"), 0, {});
         const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
         if (fm) {
+          let q = "1080p";
+          const qMatch = fm[1].match(/[_-](\d{3,4})[pP]?/);
+          if (qMatch)
+            q = qMatch[1] + "p";
           return {
             url: fm[1],
-            quality: "1080p",
+            quality: q,
+            serverName: "Filemoon",
             headers: {
               "User-Agent": UA2,
               "Referer": "https://arbitrarydecisions.com/",
@@ -590,10 +637,15 @@ function resolve3(url) {
         if (finalUrl.startsWith("/"))
           finalUrl = baseOrigin + finalUrl;
         finalUrl = finalUrl.replace(/\\/g, "");
-        console.log(`[StreamWish] URL resuelta satisfactoriamente`);
+        let q = "1080p";
+        const qMatch = finalUrl.match(/[_-](\d{3,4})[pP]?/);
+        if (qMatch)
+          q = qMatch[1] + "p";
+        console.log(`[StreamWish] URL resuelta satisfactoriamente (Calidad: ${q})`);
         return {
           url: finalUrl,
-          quality: "HD",
+          quality: q,
+          serverName: "StreamWish",
           headers: {
             "User-Agent": UA3,
             "Referer": baseOrigin + "/",
@@ -649,6 +701,7 @@ function resolve4(url) {
         headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" }
       });
       let finalUrl = null;
+      let quality = null;
       const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
       if (packedMatch) {
         const unpacked = unpackVidHide(packedMatch[0]);
@@ -656,6 +709,9 @@ function resolve4(url) {
           const hlsMatch = unpacked.match(/"hls[24]"\s*:\s*"([^"]+)"/);
           if (hlsMatch)
             finalUrl = hlsMatch[1];
+          const labelMatch = unpacked.match(/\{label\s*:\s*"([^"]+)"/i) || unpacked.match(/name\s*:\s*"([^"]+)"/i);
+          if (labelMatch)
+            quality = labelMatch[1].toLowerCase().includes("p") ? labelMatch[1] : labelMatch[1] + "p";
         }
       }
       if (!finalUrl) {
@@ -667,6 +723,10 @@ function resolve4(url) {
         console.log("[VidHide] No se encontr\xF3 URL de video");
         return null;
       }
+      if (!quality) {
+        const qMatch = finalUrl.match(/[_-](\d{3,4})[pP]?/);
+        quality = qMatch ? qMatch[1] + "p" : "1080p";
+      }
       if (!finalUrl.startsWith("http")) {
         finalUrl = new URL(url).origin + finalUrl;
       }
@@ -674,6 +734,8 @@ function resolve4(url) {
       const origin = new URL(url).origin;
       return {
         url: finalUrl,
+        quality,
+        serverName: "VidHide",
         headers: {
           "User-Agent": UA4,
           "Referer": origin + "/",
@@ -853,7 +915,8 @@ function resolve6(embedUrl) {
       console.log(`[GoodStream] URL encontrada (${quality}): ${videoUrl.substring(0, 80)}...`);
       return {
         url: videoUrl,
-        quality,
+        quality: quality || "1080p",
+        serverName: "GoodStream",
         headers: refererHeaders
       };
     } catch (err) {
@@ -891,8 +954,12 @@ function resolve7(url) {
         m3u8Match = data.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
         if (m3u8Match && m3u8Match[1]) {
           var url1 = m3u8Match[1];
-          var q1 = yield detectQuality(url1, { "Referer": "https://fastream.to/" });
-          return { url: url1, quality: q1, headers: { "User-Agent": DEFAULT_UA, "Referer": "https://fastream.to/" } };
+          return {
+            url: url1,
+            quality: q1 || "1080p",
+            serverName: "Fastream",
+            headers: { "User-Agent": DEFAULT_UA, "Referer": "https://fastream.to/" }
+          };
         }
         return null;
       }
@@ -903,7 +970,8 @@ function resolve7(url) {
       var quality = yield detectQuality(m3u8Url, { "Referer": "https://fastream.to/" });
       return {
         url: m3u8Url,
-        quality,
+        quality: quality || "1080p",
+        serverName: "Fastream",
         headers: { "User-Agent": DEFAULT_UA, "Referer": "https://fastream.to/" }
       };
     } catch (e) {

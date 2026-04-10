@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-10T15:02:48.960Z
+ * Generated: 2026-04-10T15:09:38.825Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -96,12 +96,12 @@ function getQualityFromHeight(height) {
     return "360p";
   return "240p";
 }
-function parseBestQuality(content) {
+function parseBestQuality(content, url = "") {
   const lines = content.split("\n");
   let bestHeight = 0;
   for (const line of lines) {
     if (line.includes("RESOLUTION=")) {
-      const match = line.match(/RESOLUTION=\d+x(\d+)/);
+      const match = line.match(/RESOLUTION=\d+x(\d+)/i);
       if (match) {
         const height = parseInt(match[1]);
         if (height > bestHeight)
@@ -109,7 +109,15 @@ function parseBestQuality(content) {
       }
     }
   }
-  return bestHeight > 0 ? getQualityFromHeight(bestHeight) : "720p";
+  if (bestHeight > 0)
+    return getQualityFromHeight(bestHeight);
+  const urlPattern = url.match(/[_-](\d{3,4})[pP]?/);
+  if (urlPattern) {
+    const h = parseInt(urlPattern[1]);
+    if (h >= 360 && h <= 4320)
+      return getQualityFromHeight(h);
+  }
+  return "720p";
 }
 function validateStream(stream) {
   return __async(this, null, function* () {
@@ -133,7 +141,7 @@ function validateStream(stream) {
       }
       const text = yield response.text();
       if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(text);
+        const realQuality = parseBestQuality(text, url);
         return __spreadProps(__spreadValues({}, stream), {
           quality: realQuality,
           verified: true
@@ -188,9 +196,18 @@ function normalizeLanguage(lang) {
     return "Subtitulado";
   return lang || "Latino";
 }
-function normalizeServer(server) {
-  if (!server)
+function normalizeServer(server, url = "") {
+  if (!server || server === "Servidor" || server === "Server") {
+    if (url && url.startsWith("http")) {
+      try {
+        const domain = new URL(url).hostname.replace("www.", "").split(".")[0];
+        return domain.charAt(0).toUpperCase() + domain.slice(1);
+      } catch (e) {
+        return "Servidor";
+      }
+    }
     return "Servidor";
+  }
   const s = server.toLowerCase();
   if (s.includes("voe") || s.includes("jessicaclearout"))
     return "VOE";
@@ -226,7 +243,7 @@ function finalizeStreams(streams, providerName) {
     return sorted.map((s) => {
       const q = s.quality || "HD";
       const lang = normalizeLanguage(s.langLabel || s.language);
-      const server = normalizeServer(s.serverLabel || s.serverName || s.servername);
+      const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
       const check = s.verified ? " \u2713" : "";
       return {
         name: providerName || s.name || "Provider",
