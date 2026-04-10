@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-10T14:25:41.322Z
+ * Generated: 2026-04-10T14:29:00.430Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -634,39 +634,42 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       }
       var performSearch = function(query) {
         return __async(this, null, function* () {
-          console.log('[Cuevana.gs] HTML Searching: "' + query + '"');
+          console.log('[Cuevana.gs] Searching for: "' + query + '"...');
           var searchUrl = BASE_URL + "/search/" + encodeURIComponent(query).replace(/%20/g, "+");
           try {
-            var html = yield fetchHtml(searchUrl, {
-              headers: {
-                "Referer": BASE_URL + "/",
-                "User-Agent": DEFAULT_UA,
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "same-origin"
-              }
+            var res = yield fetch(searchUrl, {
+              headers: { "User-Agent": DEFAULT_UA }
             });
+            var html = yield res.text();
+            if (html.includes("Just a moment...") || html.includes("challenge-running")) {
+              console.error("[Cuevana.gs] Cloudflare Blocked the Search Request.");
+            }
             var $ = import_cheerio_without_node_native.default.load(html);
             var searchResults = [];
-            $("a[data-tooltip-id]").each((i2, el) => {
+            $("a").each((i2, el) => {
               var href = $(el).attr("href") || "";
-              var idAttr = $(el).attr("data-tooltip-id") || "";
-              var id = idAttr.replace("tooltip-", "");
-              var title = $(el).parent().find("h3").text() || $(el).find("img").attr("alt") || "";
-              if (id && href) {
-                var isMovie2 = href.includes("/peliculas/");
-                searchResults.push({
-                  _id: id,
-                  title: title.trim(),
-                  type: isMovie2 ? "movies" : "tvshows",
-                  slug: href
-                });
+              if (href.includes("/peliculas/") || href.includes("/series/")) {
+                var idAttr = $(el).attr("data-tooltip-id") || "";
+                var id = idAttr.replace("tooltip-", "");
+                var title = $(el).find("img").attr("alt") || $(el).parent().find("h3").text() || $(el).attr("aria-label") || "";
+                if (href && title) {
+                  var isMovie2 = href.includes("/peliculas/");
+                  if (!searchResults.find((r) => r.slug === href)) {
+                    searchResults.push({
+                      _id: id || href.split("/").pop(),
+                      // Fallback a slug si falta ID
+                      title: title.trim(),
+                      type: isMovie2 ? "movies" : "tvshows",
+                      slug: href
+                    });
+                  }
+                }
               }
             });
-            console.log("[Cuevana.gs] Found " + searchResults.length + " posts via HTML search.");
+            console.log("[Cuevana.gs] Scraper found " + searchResults.length + " candidate links.");
             return { data: { posts: searchResults } };
           } catch (err) {
-            console.error("[Cuevana.gs] HTML Search Error: " + err.message);
+            console.error("[Cuevana.gs] Scraper Fatal Error: " + err.message);
             return { error: true };
           }
         });
