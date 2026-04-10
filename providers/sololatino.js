@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-10T22:21:22.944Z
+ * Generated: 2026-04-10T22:31:03.064Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1280,6 +1280,28 @@ var HEADERS = {
   "Referer": "https://sololatino.net/",
   "Connection": "keep-alive"
 };
+function extractDirectVideo(playerUrl, referer) {
+  return __async(this, null, function* () {
+    try {
+      const res = yield import_axios10.default.get(playerUrl, {
+        timeout: 6e3,
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Referer": referer
+        })
+      });
+      const html = res.data;
+      const fileMatch = html.match(/["']?file["']?\s*:\s*["'](https?:\/\/[^"']+\.m3u8[^"']*)["']/i) || html.match(/["']?src["']?\s*:\s*["'](https?:\/\/[^"']+\.m3u8[^"']*)["']/i);
+      if (fileMatch)
+        return fileMatch[1];
+      const anyM3u8 = html.match(/https?:\/\/[^"']+\.m3u8[^"']*/i);
+      if (anyM3u8)
+        return anyM3u8[0];
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
 function getPlayerToken(slug) {
   return __async(this, null, function* () {
     try {
@@ -1326,26 +1348,32 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const latinoEmbeds = scanData.langs_s.LAT;
         const resolvedResults = yield Promise.allSettled(
           latinoEmbeds.map((embed) => __async(this, null, function* () {
-            const url = embed.url;
+            let url = embed.url;
+            if (!url)
+              return null;
+            if (url.startsWith("//"))
+              url = "https:" + url;
+            else if (url.startsWith("/"))
+              url = BASE_URL + url;
             const serverName = embed.server || "Online";
-            const sLabel = serverName.toLowerCase();
             try {
               const resolved = yield resolveEmbed(url);
               if (resolved) {
-                return __spreadProps(__spreadValues({}, resolved), {
-                  langLabel: "Latino",
-                  serverLabel: serverName
-                });
+                return __spreadProps(__spreadValues({}, resolved), { langLabel: "Latino", serverLabel: serverName });
               }
             } catch (e) {
             }
-            return {
-              url,
-              langLabel: "Latino",
-              serverLabel: serverName,
-              quality: "1080p",
-              verified: true
-            };
+            const directUrl = yield extractDirectVideo(url, `${BASE_URL}/f/${slug}`);
+            if (directUrl) {
+              return {
+                url: directUrl,
+                langLabel: "Latino",
+                serverLabel: serverName,
+                quality: "1080p",
+                verified: true
+              };
+            }
+            return null;
           }))
         );
         resolvedResults.forEach((r) => {
@@ -1356,7 +1384,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }
       return yield finalizeStreams(rawStreams, "SoloLatino");
     } catch (e) {
-      console.log(`[SoloLatino] Error: ${e.message}`);
       return [];
     }
   });
