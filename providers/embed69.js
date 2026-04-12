@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-12T18:38:24.669Z
+ * Generated: 2026-04-12T19:03:16.736Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,6 +25,12 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -67,16 +73,12 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/embed69/index.js
-var embed69_exports = {};
-__export(embed69_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(embed69_exports);
-var import_axios10 = __toESM(require("axios"));
-
 // src/utils/m3u8.js
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var m3u8_exports = {};
+__export(m3u8_exports, {
+  getQualityFromHeight: () => getQualityFromHeight,
+  validateStream: () => validateStream
+});
 function getQualityFromHeight(height) {
   if (!height)
     return "Auto";
@@ -158,19 +160,18 @@ function validateStream(stream) {
     }
   });
 }
+var UA;
+var init_m3u8 = __esm({
+  "src/utils/m3u8.js"() {
+    UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+  }
+});
 
 // src/utils/sorting.js
-var QUALITY_SCORE = {
-  "4K": 100,
-  "1440p": 90,
-  "1080p": 80,
-  "720p": 70,
-  "480p": 60,
-  "360p": 50,
-  "240p": 40,
-  "Auto": 30,
-  "Unknown": 0
-};
+var sorting_exports = {};
+__export(sorting_exports, {
+  sortStreamsByQuality: () => sortStreamsByQuality
+});
 function sortStreamsByQuality(streams) {
   if (!Array.isArray(streams))
     return [];
@@ -186,93 +187,174 @@ function sortStreamsByQuality(streams) {
     return scoreB - scoreA;
   });
 }
+var QUALITY_SCORE;
+var init_sorting = __esm({
+  "src/utils/sorting.js"() {
+    QUALITY_SCORE = {
+      "4K": 100,
+      "1440p": 90,
+      "1080p": 80,
+      "720p": 70,
+      "480p": 60,
+      "360p": 50,
+      "240p": 40,
+      "Auto": 30,
+      "Unknown": 0
+    };
+  }
+});
 
 // src/utils/engine.js
-function normalizeLanguage(lang) {
-  const l = (lang || "").toLowerCase();
-  if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual"))
-    return "Latino";
-  if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
-    return "Espa\xF1ol";
-  if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
-    return "Subtitulado";
-  return lang || "Latino";
-}
-function normalizeServer(server, url = "") {
-  if (!server || server === "Servidor" || server === "Server") {
-    if (url && url.startsWith("http")) {
-      try {
-        const domain = new URL(url).hostname.replace("www.", "").split(".")[0];
-        return domain.charAt(0).toUpperCase() + domain.slice(1);
-      } catch (e) {
+var require_engine = __commonJS({
+  "src/utils/engine.js"(exports, module2) {
+    var { validateStream: validateStream2 } = (init_m3u8(), __toCommonJS(m3u8_exports));
+    var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
+    function normalizeLanguage(lang) {
+      const l = (lang || "").toLowerCase();
+      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual"))
+        return "Latino";
+      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
+        return "Espa\xF1ol";
+      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
+        return "Subtitulado";
+      return lang || "Latino";
+    }
+    function normalizeServer(server, url = "") {
+      if (!server || server === "Servidor" || server === "Server") {
+        if (url && url.startsWith("http")) {
+          try {
+            const domain = new URL(url).hostname.replace("www.", "").split(".")[0];
+            return domain.charAt(0).toUpperCase() + domain.slice(1);
+          } catch (e) {
+            return "Servidor";
+          }
+        }
         return "Servidor";
       }
-    }
-    return "Servidor";
-  }
-  const s = server.toLowerCase();
-  const u = url.toLowerCase();
-  if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || u.includes("ugc-cdn") || u.includes("cloudwindow") || u.includes("shonydar"))
-    return "VOE";
-  if (s.includes("filemoon"))
-    return "Filemoon";
-  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud"))
-    return "StreamWish";
-  if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
-    return "VidHide";
-  if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || u.includes("waaw") || u.includes("vms.sh"))
-    return "Netu";
-  if (s.includes("fastream") || s.includes("fastplay"))
-    return "Fastream";
-  if (/^[a-zA-Z0-9-]{15,}$/.test(server) || server.includes("cdn-caching")) {
-    return "Servidor Privado";
-  }
-  return server;
-}
-function finalizeStreams(streams, providerName) {
-  return __async(this, null, function* () {
-    if (!Array.isArray(streams) || streams.length === 0)
-      return [];
-    console.log(`[Engine] Processing ${streams.length} streams for ${providerName}...`);
-    let validated = streams;
-    try {
-      const results = yield Promise.allSettled(
-        streams.map((s) => validateStream(s))
-      );
-      validated = results.map(
-        (r, i) => r.status === "fulfilled" ? r.value : streams[i]
-      );
-    } catch (e) {
-      console.error(`[Engine] Validation error: ${e.message}`);
-    }
-    const sorted = sortStreamsByQuality(validated);
-    const processed = sorted.map((s) => {
-      const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-      if (lang !== "Latino")
-        return null;
-      let q = "";
-      if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
-        q = s.siteQuality;
-      } else if (s.verified) {
-        q = s.quality;
-      } else if (s.siteQuality) {
-        q = s.siteQuality;
+      const s = server.toLowerCase();
+      const u = url.toLowerCase();
+      if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || u.includes("ugc-cdn") || u.includes("cloudwindow") || u.includes("shonydar"))
+        return "VOE";
+      if (s.includes("filemoon"))
+        return "Filemoon";
+      if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud"))
+        return "StreamWish";
+      if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
+        return "VidHide";
+      if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || u.includes("waaw") || u.includes("vms.sh"))
+        return "Netu";
+      if (s.includes("fastream") || s.includes("fastplay"))
+        return "Fastream";
+      if (/^[a-zA-Z0-9-]{15,}$/.test(server) || server.includes("cdn-caching")) {
+        return "Servidor Privado";
       }
-      const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
-      const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
-      const displayQ = !q && s.verified ? "HD" : q;
-      const qualityPrefix = displayQ ? `[${displayQ}${check}] | ` : "";
-      return {
-        name: providerName || "Plugin Latino",
-        title: `${qualityPrefix}${lang} | ${server}`,
-        url: s.url,
-        quality: q || "",
-        headers: s.headers || {}
-      };
-    });
-    return processed.filter((s) => s !== null);
-  });
-}
+      return server;
+    }
+    function finalizeStreams2(streams, providerName) {
+      return __async(this, null, function* () {
+        if (!Array.isArray(streams) || streams.length === 0)
+          return [];
+        console.log(`[Engine] Processing ${streams.length} streams for ${providerName}...`);
+        let validated = streams;
+        try {
+          const results = yield Promise.allSettled(
+            streams.map((s) => validateStream2(s))
+          );
+          validated = results.map(
+            (r, i) => r.status === "fulfilled" ? r.value : streams[i]
+          );
+        } catch (e) {
+          console.error(`[Engine] Validation error: ${e.message}`);
+        }
+        const sorted = sortStreamsByQuality2(validated);
+        const processed = sorted.map((s) => {
+          const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
+          if (lang !== "Latino")
+            return null;
+          let q = "";
+          if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
+            q = s.siteQuality;
+          } else if (s.verified) {
+            q = s.quality;
+          } else if (s.siteQuality) {
+            q = s.siteQuality;
+          }
+          const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
+          const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
+          const displayQ = !q && s.verified ? "HD" : q;
+          const qualityPrefix = displayQ ? `[${displayQ}${check}] | ` : "";
+          return {
+            name: providerName || "Plugin Latino",
+            title: `${qualityPrefix}${lang} | ${server}`,
+            url: s.url,
+            quality: q || "",
+            headers: s.headers || {}
+          };
+        });
+        return processed.filter((s) => s !== null);
+      });
+    }
+    module2.exports = { finalizeStreams: finalizeStreams2 };
+  }
+});
+
+// src/utils/id_mapper.js
+var require_id_mapper = __commonJS({
+  "src/utils/id_mapper.js"(exports, module2) {
+    var axios10 = require("axios");
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    var UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var SERIES_MAPPINGS = {
+      // Scrubs Offset Case
+      "tt40197357": {
+        replacementId: "tt0285403",
+        title: "Scrubs",
+        offset: 9
+      }
+    };
+    function getCorrectImdbId2(tmdbId, mediaType) {
+      return __async(this, null, function* () {
+        const realId = tmdbId ? tmdbId.toString().split(":")[0] : "";
+        const mapping = SERIES_MAPPINGS[realId];
+        if (mapping && mapping.replacementId) {
+          return {
+            imdbId: mapping.replacementId,
+            offset: mapping.offset || 0,
+            title: mapping.title || null,
+            fromMapping: true
+          };
+        }
+        if (realId.startsWith("tt")) {
+          return { imdbId: realId, offset: 0, fromMapping: false };
+        }
+        try {
+          const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${realId}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${realId}/external_ids?api_key=${TMDB_API_KEY}`;
+          const { data } = yield axios10.get(endpoint, {
+            timeout: 5e3,
+            headers: { "User-Agent": UA10 }
+          });
+          return {
+            imdbId: data.imdb_id || null,
+            offset: 0,
+            fromMapping: false
+          };
+        } catch (e) {
+          return { imdbId: null, offset: 0, fromMapping: false };
+        }
+      });
+    }
+    module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
+  }
+});
+
+// src/embed69/index.js
+var embed69_exports = {};
+__export(embed69_exports, {
+  getStreams: () => getStreams
+});
+module.exports = __toCommonJS(embed69_exports);
+var import_axios9 = __toESM(require("axios"));
+var import_engine = __toESM(require_engine());
 
 // src/utils/resolvers.js
 var import_axios8 = __toESM(require("axios"));
@@ -1192,24 +1274,24 @@ function preProcessUrl(url) {
 }
 function getDirectCdnHeaders(url) {
   const s = url.toLowerCase();
-  const UA11 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+  const UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
   if (s.includes("acek-cdn.com") || s.includes("minochinos.com") || s.includes("masukestin.com") || s.includes("vidhide")) {
     try {
       const origin = new URL(url).origin + "/";
       return {
-        "User-Agent": UA11,
+        "User-Agent": UA10,
         "Referer": origin,
         "Origin": origin.replace(/\/$/, "")
       };
     } catch (e) {
-      return { "User-Agent": UA11, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
+      return { "User-Agent": UA10, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
     }
   }
   if (s.includes("r66nv9ed.com") || s.includes("filemoon")) {
-    return { "User-Agent": UA11, "Referer": "https://arbitrarydecisions.com/", "Origin": "https://arbitrarydecisions.com" };
+    return { "User-Agent": UA10, "Referer": "https://arbitrarydecisions.com/", "Origin": "https://arbitrarydecisions.com" };
   }
   if (s.includes("cloudwindow-route.com") || s.includes("awish.pro") || s.includes("streamwish")) {
-    return { "User-Agent": UA11, "Referer": "https://streamwish.to/", "Origin": "https://streamwish.to" };
+    return { "User-Agent": UA10, "Referer": "https://streamwish.to/", "Origin": "https://streamwish.to" };
   }
   return null;
 }
@@ -1264,54 +1346,9 @@ function resolveEmbed(url) {
   });
 }
 
-// src/utils/id_mapper.js
-var import_axios9 = __toESM(require("axios"));
-var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-var SERIES_MAPPINGS = {
-  // Scrubs Offset Case
-  "tt40197357": {
-    replacementId: "tt0285403",
-    title: "Scrubs",
-    offset: 9
-  }
-};
-function getCorrectImdbId(tmdbId, mediaType) {
-  return __async(this, null, function* () {
-    const tIdStr = tmdbId.toString();
-    const mapping = SERIES_MAPPINGS[tIdStr];
-    if (mapping && mapping.replacementId) {
-      console.log(`[IDMapper] Usando mapeo manual: ${tIdStr} -> ${mapping.replacementId}`);
-      return {
-        imdbId: mapping.replacementId,
-        offset: mapping.offset || 0,
-        title: mapping.title || null,
-        fromMapping: true
-      };
-    }
-    if (tIdStr.startsWith("tt")) {
-      return { imdbId: tIdStr, offset: 0, fromMapping: false };
-    }
-    try {
-      const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${tIdStr}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tIdStr}/external_ids?api_key=${TMDB_API_KEY}`;
-      const { data } = yield import_axios9.default.get(endpoint, {
-        timeout: 5e3,
-        headers: { "User-Agent": UA9 }
-      });
-      return {
-        imdbId: data.imdb_id || null,
-        offset: 0,
-        fromMapping: false
-      };
-    } catch (e) {
-      console.error(`[IDMapper] TMDB error para ${tIdStr}: ${e.message}`);
-      return { imdbId: null, offset: 0, fromMapping: false };
-    }
-  });
-}
-
 // src/embed69/index.js
-var UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var import_id_mapper = __toESM(require_id_mapper());
+var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 function decodeJwtPayload(token) {
   try {
@@ -1352,7 +1389,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const startTime = Date.now();
     console.log(`[Embed69] Buscando: TMDB ${tmdbId} (${mediaType})${season ? ` S${season}E${episode}` : ""}`);
     try {
-      const { imdbId, offset: sOffset } = yield getCorrectImdbId(tmdbId, mediaType);
+      const { imdbId, offset: sOffset } = yield (0, import_id_mapper.getCorrectImdbId)(tmdbId, mediaType);
       if (!imdbId) {
         console.log("[Embed69] No se encontr\xF3 IMDB ID");
         return [];
@@ -1360,10 +1397,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       console.log(`[Embed69] ID IMDb Final: ${imdbId} (Offset: ${sOffset})`);
       const embedUrl = buildEmbedUrl(imdbId, mediaType, season, episode, sOffset);
       console.log(`[Embed69] Fetching: ${embedUrl}`);
-      const { data: html } = yield import_axios10.default.get(embedUrl, {
+      const { data: html } = yield import_axios9.default.get(embedUrl, {
         timeout: 1e4,
         headers: {
-          "User-Agent": UA10,
+          "User-Agent": UA9,
           "Referer": "https://sololatino.net/",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
           "Accept-Language": "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
@@ -1407,7 +1444,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         }))
       );
       const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      const finalized = yield finalizeStreams(rawStreams, "Embed69");
+      const finalized = yield (0, import_engine.finalizeStreams)(rawStreams, "Embed69");
       const elapsed = ((Date.now() - startTime) / 1e3).toFixed(2);
       console.log(`[Embed69] \u2713 ${finalized.length} streams v\xE1lidos en ${elapsed}s`);
       return finalized;

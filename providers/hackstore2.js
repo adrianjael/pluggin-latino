@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-12T18:38:24.689Z
+ * Generated: 2026-04-12T19:03:16.755Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -25,6 +25,16 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -41,6 +51,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve12, reject) => {
     var fulfilled = (value) => {
@@ -61,6 +72,231 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
+
+// src/utils/m3u8.js
+var m3u8_exports = {};
+__export(m3u8_exports, {
+  getQualityFromHeight: () => getQualityFromHeight,
+  validateStream: () => validateStream
+});
+function getQualityFromHeight(height) {
+  if (!height)
+    return "Auto";
+  const h = parseInt(height);
+  if (h >= 2160)
+    return "4K";
+  if (h >= 1440)
+    return "1440p";
+  if (h >= 1080)
+    return "1080p";
+  if (h >= 720)
+    return "720p";
+  if (h >= 480)
+    return "480p";
+  if (h >= 360)
+    return "360p";
+  return "240p";
+}
+function parseBestQuality(content, url = "") {
+  const lines = content.split("\n");
+  let bestHeight = 0;
+  for (const line of lines) {
+    if (line.includes("RESOLUTION=")) {
+      const match = line.match(/RESOLUTION=\d+x(\d+)/i);
+      if (match) {
+        const height = parseInt(match[1]);
+        if (height > bestHeight)
+          bestHeight = height;
+      }
+    }
+  }
+  if (bestHeight > 0)
+    return getQualityFromHeight(bestHeight);
+  const urlPattern = url.match(/[_-](\d{3,4})[pP]?/);
+  if (urlPattern) {
+    const h = parseInt(urlPattern[1]);
+    if (h >= 360 && h <= 4320)
+      return getQualityFromHeight(h);
+  }
+  return "720p";
+}
+function validateStream(stream) {
+  return __async(this, null, function* () {
+    if (!stream || !stream.url)
+      return stream;
+    const { url, headers } = stream;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12e3);
+    try {
+      const response = yield fetch(url, {
+        signal: controller.signal,
+        headers: __spreadValues({
+          "Accept": "*/*",
+          "Range": "bytes=0-8192",
+          "User-Agent": UA8
+        }, headers || {})
+      });
+      clearTimeout(timeout);
+      if (!response.ok && response.status !== 206 && response.status !== 403) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = yield response.text();
+      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+        const realQuality = parseBestQuality(text, url);
+        return __spreadProps(__spreadValues({}, stream), {
+          quality: realQuality,
+          verified: true
+        });
+      }
+      return __spreadProps(__spreadValues({}, stream), { verified: true });
+    } catch (error) {
+      clearTimeout(timeout);
+      const fallbackQuality = parseBestQuality("", url) || "HD";
+      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon") || url.includes("vidhide") || url.includes("cloudwindow");
+      return __spreadProps(__spreadValues({}, stream), {
+        quality: fallbackQuality,
+        verified: isKnown
+      });
+    }
+  });
+}
+var UA8;
+var init_m3u8 = __esm({
+  "src/utils/m3u8.js"() {
+    UA8 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+  }
+});
+
+// src/utils/sorting.js
+var sorting_exports = {};
+__export(sorting_exports, {
+  sortStreamsByQuality: () => sortStreamsByQuality
+});
+function sortStreamsByQuality(streams) {
+  if (!Array.isArray(streams))
+    return [];
+  return [...streams].sort((a, b) => {
+    const scoreA = QUALITY_SCORE[a.quality] || 0;
+    const scoreB = QUALITY_SCORE[b.quality] || 0;
+    if (scoreA === scoreB) {
+      if (a.quality === "Auto")
+        return 1;
+      if (b.quality === "Auto")
+        return -1;
+    }
+    return scoreB - scoreA;
+  });
+}
+var QUALITY_SCORE;
+var init_sorting = __esm({
+  "src/utils/sorting.js"() {
+    QUALITY_SCORE = {
+      "4K": 100,
+      "1440p": 90,
+      "1080p": 80,
+      "720p": 70,
+      "480p": 60,
+      "360p": 50,
+      "240p": 40,
+      "Auto": 30,
+      "Unknown": 0
+    };
+  }
+});
+
+// src/utils/engine.js
+var require_engine = __commonJS({
+  "src/utils/engine.js"(exports2, module2) {
+    var { validateStream: validateStream2 } = (init_m3u8(), __toCommonJS(m3u8_exports));
+    var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
+    function normalizeLanguage(lang) {
+      const l = (lang || "").toLowerCase();
+      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual"))
+        return "Latino";
+      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
+        return "Espa\xF1ol";
+      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
+        return "Subtitulado";
+      return lang || "Latino";
+    }
+    function normalizeServer(server, url = "") {
+      if (!server || server === "Servidor" || server === "Server") {
+        if (url && url.startsWith("http")) {
+          try {
+            const domain = new URL(url).hostname.replace("www.", "").split(".")[0];
+            return domain.charAt(0).toUpperCase() + domain.slice(1);
+          } catch (e) {
+            return "Servidor";
+          }
+        }
+        return "Servidor";
+      }
+      const s = server.toLowerCase();
+      const u = url.toLowerCase();
+      if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || u.includes("ugc-cdn") || u.includes("cloudwindow") || u.includes("shonydar"))
+        return "VOE";
+      if (s.includes("filemoon"))
+        return "Filemoon";
+      if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud"))
+        return "StreamWish";
+      if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
+        return "VidHide";
+      if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || u.includes("waaw") || u.includes("vms.sh"))
+        return "Netu";
+      if (s.includes("fastream") || s.includes("fastplay"))
+        return "Fastream";
+      if (/^[a-zA-Z0-9-]{15,}$/.test(server) || server.includes("cdn-caching")) {
+        return "Servidor Privado";
+      }
+      return server;
+    }
+    function finalizeStreams2(streams, providerName) {
+      return __async(this, null, function* () {
+        if (!Array.isArray(streams) || streams.length === 0)
+          return [];
+        console.log(`[Engine] Processing ${streams.length} streams for ${providerName}...`);
+        let validated = streams;
+        try {
+          const results = yield Promise.allSettled(
+            streams.map((s) => validateStream2(s))
+          );
+          validated = results.map(
+            (r, i) => r.status === "fulfilled" ? r.value : streams[i]
+          );
+        } catch (e) {
+          console.error(`[Engine] Validation error: ${e.message}`);
+        }
+        const sorted = sortStreamsByQuality2(validated);
+        const processed = sorted.map((s) => {
+          const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
+          if (lang !== "Latino")
+            return null;
+          let q = "";
+          if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
+            q = s.siteQuality;
+          } else if (s.verified) {
+            q = s.quality;
+          } else if (s.siteQuality) {
+            q = s.siteQuality;
+          }
+          const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
+          const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
+          const displayQ = !q && s.verified ? "HD" : q;
+          const qualityPrefix = displayQ ? `[${displayQ}${check}] | ` : "";
+          return {
+            name: providerName || "Plugin Latino",
+            title: `${qualityPrefix}${lang} | ${server}`,
+            url: s.url,
+            quality: q || "",
+            headers: s.headers || {}
+          };
+        });
+        return processed.filter((s) => s !== null);
+      });
+    }
+    module2.exports = { finalizeStreams: finalizeStreams2 };
+  }
+});
 
 // src/hackstore2/http.js
 var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -1172,91 +1408,8 @@ function resolveEmbed(url) {
   });
 }
 
-// src/utils/m3u8.js
-var UA8 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-function getQualityFromHeight(height) {
-  if (!height)
-    return "Auto";
-  const h = parseInt(height);
-  if (h >= 2160)
-    return "4K";
-  if (h >= 1440)
-    return "1440p";
-  if (h >= 1080)
-    return "1080p";
-  if (h >= 720)
-    return "720p";
-  if (h >= 480)
-    return "480p";
-  if (h >= 360)
-    return "360p";
-  return "240p";
-}
-function parseBestQuality(content, url = "") {
-  const lines = content.split("\n");
-  let bestHeight = 0;
-  for (const line of lines) {
-    if (line.includes("RESOLUTION=")) {
-      const match = line.match(/RESOLUTION=\d+x(\d+)/i);
-      if (match) {
-        const height = parseInt(match[1]);
-        if (height > bestHeight)
-          bestHeight = height;
-      }
-    }
-  }
-  if (bestHeight > 0)
-    return getQualityFromHeight(bestHeight);
-  const urlPattern = url.match(/[_-](\d{3,4})[pP]?/);
-  if (urlPattern) {
-    const h = parseInt(urlPattern[1]);
-    if (h >= 360 && h <= 4320)
-      return getQualityFromHeight(h);
-  }
-  return "720p";
-}
-function validateStream(stream) {
-  return __async(this, null, function* () {
-    if (!stream || !stream.url)
-      return stream;
-    const { url, headers } = stream;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12e3);
-    try {
-      const response = yield fetch(url, {
-        signal: controller.signal,
-        headers: __spreadValues({
-          "Accept": "*/*",
-          "Range": "bytes=0-8192",
-          "User-Agent": UA8
-        }, headers || {})
-      });
-      clearTimeout(timeout);
-      if (!response.ok && response.status !== 206 && response.status !== 403) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const text = yield response.text();
-      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(text, url);
-        return __spreadProps(__spreadValues({}, stream), {
-          quality: realQuality,
-          verified: true
-        });
-      }
-      return __spreadProps(__spreadValues({}, stream), { verified: true });
-    } catch (error) {
-      clearTimeout(timeout);
-      const fallbackQuality = parseBestQuality("", url) || "HD";
-      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon") || url.includes("vidhide") || url.includes("cloudwindow");
-      return __spreadProps(__spreadValues({}, stream), {
-        quality: fallbackQuality,
-        verified: isKnown
-      });
-    }
-  });
-}
-
 // src/hackstore2/extractor.js
+init_m3u8();
 function getTmdbInfo(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
@@ -1409,128 +1562,14 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
   });
 }
 
-// src/utils/sorting.js
-var QUALITY_SCORE = {
-  "4K": 100,
-  "1440p": 90,
-  "1080p": 80,
-  "720p": 70,
-  "480p": 60,
-  "360p": 50,
-  "240p": 40,
-  "Auto": 30,
-  "Unknown": 0
-};
-function sortStreamsByQuality(streams) {
-  if (!Array.isArray(streams))
-    return [];
-  return [...streams].sort((a, b) => {
-    const scoreA = QUALITY_SCORE[a.quality] || 0;
-    const scoreB = QUALITY_SCORE[b.quality] || 0;
-    if (scoreA === scoreB) {
-      if (a.quality === "Auto")
-        return 1;
-      if (b.quality === "Auto")
-        return -1;
-    }
-    return scoreB - scoreA;
-  });
-}
-
-// src/utils/engine.js
-function normalizeLanguage(lang) {
-  const l = (lang || "").toLowerCase();
-  if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual"))
-    return "Latino";
-  if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
-    return "Espa\xF1ol";
-  if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
-    return "Subtitulado";
-  return lang || "Latino";
-}
-function normalizeServer(server, url = "") {
-  if (!server || server === "Servidor" || server === "Server") {
-    if (url && url.startsWith("http")) {
-      try {
-        const domain = new URL(url).hostname.replace("www.", "").split(".")[0];
-        return domain.charAt(0).toUpperCase() + domain.slice(1);
-      } catch (e) {
-        return "Servidor";
-      }
-    }
-    return "Servidor";
-  }
-  const s = server.toLowerCase();
-  const u = url.toLowerCase();
-  if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || u.includes("ugc-cdn") || u.includes("cloudwindow") || u.includes("shonydar"))
-    return "VOE";
-  if (s.includes("filemoon"))
-    return "Filemoon";
-  if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud"))
-    return "StreamWish";
-  if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
-    return "VidHide";
-  if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || u.includes("waaw") || u.includes("vms.sh"))
-    return "Netu";
-  if (s.includes("fastream") || s.includes("fastplay"))
-    return "Fastream";
-  if (/^[a-zA-Z0-9-]{15,}$/.test(server) || server.includes("cdn-caching")) {
-    return "Servidor Privado";
-  }
-  return server;
-}
-function finalizeStreams(streams, providerName) {
-  return __async(this, null, function* () {
-    if (!Array.isArray(streams) || streams.length === 0)
-      return [];
-    console.log(`[Engine] Processing ${streams.length} streams for ${providerName}...`);
-    let validated = streams;
-    try {
-      const results = yield Promise.allSettled(
-        streams.map((s) => validateStream(s))
-      );
-      validated = results.map(
-        (r, i) => r.status === "fulfilled" ? r.value : streams[i]
-      );
-    } catch (e) {
-      console.error(`[Engine] Validation error: ${e.message}`);
-    }
-    const sorted = sortStreamsByQuality(validated);
-    const processed = sorted.map((s) => {
-      const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-      if (lang !== "Latino")
-        return null;
-      let q = "";
-      if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
-        q = s.siteQuality;
-      } else if (s.verified) {
-        q = s.quality;
-      } else if (s.siteQuality) {
-        q = s.siteQuality;
-      }
-      const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
-      const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
-      const displayQ = !q && s.verified ? "HD" : q;
-      const qualityPrefix = displayQ ? `[${displayQ}${check}] | ` : "";
-      return {
-        name: providerName || "Plugin Latino",
-        title: `${qualityPrefix}${lang} | ${server}`,
-        url: s.url,
-        quality: q || "",
-        headers: s.headers || {}
-      };
-    });
-    return processed.filter((s) => s !== null);
-  });
-}
-
 // src/hackstore2/index.js
+var import_engine = __toESM(require_engine());
 function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     try {
       console.log(`[HackStore2] Request: ${mediaType} ${tmdbId} (Title: ${title || "N/A"})`);
       const streams = yield extractStreams(tmdbId, mediaType, season, episode, title, year);
-      return yield finalizeStreams(streams, "HackStore2");
+      return yield (0, import_engine.finalizeStreams)(streams, "HackStore2");
     } catch (error) {
       console.error(`[HackStore2] Fatal Error in index: ${error.message}`);
       return [];
