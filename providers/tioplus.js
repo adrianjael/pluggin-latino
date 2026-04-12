@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-12T21:24:07.048Z
+ * Generated: 2026-04-12T21:36:16.026Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1434,14 +1434,44 @@ var require_tmdb = __commonJS({
         }
       });
     }
-    module2.exports = { getTmdbTitle: getTmdbTitle2 };
+    function getTmdbInfo2(tmdbId, mediaType) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return null;
+        const cleanId = tmdbId.toString().split(":")[0];
+        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+        try {
+          let url;
+          let result;
+          if (cleanId.startsWith("tt")) {
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+            const { data } = yield axios9.get(url, { timeout: 6e3 });
+            result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
+          } else {
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
+            const { data } = yield axios9.get(url, { timeout: 6e3 });
+            result = data;
+          }
+          if (result) {
+            const title = result.name || result.title;
+            const date = result.release_date || result.first_air_date || "";
+            const year = date.split("-")[0];
+            return { title, year };
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo: getTmdbInfo2 };
   }
 });
 
 // src/tioplus/index.js
 var { finalizeStreams } = require_engine();
 var { resolveEmbed: resolveEmbed2 } = (init_resolvers(), __toCommonJS(resolvers_exports));
-var { getTmdbTitle } = require_tmdb();
+var { getTmdbTitle, getTmdbInfo } = require_tmdb();
 var spawnSync = null;
 try {
   spawnSync = require("child_process").spawnSync;
@@ -1505,15 +1535,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId || !mediaType)
       return [];
-    let mediaTitle = title;
-    if (!mediaTitle && tmdbId) {
-      mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
-    }
+    const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
+    const mediaTitle = tmdbInfo ? tmdbInfo.title : title;
+    const releaseYear = tmdbInfo ? tmdbInfo.year : "";
     if (!mediaTitle)
       return [];
-    console.log(`[TioPlus] Buscando: ${mediaTitle}`);
+    console.log(`[TioPlus] Buscando: ${mediaTitle} (${releaseYear})`);
     try {
-      const searchQuery = encodeURIComponent(mediaTitle.split(":")[0].trim());
+      const searchQuery = encodeURIComponent(mediaTitle.split(/[:(]/)[0].trim());
       const searchUrl = `${BASE_URL}/search/${searchQuery}`;
       const searchResp = yield fetch(searchUrl, { headers: { "User-Agent": UA9 } });
       if (!searchResp.ok)
@@ -1526,25 +1555,28 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         candidates.push({ url: match[1], title: match[2].trim() });
       }
       let targetUrl = null;
+      let bestScore = -1;
+      const keywords = mediaTitle.toLowerCase().split(/[: ]/).filter((w) => w.length > 2);
       for (const cand of candidates) {
-        if (cand.title.toLowerCase().includes(mediaTitle.toLowerCase()) || mediaTitle.toLowerCase().includes(cand.title.toLowerCase())) {
-          if (mediaType === "movie" && cand.url.includes("/pelicula/") || mediaType !== "movie" && cand.url.includes("/serie/")) {
-            targetUrl = cand.url;
-            break;
-          }
+        const candTitle = cand.title.toLowerCase();
+        let score = 0;
+        keywords.forEach((word) => {
+          if (candTitle.includes(word))
+            score += 5;
+        });
+        if (releaseYear && cand.title.includes(`(${releaseYear})`)) {
+          score += 50;
+        }
+        if (candTitle.includes(mediaTitle.toLowerCase()))
+          score += 10;
+        const isCorrectType = mediaType === "movie" && cand.url.includes("/pelicula/") || mediaType !== "movie" && cand.url.includes("/serie/");
+        if (isCorrectType && score > bestScore) {
+          bestScore = score;
+          targetUrl = cand.url;
         }
       }
-      if (!targetUrl && candidates.length > 0) {
-        const firstWord = mediaTitle.split(/[: ]/)[0].toLowerCase();
-        for (const cand of candidates) {
-          if (cand.title.toLowerCase().startsWith(firstWord)) {
-            if (mediaType === "movie" && cand.url.includes("/pelicula/") || mediaType !== "movie" && cand.url.includes("/serie/")) {
-              targetUrl = cand.url;
-              break;
-            }
-          }
-        }
-      }
+      if (bestScore < 10)
+        targetUrl = null;
       if (!targetUrl)
         return [];
       let finalMediaUrl = targetUrl;
