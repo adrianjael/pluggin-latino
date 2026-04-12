@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-12T23:39:28.686Z
+ * Generated: 2026-04-12T23:42:57.866Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -720,9 +720,7 @@ function resolve2(url) {
             quality: q,
             serverName: "Filemoon",
             headers: {
-              "User-Agent": UA2,
-              "Referer": url,
-              "Origin": new URL(url).origin
+              "Referer": url
             }
           };
         }
@@ -1423,9 +1421,7 @@ function getDirectCdnHeaders(url) {
     } catch (e) {
     }
     return {
-      "User-Agent": UA10,
-      "Referer": referer,
-      "Origin": "https://filemoon.sx"
+      "Referer": referer
     };
   }
   if (s.includes("cloudwindow-route.com") || s.includes("awish.pro") || s.includes("streamwish")) {
