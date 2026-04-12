@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-12T23:50:52.452Z
+ * Generated: 2026-04-12T23:52:51.618Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -687,11 +687,19 @@ function decryptByse(playback) {
 function resolve3(url) {
   return __async(this, null, function* () {
     try {
-      const idMatch = url.match(/\/e\/([a-zA-Z0-9]+)/);
+      const idMatch = url.match(/\/(?:e|tmgk|d)\/([a-zA-Z0-9]+)/);
       if (!idMatch)
         return null;
       const id = idMatch[1];
-      console.log(`[Filemoon] Resolviendo Estructural v5.6.0: ${id}`);
+      const hostname = new URL(url).hostname;
+      console.log(`[Filemoon] Resolviendo Premium v5.6.2 (GnulaHD Fix): ${id} en ${hostname}`);
+      const gnulaHeaders = {
+        "x-embed-origin": "ww3.gnulahd.nu",
+        "x-embed-referer": "https://ww3.gnulahd.nu/",
+        "x-embed-parent": url,
+        "Referer": url,
+        "User-Agent": UA3
+      };
       if (API_KEYS.FILEMOON) {
         try {
           const apiRes = yield fetch(`https://filemoon.sx/api/file/direct_link?key=${API_KEYS.FILEMOON}&file_code=${id}`);
@@ -699,10 +707,11 @@ function resolve3(url) {
           if (apiData.result && apiData.result.url) {
             console.log(`[Filemoon] API Success!`);
             return {
-              url: formatPipedUrl(apiData.result.url, url),
+              url: apiData.result.url,
               quality: "HD",
               serverName: "Filemoon",
-              headers: { "Referer": url }
+              headers: gnulaHeaders
+              // CABECERAS DINÁMICAS (Piping las recogerá)
             };
           }
         } catch (e) {
@@ -710,9 +719,8 @@ function resolve3(url) {
         }
       }
       try {
-        const hostname = new URL(url).hostname;
         const apiRes = yield fetch(`https://${hostname}/api/videos/${id}`, {
-          headers: { "User-Agent": UA3, "Referer": url }
+          headers: gnulaHeaders
         });
         const data = yield apiRes.json();
         if (data.playback) {
@@ -720,10 +728,10 @@ function resolve3(url) {
           if (decrypted && decrypted.sources) {
             const best = decrypted.sources[0];
             return {
-              url: formatPipedUrl(best.url, url),
+              url: best.url,
               quality: "HD",
               serverName: "Filemoon",
-              headers: { "Referer": url }
+              headers: gnulaHeaders
             };
           }
         }
@@ -783,15 +791,32 @@ function getDirectCdnHeaders(url) {
       return { "User-Agent": UA4, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
     }
   }
-  if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("398fitus.com")) {
+  if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("398fitus.com") || s.includes("bysevepoin.com")) {
     let referer = "https://filemoon.sx/";
     try {
       const idMatch = url.match(/hls2\/.*?\/.*?\/([a-zA-Z0-9]+)_x/);
-      if (idMatch)
-        referer = `https://filemoon.sx/e/${idMatch[1]}`;
+      if (idMatch) {
+        const id = idMatch[1];
+        let domain = "filemoon.sx";
+        let path = "e";
+        if (s.includes("398fitus")) {
+          domain = "398fitus.com";
+          path = "tmgk";
+        }
+        if (s.includes("bysevepoin")) {
+          domain = "bysevepoin.com";
+          path = "e";
+        }
+        referer = `https://${domain}/${path}/${id}`;
+      }
     } catch (e) {
     }
-    return { "Referer": referer };
+    return {
+      "Referer": referer,
+      "x-embed-origin": "ww3.gnulahd.nu",
+      "x-embed-referer": "https://ww3.gnulahd.nu/",
+      "x-embed-parent": referer
+    };
   }
   if (s.includes("cloudwindow-route.com") || s.includes("awish.pro") || s.includes("streamwish")) {
     return { "User-Agent": UA4, "Referer": "https://streamwish.to/", "Origin": "https://streamwish.to" };
@@ -799,20 +824,20 @@ function getDirectCdnHeaders(url) {
   return null;
 }
 function applyPiping(result) {
-  if (!result || !result.url)
+  if (!result || !result.url || !result.headers)
     return result;
-  if (result.url.includes("|") || !result.headers)
-    return result;
+  let pipedUrl = result.url;
   const headers = result.headers;
+  if (pipedUrl.includes("|"))
+    return result;
   const parts = [];
-  if (headers["Referer"])
-    parts.push(`Referer=${headers["Referer"]}`);
-  if (headers["Origin"])
-    parts.push(`Origin=${headers["Origin"]}`);
-  if (headers["User-Agent"])
-    parts.push(`User-Agent=${headers["User-Agent"]}`);
+  for (const [key, value] of Object.entries(headers)) {
+    if (value) {
+      parts.push(`${key}=${value}`);
+    }
+  }
   if (parts.length > 0) {
-    result.url = `${result.url}|${parts.join("|")}`;
+    result.url = `${pipedUrl}|${parts.join("|")}`;
   }
   return result;
 }
