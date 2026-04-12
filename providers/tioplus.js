@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-12T21:36:16.026Z
+ * Generated: 2026-04-12T21:44:56.326Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1542,18 +1542,31 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       return [];
     console.log(`[TioPlus] Buscando: ${mediaTitle} (${releaseYear})`);
     try {
-      const searchQuery = encodeURIComponent(mediaTitle.split(/[:(]/)[0].trim());
-      const searchUrl = `${BASE_URL}/search/${searchQuery}`;
-      const searchResp = yield fetch(searchUrl, { headers: { "User-Agent": UA9 } });
-      if (!searchResp.ok)
-        return [];
-      const searchHtml = yield searchResp.text();
-      const itemRegex = /<article[^>]*class=['"]item[^>]*>[\s\S]*?<a[^>]*href=['"]([^'"]+)['"][\s\S]*?<h2>([\s\S]*?)<\/h2>/gi;
-      let match;
-      const candidates = [];
-      while ((match = itemRegex.exec(searchHtml)) !== null) {
-        candidates.push({ url: match[1], title: match[2].trim() });
+      const performSearch = (titleQuery) => __async(this, null, function* () {
+        const searchQuery = encodeURIComponent(titleQuery.split(/[:(]/)[0].trim());
+        const url = `${BASE_URL}/search/${searchQuery}`;
+        const searchResp = yield fetch(url, { headers: { "User-Agent": UA9 } });
+        if (!searchResp.ok)
+          return { candidates: [], url };
+        const searchHtml = yield searchResp.text();
+        const itemRegex = /<article[^>]*class=['"]item[^>]*>[\s\S]*?<a[^>]*href=['"]([^'"]+)['"][\s\S]*?<h2>([\s\S]*?)<\/h2>/gi;
+        let match;
+        const res = [];
+        while ((match = itemRegex.exec(searchHtml)) !== null) {
+          res.push({ url: match[1], title: match[2].trim() });
+        }
+        return { candidates: res, url };
+      });
+      let { candidates, url: lastSearchUrl } = yield performSearch(mediaTitle);
+      if (candidates.length === 0 && mediaTitle.includes(" ")) {
+        const rootTitle = mediaTitle.split(" ")[0];
+        console.log(`[TioPlus] Reintentando b\xFAsqueda con ra\xEDz: ${rootTitle}`);
+        const retry = yield performSearch(rootTitle);
+        candidates = retry.candidates;
+        lastSearchUrl = retry.url;
       }
+      if (candidates.length === 0)
+        return [];
       let targetUrl = null;
       let bestScore = -1;
       const keywords = mediaTitle.toLowerCase().split(/[: ]/).filter((w) => w.length > 2);
@@ -1586,7 +1599,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         finalMediaUrl = `${targetUrl}/season/${s}/episode/${e}`;
       }
       const mediaResp = yield fetch(finalMediaUrl, {
-        headers: { "User-Agent": UA9, "Referer": searchUrl }
+        headers: { "User-Agent": UA9, "Referer": lastSearchUrl }
       });
       if (!mediaResp.ok)
         return [];
