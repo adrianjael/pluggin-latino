@@ -350,7 +350,7 @@
       "id": "gnulahd",
       "name": "GnulaHD",
       "description": "Películas y series en alta definición (Latino, Castellano y Subtitulado) desde ww3.gnulahd.nu.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
