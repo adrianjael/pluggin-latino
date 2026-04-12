@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-12T19:03:16.819Z
+ * Generated: 2026-04-12T19:30:38.926Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -72,6 +72,15 @@ function getImdbIdInternal(idOrQuery, mediaType) {
 function sleep(ms) {
   return new Promise((res) => setTimeout(res, ms));
 }
+function getSlugVariants(imdbId, title) {
+  const variants = [imdbId];
+  if (title) {
+    const cleanTitle = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    if (cleanTitle)
+      variants.push(cleanTitle);
+  }
+  return [...new Set(variants)];
+}
 function getDirectStream(id, token, cookie, playerUrl) {
   return __async(this, null, function* () {
     try {
@@ -104,20 +113,6 @@ function decodeLink(encoded) {
     return null;
   }
 }
-function resolveInternal(url) {
-  return __async(this, null, function* () {
-    if (!url)
-      return null;
-    try {
-      const { data: html } = yield axios.get(url, { headers: { "User-Agent": UA }, timeout: 6e3 });
-      const m3u8Match = html.match(/file\s*:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/"file"\s*:\s*"([^"]+)"/);
-      if (m3u8Match)
-        return { url: m3u8Match[1], quality: "HD" };
-    } catch (e) {
-    }
-    return null;
-  });
-}
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
@@ -132,65 +127,71 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       return [];
     const results = [];
     const epStr = e < 10 ? `0${e}` : e;
-    const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
-    const playerUrl = `${BASE_URL}/f/${slug}`;
-    try {
-      const { data: html, headers: respHeaders } = yield axios.get(playerUrl, { headers: HEADERS });
-      const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
-      const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
-      if (tokenMatch && tokenMatch[1]) {
-        const token = tokenMatch[1];
-        const postH = __spreadProps(__spreadValues({}, HEADERS), {
-          "referer": playerUrl,
-          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-        });
-        if (cookie)
-          postH["cookie"] = cookie;
-        yield axios.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
-        yield sleep(1e3);
-        const { data: scanData } = yield axios.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
-        const servers = scanData && scanData.langs_s && scanData.langs_s.LAT || scanData && scanData.s || [];
-        for (const ser of servers.slice(0, 10)) {
-          const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
-          const direct = yield getDirectStream(id, token, cookie, playerUrl);
-          if (direct && direct.url) {
-            let finalUrl = direct.url;
-            if (direct.sig)
-              finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
-            results.push({
-              name: "SoloLatino",
-              title: `[HD] | Latino | ${name}`,
-              url: finalUrl,
-              quality: "HD",
-              headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
+    const slugVariants = getSlugVariants(imdbId, title);
+    for (const baseSlug of slugVariants) {
+      if (results.length > 0)
+        break;
+      const slug = isMovie ? baseSlug : `${baseSlug}-${s}x${epStr}`;
+      const playerUrl = `${BASE_URL}/f/${slug}`;
+      try {
+        const { data: html, headers: respHeaders } = yield axios.get(playerUrl, { headers: HEADERS, timeout: 5e3 });
+        const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
+        const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
+        if (tokenMatch && tokenMatch[1]) {
+          const token = tokenMatch[1];
+          const postH = __spreadProps(__spreadValues({}, HEADERS), {
+            "referer": playerUrl,
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+          });
+          if (cookie)
+            postH["cookie"] = cookie;
+          yield axios.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
+          yield sleep(1e3);
+          const { data: scanData } = yield axios.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
+          let servers = scanData && scanData.s || [];
+          if (scanData && scanData.langs_s) {
+            Object.keys(scanData.langs_s).forEach((k) => {
+              servers = servers.concat(scanData.langs_s[k]);
             });
           }
+          for (const ser of servers.slice(0, 10)) {
+            const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
+            const direct = yield getDirectStream(id, token, cookie, playerUrl);
+            if (direct && direct.url) {
+              let finalUrl = direct.url;
+              if (direct.sig)
+                finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
+              results.push({
+                name: "SoloLatino",
+                title: `${title} | [HD] | Latino | ${name}`,
+                // Título blindado para Nuvio
+                url: finalUrl,
+                quality: "HD",
+                headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
+              });
+            }
+          }
         }
+      } catch (e2) {
       }
-    } catch (e2) {
     }
     if (results.length === 0) {
       try {
-        const mirrorUrl = `https://embed69.org/f/${slug}`;
+        const mirrorUrl = `https://embed69.org/f/${imdbId}-${isMovie ? "" : s + "x" + epStr}`.replace(/-$/, "");
         const { data: html } = yield axios.get(mirrorUrl, { headers: { "User-Agent": UA, "Referer": "https://embed69.org/" }, timeout: 4e3 });
         const dataLinkMatch = html.match(/let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/);
         if (dataLinkMatch) {
           const dataLink = JSON.parse(dataLinkMatch[1]);
           for (const section of dataLink) {
-            if (section.video_language !== "LAT")
-              continue;
             for (const emb of section.sortedEmbeds || []) {
               const iframeUrl = decodeLink(emb.link);
               if (iframeUrl) {
-                const resolved = yield resolveInternal(iframeUrl);
-                if (resolved) {
-                  results.push({
-                    name: "SoloLatino",
-                    title: `[HD] | Latino | ${emb.servername || "Mirror"}`,
-                    url: resolved.url,
-                    quality: "HD"
-                  });
-                }
+                results.push({
+                  name: "SoloLatino",
+                  title: `${title} | [HD] | Latino | ${emb.servername || "Mirror"}`,
+                  url: iframeUrl,
+                  quality: "HD"
+                });
               }
             }
           }

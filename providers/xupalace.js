@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-12T19:03:16.823Z
+ * Generated: 2026-04-12T19:30:38.931Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1304,13 +1304,13 @@ var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 var HTML_HEADERS = {
   "User-Agent": UA9,
   "Accept": "text/html",
-  "Accept-Language": "es-MX,es;q=0.9",
-  "Connection": "keep-alive"
+  "Accept-Language": "es-MX,es;q=0.9"
 };
 function getImdbId(tmdbId, mediaType) {
   return __async(this, null, function* () {
     try {
-      const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
+      const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+      const url = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
       const { data } = yield import_axios9.default.get(url, { timeout: 5e3, headers: { "User-Agent": UA9 } });
       return data.imdb_id || null;
     } catch (e) {
@@ -1318,10 +1318,25 @@ function getImdbId(tmdbId, mediaType) {
     }
   });
 }
-function getEmbeds(imdbId, mediaType, season, episode) {
+function getXuSlugs(imdbId, title) {
+  const variants = [];
+  if (imdbId)
+    variants.push(imdbId);
+  if (title) {
+    const firstWord = title.split(" ")[0].toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (firstWord)
+      variants.push(firstWord);
+    const fullSlug = title.toUpperCase().replace(/[^A-Z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    if (fullSlug)
+      variants.push(fullSlug);
+  }
+  return [...new Set(variants)];
+}
+function getEmbeds(slug, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
-      const path = mediaType === "movie" ? `/video/${imdbId}/` : `/video/${imdbId}-${season}x${String(episode).padStart(2, "0")}/`;
+      const eStr = String(episode).padStart(2, "0");
+      const path = mediaType === "movie" ? `/video/${slug}/` : `/video/${slug}-${season}x${eStr}/`;
       const { data: html } = yield import_axios9.default.get(`${BASE_URL}${path}`, { timeout: 8e3, headers: HTML_HEADERS });
       const matches = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'[^)]+\)[^<]*data-lang="(\d+)"/g)];
       if (matches.length === 0) {
@@ -1343,47 +1358,46 @@ function getEmbeds(imdbId, mediaType, season, episode) {
     }
   });
 }
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
     const LANG_NAMES = { 0: "Latino", 1: "Espa\xF1ol", 2: "Subtitulado" };
     try {
-      const imdbId = yield getImdbId(tmdbId, mediaType);
-      if (!imdbId)
-        return [];
-      const byLang = yield getEmbeds(imdbId, mediaType, season, episode);
-      if (Object.keys(byLang).length === 0)
-        return [];
-      const allStreams = [];
-      for (const lang of [0, 1, 2]) {
-        const urls = byLang[lang];
-        if (!urls || urls.length === 0)
+      const imdbId = yield getImdbId(tmdbId.toString().split(":")[0], mediaType);
+      const slugVariants = getXuSlugs(imdbId, title);
+      let allStreams = [];
+      for (const slug of slugVariants) {
+        if (allStreams.length > 0)
+          break;
+        const byLang = yield getEmbeds(slug, mediaType, season, episode);
+        if (Object.keys(byLang).length === 0)
           continue;
-        const results = yield Promise.allSettled(urls.map((url) => __async(this, null, function* () {
-          try {
-            const result = yield resolveEmbed(url);
-            if (result && result.url) {
-              return {
-                langLabel: LANG_NAMES[lang],
-                serverLabel: result.serverName || "Server",
-                url: result.url,
-                quality: result.quality || "1080p",
-                headers: result.headers || {}
-              };
+        for (const lang of [0, 1, 2]) {
+          const urls = byLang[lang];
+          if (!urls || urls.length === 0)
+            continue;
+          for (const url of urls) {
+            try {
+              const result = yield resolveEmbed(url);
+              if (result && result.url) {
+                allStreams.push({
+                  langLabel: LANG_NAMES[lang],
+                  serverLabel: result.serverName || "XuPalace",
+                  title: `${title} | [HD] | Latino | ${result.serverName || "XuPalace"}`,
+                  // Blindado para Nuvio
+                  url: result.url,
+                  quality: result.quality || "HD",
+                  headers: result.headers || {}
+                });
+              }
+            } catch (e) {
             }
-          } catch (e) {
           }
-          return null;
-        })));
-        results.forEach((r) => {
-          if (r.status === "fulfilled" && r.value)
-            allStreams.push(r.value);
-        });
+        }
       }
       return yield (0, import_engine.finalizeStreams)(allStreams, "XuPalace");
     } catch (e) {
-      console.log(`[XuPalace] Error: ${e.message}`);
       return [];
     }
   });
