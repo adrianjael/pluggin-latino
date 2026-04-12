@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-12T23:55:02.047Z
+ * Generated: 2026-04-12T23:57:44.066Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -813,12 +813,11 @@ function getDirectCdnHeaders(url) {
   return null;
 }
 function applyPiping(result) {
-  if (!result || !result.url || !result.headers)
+  if (!result || !result.url)
     return result;
-  let pipedUrl = result.url;
+  if (result.url.includes("|") || !result.headers)
+    return result;
   const headers = result.headers;
-  if (pipedUrl.includes("|"))
-    return result;
   const parts = [];
   for (const [key, value] of Object.entries(headers)) {
     if (value) {
@@ -826,7 +825,7 @@ function applyPiping(result) {
     }
   }
   if (parts.length > 0) {
-    result.url = `${pipedUrl}|${parts.join("|")}`;
+    result.url = `${result.url}|${parts.join("|")}`;
   }
   return result;
 }
@@ -852,13 +851,23 @@ function resolveEmbed(url) {
       });
     }
     if (s.includes("voe") || s.includes("jessicaclearout")) {
-      return applyPiping(yield resolve(targetUrl));
+      const res = yield resolve(targetUrl);
+      return res ? applyPiping(res) : null;
     }
     if (s.includes("hlswish") || s.includes("streamwish") || s.includes("hglamioz") || s.includes("embedwish") || s.includes("awish") || s.includes("dwish")) {
-      return applyPiping(yield resolve2(targetUrl));
+      const res = yield resolve2(targetUrl);
+      return res ? applyPiping(res) : null;
     }
-    if (s.includes("filemoon") || s.includes("398fitus") || s.includes("r66nv9ed")) {
-      return applyPiping(yield resolve3(targetUrl));
+    if (s.includes("filemoon") || s.includes("398fitus") || s.includes("r66nv9ed") || s.includes("bysevepoin")) {
+      const res = yield resolve3(targetUrl);
+      return res ? applyPiping(res) : null;
+    }
+    if (s.includes(".m3u8") || s.includes(".mp4") || s.includes(".txt")) {
+      return applyPiping({
+        url: targetUrl,
+        quality: "HD",
+        headers: { "User-Agent": UA4, "Referer": targetUrl }
+      });
     }
     return null;
   });
