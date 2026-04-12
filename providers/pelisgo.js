@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-12T17:25:35.467Z
+ * Generated: 2026-04-12T17:31:48.708Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1274,8 +1274,17 @@ function preProcessUrl(url) {
 function getDirectCdnHeaders(url) {
   const s = url.toLowerCase();
   const UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-  if (s.includes("acek-cdn.com") || s.includes("minochinos.com") || s.includes("masukestin.com")) {
-    return { "User-Agent": UA10, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
+  if (s.includes("acek-cdn.com") || s.includes("minochinos.com") || s.includes("masukestin.com") || s.includes("vidhide")) {
+    try {
+      const origin = new URL(url).origin + "/";
+      return {
+        "User-Agent": UA10,
+        "Referer": origin,
+        "Origin": origin.replace(/\/$/, "")
+      };
+    } catch (e) {
+      return { "User-Agent": UA10, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
+    }
   }
   if (s.includes("r66nv9ed.com") || s.includes("filemoon")) {
     return { "User-Agent": UA10, "Referer": "https://arbitrarydecisions.com/", "Origin": "https://arbitrarydecisions.com" };
