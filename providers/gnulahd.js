@@ -1,6 +1,6 @@
 /**
  * gnulahd - Built from src/gnulahd/
- * Generated: 2026-04-12T23:13:39.096Z
+ * Generated: 2026-04-12T23:16:33.619Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1572,13 +1572,11 @@ function extractStreamsFromPage(html, resolvers) {
         if (!langObj)
           continue;
         const langName = (langObj.label || langObj.name || "").toLowerCase();
-        let lang = "LAT";
+        let lang = null;
         if (langName.includes("latino"))
           lang = "LAT";
-        else if (langName.includes("castellano") || langName.includes("espa\xF1ol"))
-          lang = "ESP";
-        else if (langName.includes("subtitulado"))
-          lang = "SUB";
+        if (!lang)
+          continue;
         const serverList = langObj.servers || langObj.data || [];
         for (const player of serverList) {
           let serverName = (player.title || player.name || "GNULA").toUpperCase();
