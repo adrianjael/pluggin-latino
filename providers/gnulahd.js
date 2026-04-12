@@ -1,6 +1,6 @@
 /**
  * gnulahd - Built from src/gnulahd/
- * Generated: 2026-04-12T23:21:33.367Z
+ * Generated: 2026-04-12T23:26:14.148Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1305,8 +1305,12 @@ function getDirectCdnHeaders(url) {
       return { "User-Agent": UA9, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
     }
   }
-  if (s.includes("r66nv9ed.com") || s.includes("filemoon")) {
-    return { "User-Agent": UA9, "Referer": "https://arbitrarydecisions.com/", "Origin": "https://arbitrarydecisions.com" };
+  if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("398fitus.com")) {
+    return {
+      "User-Agent": UA9,
+      "Referer": "https://arbitrarydecisions.com/",
+      "Origin": "https://arbitrarydecisions.com"
+    };
   }
   if (s.includes("cloudwindow-route.com") || s.includes("awish.pro") || s.includes("streamwish")) {
     return { "User-Agent": UA9, "Referer": "https://streamwish.to/", "Origin": "https://streamwish.to" };
@@ -1554,7 +1558,9 @@ function resolveByseInternal(url) {
             const resArray = Array.isArray(resolved) ? resolved : [resolved];
             return resArray.map((s) => __spreadProps(__spreadValues({}, s), {
               name: s.serverName || "Byse (Premium)",
-              quality: s.quality || "HD"
+              quality: s.quality || "HD",
+              headers: s.headers || {}
+              // Aseguramos que los headers viajen
             }));
           }
         }
