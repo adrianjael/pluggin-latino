@@ -1,6 +1,6 @@
 /**
  * gnulahd - Built from src/gnulahd/
- * Generated: 2026-04-12T23:27:34.237Z
+ * Generated: 2026-04-12T23:29:47.325Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -612,8 +612,8 @@ function resolve2(url) {
             serverName: "Filemoon",
             headers: {
               "User-Agent": UA2,
-              "Referer": "https://arbitrarydecisions.com/",
-              "Origin": "https://arbitrarydecisions.com"
+              "Referer": "https://filemoon.sx/",
+              "Origin": "https://filemoon.sx"
             }
           };
         }
@@ -1308,8 +1308,8 @@ function getDirectCdnHeaders(url) {
   if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("398fitus.com")) {
     return {
       "User-Agent": UA9,
-      "Referer": "https://arbitrarydecisions.com/",
-      "Origin": "https://arbitrarydecisions.com"
+      "Referer": "https://filemoon.sx/",
+      "Origin": "https://filemoon.sx"
     };
   }
   if (s.includes("cloudwindow-route.com") || s.includes("awish.pro") || s.includes("streamwish")) {
