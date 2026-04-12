@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-12T20:17:08.688Z
+ * Generated: 2026-04-12T20:28:35.291Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -65,7 +65,7 @@ var __async = (__this, __arguments, generator) => {
 
 // src/utils/tmdb.js
 var require_tmdb = __commonJS({
-  "src/utils/tmdb.js"(exports, module2) {
+  "src/utils/tmdb.js"(exports2, module2) {
     var axios2 = require("axios");
     var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
     var titleCache = /* @__PURE__ */ new Map();
@@ -244,7 +244,7 @@ var init_sorting = __esm({
 
 // src/utils/engine.js
 var require_engine = __commonJS({
-  "src/utils/engine.js"(exports, module2) {
+  "src/utils/engine.js"(exports2, module2) {
     var { validateStream: validateStream2 } = (init_m3u8(), __toCommonJS(m3u8_exports));
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
@@ -288,7 +288,7 @@ var require_engine = __commonJS({
       }
       return server;
     }
-    function finalizeStreams(streams, providerName, mediaTitle) {
+    function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
@@ -338,18 +338,14 @@ var require_engine = __commonJS({
         return finalized;
       });
     }
-    module2.exports = { finalizeStreams };
+    module2.exports = { finalizeStreams: finalizeStreams2 };
   }
 });
 
 // src/sololatino/index.js
-var sololatino_exports = {};
-__export(sololatino_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(sololatino_exports);
 var axios = require("axios");
 var { getTmdbTitle } = require_tmdb();
+var { finalizeStreams } = require_engine();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
@@ -465,7 +461,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }
     } catch (e2) {
     }
-    const { finalizeStreams } = require_engine();
     return yield finalizeStreams(results, "SoloLatino", mediaTitle);
   });
 }

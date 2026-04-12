@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-12T20:17:08.613Z
+ * Generated: 2026-04-12T20:28:35.214Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -206,7 +206,7 @@ var init_sorting = __esm({
 
 // src/utils/engine.js
 var require_engine = __commonJS({
-  "src/utils/engine.js"(exports, module2) {
+  "src/utils/engine.js"(exports2, module2) {
     var { validateStream: validateStream2 } = (init_m3u8(), __toCommonJS(m3u8_exports));
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
@@ -304,21 +304,7 @@ var require_engine = __commonJS({
   }
 });
 
-// src/fuegocine/index.js
-var fuegocine_exports = {};
-__export(fuegocine_exports, {
-  getStreams: () => getStreams
-});
-module.exports = __toCommonJS(fuegocine_exports);
-var import_engine = __toESM(require_engine());
-
-// src/utils/resolvers.js
-var import_axios8 = __toESM(require("axios"));
-
 // src/utils/http.js
-var import_axios = __toESM(require("axios"));
-var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-var MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
 function request(url, options) {
   return __async(this, null, function* () {
     var opt = options || {};
@@ -361,6 +347,14 @@ function fetchJson(url, options) {
     return yield res.json();
   });
 }
+var import_axios, DEFAULT_UA, MOBILE_UA;
+var init_http = __esm({
+  "src/utils/http.js"() {
+    import_axios = __toESM(require("axios"));
+    DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
+  }
+});
 
 // src/utils/string.js
 function base64Decode(input) {
@@ -394,6 +388,10 @@ function utf8Decode(bytes) {
   }
   return out;
 }
+var init_string = __esm({
+  "src/utils/string.js"() {
+  }
+});
 
 // src/resolvers/voe.js
 function resolve(url) {
@@ -483,9 +481,14 @@ function resolve(url) {
     }
   });
 }
+var init_voe = __esm({
+  "src/resolvers/voe.js"() {
+    init_http();
+    init_string();
+  }
+});
 
 // src/utils/aes-gcm.js
-var import_crypto_js = __toESM(require("crypto-js"));
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
     const tagSize = 16;
@@ -510,9 +513,14 @@ function decryptGCM(key, iv, ciphertextWithTag) {
     return null;
   }
 }
+var import_crypto_js;
+var init_aes_gcm = __esm({
+  "src/utils/aes-gcm.js"() {
+    import_crypto_js = __toESM(require("crypto-js"));
+  }
+});
 
 // src/resolvers/filemoon.js
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function base64UrlDecode(input) {
   let s = input.replace(/-/g, "+").replace(/_/g, "/");
   while (s.length % 4)
@@ -617,10 +625,16 @@ function resolve2(url) {
     }
   });
 }
+var UA2;
+var init_filemoon = __esm({
+  "src/resolvers/filemoon.js"() {
+    init_aes_gcm();
+    init_string();
+    UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+  }
+});
 
 // src/resolvers/hlswish.js
-var import_axios2 = __toESM(require("axios"));
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackEval(payload, radix, symtab) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const unbase = (str) => {
@@ -720,10 +734,15 @@ function resolve3(url) {
     }
   });
 }
+var import_axios2, UA3;
+var init_hlswish = __esm({
+  "src/resolvers/hlswish.js"() {
+    import_axios2 = __toESM(require("axios"));
+    UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+  }
+});
 
 // src/resolvers/vidhide.js
-var import_axios3 = __toESM(require("axios"));
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function unpackVidHide(script) {
   try {
     const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
@@ -808,6 +827,13 @@ function resolve4(url) {
     }
   });
 }
+var import_axios3, UA4;
+var init_vidhide = __esm({
+  "src/resolvers/vidhide.js"() {
+    import_axios3 = __toESM(require("axios"));
+    UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/vimeos.js
 function resolve5(embedUrl) {
@@ -894,13 +920,13 @@ function resolve5(embedUrl) {
     }
   });
 }
-
-// src/resolvers/goodstream.js
-var import_axios5 = __toESM(require("axios"));
+var init_vimeos = __esm({
+  "src/resolvers/vimeos.js"() {
+    init_http();
+  }
+});
 
 // src/resolvers/quality.js
-var import_axios4 = __toESM(require("axios"));
-var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function detectQuality(_0) {
   return __async(this, arguments, function* (url, headers = {}) {
     try {
@@ -944,9 +970,15 @@ function detectQuality(_0) {
     }
   });
 }
+var import_axios4, UA5;
+var init_quality = __esm({
+  "src/resolvers/quality.js"() {
+    import_axios4 = __toESM(require("axios"));
+    UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/goodstream.js
-var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve6(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -985,6 +1017,14 @@ function resolve6(embedUrl) {
     }
   });
 }
+var import_axios5, UA6;
+var init_goodstream = __esm({
+  "src/resolvers/goodstream.js"() {
+    import_axios5 = __toESM(require("axios"));
+    init_quality();
+    UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/fastream.js
 function unpackPacker(data) {
@@ -1040,10 +1080,14 @@ function resolve7(url) {
     }
   });
 }
+var init_fastream = __esm({
+  "src/resolvers/fastream.js"() {
+    init_http();
+    init_quality();
+  }
+});
 
 // src/resolvers/okru.js
-var import_axios6 = __toESM(require("axios"));
-var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve8(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -1087,10 +1131,15 @@ function resolve8(embedUrl) {
     }
   });
 }
+var import_axios6, UA7;
+var init_okru = __esm({
+  "src/resolvers/okru.js"() {
+    import_axios6 = __toESM(require("axios"));
+    UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/turbovid.js
-var import_axios7 = __toESM(require("axios"));
-var UA8 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 function resolve9(embedUrl) {
   return __async(this, null, function* () {
     try {
@@ -1115,6 +1164,13 @@ function resolve9(embedUrl) {
     }
   });
 }
+var import_axios7, UA8;
+var init_turbovid = __esm({
+  "src/resolvers/turbovid.js"() {
+    import_axios7 = __toESM(require("axios"));
+    UA8 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
 
 // src/resolvers/pixeldrain.js
 function resolve10(embedUrl) {
@@ -1143,6 +1199,10 @@ function resolve10(embedUrl) {
     }
   });
 }
+var init_pixeldrain = __esm({
+  "src/resolvers/pixeldrain.js"() {
+  }
+});
 
 // src/resolvers/buzzheavier.js
 function resolve11(embedUrl) {
@@ -1188,15 +1248,17 @@ function resolve11(embedUrl) {
     }
   });
 }
+var init_buzzheavier = __esm({
+  "src/resolvers/buzzheavier.js"() {
+    init_http();
+  }
+});
 
 // src/utils/resolvers.js
-var MIRROR_MAP = {
-  "minochinos.com": "vidhidepro.com/v/",
-  "hglink.to": "streamwish.to/e/",
-  "bysedikamoum.com": "filemoon.sx/e/",
-  "hglamioz.com": "streamwish.to/e/",
-  "embedwish.com": "streamwish.to/e/"
-};
+var resolvers_exports = {};
+__export(resolvers_exports, {
+  resolveEmbed: () => resolveEmbed
+});
 function preProcessUrl(url) {
   return __async(this, null, function* () {
     if (!url)
@@ -1301,30 +1363,91 @@ function resolveEmbed(url) {
     return null;
   });
 }
+var import_axios8, MIRROR_MAP;
+var init_resolvers = __esm({
+  "src/utils/resolvers.js"() {
+    import_axios8 = __toESM(require("axios"));
+    init_voe();
+    init_filemoon();
+    init_hlswish();
+    init_vidhide();
+    init_vimeos();
+    init_goodstream();
+    init_fastream();
+    init_okru();
+    init_turbovid();
+    init_pixeldrain();
+    init_buzzheavier();
+    MIRROR_MAP = {
+      "minochinos.com": "vidhidepro.com/v/",
+      "hglink.to": "streamwish.to/e/",
+      "bysedikamoum.com": "filemoon.sx/e/",
+      "hglamioz.com": "streamwish.to/e/",
+      "embedwish.com": "streamwish.to/e/"
+    };
+  }
+});
+
+// src/utils/tmdb.js
+var require_tmdb = __commonJS({
+  "src/utils/tmdb.js"(exports2, module2) {
+    var axios10 = require("axios");
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    var titleCache = /* @__PURE__ */ new Map();
+    function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return null;
+        const cleanId = tmdbId.toString().split(":")[0];
+        const cacheKey = `${cleanId}_${mediaType}`;
+        if (titleCache.has(cacheKey))
+          return titleCache.get(cacheKey);
+        try {
+          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+          let url;
+          if (cleanId.startsWith("tt")) {
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+            const { data } = yield axios10.get(url, { timeout: 6e3 });
+            const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
+            const title = result ? result.name || result.title : null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          } else {
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
+            const { data } = yield axios10.get(url, { timeout: 6e3 });
+            const title = data.name || data.title || null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          }
+        } catch (e) {
+          if (retries > 0) {
+            console.log(`[TMDB-Rescue] Retrying ${tmdbId} (${retries} left)...`);
+            yield new Promise((r) => setTimeout(r, 1e3));
+            return getTmdbTitle2(tmdbId, mediaType, retries - 1);
+          }
+          console.log(`[TMDB-Rescue] Failed to fetch title for ${tmdbId}: ${e.message}`);
+          return null;
+        }
+      });
+    }
+    module2.exports = { getTmdbTitle: getTmdbTitle2 };
+  }
+});
 
 // src/fuegocine/index.js
+var axios9 = require("axios");
+var { finalizeStreams } = require_engine();
+var { resolveEmbed: resolveEmbed2 } = (init_resolvers(), __toCommonJS(resolvers_exports));
+var { getTmdbTitle } = require_tmdb();
 var BASE_URL = "https://www.fuegocine.com";
-var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var SEARCH_BASE = `${BASE_URL}/feeds/posts/default?alt=json&max-results=10&q=`;
 var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var DEFAULT_HEADERS = {
   "User-Agent": UA9,
   "Referer": `${BASE_URL}/`
 };
-function getTmdbInfo(tmdbId, mediaType) {
-  return __async(this, null, function* () {
-    try {
-      const type = mediaType === "movie" ? "movie" : "tv";
-      const { data } = yield axios.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`, { timeout: 5e3 });
-      const title = type === "movie" ? data.title || data.original_title : data.name || data.original_name;
-      const originalTitle = type === "movie" ? data.original_title || data.title : data.original_name || data.name;
-      const year = (type === "movie" ? data.release_date || "" : data.first_air_date || "").slice(0, 4);
-      return { title, originalTitle, year };
-    } catch (e) {
-      return { title: null };
-    }
-  });
-}
 function normalizeTitle(t) {
   return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -1376,15 +1499,18 @@ function extractLinks(html) {
   }
   return links;
 }
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     var _a, _b, _c, _d;
     try {
-      const { title, originalTitle, year } = yield getTmdbInfo(tmdbId, mediaType);
-      if (!title)
+      let mediaTitle = title;
+      if (!mediaTitle && tmdbId) {
+        mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
+      }
+      if (!mediaTitle)
         return [];
-      const searchTitle = season ? `${title} ${season}x${episode}` : title;
-      const { data: searchJson } = yield axios.get(SEARCH_BASE + encodeURIComponent(searchTitle), { timeout: 8e3 });
+      const searchTitle = season ? `${mediaTitle} ${season}x${episode}` : mediaTitle;
+      const { data: searchJson } = yield axios9.get(SEARCH_BASE + encodeURIComponent(searchTitle), { timeout: 8e3 });
       const entries = ((_a = searchJson.feed) == null ? void 0 : _a.entry) || [];
       const streams = [];
       for (const entry of entries) {
@@ -1393,13 +1519,13 @@ function getStreams(tmdbId, mediaType, season, episode) {
         if (!entryUrl)
           continue;
         const normEntry = normalizeTitle(entryTitle);
-        const normTitle = normalizeTitle(title);
+        const normTitle = normalizeTitle(mediaTitle);
         if (!normEntry.includes(normTitle))
           continue;
-        const { data: html } = yield axios.get(entryUrl, { timeout: 8e3 });
+        const { data: html } = yield axios9.get(entryUrl, { timeout: 8e3 });
         const links = extractLinks(html);
         for (const link of links) {
-          const result = yield resolveEmbed(link.url);
+          const result = yield resolveEmbed2(link.url);
           if (result && result.url) {
             streams.push({
               langLabel: link.lang,
@@ -1411,7 +1537,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
           }
         }
       }
-      return yield (0, import_engine.finalizeStreams)(streams, "FuegoCine");
+      return yield finalizeStreams(streams, "FuegoCine", mediaTitle);
     } catch (e) {
       console.error("[FuegoCine] error:", e.message);
       return [];

@@ -1,15 +1,13 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-12T20:17:08.585Z
+ * Generated: 2026-04-12T20:28:35.187Z
  */
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -43,14 +41,6 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
@@ -206,7 +196,7 @@ var init_sorting = __esm({
 
 // src/utils/engine.js
 var require_engine = __commonJS({
-  "src/utils/engine.js"(exports, module2) {
+  "src/utils/engine.js"(exports2, module2) {
     var { validateStream: validateStream2 } = (init_m3u8(), __toCommonJS(m3u8_exports));
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
@@ -304,17 +294,60 @@ var require_engine = __commonJS({
   }
 });
 
-// src/cinemacity/index.js
-var cinemacity_exports = {};
-__export(cinemacity_exports, {
-  getStreams: () => getStreams
+// src/utils/tmdb.js
+var require_tmdb = __commonJS({
+  "src/utils/tmdb.js"(exports2, module2) {
+    var axios2 = require("axios");
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    var titleCache = /* @__PURE__ */ new Map();
+    function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return null;
+        const cleanId = tmdbId.toString().split(":")[0];
+        const cacheKey = `${cleanId}_${mediaType}`;
+        if (titleCache.has(cacheKey))
+          return titleCache.get(cacheKey);
+        try {
+          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+          let url;
+          if (cleanId.startsWith("tt")) {
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+            const { data } = yield axios2.get(url, { timeout: 6e3 });
+            const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
+            const title = result ? result.name || result.title : null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          } else {
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
+            const { data } = yield axios2.get(url, { timeout: 6e3 });
+            const title = data.name || data.title || null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          }
+        } catch (e) {
+          if (retries > 0) {
+            console.log(`[TMDB-Rescue] Retrying ${tmdbId} (${retries} left)...`);
+            yield new Promise((r) => setTimeout(r, 1e3));
+            return getTmdbTitle2(tmdbId, mediaType, retries - 1);
+          }
+          console.log(`[TMDB-Rescue] Failed to fetch title for ${tmdbId}: ${e.message}`);
+          return null;
+        }
+      });
+    }
+    module2.exports = { getTmdbTitle: getTmdbTitle2 };
+  }
 });
-module.exports = __toCommonJS(cinemacity_exports);
-var import_axios = __toESM(require("axios"));
-var cheerio = __toESM(require("cheerio"));
-var import_engine = __toESM(require_engine());
+
+// src/cinemacity/index.js
+var axios = require("axios");
+var cheerio = require("cheerio");
+var { finalizeStreams } = require_engine();
+var { getTmdbTitle } = require_tmdb();
 var MAIN_URL = "https://cinemacity.cc";
-var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var HEADERS = {
   "User-Agent": UA2,
@@ -327,43 +360,32 @@ function normalizeTitle(t) {
 function atobPolyfill(str) {
   return Buffer.from(str, "base64").toString("binary");
 }
-function getTmdbInfo(tmdbId, mediaType) {
-  return __async(this, null, function* () {
-    try {
-      const type = mediaType === "movie" ? "movie" : "tv";
-      const { data } = yield import_axios.default.get(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`);
-      return {
-        title: type === "movie" ? data.title : data.name,
-        year: (type === "movie" ? data.release_date || "" : data.first_air_date || "").slice(0, 4)
-      };
-    } catch (e) {
-      return { title: null };
-    }
-  });
-}
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     var _a;
     try {
-      const { title, year } = yield getTmdbInfo(tmdbId, mediaType);
-      if (!title)
+      let mediaTitle = title;
+      if (!mediaTitle && tmdbId) {
+        mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
+      }
+      if (!mediaTitle)
         return [];
-      const searchUrl = `${MAIN_URL}/index.php?do=search&subaction=search&story=${encodeURIComponent(title)}`;
-      const { data: searchHtml } = yield import_axios.default.get(searchUrl, { headers: HEADERS });
+      const searchUrl = `${MAIN_URL}/index.php?do=search&subaction=search&story=${encodeURIComponent(mediaTitle)}`;
+      const { data: searchHtml } = yield axios.get(searchUrl, { headers: HEADERS });
       const $search = cheerio.load(searchHtml);
       let mediaUrl = null;
       $search("div.dar-short_item").each((i, el) => {
         const anchor = $search(el).find("a").first();
         const href = anchor.attr("href");
         const entryText = anchor.text().trim();
-        if (href && (normalizeTitle(entryText).includes(normalizeTitle(title)) || entryText.includes(year))) {
+        if (href && normalizeTitle(entryText).includes(normalizeTitle(mediaTitle))) {
           mediaUrl = href;
           return false;
         }
       });
       if (!mediaUrl)
         return [];
-      const { data: pageHtml } = yield import_axios.default.get(mediaUrl, { headers: HEADERS });
+      const { data: pageHtml } = yield axios.get(mediaUrl, { headers: HEADERS });
       const $page = cheerio.load(pageHtml);
       let fileData = null;
       $page("script").each((i, el) => {
@@ -419,7 +441,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
         quality: s.q,
         headers: HEADERS
       }));
-      return yield (0, import_engine.finalizeStreams)(standardStreams, "CinemaCity");
+      return yield finalizeStreams(standardStreams, "CinemaCity", mediaTitle);
     } catch (e) {
       console.error("[CinemaCity] error:", e.message);
       return [];
