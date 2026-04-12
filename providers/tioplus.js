@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-12T21:44:56.326Z
+ * Generated: 2026-04-12T22:27:29.231Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1545,14 +1545,25 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const performSearch = (titleQuery) => __async(this, null, function* () {
         const searchQuery = encodeURIComponent(titleQuery.split(/[:(]/)[0].trim());
         const url = `${BASE_URL}/search/${searchQuery}`;
-        const searchResp = yield fetch(url, { headers: { "User-Agent": UA9 } });
-        if (!searchResp.ok)
+        let html = "";
+        try {
+          if (spawnSync && typeof process !== "undefined") {
+            const args = ["-s", "-k", "--http1.1", "-A", UA9, url];
+            const result = spawnSync("curl.exe", args);
+            html = result.stdout ? result.stdout.toString() : "";
+          } else {
+            const response = yield fetch(url, { headers: { "User-Agent": UA9 } });
+            if (response.ok)
+              html = yield response.text();
+          }
+        } catch (e) {
+          console.log(`[TioPlus] Error en b\xFAsqueda de ${titleQuery}: ${e.message}`);
           return { candidates: [], url };
-        const searchHtml = yield searchResp.text();
+        }
         const itemRegex = /<article[^>]*class=['"]item[^>]*>[\s\S]*?<a[^>]*href=['"]([^'"]+)['"][\s\S]*?<h2>([\s\S]*?)<\/h2>/gi;
         let match;
         const res = [];
-        while ((match = itemRegex.exec(searchHtml)) !== null) {
+        while ((match = itemRegex.exec(html)) !== null) {
           res.push({ url: match[1], title: match[2].trim() });
         }
         return { candidates: res, url };
@@ -1573,6 +1584,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       for (const cand of candidates) {
         const candTitle = cand.title.toLowerCase();
         let score = 0;
+        if (keywords.length > 0 && candTitle.startsWith(keywords[0]))
+          score += 10;
         keywords.forEach((word) => {
           if (candTitle.includes(word))
             score += 5;
@@ -1609,22 +1622,24 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const encodes = [];
       while ((sMatch = serverRegex.exec(mediaHtml)) !== null) {
         const enc = sMatch[1];
-        const serverName = sMatch[2].split("-")[0].trim();
+        const rawServerName = sMatch[2].split("-")[0].trim();
+        if (rawServerName !== "Earnvids" && rawServerName !== "Plus")
+          continue;
         let lang = "LAT";
-        if (mediaHtml.includes("audio Latino"))
+        if (mediaHtml.includes("audio Latino") || mediaHtml.includes("Espa\xF1ol Latino"))
           lang = "LAT";
-        else if (mediaHtml.includes("audio Castellano"))
+        else if (mediaHtml.includes("audio Castellano") || mediaHtml.includes("Espa\xF1ol Espa\xF1a"))
           lang = "ESP";
         else if (mediaHtml.includes("subtulada") || mediaHtml.includes("Subtitu"))
           lang = "SUB";
-        encodes.push({ enc, serverName, lang });
+        encodes.push({ enc, serverName: rawServerName, lang });
       }
       if (encodes.length === 0)
         return [];
       const resolvedStreams = [];
       for (const item of encodes) {
         try {
-          const delay = Math.floor(Math.random() * 2e3) + 2e3;
+          const delay = Math.floor(Math.random() * 1e3) + 1e3;
           yield new Promise((r) => setTimeout(r, delay));
           const realEmbedUrl = yield getRedirectUrl(item.enc, finalMediaUrl);
           if (realEmbedUrl && realEmbedUrl.startsWith("http")) {
