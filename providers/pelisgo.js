@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-12T23:29:47.353Z
+ * Generated: 2026-04-12T23:36:07.110Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -695,8 +695,8 @@ function resolve2(url) {
               serverName: "Filemoon",
               headers: {
                 "User-Agent": UA2,
-                "Referer": "https://arbitrarydecisions.com/",
-                "Origin": "https://arbitrarydecisions.com"
+                "Referer": url,
+                "Origin": new URL(url).origin
               }
             };
           }
@@ -721,8 +721,8 @@ function resolve2(url) {
             serverName: "Filemoon",
             headers: {
               "User-Agent": UA2,
-              "Referer": "https://filemoon.sx/",
-              "Origin": "https://filemoon.sx"
+              "Referer": url,
+              "Origin": new URL(url).origin
             }
           };
         }

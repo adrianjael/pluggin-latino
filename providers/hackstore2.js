@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-12T23:29:47.335Z
+ * Generated: 2026-04-12T23:36:07.091Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -487,8 +487,8 @@ function resolve2(url) {
               serverName: "Filemoon",
               headers: {
                 "User-Agent": UA,
-                "Referer": "https://arbitrarydecisions.com/",
-                "Origin": "https://arbitrarydecisions.com"
+                "Referer": url,
+                "Origin": new URL(url).origin
               }
             };
           }
@@ -513,8 +513,8 @@ function resolve2(url) {
             serverName: "Filemoon",
             headers: {
               "User-Agent": UA,
-              "Referer": "https://filemoon.sx/",
-              "Origin": "https://filemoon.sx"
+              "Referer": url,
+              "Origin": new URL(url).origin
             }
           };
         }
