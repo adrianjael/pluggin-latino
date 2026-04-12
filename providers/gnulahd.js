@@ -1,6 +1,6 @@
 /**
  * gnulahd - Built from src/gnulahd/
- * Generated: 2026-04-12T23:16:33.619Z
+ * Generated: 2026-04-12T23:21:33.367Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1382,6 +1382,7 @@ var init_resolvers = __esm({
       "minochinos.com": "vidhidepro.com/v/",
       "hglink.to": "streamwish.to/e/",
       "bysedikamoum.com": "filemoon.sx/e/",
+      "398fitus.com": "filemoon.sx/e/",
       "hglamioz.com": "streamwish.to/e/",
       "embedwish.com": "streamwish.to/e/",
       "vidhideplus.com": "vidhidepro.com/v/",
@@ -1548,11 +1549,14 @@ function resolveByseInternal(url) {
       if (jsonStr) {
         const data = JSON.parse(jsonStr);
         if (data && data.embed_frame_url) {
-          return [{
-            url: data.embed_frame_url,
-            name: "Byse (Premium)",
-            quality: "HD"
-          }];
+          const resolved = yield resolveEmbed2(data.embed_frame_url);
+          if (resolved) {
+            const resArray = Array.isArray(resolved) ? resolved : [resolved];
+            return resArray.map((s) => __spreadProps(__spreadValues({}, s), {
+              name: s.serverName || "Byse (Premium)",
+              quality: s.quality || "HD"
+            }));
+          }
         }
       }
     } catch (e) {
