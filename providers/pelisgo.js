@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-12T19:30:38.880Z
+ * Generated: 2026-04-12T19:37:37.043Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -250,11 +250,11 @@ var require_engine = __commonJS({
       }
       return server;
     }
-    function finalizeStreams2(streams, providerName) {
+    function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Processing ${streams.length} streams for ${providerName}...`);
+        console.log(`[Engine] Processing ${streams.length} streams for ${providerName} (${mediaTitle || "Unknown"})...`);
         let validated = streams;
         try {
           const results = yield Promise.allSettled(
@@ -264,28 +264,20 @@ var require_engine = __commonJS({
             (r, i) => r.status === "fulfilled" ? r.value : streams[i]
           );
         } catch (e) {
-          console.error(`[Engine] Validation error: ${e.message}`);
         }
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          if (lang !== "Latino")
+          if (lang !== "Latino" && lang !== "Espa\xF1ol" && lang !== "Subtitulado")
             return null;
-          let q = "";
-          if (s.siteQuality && (s.siteQuality === "CAM" || s.siteQuality === "TS")) {
-            q = s.siteQuality;
-          } else if (s.verified) {
-            q = s.quality;
-          } else if (s.siteQuality) {
-            q = s.siteQuality;
-          }
+          let q = s.verified ? s.quality : s.siteQuality || "HD";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
-          const check = s.verified && q !== "CAM" && q !== "TS" ? " \u2713" : "";
-          const displayQ = !q && s.verified ? "HD" : q;
-          const qualityPrefix = displayQ ? `[${displayQ}${check}] | ` : "";
+          const check = s.verified ? " \u2713" : "";
+          const prefix = mediaTitle ? `${mediaTitle} | ` : "";
+          const qualityPart = q ? `[${q}${check}] | ` : "";
           return {
             name: providerName || "Plugin Latino",
-            title: `${qualityPrefix}${lang} | ${server}`,
+            title: `${prefix}${qualityPart}${lang} | ${server}`,
             url: s.url,
             quality: q || "",
             headers: s.headers || {}
