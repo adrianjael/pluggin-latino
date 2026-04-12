@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-12T19:37:37.089Z
+ * Generated: 2026-04-12T19:41:41.057Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -365,12 +365,20 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         yield axios.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
         yield sleep(1e3);
         const { data: scanData } = yield axios.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
-        let servers = scanData && scanData.s || [];
+        const uniqueServers = /* @__PURE__ */ new Map();
+        (scanData && scanData.s || []).forEach((ser) => {
+          if (ser[1])
+            uniqueServers.set(ser[1], ser);
+        });
         if (scanData && scanData.langs_s) {
           Object.keys(scanData.langs_s).forEach((k) => {
-            servers = servers.concat(scanData.langs_s[k]);
+            (scanData.langs_s[k] || []).forEach((ser) => {
+              if (ser[1])
+                uniqueServers.set(ser[1], ser);
+            });
           });
         }
+        const servers = Array.from(uniqueServers.values());
         for (const ser of servers.slice(0, 10)) {
           const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
           const direct = yield getDirectStream(id, token, cookie, playerUrl);
