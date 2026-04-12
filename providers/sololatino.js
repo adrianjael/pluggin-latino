@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-12T19:44:45.915Z
+ * Generated: 2026-04-12T20:11:18.361Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -62,6 +62,54 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
+
+// src/utils/tmdb.js
+var require_tmdb = __commonJS({
+  "src/utils/tmdb.js"(exports, module2) {
+    var axios2 = require("axios");
+    var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
+    var titleCache = /* @__PURE__ */ new Map();
+    function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return null;
+        const cleanId = tmdbId.toString().split(":")[0];
+        const cacheKey = `${cleanId}_${mediaType}`;
+        if (titleCache.has(cacheKey))
+          return titleCache.get(cacheKey);
+        try {
+          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+          let url;
+          if (cleanId.startsWith("tt")) {
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id`;
+            const { data } = yield axios2.get(url, { timeout: 6e3 });
+            const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
+            const title = result ? result.name || result.title : null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          } else {
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}`;
+            const { data } = yield axios2.get(url, { timeout: 6e3 });
+            const title = data.name || data.title || null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          }
+        } catch (e) {
+          if (retries > 0) {
+            console.log(`[TMDB-Rescue] Retrying ${tmdbId} (${retries} left)...`);
+            yield new Promise((r) => setTimeout(r, 1e3));
+            return getTmdbTitle2(tmdbId, mediaType, retries - 1);
+          }
+          console.log(`[TMDB-Rescue] Failed to fetch title for ${tmdbId}: ${e.message}`);
+          return null;
+        }
+      });
+    }
+    module2.exports = { getTmdbTitle: getTmdbTitle2 };
+  }
+});
 
 // src/utils/m3u8.js
 var m3u8_exports = {};
@@ -295,6 +343,7 @@ __export(sololatino_exports, {
 });
 module.exports = __toCommonJS(sololatino_exports);
 var axios = require("axios");
+var { getTmdbTitle } = require_tmdb();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
@@ -351,6 +400,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const s = parseInt(parts[1] || season || 1);
     const e = parseInt(parts[2] || episode || 1);
     const isMovie = mediaType === "movie" || mediaType === "movies";
+    let mediaTitle = title;
+    if (!mediaTitle && tmdbId) {
+      mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
+    }
     const imdbId = yield getImdbIdInternal(realId, mediaType);
     if (!imdbId)
       return [];
@@ -407,7 +460,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     } catch (e2) {
     }
     const { finalizeStreams } = require_engine();
-    return yield finalizeStreams(results, "SoloLatino", title);
+    return yield finalizeStreams(results, "SoloLatino", mediaTitle);
   });
 }
 module.exports = { getStreams };

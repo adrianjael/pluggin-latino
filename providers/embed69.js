@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-12T19:44:45.830Z
+ * Generated: 2026-04-12T20:11:18.278Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -344,6 +344,54 @@ var require_id_mapper = __commonJS({
       });
     }
     module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
+  }
+});
+
+// src/utils/tmdb.js
+var require_tmdb = __commonJS({
+  "src/utils/tmdb.js"(exports, module2) {
+    var axios10 = require("axios");
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    var titleCache = /* @__PURE__ */ new Map();
+    function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return null;
+        const cleanId = tmdbId.toString().split(":")[0];
+        const cacheKey = `${cleanId}_${mediaType}`;
+        if (titleCache.has(cacheKey))
+          return titleCache.get(cacheKey);
+        try {
+          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+          let url;
+          if (cleanId.startsWith("tt")) {
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+            const { data } = yield axios10.get(url, { timeout: 6e3 });
+            const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
+            const title = result ? result.name || result.title : null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          } else {
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
+            const { data } = yield axios10.get(url, { timeout: 6e3 });
+            const title = data.name || data.title || null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          }
+        } catch (e) {
+          if (retries > 0) {
+            console.log(`[TMDB-Rescue] Retrying ${tmdbId} (${retries} left)...`);
+            yield new Promise((r) => setTimeout(r, 1e3));
+            return getTmdbTitle2(tmdbId, mediaType, retries - 1);
+          }
+          console.log(`[TMDB-Rescue] Failed to fetch title for ${tmdbId}: ${e.message}`);
+          return null;
+        }
+      });
+    }
+    module2.exports = { getTmdbTitle: getTmdbTitle2 };
   }
 });
 
@@ -1348,6 +1396,7 @@ function resolveEmbed(url) {
 
 // src/embed69/index.js
 var import_id_mapper = __toESM(require_id_mapper());
+var import_tmdb = __toESM(require_tmdb());
 var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 function decodeJwtPayload(token) {
@@ -1386,8 +1435,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId || !mediaType)
       return [];
+    let mediaTitle = title;
+    if (!mediaTitle && tmdbId) {
+      mediaTitle = yield (0, import_tmdb.getTmdbTitle)(tmdbId, mediaType);
+    }
     const startTime = Date.now();
-    console.log(`[Embed69] Buscando: TMDB ${tmdbId} (${mediaType})${season ? ` S${season}E${episode}` : ""}`);
+    console.log(`[Embed69] Buscando: ${mediaTitle || "TMDB " + tmdbId} (${mediaType})${season ? ` S${season}E${episode}` : ""}`);
     try {
       const { imdbId, offset: sOffset } = yield (0, import_id_mapper.getCorrectImdbId)(tmdbId, mediaType);
       if (!imdbId) {
@@ -1444,7 +1497,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         }))
       );
       const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      const finalized = yield (0, import_engine.finalizeStreams)(rawStreams, "Embed69", title);
+      const finalized = yield (0, import_engine.finalizeStreams)(rawStreams, "Embed69", mediaTitle);
       const elapsed = ((Date.now() - startTime) / 1e3).toFixed(2);
       console.log(`[Embed69] \u2713 ${finalized.length} streams v\xE1lidos en ${elapsed}s`);
       return finalized;
