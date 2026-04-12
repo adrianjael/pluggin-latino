@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-12T20:43:50.198Z
+ * Generated: 2026-04-12T21:05:31.362Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1462,7 +1462,9 @@ var init_resolvers = __esm({
       "hglink.to": "streamwish.to/e/",
       "bysedikamoum.com": "filemoon.sx/e/",
       "hglamioz.com": "streamwish.to/e/",
-      "embedwish.com": "streamwish.to/e/"
+      "embedwish.com": "streamwish.to/e/",
+      "vidhideplus.com": "vidhidepro.com/v/",
+      "dintezuvio.com": "vidhidepro.com/v/"
     };
   }
 });
