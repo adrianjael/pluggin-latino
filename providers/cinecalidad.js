@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-12T23:37:46.181Z
+ * Generated: 2026-04-12T23:39:28.590Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1328,16 +1328,16 @@ function resolveEmbed(url) {
   return __async(this, null, function* () {
     if (!url)
       return null;
-    const directHeaders = getDirectCdnHeaders(url);
-    if (directHeaders && (url.includes(".m3u8") || url.includes(".mp4") || url.includes(".txt"))) {
+    const targetUrl = yield preProcessUrl(url);
+    const s = targetUrl.toLowerCase();
+    const directHeaders = getDirectCdnHeaders(targetUrl);
+    if (directHeaders && (targetUrl.includes(".m3u8") || targetUrl.includes(".mp4") || targetUrl.includes(".txt"))) {
       return {
-        url,
+        url: targetUrl,
         quality: "HD",
         headers: directHeaders
       };
     }
-    const targetUrl = yield preProcessUrl(url);
-    const s = targetUrl.toLowerCase();
     if (s.includes("voe") || s.includes("jessicaclearout")) {
       return yield resolve(targetUrl);
     }
