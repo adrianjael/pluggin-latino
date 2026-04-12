@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-12T23:08:37.511Z
+ * Generated: 2026-04-12T23:27:34.275Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1232,8 +1232,12 @@ function getDirectCdnHeaders(url) {
       return { "User-Agent": UA9, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
     }
   }
-  if (s.includes("r66nv9ed.com") || s.includes("filemoon")) {
-    return { "User-Agent": UA9, "Referer": "https://arbitrarydecisions.com/", "Origin": "https://arbitrarydecisions.com" };
+  if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("398fitus.com")) {
+    return {
+      "User-Agent": UA9,
+      "Referer": "https://arbitrarydecisions.com/",
+      "Origin": "https://arbitrarydecisions.com"
+    };
   }
   if (s.includes("cloudwindow-route.com") || s.includes("awish.pro") || s.includes("streamwish")) {
     return { "User-Agent": UA9, "Referer": "https://streamwish.to/", "Origin": "https://streamwish.to" };
@@ -1309,6 +1313,7 @@ var init_resolvers = __esm({
       "minochinos.com": "vidhidepro.com/v/",
       "hglink.to": "streamwish.to/e/",
       "bysedikamoum.com": "filemoon.sx/e/",
+      "398fitus.com": "filemoon.sx/e/",
       "hglamioz.com": "streamwish.to/e/",
       "embedwish.com": "streamwish.to/e/",
       "vidhideplus.com": "vidhidepro.com/v/",
