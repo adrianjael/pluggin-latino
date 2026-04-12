@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-12T18:35:31.638Z
+ * Generated: 2026-04-12T18:38:24.755Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1385,6 +1385,21 @@ function getSessionData(slug) {
     }
   });
 }
+function decodeSoloLatinoLink(token) {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2)
+      return null;
+    let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    while (payload.length % 4)
+      payload += "=";
+    const decoded = typeof Buffer !== "undefined" ? Buffer.from(payload, "base64").toString("utf8") : atob(payload);
+    const data = JSON.parse(decoded);
+    return data.link || null;
+  } catch (e) {
+    return null;
+  }
+}
 function cleanTitleForSlug(title) {
   if (!title)
     return "";
@@ -1393,6 +1408,7 @@ function cleanTitleForSlug(title) {
 function extractFromSlug(slug, mediaType) {
   return __async(this, null, function* () {
     const results = [];
+    const isMovie = mediaType === "movie" || mediaType === "movies";
     const mirrorUrl = `https://embed69.org/f/${slug}`;
     try {
       const { data: html } = yield import_axios10.default.get(mirrorUrl, {
@@ -1423,37 +1439,39 @@ function extractFromSlug(slug, mediaType) {
       }
     } catch (e) {
     }
-    try {
-      const { token, cookie, playerUrl } = yield getSessionData(slug);
-      if (token) {
-        yield registerClick(token, cookie, playerUrl);
-        const scanBody = new URLSearchParams({ a: "1", tok: token }).toString();
-        const { data: scanData } = yield import_axios10.default.post(`${BASE_URL}/s.php`, scanBody, {
-          headers: __spreadProps(__spreadValues({}, HEADERS), { "cookie": cookie, "referer": playerUrl })
-        });
-        const servers = scanData && scanData.langs_s && scanData.langs_s.LAT || [];
-        const premierResults = yield Promise.allSettled(
-          servers.slice(0, 5).map((ser) => __async(this, null, function* () {
-            const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
-            const direct = yield getDirectStream(id, token, cookie, playerUrl);
-            if (direct && direct.url) {
-              let finalUrl = direct.url;
-              if (direct.sig)
-                finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
-              return {
-                url: finalUrl,
-                serverLabel: `SoloLatino - ${name}`,
-                langLabel: "Latino",
-                quality: "HD",
-                headers: { "User-Agent": UA10, "Referer": playerUrl, "Origin": BASE_URL }
-              };
-            }
-            return null;
-          }))
-        );
-        results.push(...premierResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value));
+    if (isMovie || results.length === 0) {
+      try {
+        const { token, cookie, playerUrl } = yield getSessionData(slug);
+        if (token) {
+          yield registerClick(token, cookie, playerUrl);
+          const scanBody = new URLSearchParams({ a: "1", tok: token }).toString();
+          const { data: scanData } = yield import_axios10.default.post(`${BASE_URL}/s.php`, scanBody, {
+            headers: __spreadProps(__spreadValues({}, HEADERS), { "cookie": cookie, "referer": playerUrl })
+          });
+          const servers = scanData && scanData.langs_s && scanData.langs_s.LAT || [];
+          const premierResults = yield Promise.allSettled(
+            servers.slice(0, 5).map((ser) => __async(this, null, function* () {
+              const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
+              const direct = yield getDirectStream(id, token, cookie, playerUrl);
+              if (direct && direct.url) {
+                let finalUrl = direct.url;
+                if (direct.sig)
+                  finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
+                return {
+                  url: finalUrl,
+                  serverLabel: `SoloLatino - ${name}`,
+                  langLabel: "Latino",
+                  quality: "HD",
+                  headers: { "User-Agent": UA10, "Referer": playerUrl, "Origin": BASE_URL }
+                };
+              }
+              return null;
+            }))
+          );
+          results.push(...premierResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value));
+        }
+      } catch (e) {
       }
-    } catch (e) {
     }
     return results;
   });
@@ -1480,6 +1498,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const titleSlug = mediaType === "movie" || mediaType === "movies" ? nameSlug : `${nameSlug}-${s}x${e}`;
         slugs.push(titleSlug);
         if (mediaType !== "movie" && mediaType !== "movies") {
+          slugs.push(`${nameSlug}-2019-${s}x${e}`);
           slugs.push(`${nameSlug}-${s + 1}x01`);
         }
       }
