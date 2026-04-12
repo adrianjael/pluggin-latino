@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-12T20:16:39.030Z
+ * Generated: 2026-04-12T20:17:08.603Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1493,16 +1493,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }
       console.log(`[Embed69] Resolviendo ${allEmbeds.length} fuentes en paralelo...`);
       const resolvedResults = yield Promise.allSettled(
-        allEmbeds.map((item) => __async(this, null, function* () {
-          try {
-            const res = yield resolveEmbed(item.url);
-            return res ? __spreadProps(__spreadValues(__spreadValues({}, item), res), { url: res.url }) : null;
-          } catch (e) {
-            return null;
-          }
-        }))
+        allEmbeds.map(
+          (item) => resolveEmbed(item.url).then((res) => __spreadProps(__spreadValues({}, res), { langLabel: item.langLabel }))
+        )
       );
-      const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+      const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value && r.value.url).map((r) => r.value);
       const finalized = yield (0, import_engine.finalizeStreams)(rawStreams, "Embed69", mediaTitle);
       const elapsed = ((Date.now() - startTime) / 1e3).toFixed(2);
       console.log(`[Embed69] \u2713 ${finalized.length} streams v\xE1lidos en ${elapsed}s`);
