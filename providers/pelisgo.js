@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-12T23:52:51.584Z
+ * Generated: 2026-04-12T23:55:02.133Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -901,27 +901,16 @@ function getDirectCdnHeaders(url) {
     }
   }
   if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("398fitus.com") || s.includes("bysevepoin.com")) {
-    let referer = "https://filemoon.sx/";
-    try {
-      const idMatch = url.match(/hls2\/.*?\/.*?\/([a-zA-Z0-9]+)_x/);
-      if (idMatch) {
-        const id = idMatch[1];
-        let domain = "filemoon.sx";
-        let path = "e";
-        if (s.includes("398fitus")) {
-          domain = "398fitus.com";
-          path = "tmgk";
-        }
-        if (s.includes("bysevepoin")) {
-          domain = "bysevepoin.com";
-          path = "e";
-        }
-        referer = `https://${domain}/${path}/${id}`;
-      }
-    } catch (e) {
-    }
+    let domain = "filemoon.sx";
+    if (s.includes("398fitus"))
+      domain = "398fitus.com";
+    if (s.includes("bysevepoin"))
+      domain = "bysevepoin.com";
+    const referer = `https://${domain}/`;
     return {
       "Referer": referer,
+      "Origin": `https://${domain}`,
+      "User-Agent": UA4,
       "x-embed-origin": "ww3.gnulahd.nu",
       "x-embed-referer": "https://ww3.gnulahd.nu/",
       "x-embed-parent": referer
