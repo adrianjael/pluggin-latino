@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-12T17:49:44.450Z
+ * Generated: 2026-04-12T17:57:41.045Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1428,22 +1428,24 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const s = (parseInt(season) || 1) + (sOffset || 0);
       const e = (episode || 1).toString().padStart(2, "0");
       const slug = mediaType === "movie" || mediaType === "movies" ? imdbId : `${imdbId}-${s}x${e}`;
-      const url = `${BASE_URL}/f/${slug}`;
+      const mirrorUrl = `https://embed69.org/f/${slug}`;
       try {
-        console.log(`[SoloLatino] Intentando obtener dataLink de: ${url}`);
-        const { data: html } = yield import_axios10.default.get(url, {
-          headers: __spreadProps(__spreadValues({}, HEADERS), {
-            "Referer": "https://sololatino.net/",
-            "Accept": "text/html,application/xhtml+xml,application/xml;"
-          }),
-          timeout: 5e3
+        console.log(`[SoloLatino] Extrayendo dataLink desde espejo: ${mirrorUrl}`);
+        const { data: html } = yield import_axios10.default.get(mirrorUrl, {
+          headers: {
+            "User-Agent": UA10,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Referer": "https://embed69.org/"
+          },
+          timeout: 8e3
         });
         const dataLinkMatch = html.match(/let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/);
         if (dataLinkMatch) {
           const dataLink = JSON.parse(dataLinkMatch[1]);
           const results = [];
           for (const section of dataLink) {
-            if (section.video_language !== "LAT")
+            const lang = section.video_language === "LAT" ? "Latino" : section.video_language === "ESP" ? "Espa\xF1ol" : "Subtitulado";
+            if (lang !== "Latino")
               continue;
             for (const emb of section.sortedEmbeds || []) {
               if (emb.servername === "download")
@@ -1454,17 +1456,19 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
                 if (resolved) {
                   results.push(__spreadProps(__spreadValues({}, resolved), {
                     serverLabel: `SoloLatino - ${emb.servername}`,
-                    langLabel: "Latino"
+                    langLabel: lang
                   }));
                 }
               }
             }
           }
-          if (results.length > 0)
+          if (results.length > 0) {
+            console.log(`[SoloLatino] ${results.length} enlaces obtenidos v\xEDa Espejo.`);
             return yield finalizeStreams(results, "SoloLatino");
+          }
         }
       } catch (e2) {
-        console.log(`[SoloLatino] No se pudo leer dataLink (Cloudflare?): ${e2.message}`);
+        console.log(`[SoloLatino] Error en espejo: ${e2.message}. Intentando fallback...`);
       }
       const { token, cookie, playerUrl } = yield getSessionData(slug);
       if (!token)
