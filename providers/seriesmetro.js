@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-12T20:11:18.353Z
+ * Generated: 2026-04-12T20:16:39.108Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -268,8 +268,10 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          if (lang !== "Latino" && lang !== "Espa\xF1ol" && lang !== "Subtitulado")
+          if (lang !== "Latino" && lang !== "Espa\xF1ol" && lang !== "Subtitulado") {
+            console.log(`[Engine] Rechazado por idioma (${lang}): ${s.url.substring(0, 40)}...`);
             return null;
+          }
           let q = s.verified ? s.quality : s.siteQuality || "HD";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           const check = s.verified ? " \u2713" : "";
@@ -284,14 +286,18 @@ var require_engine = __commonJS({
           };
         });
         const uniqueUrls = /* @__PURE__ */ new Set();
-        return processed.filter((s) => {
+        const finalized = processed.filter((s) => {
           if (s === null)
             return false;
-          if (uniqueUrls.has(s.url))
+          if (uniqueUrls.has(s.url)) {
+            console.log(`[Engine] Filtrado por duplicado (mismo URL): ${s.title}`);
             return false;
+          }
           uniqueUrls.add(s.url);
           return true;
         });
+        console.log(`[Engine] FIN: ${finalized.length} resultados finales enviados a Nuvio para ${providerName}.`);
+        return finalized;
       });
     }
     module2.exports = { finalizeStreams: finalizeStreams2 };
