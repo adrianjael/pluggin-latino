@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-12T19:41:40.984Z
+ * Generated: 2026-04-12T19:44:45.840Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -283,7 +283,15 @@ var require_engine = __commonJS({
             headers: s.headers || {}
           };
         });
-        return processed.filter((s) => s !== null);
+        const uniqueUrls = /* @__PURE__ */ new Set();
+        return processed.filter((s) => {
+          if (s === null)
+            return false;
+          if (uniqueUrls.has(s.url))
+            return false;
+          uniqueUrls.add(s.url);
+          return true;
+        });
       });
     }
     module2.exports = { finalizeStreams: finalizeStreams2 };
