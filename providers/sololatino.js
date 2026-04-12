@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-12T17:31:48.756Z
+ * Generated: 2026-04-12T17:49:44.450Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1311,11 +1311,12 @@ function getCorrectImdbId(tmdbId, mediaType) {
 }
 
 // src/sololatino/index.js
+var UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
 var BASE_URL = "https://player.pelisserieshoy.com";
-var UA10 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var HEADERS = {
   "user-agent": UA10,
-  "accept": "*/*",
+  "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "accept-language": "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3",
   "referer": "https://sololatino.net/",
   "x-requested-with": "XMLHttpRequest"
 };
@@ -1383,70 +1384,134 @@ function getSessionData(slug) {
     }
   });
 }
+function decodeSoloLatinoLink(token) {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2)
+      return null;
+    let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    while (payload.length % 4)
+      payload += "=";
+    const decoded = typeof Buffer !== "undefined" ? Buffer.from(payload, "base64").toString("utf8") : atob(payload);
+    const data = JSON.parse(decoded);
+    return data.link || null;
+  } catch (e) {
+    return null;
+  }
+}
+function m3u8ToIframe(url) {
+  const s = url.toLowerCase();
+  if (s.includes("minochinos.com/stream/") || s.includes("goldenharborcreativeworks.space/")) {
+    const match = url.match(/\/stream\/([^/]+)/) || url.match(/\.space\/([^/]+)/);
+    return null;
+  }
+  if (s.includes("r66nv9ed.com") || s.includes("filemoon")) {
+    const match = url.match(/\/([a-zA-Z0-9]{12})(_h)?\/master\.m3u8/);
+    if (match)
+      return `https://filemoon.sx/e/${match[1]}`;
+  }
+  if (s.includes("acek-cdn.com") || s.includes("streamwish")) {
+    const match = url.match(/\/([a-zA-Z0-9]{12})[^\/]*\/master\.m3u8/);
+    if (match)
+      return `https://streamwish.to/e/${match[1]}`;
+  }
+  return null;
+}
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId || !mediaType)
       return [];
-    const startTime = Date.now();
     try {
       const { imdbId, offset: sOffset } = yield getCorrectImdbId(tmdbId, mediaType);
-      if (!imdbId) {
-        console.log("[SoloLatino] No se encontr\xF3 ID de IMDB para traducir.");
+      if (!imdbId)
         return [];
-      }
       const s = (parseInt(season) || 1) + (sOffset || 0);
       const e = (episode || 1).toString().padStart(2, "0");
       const slug = mediaType === "movie" || mediaType === "movies" ? imdbId : `${imdbId}-${s}x${e}`;
-      console.log(`[SoloLatino] Iniciando sesi\xF3n para: ${slug} (Original TMDB: ${tmdbId})`);
+      const url = `${BASE_URL}/f/${slug}`;
+      try {
+        console.log(`[SoloLatino] Intentando obtener dataLink de: ${url}`);
+        const { data: html } = yield import_axios10.default.get(url, {
+          headers: __spreadProps(__spreadValues({}, HEADERS), {
+            "Referer": "https://sololatino.net/",
+            "Accept": "text/html,application/xhtml+xml,application/xml;"
+          }),
+          timeout: 5e3
+        });
+        const dataLinkMatch = html.match(/let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/);
+        if (dataLinkMatch) {
+          const dataLink = JSON.parse(dataLinkMatch[1]);
+          const results = [];
+          for (const section of dataLink) {
+            if (section.video_language !== "LAT")
+              continue;
+            for (const emb of section.sortedEmbeds || []) {
+              if (emb.servername === "download")
+                continue;
+              const iframeUrl = decodeSoloLatinoLink(emb.link);
+              if (iframeUrl) {
+                const resolved = yield resolveEmbed(iframeUrl);
+                if (resolved) {
+                  results.push(__spreadProps(__spreadValues({}, resolved), {
+                    serverLabel: `SoloLatino - ${emb.servername}`,
+                    langLabel: "Latino"
+                  }));
+                }
+              }
+            }
+          }
+          if (results.length > 0)
+            return yield finalizeStreams(results, "SoloLatino");
+        }
+      } catch (e2) {
+        console.log(`[SoloLatino] No se pudo leer dataLink (Cloudflare?): ${e2.message}`);
+      }
       const { token, cookie, playerUrl } = yield getSessionData(slug);
       if (!token)
         return [];
       yield registerClick(token, cookie, playerUrl);
       const scanBody = new URLSearchParams({ a: "1", tok: token }).toString();
       const { data: scanData } = yield import_axios10.default.post(`${BASE_URL}/s.php`, scanBody, {
-        headers: __spreadProps(__spreadValues({}, HEADERS), {
-          "cookie": cookie,
-          "origin": BASE_URL,
-          "referer": playerUrl,
-          "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
-        })
+        headers: __spreadProps(__spreadValues({}, HEADERS), { "cookie": cookie, "referer": playerUrl })
       });
       const latinServers = scanData && scanData.langs_s && scanData.langs_s.LAT || (scanData && Array.isArray(scanData.s) ? scanData.s : []);
       if (!latinServers || latinServers.length === 0)
         return [];
       console.log(`[SoloLatino] ${latinServers.length} servidores encontrados.`);
       const streamResults = yield Promise.allSettled(
-        latinServers.slice(0, 5).map((s2) => __async(this, null, function* () {
-          const [name, id] = Array.isArray(s2) ? s2 : [s2[0], s2[1]];
+        latinServers.slice(0, 8).map((ser) => __async(this, null, function* () {
+          const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
           const direct = yield getDirectStream(id, token, cookie, playerUrl);
           if (direct && direct.url) {
-            const resolved = yield resolveEmbed(direct.url);
-            if (resolved && resolved.headers && Object.keys(resolved.headers).length > 0) {
-              return __spreadProps(__spreadValues({}, resolved), {
-                serverLabel: `SoloLatino - ${name}`,
-                langLabel: "Latino",
-                quality: resolved.quality || "HD"
-              });
+            const iframeUrl = m3u8ToIframe(direct.url);
+            if (iframeUrl) {
+              const resolved = yield resolveEmbed(iframeUrl);
+              if (resolved) {
+                return __spreadProps(__spreadValues({}, resolved), {
+                  serverLabel: `SoloLatino - ${name}`,
+                  langLabel: "Latino"
+                });
+              }
             }
             return {
               url: direct.url,
-              serverLabel: `SoloLatino - ${name}`,
+              serverLabel: `SoloLatino - ${name} (Direct)`,
               langLabel: "Latino",
               quality: "HD",
-              type: direct.type === "mp4" ? "mp4" : "m3u8",
               headers: {
                 "User-Agent": UA10,
                 "Referer": playerUrl,
-                "Origin": BASE_URL,
-                "Cookie": cookie
+                "Origin": BASE_URL
               }
             };
           }
           return null;
         }))
       );
-      const rawStreams = streamResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      const finalized = yield finalizeStreams(rawStreams, "SoloLatino");
+      const finalized = yield finalizeStreams(
+        streamResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value),
+        "SoloLatino"
+      );
       return finalized;
     } catch (e) {
       console.log(`[SoloLatino] Error: ${e.message}`);
