@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-12T23:36:07.118Z
+ * Generated: 2026-04-12T23:37:46.284Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1233,9 +1233,16 @@ function getDirectCdnHeaders(url) {
     }
   }
   if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("398fitus.com")) {
+    let referer = "https://filemoon.sx/";
+    try {
+      const idMatch = url.match(/hls2\/.*?\/.*?\/([a-zA-Z0-9]+)_x/);
+      if (idMatch)
+        referer = `https://filemoon.sx/e/${idMatch[1]}`;
+    } catch (e) {
+    }
     return {
       "User-Agent": UA9,
-      "Referer": "https://filemoon.sx/",
+      "Referer": referer,
       "Origin": "https://filemoon.sx"
     };
   }
