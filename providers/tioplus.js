@@ -1,6 +1,6 @@
 /**
- * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-12T20:42:08.777Z
+ * tioplus - Built from src/tioplus/
+ * Generated: 2026-04-12T20:42:08.801Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1436,235 +1436,122 @@ var require_tmdb = __commonJS({
   }
 });
 
-// src/playhubmax/index.js
+// src/tioplus/index.js
 var axios9 = require("axios");
 var { finalizeStreams } = require_engine();
 var { resolveEmbed: resolveEmbed2 } = (init_resolvers(), __toCommonJS(resolvers_exports));
 var { getTmdbTitle } = require_tmdb();
-var PHM_API = "https://api.playhubmax.com/api";
-var AES_KEY_STR = "33dff3b1c1362e45e1425fcc9724d6f3";
-var AES_IV_STR = "33dff3b1c1362e45";
-var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-var API_HEADERS = {
-  "User-Agent": UA9,
-  "Accept": "application/json, text/plain, */*",
-  "Origin": "https://www.playhubmax.com",
-  "Referer": "https://www.playhubmax.com/"
-};
-var AES_SBOX = [99, 124, 119, 123, 242, 107, 111, 197, 48, 1, 103, 43, 254, 215, 171, 118, 202, 130, 201, 125, 250, 89, 71, 240, 173, 212, 162, 175, 156, 164, 114, 192, 183, 253, 147, 38, 54, 63, 247, 204, 52, 165, 229, 241, 113, 216, 49, 21, 4, 199, 35, 195, 24, 150, 5, 154, 7, 18, 128, 226, 235, 39, 178, 117, 9, 131, 44, 26, 27, 110, 90, 160, 82, 59, 214, 179, 41, 227, 47, 132, 83, 209, 0, 237, 32, 252, 177, 91, 106, 203, 190, 57, 74, 76, 88, 207, 208, 239, 170, 251, 67, 77, 51, 133, 69, 249, 2, 127, 80, 60, 159, 168, 81, 163, 64, 143, 146, 157, 56, 245, 188, 182, 218, 33, 16, 255, 243, 210, 205, 12, 19, 236, 95, 151, 68, 23, 196, 167, 126, 61, 100, 93, 25, 115, 96, 129, 79, 220, 34, 42, 144, 136, 70, 238, 184, 20, 222, 94, 11, 219, 224, 50, 58, 10, 73, 6, 36, 92, 194, 211, 172, 98, 145, 149, 228, 121, 231, 200, 55, 109, 141, 213, 78, 169, 108, 86, 244, 234, 101, 122, 174, 8, 186, 120, 37, 46, 28, 166, 180, 198, 232, 221, 116, 31, 75, 189, 139, 138, 112, 62, 181, 102, 72, 3, 246, 14, 97, 53, 87, 185, 134, 193, 29, 158, 225, 248, 152, 17, 105, 217, 142, 148, 155, 30, 135, 233, 206, 85, 40, 223, 140, 161, 137, 13, 191, 230, 66, 104, 65, 153, 45, 15, 176, 84, 187, 22];
-var AES_SBOX_INV = (() => {
-  const inv = new Array(256);
-  for (let i = 0; i < 256; i++)
-    inv[AES_SBOX[i]] = i;
-  return inv;
-})();
-var AES_RCON = [1, 2, 4, 8, 16, 32, 64, 128, 27, 54];
-function gmul(a, b) {
-  let p = 0;
-  for (let i = 0; i < 8; i++) {
-    if (b & 1)
-      p ^= a;
-    let hbs = a & 128;
-    a = a << 1 & 255;
-    if (hbs)
-      a ^= 27;
-    b >>= 1;
+var BASE_URL = "https://tioplus.app";
+var UA9 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+function toDoubleBase64(str) {
+  if (typeof btoa !== "undefined") {
+    return btoa(btoa(str));
   }
-  return p;
+  const first = Buffer.from(str).toString("base64");
+  return Buffer.from(first).toString("base64");
 }
-function aesKeyExpansion(keyBytes) {
-  let w = [];
-  for (let i = 0; i < 8; i++)
-    w[i] = keyBytes.slice(i * 4, i * 4 + 4);
-  for (let i = 8; i < 60; i++) {
-    let temp = w[i - 1].slice();
-    if (i % 8 === 0) {
-      let rot = [temp[1], temp[2], temp[3], temp[0]];
-      temp = [AES_SBOX[rot[0]], AES_SBOX[rot[1]], AES_SBOX[rot[2]], AES_SBOX[rot[3]]];
-      temp[0] ^= AES_RCON[i / 8 - 1];
-    } else if (i % 8 === 4) {
-      temp = [AES_SBOX[temp[0]], AES_SBOX[temp[1]], AES_SBOX[temp[2]], AES_SBOX[temp[3]]];
-    }
-    w[i] = [w[i - 8][0] ^ temp[0], w[i - 8][1] ^ temp[1], w[i - 8][2] ^ temp[2], w[i - 8][3] ^ temp[3]];
-  }
-  return w;
-}
-function aesDecryptBlock(block, roundKeys) {
-  let s = [[block[0], block[1], block[2], block[3]], [block[4], block[5], block[6], block[7]], [block[8], block[9], block[10], block[11]], [block[12], block[13], block[14], block[15]]];
-  for (let c = 0; c < 4; c++) {
-    let rk = roundKeys[56 + c];
-    for (let r = 0; r < 4; r++)
-      s[c][r] ^= rk[r];
-  }
-  for (let round = 13; round >= 1; round--) {
-    let t12 = s[3][1];
-    s[3][1] = s[2][1];
-    s[2][1] = s[1][1];
-    s[1][1] = s[0][1];
-    s[0][1] = t12;
-    let t22 = s[0][2];
-    s[0][2] = s[2][2];
-    s[2][2] = t22;
-    t22 = s[1][2];
-    s[1][2] = s[3][2];
-    s[3][2] = t22;
-    let t32 = s[0][3];
-    s[0][3] = s[1][3];
-    s[1][3] = s[2][3];
-    s[2][3] = s[3][3];
-    s[3][3] = t32;
-    for (let c = 0; c < 4; c++)
-      for (let r = 0; r < 4; r++)
-        s[c][r] = AES_SBOX_INV[s[c][r]];
-    for (let c = 0; c < 4; c++) {
-      let rk = roundKeys[round * 4 + c];
-      for (let r = 0; r < 4; r++)
-        s[c][r] ^= rk[r];
-    }
-    for (let c = 0; c < 4; c++) {
-      let a = s[c].slice();
-      s[c][0] = gmul(a[0], 14) ^ gmul(a[1], 11) ^ gmul(a[2], 13) ^ gmul(a[3], 9);
-      s[c][1] = gmul(a[0], 9) ^ gmul(a[1], 14) ^ gmul(a[2], 11) ^ gmul(a[3], 13);
-      s[c][2] = gmul(a[0], 13) ^ gmul(a[1], 9) ^ gmul(a[2], 14) ^ gmul(a[3], 11);
-      s[c][3] = gmul(a[0], 11) ^ gmul(a[1], 13) ^ gmul(a[2], 9) ^ gmul(a[3], 14);
-    }
-  }
-  let t1 = s[3][1];
-  s[3][1] = s[2][1];
-  s[2][1] = s[1][1];
-  s[1][1] = s[0][1];
-  s[0][1] = t1;
-  let t2 = s[0][2];
-  s[0][2] = s[2][2];
-  s[2][2] = t2;
-  t2 = s[1][2];
-  s[1][2] = s[3][2];
-  s[3][2] = t2;
-  let t3 = s[0][3];
-  s[0][3] = s[1][3];
-  s[1][3] = s[2][3];
-  s[2][3] = s[3][3];
-  s[3][3] = t3;
-  for (let c = 0; c < 4; c++)
-    for (let r = 0; r < 4; r++)
-      s[c][r] = AES_SBOX_INV[s[c][r]];
-  for (let c = 0; c < 4; c++) {
-    let rk = roundKeys[c];
-    for (let r = 0; r < 4; r++)
-      s[c][r] ^= rk[r];
-  }
-  let out = [];
-  for (let c = 0; c < 4; c++)
-    for (let r = 0; r < 4; r++)
-      out.push(s[c][r]);
-  return out;
-}
-function decryptSources(b64) {
-  try {
-    let key = Array.from(Buffer.from(AES_KEY_STR, "utf8"));
-    let iv = Array.from(Buffer.from(AES_IV_STR, "utf8"));
-    let ct = Array.from(Buffer.from(b64, "base64"));
-    let roundKeys = aesKeyExpansion(key);
-    let plain = [];
-    let prev = iv;
-    for (let i = 0; i < ct.length; i += 16) {
-      let block = ct.slice(i, i + 16);
-      let dec = aesDecryptBlock(block, roundKeys);
-      for (let j = 0; j < 16; j++)
-        plain.push(dec[j] ^ prev[j]);
-      prev = block;
-    }
-    let pad = plain[plain.length - 1];
-    if (pad < 1 || pad > 16)
-      return [];
-    let json = Buffer.from(plain.slice(0, plain.length - pad)).toString("utf8");
-    return JSON.parse(json);
-  } catch (e) {
-    return [];
-  }
-}
-function searchContents(q) {
+function getRedirectUrl(serverEncoded, referer) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield axios9.get(`${PHM_API}/US/en/contents?q=${encodeURIComponent(q)}`, { headers: API_HEADERS, timeout: 8e3 });
-      return data.data || [];
-    } catch (e) {
-      return [];
-    }
-  });
-}
-function getSources(type, uuid) {
-  return __async(this, null, function* () {
-    try {
-      const { data } = yield axios9.get(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS, timeout: 8e3 });
-      if (!data.data)
-        return [];
-      const sources = decryptSources(data.data);
-      return sources.filter((s) => {
-        var _a;
-        return (_a = s.languages) == null ? void 0 : _a.includes("es");
+      const doubleB64 = toDoubleBase64(serverEncoded);
+      const playerUrl = `${BASE_URL}/player/${doubleB64}`;
+      const { data: html } = yield axios9.get(playerUrl, {
+        headers: {
+          "User-Agent": UA9,
+          "Referer": referer,
+          "Accept": "text/html,application/xhtml+xml"
+        },
+        timeout: 8e3
       });
+      const match = html.match(/window\.location\.href\s*=\s*['"](.*?)['"]/);
+      return match ? match[1] : null;
     } catch (e) {
-      return [];
-    }
-  });
-}
-function getContentDetail(uuid) {
-  return __async(this, null, function* () {
-    try {
-      const { data } = yield axios9.get(`${PHM_API}/en/contents/${uuid}`, { headers: API_HEADERS, timeout: 8e3 });
-      return data;
-    } catch (e) {
-      return {};
+      return null;
     }
   });
 }
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
-    var _a, _b;
+    if (!tmdbId || !mediaType)
+      return [];
+    const startTime = Date.now();
+    let mediaTitle = title;
+    if (!mediaTitle && tmdbId) {
+      mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
+    }
+    if (!mediaTitle)
+      return [];
+    console.log(`[TioPlus] Buscando: ${mediaTitle}`);
     try {
-      let mediaTitle = title;
-      if (!mediaTitle && tmdbId) {
-        mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
-      }
-      if (!mediaTitle)
-        return [];
-      const type = mediaType === "series" || mediaType === "tv" ? "tv" : "movie";
-      const candidates = yield searchContents(mediaTitle);
-      const match = candidates.find((c) => {
-        var _a2;
-        return ((_a2 = c.title) == null ? void 0 : _a2.toLowerCase()) === mediaTitle.toLowerCase();
+      const searchQuery = encodeURIComponent(mediaTitle.split(":")[0].trim());
+      const searchUrl = `${BASE_URL}/search/${searchQuery}`;
+      const { data: searchHtml } = yield axios9.get(searchUrl, {
+        headers: { "User-Agent": UA9 },
+        timeout: 1e4
       });
-      if (!match)
-        return [];
-      let finalSources = [];
-      if (type === "tv") {
-        const detail = yield getContentDetail(match.uuid);
-        const seasonObj = (_a = detail.seasons) == null ? void 0 : _a.find((s) => parseInt(s.seasonNumber) === parseInt(season));
-        if (!seasonObj)
-          return [];
-        const { data: episodes } = yield axios9.get(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
-        const ep = (_b = episodes.data) == null ? void 0 : _b.find((e) => parseInt(e.episodeNumber) === parseInt(episode));
-        if (!ep)
-          return [];
-        finalSources = yield getSources("episode", ep.uuid);
-      } else {
-        finalSources = yield getSources("content", match.uuid);
+      const itemRegex = /<article[^>]*class=['"]item[^>]*>[\s\S]*?<a[^>]*href=['"]([^'"]+)['"][\s\S]*?<h2>([\s\S]*?)<\/h2>/gi;
+      let match;
+      let targetUrl = null;
+      while ((match = itemRegex.exec(searchHtml)) !== null) {
+        const resultUrl = match[1];
+        const resultLabel = match[2].trim();
+        if (resultLabel.toLowerCase().includes(mediaTitle.toLowerCase())) {
+          if (mediaType === "movie" && resultUrl.includes("/pelicula/") || mediaType !== "movie" && resultUrl.includes("/serie/")) {
+            targetUrl = resultUrl;
+            break;
+          }
+        }
       }
-      const streams = (yield Promise.allSettled(finalSources.map((s) => __async(this, null, function* () {
-        const result = yield resolveEmbed2(s.url);
-        const finalUrl = result && result.url ? result.url : s.url;
-        return {
-          langLabel: "Latino",
-          serverLabel: s.hostName || "PlayHub",
-          url: finalUrl,
-          quality: "1080p",
-          headers: result && result.headers ? result.headers : { "User-Agent": UA9, "Referer": "https://www.playhubmax.com/" }
-        };
-      })))).filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      return yield finalizeStreams(streams, "PlayHubMax", mediaTitle);
-    } catch (e) {
-      console.error("[PlayHubMax] error:", e.message);
+      if (!targetUrl)
+        return [];
+      let finalMediaUrl = targetUrl;
+      if (mediaType !== "movie") {
+        const s = parseInt(season) || 1;
+        const e = parseInt(episode) || 1;
+        finalMediaUrl = `${targetUrl}/season/${s}/episode/${e}`;
+      }
+      console.log(`[TioPlus] Extrayendo de: ${finalMediaUrl}`);
+      const { data: mediaHtml } = yield axios9.get(finalMediaUrl, {
+        headers: { "User-Agent": UA9, "Referer": searchUrl },
+        timeout: 1e4
+      });
+      const serverRegex = /data-server=['"]([^'"]+)['"][^>]*>[\s\S]*?<span>([^<]+)<\/span>/gi;
+      let sMatch;
+      const encodes = [];
+      while ((sMatch = serverRegex.exec(mediaHtml)) !== null) {
+        const enc = sMatch[1];
+        const serverName = sMatch[2].split("-")[0].trim();
+        let lang = "LAT";
+        if (mediaHtml.includes("audio Latino"))
+          lang = "LAT";
+        else if (mediaHtml.includes("audio Castellano"))
+          lang = "ESP";
+        else if (mediaHtml.includes("subtulada") || mediaHtml.includes("Subtitu"))
+          lang = "SUB";
+        encodes.push({ enc, serverName, lang });
+      }
+      if (encodes.length === 0)
+        return [];
+      console.log(`[TioPlus] Bypass en proceso para ${encodes.length} enlaces...`);
+      const resolvedStreams = [];
+      for (const item of encodes) {
+        const realEmbedUrl = yield getRedirectUrl(item.enc, finalMediaUrl);
+        if (realEmbedUrl) {
+          const resolved = yield resolveEmbed2(realEmbedUrl);
+          if (resolved && resolved.url) {
+            resolvedStreams.push(__spreadProps(__spreadValues({}, resolved), {
+              serverLabel: item.serverName,
+              langLabel: item.lang === "LAT" ? "Latino" : item.lang === "ESP" ? "Espa\xF1ol" : "Subtitulado"
+            }));
+          }
+        }
+      }
+      const finalized = yield finalizeStreams(resolvedStreams, "TioPlus", mediaTitle);
+      const elapsed = ((Date.now() - startTime) / 1e3).toFixed(2);
+      console.log(`[TioPlus] \u2713 ${finalized.length} streams en ${elapsed}s`);
+      return finalized;
+    } catch (error) {
+      console.log(`[TioPlus] Error: ${error.message}`);
       return [];
     }
   });
