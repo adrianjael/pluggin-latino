@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-12T17:57:41.045Z
+ * Generated: 2026-04-12T18:27:21.329Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1357,6 +1357,7 @@ function getDirectStream(serverId, token, cookie, playerUrl) {
       if (data && data.u) {
         return {
           url: data.u,
+          sig: data.sig || null,
           type: data.type || "m3u8"
         };
       }
@@ -1428,6 +1429,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const s = (parseInt(season) || 1) + (sOffset || 0);
       const e = (episode || 1).toString().padStart(2, "0");
       const slug = mediaType === "movie" || mediaType === "movies" ? imdbId : `${imdbId}-${s}x${e}`;
+      const allResults = [];
       const mirrorUrl = `https://embed69.org/f/${slug}`;
       try {
         console.log(`[SoloLatino] Extrayendo dataLink desde espejo: ${mirrorUrl}`);
@@ -1442,7 +1444,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const dataLinkMatch = html.match(/let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/);
         if (dataLinkMatch) {
           const dataLink = JSON.parse(dataLinkMatch[1]);
-          const results = [];
+          const mirrorResults = [];
           for (const section of dataLink) {
             const lang = section.video_language === "LAT" ? "Latino" : section.video_language === "ESP" ? "Espa\xF1ol" : "Subtitulado";
             if (lang !== "Latino")
@@ -1454,7 +1456,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               if (iframeUrl) {
                 const resolved = yield resolveEmbed(iframeUrl);
                 if (resolved) {
-                  results.push(__spreadProps(__spreadValues({}, resolved), {
+                  mirrorResults.push(__spreadProps(__spreadValues({}, resolved), {
                     serverLabel: `SoloLatino - ${emb.servername}`,
                     langLabel: lang
                   }));
@@ -1462,13 +1464,13 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               }
             }
           }
-          if (results.length > 0) {
-            console.log(`[SoloLatino] ${results.length} enlaces obtenidos v\xEDa Espejo.`);
-            return yield finalizeStreams(results, "SoloLatino");
+          if (mirrorResults.length > 0) {
+            console.log(`[SoloLatino] ${mirrorResults.length} enlaces obtenidos v\xEDa Espejo.`);
+            allResults.push(...mirrorResults);
           }
         }
       } catch (e2) {
-        console.log(`[SoloLatino] Error en espejo: ${e2.message}. Intentando fallback...`);
+        console.log(`[SoloLatino] Error en espejo: ${e2.message}.`);
       }
       const { token, cookie, playerUrl } = yield getSessionData(slug);
       if (!token)
@@ -1483,23 +1485,29 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         return [];
       console.log(`[SoloLatino] ${latinServers.length} servidores encontrados.`);
       const streamResults = yield Promise.allSettled(
-        latinServers.slice(0, 8).map((ser) => __async(this, null, function* () {
+        latinServers.slice(0, 10).map((ser) => __async(this, null, function* () {
           const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
           const direct = yield getDirectStream(id, token, cookie, playerUrl);
           if (direct && direct.url) {
-            const iframeUrl = m3u8ToIframe(direct.url);
-            if (iframeUrl) {
-              const resolved = yield resolveEmbed(iframeUrl);
-              if (resolved) {
-                return __spreadProps(__spreadValues({}, resolved), {
-                  serverLabel: `SoloLatino - ${name}`,
-                  langLabel: "Latino"
-                });
+            let finalUrl = direct.url;
+            if (direct.sig) {
+              finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
+            }
+            if (!direct.sig) {
+              const iframeUrl = m3u8ToIframe(direct.url);
+              if (iframeUrl) {
+                const resolved = yield resolveEmbed(iframeUrl);
+                if (resolved) {
+                  return __spreadProps(__spreadValues({}, resolved), {
+                    serverLabel: `SoloLatino - ${name}`,
+                    langLabel: "Latino"
+                  });
+                }
               }
             }
             return {
-              url: direct.url,
-              serverLabel: `SoloLatino - ${name} (Direct)`,
+              url: finalUrl,
+              serverLabel: `SoloLatino - ${name}`,
               langLabel: "Latino",
               quality: "HD",
               headers: {
@@ -1512,11 +1520,17 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           return null;
         }))
       );
-      const finalized = yield finalizeStreams(
-        streamResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value),
-        "SoloLatino"
-      );
-      return finalized;
+      const combined = streamResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+      allResults.push(...combined);
+      const uniqueResults = [];
+      const seenUrls = /* @__PURE__ */ new Set();
+      for (const res of allResults) {
+        if (!seenUrls.has(res.url)) {
+          seenUrls.add(res.url);
+          uniqueResults.push(res);
+        }
+      }
+      return yield finalizeStreams(uniqueResults, "SoloLatino");
     } catch (e) {
       console.log(`[SoloLatino] Error: ${e.message}`);
       return [];
