@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T20:39:59.477Z
+ * Generated: 2026-04-13T20:51:16.151Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1040,16 +1040,15 @@ var require_vidhide = __commonJS({
           if (!finalUrl.startsWith("http")) {
             finalUrl = new URL(url).origin + finalUrl;
           }
-          const domain = new URL(url).origin;
           const stream = {
             url: finalUrl,
             quality,
             serverName: "VidHide",
             headers: {
               "User-Agent": UA4,
-              "referer": domain,
-              "origin": domain,
-              "x-requested-with": "XMLHttpRequest"
+              "Referer": url.split("?")[0],
+              "Origin": new URL(url).origin,
+              "X-Requested-With": "XMLHttpRequest"
             }
           };
           return yield validateStream(stream);
@@ -1671,9 +1670,9 @@ var require_resolvers = __commonJS({
       try {
         const domain = new URL(url).hostname;
         const baseOrigin = `https://${domain}`;
-        const headers = { "User-Agent": UA4, "referer": baseOrigin, "origin": baseOrigin };
+        const headers = { "User-Agent": UA4, "Referer": baseOrigin, "Origin": baseOrigin };
         if (isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE")) {
-          headers["x-requested-with"] = "XMLHttpRequest";
+          headers["X-Requested-With"] = "XMLHttpRequest";
           headers["x-embed-origin"] = domain;
           if (isMirror(s, "FILEMOON")) {
             headers["x-embed-origin"] = "ww3.gnulahd.nu";
