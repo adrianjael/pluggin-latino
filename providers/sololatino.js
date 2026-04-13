@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T20:51:16.249Z
+ * Generated: 2026-04-13T21:00:14.977Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -145,19 +145,9 @@ var require_tmdb = __commonJS({
 var require_ua = __commonJS({
   "src/utils/ua.js"(exports2, module2) {
     var UA_POOL = [
-      // Windows - Chrome
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-      // Windows - Edge
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
-      // Android - Chrome
-      "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-      "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36",
-      // iPhone - Safari
-      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
-      "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-      // Mac - Safari
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15"
+      // Windows - Chrome 146 (Custom modern fingerprint)
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
     ];
     function getRandomUA2() {
       const index = Math.floor(Math.random() * UA_POOL.length);
@@ -172,12 +162,21 @@ var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
     var axios2 = require("axios");
     var { getRandomUA: getRandomUA2 } = require_ua();
+    var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
     var sessionUA = null;
     function setSessionUA2(ua) {
       sessionUA = ua;
     }
     function getSessionUA2() {
-      return sessionUA || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+      return sessionUA || DEFAULT_CHROME_UA;
+    }
+    function getStealthHeaders() {
+      return {
+        "User-Agent": getSessionUA2(),
+        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"'
+      };
     }
     var DEFAULT_UA = getSessionUA2();
     var MOBILE_UA = getSessionUA2();
@@ -237,6 +236,7 @@ var require_http = __commonJS({
       fetchJson,
       getSessionUA: getSessionUA2,
       setSessionUA: setSessionUA2,
+      getStealthHeaders,
       DEFAULT_UA,
       MOBILE_UA
     };

@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T20:51:16.166Z
+ * Generated: 2026-04-13T21:00:14.895Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -77,19 +77,9 @@ var __async = (__this, __arguments, generator) => {
 var require_ua = __commonJS({
   "src/utils/ua.js"(exports2, module2) {
     var UA_POOL = [
-      // Windows - Chrome
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-      // Windows - Edge
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
-      // Android - Chrome
-      "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-      "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36",
-      // iPhone - Safari
-      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
-      "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-      // Mac - Safari
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15"
+      // Windows - Chrome 146 (Custom modern fingerprint)
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
     ];
     function getRandomUA2() {
       const index = Math.floor(Math.random() * UA_POOL.length);
@@ -104,12 +94,21 @@ var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
     var axios6 = require("axios");
     var { getRandomUA: getRandomUA2 } = require_ua();
+    var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
     var sessionUA = null;
     function setSessionUA2(ua) {
       sessionUA = ua;
     }
     function getSessionUA2() {
-      return sessionUA || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+      return sessionUA || DEFAULT_CHROME_UA;
+    }
+    function getStealthHeaders() {
+      return {
+        "User-Agent": getSessionUA2(),
+        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"'
+      };
     }
     var DEFAULT_UA3 = getSessionUA2();
     var MOBILE_UA = getSessionUA2();
@@ -169,6 +168,7 @@ var require_http = __commonJS({
       fetchJson: fetchJson2,
       getSessionUA: getSessionUA2,
       setSessionUA: setSessionUA2,
+      getStealthHeaders,
       DEFAULT_UA: DEFAULT_UA3,
       MOBILE_UA
     };
@@ -889,7 +889,7 @@ var require_filemoon = __commonJS({
 var require_vidhide = __commonJS({
   "src/resolvers/vidhide.js"(exports2, module2) {
     var axios6 = require("axios");
-    var { getSessionUA: getSessionUA2 } = require_http();
+    var { getSessionUA: getSessionUA2, getStealthHeaders } = require_http();
     var UA4 = getSessionUA2();
     function unpackVidHide(script) {
       try {
@@ -955,12 +955,11 @@ var require_vidhide = __commonJS({
             url: finalUrl,
             quality,
             serverName: "VidHide",
-            headers: {
-              "User-Agent": UA4,
+            headers: __spreadProps(__spreadValues({}, getStealthHeaders()), {
               "Referer": url.split("?")[0],
               "Origin": new URL(url).origin,
               "X-Requested-With": "XMLHttpRequest"
-            }
+            })
           };
           return yield validateStream(stream);
         } catch (e) {
@@ -1577,11 +1576,15 @@ var require_resolvers = __commonJS({
     function getDirectCdnHeaders(url) {
       if (!url)
         return null;
+      const { getStealthHeaders } = require_http();
       const s = url.toLowerCase();
       try {
         const domain = new URL(url).hostname;
         const baseOrigin = `https://${domain}`;
-        const headers = { "User-Agent": UA4, "Referer": baseOrigin, "Origin": baseOrigin };
+        const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+          "Referer": baseOrigin,
+          "Origin": baseOrigin
+        });
         if (isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE")) {
           headers["X-Requested-With"] = "XMLHttpRequest";
           headers["x-embed-origin"] = domain;
