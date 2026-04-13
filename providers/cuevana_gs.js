@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T02:50:56.199Z
+ * Generated: 2026-04-13T02:51:30.879Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -474,7 +474,7 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          const allowed = ["latino", "espa\xF1ol", "subtitulado"];
+          const allowed = ["latino", "lat", "espa\xF1ol", "esp", "spa", "subtitulado", "sub", "vose"];
           const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
           if (!isAllowed) {
             console.log(`[Engine] Rechazado por idioma (${lang}): ${s.url.substring(0, 40)}...`);
