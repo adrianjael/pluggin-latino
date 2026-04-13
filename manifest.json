@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "5.6.19",
+  "version": "5.6.20",
   "scrapers": [
     {
       "id": "embed69",
@@ -186,29 +186,6 @@
       "supportsExternalPlayer": true
     },
     {
-      "id": "lamovie",
-      "name": "LaMovie",
-      "description": "Películas, series y anime en HD (Latino) con servidores rápidos",
-      "version": "2.0.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/lamovie.js",
-      "enabled": true,
-      "logo": "https://la.movie/wp-content/uploads/2025/05/cropped-La.movie_-192x192.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    },
-    {
       "id": "seriesmetro",
       "name": "SeriesMetro",
       "description": "Especialista en series y películas (Latino) con servidores Fastream",
@@ -290,29 +267,6 @@
       "filename": "providers/playhubmax.js",
       "enabled": true,
       "logo": "https://i.ibb.co/qqKWJyk/logo-rayo-morado-fondo-blanco-121452-121.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    },
-    {
-      "id": "cinemacity",
-      "name": "CinemaCity",
-      "description": "Catálogo extenso con servidores directos y subtítulos.",
-      "version": "2.0.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/cinemacity.js",
-      "enabled": true,
-      "logo": "https://i.postimg.cc/XYjKhS3b/cinemacity.png",
       "contentLanguage": [
         "es"
       ],
