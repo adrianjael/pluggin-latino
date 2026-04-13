@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T04:59:45.406Z
+ * Generated: 2026-04-13T05:03:42.893Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -197,6 +197,8 @@ var require_m3u8 = __commonJS({
         try {
           const response = yield axios2.get(url, {
             timeout: 8e3,
+            skipSizeCheck: true,
+            // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
             headers: __spreadValues({
               "User-Agent": UA2,
               "Range": "bytes=0-4096"
@@ -355,7 +357,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+            title: `${mediaTitle} | ${q}${check} | ${lang} | ${server}`,
             url: s.url,
             quality: q,
             serverName: server,

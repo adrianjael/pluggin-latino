@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-13T04:59:45.343Z
+ * Generated: 2026-04-13T05:03:42.837Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -277,43 +277,58 @@ var require_voe = __commonJS({
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          console.log("[VOE] Resolving v5.6.67: " + url);
+          console.log("[VOE] Resolving v5.6.69: " + url);
           let response = yield axios6.get(url, {
             headers: { "User-Agent": UA4, "Referer": url },
-            timeout: 1e4
+            timeout: 1e4,
+            skipSizeCheck: true
           });
           let html = response.data;
           if (typeof html !== "string")
             return null;
-          if (html.includes("Redirecting...") || html.length < 1500) {
-            const redirectMatch = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+          const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
+          const scanAndReturn = (text) => {
+            let m;
+            while ((m = catcherRegex.exec(text)) !== null) {
+              const l = m[1];
+              if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("cdn-test")) {
+                return l;
+              }
+            }
+            return null;
+          };
+          const firstFind = scanAndReturn(html);
+          if (firstFind) {
+            console.log("[VOE] \u2705 Enlace detectado proactivamente en primera respuesta.");
+            return {
+              url: firstFind,
+              quality: "1080p",
+              serverName: "VOE",
+              headers: { "User-Agent": UA4, "Referer": "https://voe.sx/" }
+            };
+          }
+          if (html.includes("Redirecting...") || html.includes("location.href") || html.length < 2e3) {
+            const redirectMatch = html.match(/(?:location\.href|location\.replace|location\.assign)\s*=\s*['"]([^'"]+)['"]/i) || html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
             if (redirectMatch) {
               const newUrl = redirectMatch[1];
               console.log("[VOE] -> Siguiendo redirecci\xF3n JS: " + newUrl);
               response = yield axios6.get(newUrl, {
                 headers: { "User-Agent": UA4, "Referer": url },
-                timeout: 1e4
+                timeout: 1e4,
+                skipSizeCheck: true
               });
               html = response.data;
+              const secondFind = scanAndReturn(html);
+              if (secondFind) {
+                console.log("[VOE] \u2705 Enlace detectado tras redirecci\xF3n.");
+                return {
+                  url: secondFind,
+                  quality: "1080p",
+                  serverName: "VOE",
+                  headers: { "User-Agent": UA4, "Referer": "https://voe.sx/" }
+                };
+              }
             }
-          }
-          const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
-          let match;
-          let foundLinks = [];
-          while ((match = catcherRegex.exec(html)) !== null) {
-            const l = match[1];
-            if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("cdn-test")) {
-              foundLinks.push(l);
-            }
-          }
-          if (foundLinks.length > 0) {
-            console.log("[VOE] \u2705 Enlace detectado por Catcher Regex.");
-            return {
-              url: foundLinks[0],
-              quality: "1080p",
-              serverName: "VOE",
-              headers: { "User-Agent": UA4, "Referer": "https://voe.sx/" }
-            };
           }
           const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/i) || html.match(/<script id="data"[\s\S]*?>([\s\S]*?)<\/script>/i);
           if (jsonMatch) {
@@ -1567,6 +1582,8 @@ var require_m3u8 = __commonJS({
         try {
           const response = yield axios6.get(url, {
             timeout: 8e3,
+            skipSizeCheck: true,
+            // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
             headers: __spreadValues({
               "User-Agent": UA4,
               "Range": "bytes=0-4096"
@@ -1892,7 +1909,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+            title: `${mediaTitle} | ${q}${check} | ${lang} | ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
