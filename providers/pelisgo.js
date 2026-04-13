@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-13T04:42:53.909Z
+ * Generated: 2026-04-13T04:59:45.354Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -424,8 +424,12 @@ var require_engine = __commonJS({
             console.log(`[Engine] Rechazado por idioma no Latino (${lang}): ${s.url.substring(0, 40)}...`);
             return null;
           }
-          let q = s.verified ? s.quality : s.siteQuality || "HD";
-          const check = s.verified ? " \u2705" : "";
+          let q = "HD";
+          let check = "";
+          if (s.verified && s.quality && s.quality !== "Unknown") {
+            q = s.quality;
+            check = " \u2705";
+          }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
@@ -463,103 +467,97 @@ var require_voe = __commonJS({
   "src/resolvers/voe.js"(exports2, module2) {
     var axios6 = require("axios");
     var { base64Decode: base64Decode2 } = (init_string(), __toCommonJS(string_exports));
-    var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          console.log("[VOE] Resolving (Axios): " + url);
-          const response = yield axios6.get(url, {
-            headers: {
-              "User-Agent": UA5,
-              "Referer": url
-              // Algunos espejos requieren esto para mostrar el JSON
-            },
-            timeout: 8e3
+          console.log("[VOE] Resolving v5.6.67: " + url);
+          let response = yield axios6.get(url, {
+            headers: { "User-Agent": UA5, "Referer": url },
+            timeout: 1e4
           });
           let html = response.data;
-          if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
-            console.log("[VOE] Detectada redirecci\xF3n interna...");
-            const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
-            if (rm) {
-              const res2 = yield axios6.get(rm[1], { headers: { "User-Agent": UA5, "Referer": url }, timeout: 8e3 });
-              html = res2.data;
-            }
-          }
-          const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
-          if (jsonMatch) {
-            console.log("[VOE] Bloque JSON encontrado. Descifrando...");
-            try {
-              const parsed = JSON.parse(jsonMatch[1].trim());
-              const encText = Array.isArray(parsed) ? parsed[0] : parsed;
-              if (typeof encText !== "string")
-                return null;
-              let rot13 = encText.replace(/[a-zA-Z]/g, function(c) {
-                const code = c.charCodeAt(0);
-                const limit = c <= "Z" ? 90 : 122;
-                const shifted = code + 13;
-                return String.fromCharCode(limit >= shifted ? shifted : shifted - 26);
+          if (typeof html !== "string")
+            return null;
+          if (html.includes("Redirecting...") || html.length < 1500) {
+            const redirectMatch = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+            if (redirectMatch) {
+              const newUrl = redirectMatch[1];
+              console.log("[VOE] -> Siguiendo redirecci\xF3n JS: " + newUrl);
+              response = yield axios6.get(newUrl, {
+                headers: { "User-Agent": UA5, "Referer": url },
+                timeout: 1e4
               });
-              const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
-              for (let i = 0; i < noise.length; i++) {
-                const n = noise[i];
-                rot13 = rot13.split(n).join("");
-              }
-              const b64_1 = base64Decode2(rot13);
-              let shiftedStr = "";
-              for (let j = 0; j < b64_1.length; j++) {
-                shiftedStr += String.fromCharCode(b64_1.charCodeAt(j) - 3);
-              }
-              const reversed = shiftedStr.split("").reverse().join("");
-              const data = JSON.parse(base64Decode2(reversed));
-              if (data && (data.source || data.mp4)) {
-                const finalUrl = data.source || data.mp4;
-                console.log("[VOE] -> Decriptaci\xF3n Exitosa");
-                let q = "1080p";
-                if (data.video_height) {
-                  const h = parseInt(data.video_height);
-                  if (h >= 1080)
-                    q = "1080p";
-                  else if (h >= 720)
-                    q = "720p";
-                  else if (h >= 480)
-                    q = "480p";
-                  else
-                    q = h + "p";
-                }
-                return {
-                  url: finalUrl,
-                  quality: q,
-                  serverName: "VOE",
-                  headers: {
-                    "User-Agent": UA5,
-                    "Referer": "https://voe.sx/",
-                    "Origin": "https://voe.sx"
-                  }
-                };
-              }
-            } catch (ex) {
-              console.error("[VOE] Decryption failed:", ex.message);
+              html = response.data;
             }
           }
-          const m3u8MatchRaw = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
-          if (m3u8MatchRaw) {
-            console.log("[VOE] URL m3u8 encontrada por regex directo.");
-            const finalUrl = m3u8MatchRaw[1];
+          const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
+          let match;
+          let foundLinks = [];
+          while ((match = catcherRegex.exec(html)) !== null) {
+            const l = match[1];
+            if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("cdn-test")) {
+              foundLinks.push(l);
+            }
+          }
+          if (foundLinks.length > 0) {
+            console.log("[VOE] \u2705 Enlace detectado por Catcher Regex.");
             return {
-              url: finalUrl,
-              quality: "HD",
+              url: foundLinks[0],
+              quality: "1080p",
               serverName: "VOE",
-              headers: {
-                "User-Agent": UA5,
-                "Referer": "https://voe.sx/",
-                "Origin": "https://voe.sx"
-              }
+              headers: { "User-Agent": UA5, "Referer": "https://voe.sx/" }
             };
           }
-          console.log("[VOE] No se encontraron datos de video en el HTML.");
+          const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/i) || html.match(/<script id="data"[\s\S]*?>([\s\S]*?)<\/script>/i);
+          if (jsonMatch) {
+            console.log("[VOE] Procesando bloque de datos...");
+            try {
+              const arr = JSON.parse(jsonMatch[1].trim());
+              const encText = Array.isArray(arr) ? arr[0] : arr;
+              if (typeof encText === "string" && encText.length > 100) {
+                let step1 = encText.replace(/[a-zA-Z]/g, function(c) {
+                  const code = c.charCodeAt(0);
+                  const limit = c <= "Z" ? 90 : 122;
+                  const shifted = code + 13;
+                  return String.fromCharCode(limit >= shifted ? shifted : shifted - 26);
+                });
+                const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+                noise.forEach((n) => step1 = step1.split(n).join(""));
+                const step3 = base64Decode2(step1);
+                let step4 = "";
+                for (let j = 0; j < step3.length; j++) {
+                  step4 += String.fromCharCode(step3.charCodeAt(j) - 3);
+                }
+                const reversed = step4.split("").reverse().join("");
+                const finalStr = base64Decode2(reversed);
+                let videoUrl = null;
+                try {
+                  const finalJson = JSON.parse(finalStr);
+                  videoUrl = finalJson.source || finalJson.mp4 || finalJson.direct_access_url;
+                } catch (e) {
+                  const m = finalStr.match(/(https?:\/\/[^"']+?\.(?:m3u8|mp4)[^"']*?)/i);
+                  if (m)
+                    videoUrl = m[1];
+                }
+                if (videoUrl) {
+                  console.log("[VOE] \u2705 Enlace extra\xEDdo con \xE9xito.");
+                  return {
+                    url: videoUrl,
+                    quality: "1080p",
+                    serverName: "VOE",
+                    headers: { "User-Agent": UA5, "Referer": "https://voe.sx/" }
+                  };
+                }
+              }
+            } catch (ex) {
+              console.warn("[VOE] Fallo en procesamiento:", ex.message);
+            }
+          }
+          console.log("[VOE] No se encontr\xF3 contenido en v5.6.67.");
           return null;
         } catch (e) {
-          console.error("[VOE] Error resolviedo: " + e.message);
+          console.error("[VOE] Error: " + e.message);
           return null;
         }
       });
@@ -779,6 +777,17 @@ var require_filemoon = __commonJS({
             "Accept": "*/*",
             "x-embed-parent": url
           };
+          let response = yield axios6.get(url, { headers: defaultHeaders, timeout: 8e3 });
+          let html = response.data;
+          if (typeof html === "string" && (html.includes("Redirecting...") || html.length < 1500)) {
+            const redirectMatch = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+            if (redirectMatch) {
+              const newUrl = redirectMatch[1];
+              console.log("[Filemoon] -> Siguiendo redirecci\xF3n JS: " + newUrl);
+              response = yield axios6.get(newUrl, { headers: __spreadProps(__spreadValues({}, defaultHeaders), { "Referer": url }), timeout: 8e3 });
+              html = response.data;
+            }
+          }
           if (API_KEYS2.FILEMOON) {
             console.log("[Filemoon] Probando API Premium...");
             try {
@@ -787,7 +796,7 @@ var require_filemoon = __commonJS({
                 console.log("[Filemoon] \u2705 URL obtenida por API Premium.");
                 return {
                   url: apiData.result.url,
-                  quality: "HD",
+                  quality: "1080p",
                   serverName: "Filemoon",
                   headers: defaultHeaders
                 };
@@ -828,29 +837,29 @@ var require_filemoon = __commonJS({
           } catch (apiErr) {
             console.log(`[Filemoon] Playback Flow fall\xF3: ${apiErr.message}`);
           }
-          console.log("[Filemoon] Probando Fallback Simple...");
-          try {
-            const { data } = yield axios6.get(`https://${hostname}/api/videos/${code}`, { headers: defaultHeaders, timeout: 1e4 });
-            if (data.playback) {
-              const decrypted = yield decryptByse(data.playback);
-              if (decrypted && decrypted.sources) {
-                console.log("[Filemoon] \u2705 URL obtenida por Fallback.");
-                const best = decrypted.sources[0];
-                return {
-                  url: best.url,
-                  quality: "1080p",
-                  serverName: "Filemoon",
-                  headers: defaultHeaders
-                };
-              }
+          console.log("[Filemoon] Probando b\xFAsqueda por Catcher Regex broad...");
+          const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
+          let match;
+          let foundLinks = [];
+          while ((match = catcherRegex.exec(html)) !== null) {
+            const l = match[1];
+            if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("google")) {
+              foundLinks.push(l);
             }
-          } catch (e) {
-            console.log(`[Filemoon] Fallback fall\xF3: ${e.message}`);
           }
-          console.log("[Filemoon] No se pudieron obtener enlaces.");
+          if (foundLinks.length > 0) {
+            console.log("[Filemoon] \u2705 URL encontrada por Catcher Regex.");
+            return {
+              url: foundLinks[0],
+              quality: "1080p",
+              serverName: "Filemoon",
+              headers: defaultHeaders
+            };
+          }
+          console.log("[Filemoon] No se pudieron obtener enlaces en v5.6.67.");
           return null;
         } catch (e) {
-          console.error(`[Filemoon] Error: ${e.message}`);
+          console.error(`[Filemoon] Error cr\xEDtico: ${e.message}`);
           return null;
         }
       });

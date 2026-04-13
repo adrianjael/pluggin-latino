@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T04:42:53.957Z
+ * Generated: 2026-04-13T04:59:45.406Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -346,8 +346,12 @@ var require_engine = __commonJS({
             console.log(`[Engine] Rechazado por idioma no Latino (${lang}): ${s.url.substring(0, 40)}...`);
             return null;
           }
-          let q = s.verified ? s.quality : s.siteQuality || "HD";
-          const check = s.verified ? " \u2705" : "";
+          let q = "HD";
+          let check = "";
+          if (s.verified && s.quality && s.quality !== "Unknown") {
+            q = s.quality;
+            check = " \u2705";
+          }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
