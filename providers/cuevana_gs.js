@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T03:17:09.207Z
+ * Generated: 2026-04-13T03:18:24.360Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1042,10 +1042,6 @@ var require_id_mapper = __commonJS({
     var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
     var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var SERIES_MAPPINGS = {
-      "157336": {
-        imdbId: "tt0816692",
-        title: "Interestelar"
-      },
       // Scrubs Offset Case
       "tt40197357": {
         replacementId: "tt0285403",
