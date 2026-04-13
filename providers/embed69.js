@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T00:36:16.842Z
+ * Generated: 2026-04-13T02:13:49.472Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -571,7 +571,12 @@ var require_voe = __commonJS({
                   url: finalUrl,
                   quality: q,
                   serverName: "VOE",
-                  headers: { "User-Agent": DEFAULT_UA2, "Referer": url }
+                  headers: {
+                    "User-Agent": DEFAULT_UA2,
+                    "Referer": "https://voe.sx/",
+                    "Origin": "https://voe.sx",
+                    "Accept": "*/*"
+                  }
                 };
               }
             } catch (ex) {
@@ -585,7 +590,12 @@ var require_voe = __commonJS({
               url: finalUrl,
               quality: "1080p",
               serverName: "VOE",
-              headers: { "User-Agent": DEFAULT_UA2, "Referer": url }
+              headers: {
+                "User-Agent": DEFAULT_UA2,
+                "Referer": "https://voe.sx/",
+                "Origin": "https://voe.sx",
+                "Accept": "*/*"
+              }
             };
           }
           return null;
