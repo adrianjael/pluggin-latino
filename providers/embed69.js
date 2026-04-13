@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T14:46:52.931Z
+ * Generated: 2026-04-13T14:50:44.747Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1618,7 +1618,7 @@ var { resolveEmbed } = require_resolvers();
 var { getCorrectImdbId } = require_id_mapper();
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
-var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
+var LANG_PRIORITY = ["LAT"];
 var INDIVIDUAL_TIMEOUT = 15e3;
 function decodeJwtPayload(token) {
   try {
@@ -1698,14 +1698,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       });
       const rawStreams = [];
       const seenUrls = /* @__PURE__ */ new Set();
+      const batch = [];
       for (const langCode of LANG_PRIORITY) {
         const section = byLang[langCode];
         if (!section)
           continue;
         const embeds = section.sortedEmbeds || section.embeds || [];
-        const langLabel = langCode === "LAT" ? "Latino" : langCode === "ESP" ? "Espa\xF1ol" : "Subtitulado";
-        console.log(`[Embed69] Lote quir\xFArgico: ${embeds.length} en ${langLabel}`);
-        const batch = [];
+        const langLabel = "Latino";
+        console.log(`[Embed69] Encolando: ${embeds.length} en ${langLabel}`);
         for (const embed of embeds) {
           const sName = (embed.servername || "").toLowerCase();
           if (!embed.link || sName === "download")
@@ -1717,7 +1717,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               continue;
             seenUrls.add(url);
             const sLabel = embed.servername || "Servidor";
-            const isFilemoon = sName.includes("filemoon") || sName.includes("byse") || url.includes("filemoon") || url.includes("398fitus") || url.includes("r66nv9ed");
             const resolutionPromise = Promise.race([
               resolveEmbed(url).then((res) => {
                 return __spreadProps(__spreadValues({}, res || {}), { langLabel, serverLabel: sLabel });
@@ -1730,12 +1729,13 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             batch.push(resolutionPromise);
           }
         }
-        const results = yield Promise.allSettled(batch);
-        results.forEach((r) => {
-          if (r.status === "fulfilled" && r.value)
-            rawStreams.push(r.value);
-        });
       }
+      console.log(`[Embed69] R\xE1faga: Procesando ${batch.length} servidores en paralelo`);
+      const results = yield Promise.allSettled(batch);
+      results.forEach((r) => {
+        if (r.status === "fulfilled" && r.value)
+          rawStreams.push(r.value);
+      });
       return yield finalizeStreams(rawStreams, "Embed69", mediaTitle);
     } catch (error) {
       console.log(`[Embed69] Error Cr\xEDtico: ${error.message}`);
