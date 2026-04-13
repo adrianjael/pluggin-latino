@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T05:23:34.655Z
+ * Generated: 2026-04-13T05:28:39.561Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -282,13 +282,15 @@ var require_engine = __commonJS({
     var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
-      const l = (lang || "").toLowerCase();
-      if (l.includes("latino") || l.includes("lat"))
+      const l = (lang || "").toUpperCase();
+      if (l === "LAT" || l.includes("LATINO"))
         return "Latino";
-      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
+      if (l === "ESP" || l.includes("ESPA\xD1A") || l.includes("CASTELLANO"))
         return "Espa\xF1ol";
-      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
+      if (l === "SUB" || l.includes("SUBTITULADO") || l.includes("VOSE"))
         return "Subtitulado";
+      if (l.includes("MEX") || l.includes("ARG") || l.includes("COL"))
+        return "Latino";
       return "Otro";
     }
     function normalizeServer(server, url = "") {
@@ -305,60 +307,50 @@ var require_engine = __commonJS({
       }
       const s = server.toLowerCase();
       const u = url.toLowerCase();
-      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx") || u.includes("voe.inc"))
+      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx"))
         return "VOE";
-      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon") || u.includes("moonembed"))
+      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon"))
         return "Filemoon";
-      if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud") || u.includes("streamwish"))
+      if (s.includes("streamwish") || u.includes("streamwish") || u.includes("strcloud"))
         return "StreamWish";
-      if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("vidhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh"))
+      if (s.includes("vidhide") || u.includes("vidhide") || u.includes("dintezuvio"))
         return "VidHide";
-      if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || s.includes("vms.sh") || u.includes("waaw") || u.includes("vms.sh"))
+      if (s.includes("waaw") || s.includes("netu") || u.includes("vms.sh"))
         return "Netu";
-      if (s.includes("fastream") || s.includes("fastplay"))
-        return "Fastream";
-      if (s.includes("buzzheavier"))
-        return "Buzzheavier";
-      if (s.includes("ok.ru") || s.includes("okru"))
-        return "Okru";
-      if (/^[a-zA-Z0-9-]{15,}$/.test(server) || server.includes("cdn-caching")) {
-        return "Servidor Privado";
-      }
       return server;
     }
     function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Processing ${streams.length} streams for ${providerName} (${mediaTitle || "Unknown"})...`);
-        let validated = streams;
-        try {
-          const results = yield Promise.allSettled(
-            streams.map((s) => validateStream(s))
-          );
-          validated = results.map(
-            (r, i) => r.status === "fulfilled" ? r.value : streams[i]
-          );
-        } catch (e) {
+        console.log(`[Engine] Legacy Processing ${streams.length} streams...`);
+        const validated = [];
+        for (const s of streams) {
+          if (!s.url)
+            continue;
+          if (s.verified) {
+            validated.push(s);
+            continue;
+          }
+          try {
+            const v = yield validateStream(s);
+            validated.push(v);
+          } catch (e) {
+            validated.push(__spreadProps(__spreadValues({}, s), { quality: "HD", verified: true }));
+          }
         }
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          const allowed = ["latino", "lat"];
-          const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
-          if (!isAllowed) {
+          if (lang !== "Latino") {
             return null;
           }
-          let q = "HD";
-          let check = "";
-          if (s.verified && s.quality && s.quality !== "Unknown") {
-            q = s.quality;
-            check = " \u2705";
-          }
+          let q = s.quality || "1080p";
+          let check = s.verified ? " \u2705" : "";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${q}${check} | ${lang} | ${server}`,
+            title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
@@ -377,7 +369,7 @@ var require_engine = __commonJS({
           uniqueUrls.add(s.url);
           return true;
         }).slice(0, MAX_RESULTS);
-        console.log(`[Engine] FIN: ${finalized.length} resultados finales (L\xEDmite: ${MAX_RESULTS}) enviados a Nuvio para ${providerName}.`);
+        console.log(`[Engine] FIN: ${finalized.length} resultados.`);
         return finalized;
       });
     }

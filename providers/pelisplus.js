@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-13T05:23:34.626Z
+ * Generated: 2026-04-13T05:28:39.532Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -146,265 +146,93 @@ var require_http = __commonJS({
   }
 });
 
-// src/utils/string.js
-var string_exports = {};
-__export(string_exports, {
-  base64Decode: () => base64Decode,
-  calculateSimilarity: () => calculateSimilarity,
-  getHostname: () => getHostname,
-  getOrigin: () => getOrigin,
-  isGoodMatch: () => isGoodMatch,
-  normalizeTitle: () => normalizeTitle,
-  utf8Decode: () => utf8Decode
-});
-function normalizeTitle(t) {
-  if (!t)
-    return "";
-  var normalized = t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-  var words = normalized.split(" ");
-  var filtered = [];
-  for (var i = 0; i < words.length; i++) {
-    var word = words[i];
-    var isNoise = false;
-    for (var j = 0; j < NOISE_WORDS.length; j++) {
-      if (NOISE_WORDS[j] === word) {
-        isNoise = true;
-        break;
-      }
-    }
-    if (!isNoise)
-      filtered.push(word);
-  }
-  return filtered.length > 0 ? filtered.join(" ") : normalized;
-}
-function calculateSimilarity(title1, title2) {
-  var norm1 = normalizeTitle(title1);
-  var norm2 = normalizeTitle(title2);
-  if (norm1 === norm2)
-    return 1;
-  if (norm1.length > 6 && norm2.length > 6 && (norm2.indexOf(norm1) !== -1 || norm1.indexOf(norm2) !== -1)) {
-    return 0.95;
-  }
-  var w1 = norm1.split(/\s+/);
-  var w2 = norm2.split(/\s+/);
-  var words1Map = {};
-  var words2Map = {};
-  var allUniqueWords = {};
-  for (var i = 0; i < w1.length; i++) {
-    if (w1[i].length > 1) {
-      words1Map[w1[i]] = true;
-      allUniqueWords[w1[i]] = true;
-    }
-  }
-  for (var j = 0; j < w2.length; j++) {
-    if (w2[j].length > 1) {
-      words2Map[w2[j]] = true;
-      allUniqueWords[w2[j]] = true;
-    }
-  }
-  var intersection = 0;
-  var union = 0;
-  for (var word in allUniqueWords) {
-    union++;
-    if (words1Map[word] && words2Map[word]) {
-      intersection++;
-    }
-  }
-  if (union === 0)
-    return 0;
-  var score = intersection / union;
-  var yearMatch1 = title1.match(/\b(19|20)\d{2}\b/);
-  var yearMatch2 = title2.match(/\b(19|20)\d{2}\b/);
-  if (yearMatch1 && yearMatch2 && yearMatch1[0] !== yearMatch2[0]) {
-    return score * 0.5;
-  }
-  return score;
-}
-function isGoodMatch(query, result, minScore) {
-  var ms = minScore || 0.45;
-  return calculateSimilarity(query, result) >= ms;
-}
-function base64Decode(input) {
-  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-  var str = String(input).replace(/=+$/, "");
-  var output = "";
-  if (str.length % 4 === 1)
-    throw new Error("Base64 invalido");
-  var bc = 0, bs, buffer, idx = 0;
-  while (buffer = str.charAt(idx++)) {
-    buffer = chars.indexOf(buffer);
-    if (~buffer) {
-      bs = bc % 4 ? bs * 64 + buffer : buffer;
-      if (bc++ % 4) {
-        output += String.fromCharCode(255 & bs >> (-2 * bc & 6));
-      }
-    }
-  }
-  return output;
-}
-function utf8Decode(bytes) {
-  var out = "", i = 0;
-  while (i < bytes.length) {
-    var c = bytes[i++];
-    if (c < 128)
-      out += String.fromCharCode(c);
-    else if (c > 191 && c < 224)
-      out += String.fromCharCode((c & 31) << 6 | bytes[i++] & 63);
-    else
-      out += String.fromCharCode((c & 15) << 12 | (bytes[i++] & 63) << 6 | bytes[i++] & 63);
-  }
-  return out;
-}
-function getOrigin(url) {
-  if (!url)
-    return "";
-  var match = url.match(/^(https?:\/\/[^\/]+)/);
-  return match ? match[1] : "";
-}
-function getHostname(url) {
-  if (!url)
-    return "";
-  var match = url.match(/^https?:\/\/([^\/]+)/);
-  return match ? match[1] : "";
-}
-var NOISE_WORDS;
-var init_string = __esm({
-  "src/utils/string.js"() {
-    NOISE_WORDS = [
-      "latino",
-      "espanol",
-      "hispano",
-      "dual",
-      "subs",
-      "subtitulado",
-      "hd",
-      "1080p",
-      "720p",
-      "4k",
-      "uhd",
-      "completa",
-      "pelicula",
-      "serie",
-      "episodio",
-      "capitulo",
-      "temporada"
-    ];
-  }
-});
-
 // src/resolvers/voe.js
 var require_voe = __commonJS({
   "src/resolvers/voe.js"(exports2, module2) {
     var axios6 = require("axios");
-    var { base64Decode: base64Decode2 } = (init_string(), __toCommonJS(string_exports));
-    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
+    function base64Decode(input) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+      let str = String(input).replace(/=+$/, "");
+      let output = "";
+      if (str.length % 4 === 1)
+        throw new Error("Base64 invalido");
+      let bc = 0, bs, buffer, idx = 0;
+      while (buffer = str.charAt(idx++)) {
+        buffer = chars.indexOf(buffer);
+        if (~buffer) {
+          bs = bc % 4 ? bs * 64 + buffer : buffer;
+          if (bc++ % 4) {
+            output += String.fromCharCode(255 & bs >> (-2 * bc & 6));
+          }
+        }
+      }
+      return output;
+    }
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          console.log("[VOE] Resolving v5.6.69: " + url);
-          let response = yield axios6.get(url, {
-            headers: { "User-Agent": UA4, "Referer": url },
-            timeout: 1e4,
-            skipSizeCheck: true
+          console.log(`[VOE] Resolving Legacy: ${url}`);
+          const { data: html } = yield axios6.get(url, {
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
+            timeout: 8e3
           });
-          let html = response.data;
-          if (typeof html !== "string")
-            return null;
-          const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
-          const scanAndReturn = (text) => {
-            if (!text || typeof text !== "string")
-              return null;
-            let m;
-            while ((m = catcherRegex.exec(text)) !== null) {
-              const l = m[1];
-              if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("google")) {
-                return l;
-              }
+          if (html.includes("window.location.href") && html.length < 2e3) {
+            const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+            if (rm) {
+              return resolve9(rm[1]);
             }
-            return null;
-          };
-          const firstFind = scanAndReturn(html);
-          if (firstFind) {
-            console.log("[VOE] \u2705 Enlace detectado proactivamente en primera respuesta.");
-            return {
-              url: firstFind,
-              quality: "1080p",
-              serverName: "VOE",
-              headers: { "User-Agent": UA4, "Referer": "https://voe.sx/" }
-            };
           }
-          if (html.includes("Redirecting...") || html.includes("location.href") || html.length < 2e3) {
-            const redirectMatch = html.match(/(?:location\.href|location\.replace|location\.assign)\s*=\s*['"]([^'"]+)['"]/i) || html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
-            if (redirectMatch) {
-              const newUrl = redirectMatch[1];
-              console.log("[VOE] -> Siguiendo redirecci\xF3n JS: " + newUrl);
-              response = yield axios6.get(newUrl, {
-                headers: { "User-Agent": UA4, "Referer": url },
-                timeout: 1e4,
-                skipSizeCheck: true
+          const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[1].trim());
+              let encText = Array.isArray(parsed) ? parsed[0] : parsed;
+              if (typeof encText !== "string")
+                return null;
+              let decoded = encText.replace(/[a-zA-Z]/g, (c) => {
+                const code = c.charCodeAt(0);
+                const limit = c <= "Z" ? 90 : 122;
+                const shifted = code + 13;
+                return String.fromCharCode(limit >= shifted ? shifted : shifted - 26);
               });
-              html = response.data;
-              const secondFind = scanAndReturn(html);
-              if (secondFind) {
-                console.log("[VOE] \u2705 Enlace detectado tras redirecci\xF3n.");
+              const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+              for (const n of noise) {
+                decoded = decoded.split(n).join("");
+              }
+              const b64_1 = base64Decode(decoded);
+              let shiftedStr = "";
+              for (let j = 0; j < b64_1.length; j++) {
+                shiftedStr += String.fromCharCode(b64_1.charCodeAt(j) - 3);
+              }
+              const reversed = shiftedStr.split("").reverse().join("");
+              const data = JSON.parse(base64Decode(reversed));
+              if (data && data.source) {
                 return {
-                  url: secondFind,
+                  url: data.source,
                   quality: "1080p",
-                  serverName: "VOE",
-                  headers: { "User-Agent": UA4, "Referer": "https://voe.sx/" }
+                  verified: true,
+                  headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Referer": url
+                  }
                 };
               }
-            }
-          }
-          const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/i) || html.match(/<script id="data"[\s\S]*?>([\s\S]*?)<\/script>/i);
-          if (jsonMatch) {
-            console.log("[VOE] Procesando bloque de datos...");
-            try {
-              const arr = JSON.parse(jsonMatch[1].trim());
-              const encText = Array.isArray(arr) ? arr[0] : arr;
-              if (typeof encText === "string" && encText.length > 100) {
-                let step1 = encText.replace(/[a-zA-Z]/g, function(c) {
-                  const code = c.charCodeAt(0);
-                  const limit = c <= "Z" ? 90 : 122;
-                  const shifted = code + 13;
-                  return String.fromCharCode(limit >= shifted ? shifted : shifted - 26);
-                });
-                const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
-                noise.forEach((n) => step1 = step1.split(n).join(""));
-                const step3 = base64Decode2(step1);
-                let step4 = "";
-                for (let j = 0; j < step3.length; j++) {
-                  step4 += String.fromCharCode(step3.charCodeAt(j) - 3);
-                }
-                const reversed = step4.split("").reverse().join("");
-                const finalStr = base64Decode2(reversed);
-                let videoUrl = null;
-                try {
-                  const finalJson = JSON.parse(finalStr);
-                  videoUrl = finalJson.source || finalJson.mp4 || finalJson.direct_access_url;
-                } catch (e) {
-                  const m = finalStr.match(/(https?:\/\/[^"']+?\.(?:m3u8|mp4)[^"']*?)/i);
-                  if (m)
-                    videoUrl = m[1];
-                }
-                if (videoUrl) {
-                  console.log("[VOE] \u2705 Enlace extra\xEDdo con \xE9xito.");
-                  return {
-                    url: videoUrl,
-                    quality: "1080p",
-                    serverName: "VOE",
-                    headers: { "User-Agent": UA4, "Referer": "https://voe.sx/" }
-                  };
-                }
-              }
             } catch (ex) {
-              console.warn("[VOE] Fallo en procesamiento:", ex.message);
+              console.error(`[VOE] Legacy Decryption failed: ${ex.message}`);
             }
           }
-          console.log("[VOE] No se encontr\xF3 contenido en v5.6.67.");
+          const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+          if (m3u8Match) {
+            return {
+              url: m3u8Match[1],
+              quality: "1080p",
+              verified: false,
+              headers: { "Referer": url }
+            };
+          }
           return null;
-        } catch (e) {
-          console.error("[VOE] Error: " + e.message);
+        } catch (error) {
+          console.error(`[VOE] Error: ${error.message}`);
           return null;
         }
       });
@@ -510,211 +338,51 @@ var require_hlswish = __commonJS({
   }
 });
 
-// src/utils/aes-gcm.js
-var aes_gcm_exports = {};
-__export(aes_gcm_exports, {
-  decryptGCM: () => decryptGCM
-});
-function decryptGCM(key, iv, ciphertextWithTag) {
-  try {
-    const tagSize = 16;
-    const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-    const keyWA = import_crypto_js.default.lib.WordArray.create(key);
-    const ivCounter = new Uint8Array(16);
-    ivCounter.set(iv, 0);
-    ivCounter[15] = 2;
-    const ivWA = import_crypto_js.default.lib.WordArray.create(ivCounter);
-    const decrypted = import_crypto_js.default.AES.decrypt(
-      { ciphertext: import_crypto_js.default.lib.WordArray.create(ciphertext) },
-      keyWA,
-      {
-        iv: ivWA,
-        mode: import_crypto_js.default.mode.CTR,
-        padding: import_crypto_js.default.pad.NoPadding
-      }
-    );
-    return decrypted.toString(import_crypto_js.default.enc.Utf8);
-  } catch (e) {
-    console.error("[PureJS-GCM] Error Decrypting:", e.message);
-    return null;
-  }
-}
-var import_crypto_js;
-var init_aes_gcm = __esm({
-  "src/utils/aes-gcm.js"() {
-    import_crypto_js = __toESM(require("crypto-js"));
-  }
-});
-
-// src/utils/config.js
-var config_exports = {};
-__export(config_exports, {
-  API_ENDPOINTS: () => API_ENDPOINTS,
-  API_KEYS: () => API_KEYS
-});
-var API_KEYS, API_ENDPOINTS;
-var init_config = __esm({
-  "src/utils/config.js"() {
-    API_KEYS = {
-      FILEMOON: "42605q5ytvlhmu9eris67",
-      VIDHIDE: "27261mmymf1etcdwfdvr3",
-      STREAMWISH: "10801lny3tlwanfupzu4m",
-      MIXDROP: "gAR2UJ0JE2RKlhJJCqE"
-    };
-    API_ENDPOINTS = {
-      FILEMOON: "https://filemoon-api.vercel.app/api/filemoon"
-    };
-  }
-});
-
 // src/resolvers/filemoon.js
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
     var axios6 = require("axios");
-    var { decryptGCM: decryptGCM2 } = (init_aes_gcm(), __toCommonJS(aes_gcm_exports));
-    var { base64Decode: base64Decode2, utf8Decode: utf8Decode2 } = (init_string(), __toCommonJS(string_exports));
-    var { API_KEYS: API_KEYS2 } = (init_config(), __toCommonJS(config_exports));
-    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
-    function decryptByse(playback) {
-      return __async(this, null, function* () {
-        try {
-          const keyArr = [];
-          for (const p of playback.key_parts) {
-            const b64 = p.replace(/-/g, "+").replace(/_/g, "/");
-            const bin = base64Decode2(b64);
-            new Uint8Array(bin.split("").map((c) => c.charCodeAt(0))).forEach((b) => keyArr.push(b));
-          }
-          const key = new Uint8Array(keyArr);
-          const ivBase = playback.iv.replace(/-/g, "+").replace(/_/g, "/");
-          const ivBin = base64Decode2(ivBase);
-          const iv = new Uint8Array(ivBin.split("").map((c) => c.charCodeAt(0)));
-          const payloadBase = playback.payload.replace(/-/g, "+").replace(/_/g, "/");
-          const payloadBin = base64Decode2(payloadBase);
-          const ciphertextWithTag = new Uint8Array(payloadBin.split("").map((c) => c.charCodeAt(0)));
-          if (typeof crypto !== "undefined" && crypto.subtle) {
-            try {
-              const cryptoKey = yield crypto.subtle.importKey("raw", key, "AES-GCM", false, ["decrypt"]);
-              const decryptedArr = yield crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ciphertextWithTag);
-              return JSON.parse(utf8Decode2(new Uint8Array(decryptedArr)));
-            } catch (e) {
-              console.log("[Byse] Subtle fail");
-            }
-          }
-          const decryptedStr = decryptGCM2(key, iv, ciphertextWithTag);
-          return decryptedStr ? JSON.parse(decryptedStr) : null;
-        } catch (e) {
-          console.log(`[Byse Decrypt] Error: ${e.message}`);
-          return null;
+    function unpack(p, a, c, k, e, d) {
+      while (c--) {
+        if (k[c]) {
+          p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
         }
-      });
+      }
+      return p;
     }
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          const defaultHeaders = { "User-Agent": UA4, "Referer": url };
-          console.log(`[Filemoon] Resolving v5.6.71: ${url}`);
-          let response = yield axios6.get(url, {
-            headers: defaultHeaders,
-            timeout: 1e4,
-            skipSizeCheck: true
+          console.log(`[Filemoon] Resolving Legacy: ${url}`);
+          const { data: html } = yield axios6.get(url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Referer": url
+            },
+            timeout: 8e3
           });
-          let html = response.data;
-          if (typeof html !== "string")
-            return null;
-          const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
-          const scanAndReturn = (text) => {
-            let m;
-            while ((m = catcherRegex.exec(text)) !== null) {
-              const l = m[1];
-              if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("google")) {
-                return l;
-              }
+          const packerRegex = /eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g;
+          let match;
+          while ((match = packerRegex.exec(html)) !== null) {
+            const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
+            const m3u8Match = unpacked.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/i);
+            if (m3u8Match) {
+              console.log("[Filemoon] \u2713 Stream encontrado via Legacy-Unpacker.");
+              return {
+                url: m3u8Match[1],
+                quality: "1080p",
+                verified: true,
+                headers: {
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                  "Referer": "https://arbitrarydecisions.com/",
+                  "Origin": "https://arbitrarydecisions.com"
+                }
+              };
             }
-            return null;
-          };
-          const firstFind = scanAndReturn(html);
-          if (firstFind) {
-            console.log("[Filemoon] \u2705 Enlace detectado proactivamente.");
-            return {
-              url: firstFind,
-              quality: "1080p",
-              serverName: "Filemoon",
-              headers: defaultHeaders
-            };
-          }
-          if (html.includes("location.href") || html.includes("Redirecting...") || html.length < 2e3) {
-            const redirectMatch = html.match(/(?:location\.href|location\.replace|location\.assign|window\.location\.href)\s*=\s*['"]([^'"]+)['"]/i);
-            if (redirectMatch) {
-              const newUrl = redirectMatch[1];
-              console.log(`[Filemoon] -> Siguiendo redirecci\xF3n JS: ${newUrl}`);
-              response = yield axios6.get(newUrl, {
-                headers: { "User-Agent": UA4, "Referer": url },
-                timeout: 1e4,
-                skipSizeCheck: true
-              });
-              html = response.data;
-              const secondFind = scanAndReturn(html);
-              if (secondFind) {
-                console.log("[Filemoon] \u2705 Enlace detectado tras redirecci\xF3n.");
-                return {
-                  url: secondFind,
-                  quality: "1080p",
-                  serverName: "Filemoon",
-                  headers: { "User-Agent": UA4, "Referer": newUrl }
-                };
-              }
-            }
-          }
-          try {
-            const codeMatch = url.match(/\/([a-zA-Z0-9]{8,20})(?:\.html)?$/);
-            const code = codeMatch ? codeMatch[1] : url.split("/").pop();
-            const hostname = new URL(url).hostname;
-            let targetHost = hostname;
-            let targetCode = code;
-            let refererForPlayback = url;
-            const detailsUrl = `https://${targetHost}/api/videos/${targetCode}/embed/details`;
-            const { data: details } = yield axios6.get(detailsUrl, {
-              headers: __spreadProps(__spreadValues({}, defaultHeaders), { "x-embed-origin": "ww3.gnulahd.nu" }),
-              timeout: 5e3
-            });
-            if (details && details.embed_frame_url) {
-              const frameUrl = details.embed_frame_url;
-              const frameUri = new URL(frameUrl);
-              targetCode = frameUri.pathname.split("/").pop();
-              targetHost = frameUri.hostname;
-              refererForPlayback = frameUrl;
-            }
-            const pbHeaders = __spreadProps(__spreadValues({}, defaultHeaders), { "Referer": refererForPlayback, "x-embed-parent": url });
-            const { data: pbData } = yield axios6.get(`https://${targetHost}/api/videos/${targetCode}/embed/playback`, { headers: pbHeaders, timeout: 8e3 });
-            if (pbData.playback) {
-              const decrypted = yield decryptByse(pbData.playback);
-              if (decrypted && decrypted.sources) {
-                console.log("[Filemoon] \u2705 URL obtenida por API Byse.");
-                const best = decrypted.sources[0];
-                return {
-                  url: best.url,
-                  quality: best.label || "1080p",
-                  serverName: "Filemoon",
-                  headers: pbHeaders
-                };
-              }
-            }
-          } catch (apiErr) {
-            console.log(`[Filemoon] API Byse fall\xF3: ${apiErr.message}`);
-          }
-          const lastFind = scanAndReturn(html);
-          if (lastFind) {
-            console.log("[Filemoon] \u2705 URL encontrada por Catcher Regex Final.");
-            return {
-              url: lastFind,
-              quality: "1080p",
-              serverName: "Filemoon",
-              headers: defaultHeaders
-            };
           }
           return null;
-        } catch (e) {
-          console.log(`[Filemoon] Error en resoluci\xF3n: ${e.message}`);
+        } catch (error) {
+          console.error(`[Filemoon] Error: ${error.message}`);
           return null;
         }
       });
@@ -1403,7 +1071,7 @@ function generateKey(hostname) {
   for (let i = 0; i < Math.min(n.length, 16); i++) {
     keyArr[i] = n.charCodeAt(i) & 255;
   }
-  return import_crypto_js2.default.lib.WordArray.create(keyArr);
+  return import_crypto_js.default.lib.WordArray.create(keyArr);
 }
 function generateIV(hostname, hash) {
   const s = hostname;
@@ -1424,26 +1092,26 @@ function generateIV(hostname, hash) {
   for (let i = 0; i < Math.min(b.length, 16); i++) {
     ivArr[i] = b.charCodeAt(i) & 255;
   }
-  return import_crypto_js2.default.lib.WordArray.create(ivArr);
+  return import_crypto_js.default.lib.WordArray.create(ivArr);
 }
 function decrypt(hex, keyWA, ivWA) {
-  const ciphertextWA = import_crypto_js2.default.enc.Hex.parse(hex);
-  const decrypted = import_crypto_js2.default.AES.decrypt(
+  const ciphertextWA = import_crypto_js.default.enc.Hex.parse(hex);
+  const decrypted = import_crypto_js.default.AES.decrypt(
     { ciphertext: ciphertextWA },
     keyWA,
     {
       iv: ivWA,
-      mode: import_crypto_js2.default.mode.CBC,
-      padding: import_crypto_js2.default.pad.Pkcs7
+      mode: import_crypto_js.default.mode.CBC,
+      padding: import_crypto_js.default.pad.Pkcs7
     }
   );
-  return decrypted.toString(import_crypto_js2.default.enc.Utf8);
+  return decrypted.toString(import_crypto_js.default.enc.Utf8);
 }
-var import_axios5, import_crypto_js2;
+var import_axios5, import_crypto_js;
 var init_embedseek = __esm({
   "src/resolvers/embedseek.js"() {
     import_axios5 = __toESM(require("axios"));
-    import_crypto_js2 = __toESM(require("crypto-js"));
+    import_crypto_js = __toESM(require("crypto-js"));
   }
 });
 
@@ -1725,14 +1393,14 @@ var require_extractor = __commonJS({
     var { resolveEmbed } = require_resolvers();
     var { validateStream } = require_m3u8();
     var { getTmdbTitle: getTmdbTitle2 } = require_tmdb();
-    function normalizeTitle2(t) {
+    function normalizeTitle(t) {
       if (!t)
         return "";
       return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
     }
     function titleMatch(query, target) {
-      const q = normalizeTitle2(query);
-      const t = normalizeTitle2(target);
+      const q = normalizeTitle(query);
+      const t = normalizeTitle(target);
       if (!q || !t)
         return false;
       if (q === t || t.includes(q) || q.includes(t))
@@ -1783,8 +1451,8 @@ var require_extractor = __commonJS({
                   resultTitle = tMatch[1].trim();
               }
               if (titleMatch(q, resultTitle)) {
-                const normalizedQ = normalizeTitle2(q);
-                const normalizedT = normalizeTitle2(resultTitle);
+                const normalizedQ = normalizeTitle(q);
+                const normalizedT = normalizeTitle(resultTitle);
                 const score = Math.abs(normalizedQ.length - normalizedT.length);
                 matches.push({ href: BASE_URL + href, title: resultTitle, score });
               }
@@ -1990,13 +1658,15 @@ var require_engine = __commonJS({
     var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
-      const l = (lang || "").toLowerCase();
-      if (l.includes("latino") || l.includes("lat"))
+      const l = (lang || "").toUpperCase();
+      if (l === "LAT" || l.includes("LATINO"))
         return "Latino";
-      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
+      if (l === "ESP" || l.includes("ESPA\xD1A") || l.includes("CASTELLANO"))
         return "Espa\xF1ol";
-      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
+      if (l === "SUB" || l.includes("SUBTITULADO") || l.includes("VOSE"))
         return "Subtitulado";
+      if (l.includes("MEX") || l.includes("ARG") || l.includes("COL"))
+        return "Latino";
       return "Otro";
     }
     function normalizeServer(server, url = "") {
@@ -2013,60 +1683,50 @@ var require_engine = __commonJS({
       }
       const s = server.toLowerCase();
       const u = url.toLowerCase();
-      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx") || u.includes("voe.inc"))
+      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx"))
         return "VOE";
-      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon") || u.includes("moonembed"))
+      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon"))
         return "Filemoon";
-      if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud") || u.includes("streamwish"))
+      if (s.includes("streamwish") || u.includes("streamwish") || u.includes("strcloud"))
         return "StreamWish";
-      if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("vidhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh"))
+      if (s.includes("vidhide") || u.includes("vidhide") || u.includes("dintezuvio"))
         return "VidHide";
-      if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || s.includes("vms.sh") || u.includes("waaw") || u.includes("vms.sh"))
+      if (s.includes("waaw") || s.includes("netu") || u.includes("vms.sh"))
         return "Netu";
-      if (s.includes("fastream") || s.includes("fastplay"))
-        return "Fastream";
-      if (s.includes("buzzheavier"))
-        return "Buzzheavier";
-      if (s.includes("ok.ru") || s.includes("okru"))
-        return "Okru";
-      if (/^[a-zA-Z0-9-]{15,}$/.test(server) || server.includes("cdn-caching")) {
-        return "Servidor Privado";
-      }
       return server;
     }
     function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Processing ${streams.length} streams for ${providerName} (${mediaTitle || "Unknown"})...`);
-        let validated = streams;
-        try {
-          const results = yield Promise.allSettled(
-            streams.map((s) => validateStream(s))
-          );
-          validated = results.map(
-            (r, i) => r.status === "fulfilled" ? r.value : streams[i]
-          );
-        } catch (e) {
+        console.log(`[Engine] Legacy Processing ${streams.length} streams...`);
+        const validated = [];
+        for (const s of streams) {
+          if (!s.url)
+            continue;
+          if (s.verified) {
+            validated.push(s);
+            continue;
+          }
+          try {
+            const v = yield validateStream(s);
+            validated.push(v);
+          } catch (e) {
+            validated.push(__spreadProps(__spreadValues({}, s), { quality: "HD", verified: true }));
+          }
         }
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          const allowed = ["latino", "lat"];
-          const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
-          if (!isAllowed) {
+          if (lang !== "Latino") {
             return null;
           }
-          let q = "HD";
-          let check = "";
-          if (s.verified && s.quality && s.quality !== "Unknown") {
-            q = s.quality;
-            check = " \u2705";
-          }
+          let q = s.quality || "1080p";
+          let check = s.verified ? " \u2705" : "";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${q}${check} | ${lang} | ${server}`,
+            title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
@@ -2085,7 +1745,7 @@ var require_engine = __commonJS({
           uniqueUrls.add(s.url);
           return true;
         }).slice(0, MAX_RESULTS);
-        console.log(`[Engine] FIN: ${finalized.length} resultados finales (L\xEDmite: ${MAX_RESULTS}) enviados a Nuvio para ${providerName}.`);
+        console.log(`[Engine] FIN: ${finalized.length} resultados.`);
         return finalized;
       });
     }
