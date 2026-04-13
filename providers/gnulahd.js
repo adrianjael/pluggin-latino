@@ -1,6 +1,6 @@
 /**
  * gnulahd - Built from src/gnulahd/
- * Generated: 2026-04-13T00:21:36.208Z
+ * Generated: 2026-04-13T00:24:56.708Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1214,8 +1214,18 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     }
     if (candidates.length === 0)
       return [];
-    const normalizedTarget = mediaTitle.toLowerCase();
-    const bestMatch = candidates.find((c) => c.title.toLowerCase().includes(normalizedTarget)) || candidates[0];
+    const normalizedTarget = mediaTitle.toLowerCase().trim();
+    let bestMatch = candidates.find((c) => c.title.toLowerCase().trim() === normalizedTarget);
+    if (!bestMatch) {
+      const matches = candidates.filter((c) => c.title.toLowerCase().includes(normalizedTarget));
+      if (matches.length > 0) {
+        matches.sort((a, b) => a.title.length - b.title.length);
+        bestMatch = matches[0];
+      } else {
+        bestMatch = candidates[0];
+      }
+    }
+    console.log(`[GnulaHD] Seleccionado: ${bestMatch.title} (${bestMatch.url})`);
     let results = [];
     if (isMovie) {
       results = yield extractStreamsFromPage(yield getUrl(bestMatch.url));
