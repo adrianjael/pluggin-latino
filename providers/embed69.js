@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T03:47:48.819Z
+ * Generated: 2026-04-13T03:51:16.291Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1204,84 +1204,11 @@ var require_resolvers = __commonJS({
   }
 });
 
-// src/utils/id_mapper.js
-var require_id_mapper = __commonJS({
-  "src/utils/id_mapper.js"(exports2, module2) {
-    var axios6 = require("axios");
-    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-    var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-    var SERIES_MAPPINGS = {
-      // Scrubs Offset Case
-      "tt40197357": {
-        replacementId: "tt0285403",
-        title: "Scrubs",
-        offset: 9
-      }
-    };
-    var ID_CACHE = /* @__PURE__ */ new Map();
-    function getCorrectImdbId2(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        const realId = tmdbId ? tmdbId.toString().split(":")[0] : "";
-        if (!realId)
-          return { imdbId: null, offset: 0, title: null };
-        const cacheKey = `${mediaType}_${realId}`;
-        if (ID_CACHE.has(cacheKey)) {
-          return ID_CACHE.get(cacheKey);
-        }
-        const mapping = SERIES_MAPPINGS[realId];
-        if (mapping && mapping.replacementId) {
-          const res = {
-            imdbId: mapping.replacementId,
-            offset: mapping.offset || 0,
-            title: mapping.title || null,
-            fromMapping: true
-          };
-          ID_CACHE.set(cacheKey, res);
-          return res;
-        }
-        if (realId.startsWith("tt")) {
-          const res = { imdbId: realId, offset: 0, fromMapping: false };
-          ID_CACHE.set(cacheKey, res);
-          return res;
-        }
-        try {
-          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          const idUrl = `https://api.themoviedb.org/3/${type}/${realId}/external_ids?api_key=${TMDB_API_KEY}`;
-          const infoUrl = `https://api.themoviedb.org/3/${type}/${realId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-          const [idsRes, infoRes] = yield Promise.all([
-            axios6.get(idUrl, { timeout: 4e3, headers: { "User-Agent": UA6 } }),
-            axios6.get(infoUrl, { timeout: 4e3, headers: { "User-Agent": UA6 } })
-          ]);
-          const res = {
-            imdbId: idsRes.data.imdb_id || null,
-            title: infoRes.data.title || infoRes.data.name || null,
-            originalTitle: infoRes.data.original_title || infoRes.data.original_name || null,
-            year: (infoRes.data.release_date || infoRes.data.first_air_date || "").split("-")[0],
-            offset: 0,
-            fromMapping: false
-          };
-          if (!res.imdbId && idsRes.data.id) {
-            console.log(`[ID Mapper] Tentativa de recuperaci\xF3n para TMDB ${idsRes.data.id}`);
-          }
-          ID_CACHE.set(cacheKey, res);
-          return res;
-        } catch (e) {
-          console.log(`[ID Mapper] Error en API: ${e.message}`);
-          const fail = { imdbId: null, offset: 0, fromMapping: false, title: title || null };
-          return fail;
-        }
-      });
-    }
-    module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
-    module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
-  }
-});
-
 // src/embed69/index.js
 var axios5 = require("axios");
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var { getCorrectImdbId } = require_id_mapper();
+var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
@@ -1293,8 +1220,6 @@ function decodeJwtPayload(token) {
     let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     payload += "=".repeat((4 - payload.length % 4) % 4);
     const decoded = Buffer.from(payload, "base64").toString("utf8");
-    if (!decoded)
-      return null;
     return JSON.parse(decoded);
   } catch (e) {
     return null;
@@ -1310,37 +1235,43 @@ function parseDataLink(html) {
     return null;
   }
 }
-function getStreams(tmdbId, mediaType, season, episode, title2) {
+function getImdbId(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const tId = tmdbId.toString();
+    const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${tId}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tId}/external_ids?api_key=${TMDB_API_KEY}`;
+    try {
+      const { data } = yield axios5.get(endpoint, { timeout: 6e3, headers: { "User-Agent": UA5 } });
+      return data.imdb_id || null;
+    } catch (e) {
+      console.log(`[Embed69] TMDB fallback error: ${e.message}`);
+      return null;
+    }
+  });
+}
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId || !mediaType)
       return [];
     const startTime = Date.now();
     try {
-      const mapper = yield getCorrectImdbId(tmdbId, mediaType);
-      const imdbId = mapper.imdbId;
-      const mediaTitle = title2 || mapper.title || "Contenido";
-      if (!imdbId)
+      const imdbId = yield getImdbId(tmdbId, mediaType);
+      if (!imdbId) {
+        console.log("[Embed69] No se pudo obtener IMDB ID");
         return [];
+      }
       let embedUrl = `${BASE_URL}/f/${imdbId}`;
       if (mediaType !== "movie" && mediaType !== "movies") {
         const s = season || 1;
         const e = String(episode || 1).padStart(2, "0");
         embedUrl = `${embedUrl}-${s}x${e}`;
       }
-      console.log(`[Embed69] Fetching Original: ${embedUrl}`);
       const { data: html } = yield axios5.get(embedUrl, {
         timeout: 1e4,
-        headers: {
-          "User-Agent": UA5,
-          "Referer": "https://sololatino.net/",
-          "Accept": "text/html,application/xhtml+xml"
-        }
+        headers: { "User-Agent": UA5, "Referer": "https://sololatino.net/" }
       });
       const dataLink = parseDataLink(html);
-      if (!dataLink) {
-        console.log("[Embed69] No dataLink found.");
+      if (!dataLink)
         return [];
-      }
       const byLang = {};
       const sections = Array.isArray(dataLink) ? dataLink : Object.values(dataLink);
       for (const section of sections) {
@@ -1354,10 +1285,9 @@ function getStreams(tmdbId, mediaType, season, episode, title2) {
           continue;
         const embeds = section.sortedEmbeds || section.embeds || [];
         const langLabel = langCode === "LAT" ? "Latino" : langCode === "ESP" ? "Espa\xF1ol" : "Subtitulado";
-        console.log(`[Embed69] Procesando secci\xF3n ${langLabel}...`);
         const batch = [];
         for (const embed of embeds) {
-          if (embed.servername === "download" || !embed.link)
+          if (!embed.link || embed.servername === "download")
             continue;
           const payload = decodeJwtPayload(embed.link);
           if (payload && payload.link) {
@@ -1374,14 +1304,13 @@ function getStreams(tmdbId, mediaType, season, episode, title2) {
         }
         const results = yield Promise.allSettled(batch);
         results.forEach((r) => {
-          if (r.status === "fulfilled" && r.value) {
+          if (r.status === "fulfilled" && r.value)
             rawStreams.push(r.value);
-          }
         });
       }
-      return yield finalizeStreams(rawStreams, "Embed69", mediaTitle);
+      return yield finalizeStreams(rawStreams, "Embed69", title || "Contenido");
     } catch (error) {
-      console.log(`[Embed69] Error Cr\xEDtico: ${error.message}`);
+      console.log(`[Embed69] Error: ${error.message}`);
       return [];
     }
   });
