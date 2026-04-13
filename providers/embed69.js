@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T14:25:28.999Z
+ * Generated: 2026-04-13T14:29:16.753Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -257,7 +257,7 @@ var require_engine = __commonJS({
         const processed = [];
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
-          if (lang !== "Latino")
+          if (lang.toLowerCase() !== "latino")
             continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           let displayQuality = "HD";
@@ -270,7 +270,7 @@ var require_engine = __commonJS({
             name: providerName || "Plugin Latino",
             title: `${displayQuality}${checkMark} - ${lang} - ${server}`,
             url: s.url,
-            quality: q,
+            quality: displayQuality,
             serverName: server,
             lang,
             headers: s.headers || {
@@ -1160,8 +1160,8 @@ function resolve5(embedUrl) {
         return null;
       }
       const sorted = videos.sort((a, b) => {
-        const ai = QUALITY_ORDER.findIndex((q2) => a.type.toLowerCase().includes(q2));
-        const bi = QUALITY_ORDER.findIndex((q2) => b.type.toLowerCase().includes(q2));
+        const ai = QUALITY_ORDER.findIndex((q) => a.type.toLowerCase().includes(q));
+        const bi = QUALITY_ORDER.findIndex((q) => b.type.toLowerCase().includes(q));
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       });
       const best = sorted[0];
