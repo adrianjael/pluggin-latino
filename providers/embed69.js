@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T03:14:28.715Z
+ * Generated: 2026-04-13T03:17:09.217Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1056,17 +1056,17 @@ var require_tmdb = __commonJS({
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
             const { data } = yield axios3.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-            const title = result ? result.name || result.title : null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
+            const title2 = result ? result.name || result.title : null;
+            if (title2)
+              titleCache.set(cacheKey, title2);
+            return title2;
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
             const { data } = yield axios3.get(url, { timeout: 6e3 });
-            const title = data.name || data.title || null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
+            const title2 = data.name || data.title || null;
+            if (title2)
+              titleCache.set(cacheKey, title2);
+            return title2;
           }
         } catch (e) {
           if (retries > 0) {
@@ -1098,10 +1098,10 @@ var require_tmdb = __commonJS({
             result = data;
           }
           if (result) {
-            const title = result.name || result.title;
+            const title2 = result.name || result.title;
             const date = result.release_date || result.first_air_date || "";
             const year = date.split("-")[0];
-            return { title, year };
+            return { title: title2, year };
           }
           return null;
         } catch (e) {
@@ -1120,6 +1120,10 @@ var require_id_mapper = __commonJS({
     var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var SERIES_MAPPINGS = {
+      "157336": {
+        imdbId: "tt0816692",
+        title: "Interestelar"
+      },
       // Scrubs Offset Case
       "tt40197357": {
         replacementId: "tt0285403",
@@ -1169,11 +1173,14 @@ var require_id_mapper = __commonJS({
             offset: 0,
             fromMapping: false
           };
+          if (!res.imdbId && idsRes.data.id) {
+            console.log(`[ID Mapper] Tentativa de recuperaci\xF3n para TMDB ${idsRes.data.id}`);
+          }
           ID_CACHE.set(cacheKey, res);
           return res;
         } catch (e) {
-          const fail = { imdbId: null, offset: 0, fromMapping: false, title: null };
-          ID_CACHE.set(cacheKey, fail);
+          console.log(`[ID Mapper] Error en API: ${e.message}`);
+          const fail = { imdbId: null, offset: 0, fromMapping: false, title: title || null };
           return fail;
         }
       });
@@ -1201,7 +1208,7 @@ function parseDataLink(html) {
     return null;
   }
 }
-function getStreams(tmdbId, mediaType, season, episode, title) {
+function getStreams(tmdbId, mediaType, season, episode, title2) {
   return __async(this, null, function* () {
     if (!tmdbId || !mediaType)
       return [];
@@ -1209,16 +1216,22 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = mapper.imdbId;
-      const mediaTitle = title || mapper.title || "Pel\xEDcula";
+      const mediaTitle = title2 || mapper.title || "Pel\xEDcula";
       if (!imdbId) {
         console.log(`[Embed69] No IMDB ID found for ${tmdbId}`);
         return [];
       }
-      let embedUrl = `${BASE_URL}/f/${imdbId}`;
-      if (mediaType !== "movie" && mediaType !== "movies") {
-        const s = season || 1;
-        const e = String(episode || 1).padStart(2, "0");
-        embedUrl = `${embedUrl}-${s}x${e}`;
+      let embedUrl = "";
+      if (imdbId) {
+        embedUrl = `${BASE_URL}/f/${imdbId}`;
+        if (mediaType !== "movie" && mediaType !== "movies") {
+          const s = season || 1;
+          const e = String(episode || 1).padStart(2, "0");
+          embedUrl = `${embedUrl}-${s}x${e}`;
+        }
+      } else {
+        console.log(`[Embed69] Fallback: Searching by title "${mediaTitle}"`);
+        embedUrl = `${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`;
       }
       console.log(`[Embed69] Fetching: ${embedUrl}`);
       const { data: html } = yield axios2.get(embedUrl, {

@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T03:14:28.706Z
+ * Generated: 2026-04-13T03:17:09.207Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1042,6 +1042,10 @@ var require_id_mapper = __commonJS({
     var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
     var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var SERIES_MAPPINGS = {
+      "157336": {
+        imdbId: "tt0816692",
+        title: "Interestelar"
+      },
       // Scrubs Offset Case
       "tt40197357": {
         replacementId: "tt0285403",
@@ -1091,11 +1095,14 @@ var require_id_mapper = __commonJS({
             offset: 0,
             fromMapping: false
           };
+          if (!res.imdbId && idsRes.data.id) {
+            console.log(`[ID Mapper] Tentativa de recuperaci\xF3n para TMDB ${idsRes.data.id}`);
+          }
           ID_CACHE.set(cacheKey, res);
           return res;
         } catch (e) {
-          const fail = { imdbId: null, offset: 0, fromMapping: false, title: null };
-          ID_CACHE.set(cacheKey, fail);
+          console.log(`[ID Mapper] Error en API: ${e.message}`);
+          const fail = { imdbId: null, offset: 0, fromMapping: false, title: title || null };
           return fail;
         }
       });
@@ -1117,13 +1124,13 @@ function getTmdbInfo(tmdbId, mediaType) {
       const res = yield fetch(url);
       const json = yield res.json();
       if (json && json.id) {
-        var title = json.title || json.name || "";
+        var title2 = json.title || json.name || "";
         var originalTitle = json.original_title || json.original_name || "";
         var year = "";
         var date = json.release_date || json.first_air_date || "";
         if (date)
           year = date.split("-")[0];
-        return { title, originalTitle, year };
+        return { title: title2, originalTitle, year };
       }
     } catch (e) {
     }
@@ -1364,17 +1371,17 @@ var require_tmdb = __commonJS({
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id`;
             const { data } = yield axios2.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-            const title = result ? result.name || result.title : null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
+            const title2 = result ? result.name || result.title : null;
+            if (title2)
+              titleCache.set(cacheKey, title2);
+            return title2;
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}`;
             const { data } = yield axios2.get(url, { timeout: 6e3 });
-            const title = data.name || data.title || null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
+            const title2 = data.name || data.title || null;
+            if (title2)
+              titleCache.set(cacheKey, title2);
+            return title2;
           }
         } catch (e) {
           if (retries > 0) {
@@ -1406,10 +1413,10 @@ var require_tmdb = __commonJS({
             result = data;
           }
           if (result) {
-            const title = result.name || result.title;
+            const title2 = result.name || result.title;
             const date = result.release_date || result.first_air_date || "";
             const year = date.split("-")[0];
-            return { title, year };
+            return { title: title2, year };
           }
           return null;
         } catch (e) {
@@ -1425,10 +1432,10 @@ var require_tmdb = __commonJS({
 var { extractStreams: extractStreams2 } = (init_extractor(), __toCommonJS(extractor_exports));
 var { finalizeStreams: finalizeStreams2 } = require_engine();
 var { getTmdbTitle } = require_tmdb();
-function getStreams(tmdbId, mediaType, season, episode, title) {
+function getStreams(tmdbId, mediaType, season, episode, title2) {
   return __async(this, null, function* () {
     try {
-      let mediaTitle = title;
+      let mediaTitle = title2;
       if (!mediaTitle && tmdbId) {
         mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
       }
