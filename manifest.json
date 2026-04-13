@@ -1,12 +1,12 @@
 {
   "name": "Nuvio Latino",
-  "version": "5.6.60",
+  "version": "5.6.61",
   "scrapers": [
     {
       "id": "embed69",
       "name": "Embed69",
-      "description": "Peliculas y series via embed69.org (V2.1.0) - Nuvio Latino Edition",
-      "version": "2.1.0",
+      "description": "Peliculas y series via embed69.org (V2.1.2) - RELOADED",
+      "version": "2.1.2",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",

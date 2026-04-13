@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T04:23:49.977Z
+ * Generated: 2026-04-13T04:28:36.308Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1618,15 +1618,15 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
-        if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || s.includes("ugc-cdn") || s.includes("cloudwindow") || s.includes("voe-sx") || s.includes("voex.sx")) {
+        if (s.includes("voe") || s.includes("voe.sx") || s.includes("jessicaclearout") || s.includes("shonydar") || s.includes("ugc-cdn") || s.includes("cloudwindow") || s.includes("voe-sx") || s.includes("voex.sx")) {
           const res = yield resolveVoe(url);
           return res ? applyPiping(res) : null;
         }
-        if (s.includes("hlswish") || s.includes("streamwish") || s.includes("hglamioz") || s.includes("hglink") || s.includes("audinifer") || s.includes("embedwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || s.includes("filelions") || s.includes("wishembed")) {
+        if (s.includes("hlswish") || s.includes("streamwish") || s.includes("hglink") || s.includes("hglamioz") || s.includes("hglink.to") || s.includes("audinifer") || s.includes("embedwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || s.includes("filelions") || s.includes("wishembed")) {
           const res = yield resolveHlswish(url);
           return res ? applyPiping(res) : null;
         }
-        if (s.includes("filemoon") || s.includes("398fitus") || s.includes("r66nv9ed") || s.includes("byse") || s.includes("bysevepoin") || s.includes("bysezejataos") || s.includes("moonalu") || s.includes("moonembed") || s.includes("bysedikamoum")) {
+        if (s.includes("filemoon") || s.includes("bysedikamoum") || s.includes("398fitus") || s.includes("r66nv9ed") || s.includes("byse") || s.includes("bysevepoin") || s.includes("bysezejataos") || s.includes("moonalu") || s.includes("moonembed")) {
           const res = yield resolveFilemoon(url);
           return res ? applyPiping(res) : null;
         }
@@ -1784,6 +1784,7 @@ function parseDataLink(html) {
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     const mediaTitle = title || "Contenido";
+    console.log(`[Embed69] CRITICAL DEBUG: v5.6.61 - RELOADED - ${(/* @__PURE__ */ new Date()).toISOString()}`);
     console.log(`[Embed69] Iniciando b\xFAsqueda para: ${mediaTitle} (${mediaType})`);
     try {
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
