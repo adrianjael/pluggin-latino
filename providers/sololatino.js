@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T15:34:43.884Z
+ * Generated: 2026-04-13T16:44:31.888Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -664,12 +664,21 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             let finalUrl = direct.url;
             if (direct.sig)
               finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
+            let techName = "";
+            if (isMirror(finalUrl, "VIDHIDE"))
+              techName = "VidHide";
+            else if (isMirror(finalUrl, "FILEMOON"))
+              techName = "Filemoon";
+            else if (isMirror(finalUrl, "STREAMWISH"))
+              techName = "StreamWish";
+            else if (isMirror(finalUrl, "VOE"))
+              techName = "VOE";
+            const fullName = techName ? `${name} - ${techName}` : name;
             return {
               langLabel: "Latino",
-              serverLabel: name,
+              serverName: fullName,
               url: finalUrl,
               quality: "1080p",
-              // Optimismo inicial para validación
               headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
             };
           }
