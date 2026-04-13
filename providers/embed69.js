@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T14:50:44.747Z
+ * Generated: 2026-04-13T14:55:46.067Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -134,7 +134,7 @@ var require_m3u8 = __commonJS({
         try {
           try {
             yield axios7.head(url, {
-              timeout: 1500,
+              timeout: 1e3,
               headers: __spreadValues({ "User-Agent": UA5 }, headers || {})
             });
           } catch (e) {
@@ -143,7 +143,7 @@ var require_m3u8 = __commonJS({
             }
           }
           const response = yield axios7.get(url, {
-            timeout: 5e3,
+            timeout: 3e3,
             skipSizeCheck: true,
             // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
             headers: __spreadValues({
@@ -1619,7 +1619,7 @@ var { getCorrectImdbId } = require_id_mapper();
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 var LANG_PRIORITY = ["LAT"];
-var INDIVIDUAL_TIMEOUT = 15e3;
+var INDIVIDUAL_TIMEOUT = 8e3;
 function decodeJwtPayload(token) {
   try {
     const parts = token.split(".");
@@ -1649,11 +1649,11 @@ function parseDataLink(html) {
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     const mediaTitle = title || "Contenido";
-    console.log(`[Embed69] PERFORMANCE v5.8.0 - Iniciando b\xFAsqueda para: ${mediaTitle}`);
+    console.log(`[Embed69] EXTREME v5.8.3 - Iniciando b\xFAsqueda para: ${mediaTitle}`);
     try {
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = mapper ? mapper.imdbId : null;
-      const searchUrls = [];
+      const allDataLinks = [];
       if (imdbId) {
         let idUrl = `${BASE_URL}/f/${imdbId}`;
         if (mediaType !== "movie" && mediaType !== "movies") {
@@ -1661,26 +1661,29 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           const e = String(episode || 1).padStart(2, "0");
           idUrl = `${idUrl}-${s}x${e}`;
         }
-        searchUrls.push(idUrl);
+        console.log(`[Embed69] Intentando por ID: ${imdbId}`);
+        const idRes = yield axios6.get(idUrl, { timeout: 7e3, headers: { "User-Agent": UA4, "Referer": "https://sololatino.net/" } }).catch(() => null);
+        if (idRes && idRes.data) {
+          const raw = parseDataLink(idRes.data);
+          if (raw) {
+            const arr = Array.isArray(raw) ? raw : Object.values(raw);
+            allDataLinks.push(...arr);
+            console.log(`[Embed69] \u2713 Resultados encontrados por ID. Saltando b\xFAsqueda por texto.`);
+          }
+        }
       }
-      searchUrls.push(`${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`);
-      console.log(`[Embed69] Fetching Parallel: ${searchUrls.length} hilos`);
-      const responses = yield Promise.all(searchUrls.map(
-        (url) => axios6.get(url, {
-          timeout: 1e4,
-          headers: { "User-Agent": UA4, "Referer": "https://sololatino.net/" }
-        }).catch(() => null)
-      ));
-      const allDataLinks = [];
-      responses.forEach((res) => {
-        if (res && res.data) {
-          const raw = parseDataLink(res.data);
+      if (allDataLinks.length === 0) {
+        console.log(`[Embed69] Intentando por Texto: ${mediaTitle}`);
+        const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`;
+        const textRes = yield axios6.get(searchUrl, { timeout: 7e3, headers: { "User-Agent": UA4, "Referer": "https://sololatino.net/" } }).catch(() => null);
+        if (textRes && textRes.data) {
+          const raw = parseDataLink(textRes.data);
           if (raw) {
             const arr = Array.isArray(raw) ? raw : Object.values(raw);
             allDataLinks.push(...arr);
           }
         }
-      });
+      }
       if (allDataLinks.length === 0)
         return [];
       const byLang = {};
