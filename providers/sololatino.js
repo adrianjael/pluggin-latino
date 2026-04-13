@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T04:32:46.714Z
+ * Generated: 2026-04-13T04:37:03.282Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -347,10 +347,11 @@ var require_engine = __commonJS({
             return null;
           }
           let q = s.verified ? s.quality : s.siteQuality || "HD";
+          const check = s.verified ? " \u2714\uFE0F" : "";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${q} \xB7 ${lang} \xB7 ${server}`,
+            title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
             url: s.url,
             quality: q,
             serverName: server,

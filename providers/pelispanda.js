@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-13T04:32:46.674Z
+ * Generated: 2026-04-13T04:37:03.247Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -298,80 +298,23 @@ var init_crypto = __esm({
   }
 });
 
-// src/utils/http.js
-var http_exports = {};
-__export(http_exports, {
-  DEFAULT_UA: () => DEFAULT_UA,
-  MOBILE_UA: () => MOBILE_UA,
-  fetchHtml: () => fetchHtml,
-  fetchJson: () => fetchJson,
-  request: () => request
-});
-function request(url, options) {
-  return __async(this, null, function* () {
-    var opt = options || {};
-    var headers = Object.assign({
-      "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA,
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
-    }, opt.headers);
-    try {
-      var timeoutMs = opt.timeout || 5e3;
-      var controller = new AbortController();
-      var timeoutId = setTimeout(() => {
-        controller.abort();
-      }, timeoutMs);
-      var fetchOptions = Object.assign({}, opt, {
-        headers,
-        signal: controller.signal
-      });
-      var response = yield fetch(url, fetchOptions);
-      clearTimeout(timeoutId);
-      if (!response.ok && !opt.ignoreErrors) {
-        console.warn("[HTTP] Error " + response.status + " en " + url);
-      }
-      return response;
-    } catch (error) {
-      console.error("[HTTP] Error en " + url + ": " + error.message);
-      throw error;
-    }
-  });
-}
-function fetchHtml(url, options) {
-  return __async(this, null, function* () {
-    var res = yield request(url, options);
-    return yield res.text();
-  });
-}
-function fetchJson(url, options) {
-  return __async(this, null, function* () {
-    var res = yield request(url, options);
-    return yield res.json();
-  });
-}
-var import_axios, DEFAULT_UA, MOBILE_UA;
-var init_http = __esm({
-  "src/utils/http.js"() {
-    import_axios = __toESM(require("axios"));
-    DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-    MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
-  }
-});
-
 // src/resolvers/voe.js
 var require_voe = __commonJS({
   "src/resolvers/voe.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3, DEFAULT_UA: DEFAULT_UA2 } = (init_http(), __toCommonJS(http_exports));
+    var axios6 = require("axios");
     var { base64Decode: base64Decode2 } = (init_string(), __toCommonJS(string_exports));
+    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          console.log("[VOE] Resolving: " + url);
-          let html = yield fetchHtml3(url, { headers: { "User-Agent": DEFAULT_UA2 } });
+          console.log("[VOE] Resolving (Axios): " + url);
+          const response = yield axios6.get(url, { headers: { "User-Agent": UA4 }, timeout: 8e3 });
+          let html = response.data;
           if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
             const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
             if (rm) {
-              html = yield fetchHtml3(rm[1], { headers: { "User-Agent": DEFAULT_UA2 } });
+              const res2 = yield axios6.get(rm[1], { headers: { "User-Agent": UA4 }, timeout: 8e3 });
+              html = res2.data;
             }
           }
           const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
@@ -401,7 +344,6 @@ var require_voe = __commonJS({
               const data = JSON.parse(base64Decode2(reversed));
               if (data && (data.source || data.mp4)) {
                 const finalUrl = data.source || data.mp4;
-                console.log("[VOE] -> video encontrado: " + finalUrl.substring(0, 60) + "...");
                 let q = "1080p";
                 if (data.video_height) {
                   const h = parseInt(data.video_height);
@@ -419,10 +361,9 @@ var require_voe = __commonJS({
                   quality: q,
                   serverName: "VOE",
                   headers: {
-                    "User-Agent": DEFAULT_UA2,
+                    "User-Agent": UA4,
                     "Referer": "https://voe.sx/",
-                    "Origin": "https://voe.sx",
-                    "Accept": "*/*"
+                    "Origin": "https://voe.sx"
                   }
                 };
               }
@@ -435,13 +376,12 @@ var require_voe = __commonJS({
             const finalUrl = m3u8MatchRaw[1];
             return {
               url: finalUrl,
-              quality: "1080p",
+              quality: "HD",
               serverName: "VOE",
               headers: {
-                "User-Agent": DEFAULT_UA2,
+                "User-Agent": UA4,
                 "Referer": "https://voe.sx/",
-                "Origin": "https://voe.sx",
-                "Accept": "*/*"
+                "Origin": "https://voe.sx"
               }
             };
           }
@@ -613,6 +553,7 @@ var init_config = __esm({
 // src/resolvers/filemoon.js
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
+    var axios6 = require("axios");
     var { decryptGCM: decryptGCM2 } = (init_aes_gcm(), __toCommonJS(aes_gcm_exports));
     var { base64Decode: base64Decode2, utf8Decode: utf8Decode2 } = (init_string(), __toCommonJS(string_exports));
     var { API_KEYS: API_KEYS2 } = (init_config(), __toCommonJS(config_exports));
@@ -668,8 +609,7 @@ var require_filemoon = __commonJS({
           };
           if (API_KEYS2.FILEMOON) {
             try {
-              const apiRes = yield fetch(`https://filemoon.sx/api/file/direct_link?key=${API_KEYS2.FILEMOON}&file_code=${code}`);
-              const apiData = yield apiRes.json();
+              const { data: apiData } = yield axios6.get(`https://filemoon.sx/api/file/direct_link?key=${API_KEYS2.FILEMOON}&file_code=${code}`, { timeout: 8e3 });
               if (apiData.result && apiData.result.url) {
                 return {
                   url: apiData.result.url,
@@ -682,8 +622,7 @@ var require_filemoon = __commonJS({
             }
           }
           try {
-            const detailsRes = yield fetch(`https://${hostname}/api/videos/${code}/embed/details`, { headers: defaultHeaders });
-            const details = yield detailsRes.json();
+            const { data: details } = yield axios6.get(`https://${hostname}/api/videos/${code}/embed/details`, { headers: defaultHeaders, timeout: 8e3 });
             let targetCode = code;
             let targetHost = hostname;
             let refererForPlayback = url;
@@ -695,16 +634,15 @@ var require_filemoon = __commonJS({
               refererForPlayback = frameUrl;
             }
             const pbHeaders = __spreadProps(__spreadValues({}, defaultHeaders), { "Referer": refererForPlayback, "x-embed-parent": url });
-            const pbRes = yield fetch(`https://${targetHost}/api/videos/${targetCode}/embed/playback`, { headers: pbHeaders });
-            const pbData = yield pbRes.json();
+            const { data: pbData } = yield axios6.get(`https://${targetHost}/api/videos/${targetCode}/embed/playback`, { headers: pbHeaders, timeout: 8e3 });
             if (pbData.playback) {
               const decrypted = yield decryptByse(pbData.playback);
               if (decrypted && decrypted.sources) {
                 const best = decrypted.sources[0];
                 return {
                   url: best.url,
-                  quality: best.label || "HD",
-                  serverName: "Filemoon/Byse",
+                  quality: best.label || "1080p",
+                  serverName: "Filemoon",
                   headers: pbHeaders
                 };
               }
@@ -713,15 +651,14 @@ var require_filemoon = __commonJS({
             console.log(`[Byse] Flow failed: ${apiErr.message}`);
           }
           try {
-            const apiRes = yield fetch(`https://${hostname}/api/videos/${code}`, { headers: defaultHeaders });
-            const data = yield apiRes.json();
+            const { data } = yield axios6.get(`https://${hostname}/api/videos/${code}`, { headers: defaultHeaders, timeout: 1e4 });
             if (data.playback) {
               const decrypted = yield decryptByse(data.playback);
               if (decrypted && decrypted.sources) {
                 const best = decrypted.sources[0];
                 return {
                   url: best.url,
-                  quality: "HD",
+                  quality: "1080p",
                   serverName: "Filemoon",
                   headers: defaultHeaders
                 };
@@ -882,7 +819,7 @@ function resolve(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log(`[GoodStream] Resolviendo: ${embedUrl}`);
-      const response = yield import_axios2.default.get(embedUrl, {
+      const response = yield import_axios.default.get(embedUrl, {
         headers: {
           "User-Agent": UA,
           "Referer": "https://goodstream.one",
@@ -916,12 +853,72 @@ function resolve(embedUrl) {
     }
   });
 }
-var import_axios2, import_quality, UA;
+var import_axios, import_quality, UA;
 var init_goodstream = __esm({
   "src/resolvers/goodstream.js"() {
-    import_axios2 = __toESM(require("axios"));
+    import_axios = __toESM(require("axios"));
     import_quality = __toESM(require_quality());
     UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  }
+});
+
+// src/utils/http.js
+var http_exports = {};
+__export(http_exports, {
+  DEFAULT_UA: () => DEFAULT_UA,
+  MOBILE_UA: () => MOBILE_UA,
+  fetchHtml: () => fetchHtml,
+  fetchJson: () => fetchJson,
+  request: () => request
+});
+function request(url, options) {
+  return __async(this, null, function* () {
+    var opt = options || {};
+    var headers = Object.assign({
+      "User-Agent": opt.mobile ? MOBILE_UA : DEFAULT_UA,
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+    }, opt.headers);
+    try {
+      var timeoutMs = opt.timeout || 5e3;
+      var controller = new AbortController();
+      var timeoutId = setTimeout(() => {
+        controller.abort();
+      }, timeoutMs);
+      var fetchOptions = Object.assign({}, opt, {
+        headers,
+        signal: controller.signal
+      });
+      var response = yield fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+      if (!response.ok && !opt.ignoreErrors) {
+        console.warn("[HTTP] Error " + response.status + " en " + url);
+      }
+      return response;
+    } catch (error) {
+      console.error("[HTTP] Error en " + url + ": " + error.message);
+      throw error;
+    }
+  });
+}
+function fetchHtml(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.text();
+  });
+}
+function fetchJson(url, options) {
+  return __async(this, null, function* () {
+    var res = yield request(url, options);
+    return yield res.json();
+  });
+}
+var import_axios2, DEFAULT_UA, MOBILE_UA;
+var init_http = __esm({
+  "src/utils/http.js"() {
+    import_axios2 = __toESM(require("axios"));
+    DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
   }
 });
 
@@ -1442,7 +1439,7 @@ var require_resolvers = __commonJS({
         return result;
       let url = result.url;
       if (!url.includes(".m3u8") && !url.includes(".mp4")) {
-        url += url.includes("?") ? "&format=.m3u8" : "#.m3u8";
+        url += ".m3u8";
       }
       if (result.headers) {
         const parts = Object.entries(result.headers).map(([k, v]) => `${k}=${v}`);
@@ -1872,10 +1869,11 @@ var require_engine = __commonJS({
             return null;
           }
           let q = s.verified ? s.quality : s.siteQuality || "HD";
+          const check = s.verified ? " \u2714\uFE0F" : "";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${q} \xB7 ${lang} \xB7 ${server}`,
+            title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
