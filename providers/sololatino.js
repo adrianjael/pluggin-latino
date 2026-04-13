@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T17:34:42.802Z
+ * Generated: 2026-04-13T17:37:22.342Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -570,6 +570,8 @@ var { getRandomUA } = require_ua();
 var { isMirror } = require_mirrors();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var RESULT_CACHE = /* @__PURE__ */ new Map();
+var CACHE_TTL = 5 * 60 * 1e3;
 function getImdbIdInternal(idOrQuery, mediaType) {
   return __async(this, null, function* () {
     const rawId = idOrQuery.toString().split(":")[0];
@@ -592,7 +594,7 @@ function getDirectStream(id, token, cookie, playerUrl, sessionHeaders) {
       const config = {
         timeout: 8e3,
         headers: __spreadProps(__spreadValues({}, sessionHeaders), {
-          "referer": playerUrl,
+          "Referer": playerUrl,
           "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
         })
       };
@@ -609,6 +611,20 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
+    const parts = tmdbId.toString().split(":");
+    const realId = parts[0];
+    const s = parseInt(parts[1] || season || 1);
+    const e = parseInt(parts[2] || episode || 1);
+    const isMovie = mediaType === "movie" || mediaType === "movies";
+    const cacheKey = isMovie ? realId : `${realId}-${s}-${e}`;
+    const now = Date.now();
+    if (RESULT_CACHE.has(cacheKey)) {
+      const cached = RESULT_CACHE.get(cacheKey);
+      if (now - cached.time < CACHE_TTL) {
+        console.log(`[SoloLatino] Servido desde cach\xE9 inteligente: ${cacheKey}`);
+        return cached.data;
+      }
+    }
     const UA = getRandomUA();
     setSessionUA(UA);
     const SESSION_HEADERS = {
@@ -618,11 +634,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       "X-Requested-With": "XMLHttpRequest",
       "Referer": "https://sololatino.net/"
     };
-    const parts = tmdbId.toString().split(":");
-    const realId = parts[0];
-    const s = parseInt(parts[1] || season || 1);
-    const e = parseInt(parts[2] || episode || 1);
-    const isMovie = mediaType === "movie" || mediaType === "movies";
     let mediaTitle = title;
     if (!mediaTitle && tmdbId) {
       mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
@@ -634,14 +645,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      console.log(`[SoloLatino] STABILITY v6.4.2 - Sesi\xF3n: ${slug}`);
+      console.log(`[SoloLatino] ULTRA v6.7.0 - Iniciando Sesi\xF3n Blindada: ${slug}`);
       const { data: html, headers: respHeaders } = yield axios.get(playerUrl, { headers: SESSION_HEADERS, timeout: 6e3 });
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
       const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
       if (tokenMatch && tokenMatch[1]) {
         const token = tokenMatch[1];
         const postH = __spreadProps(__spreadValues({}, SESSION_HEADERS), {
-          "referer": playerUrl,
+          "Referer": playerUrl,
           "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
         });
         if (cookie)
@@ -661,10 +672,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             });
           });
         }
-        const serverList = Array.from(uniqueServers.values()).slice(0, 10);
-        const resolved = yield Promise.all(serverList.map((ser) => __async(this, null, function* () {
-          const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
-          try {
+        const serverList = Array.from(uniqueServers.values()).slice(0, 8);
+        const resolved = [];
+        for (let i = 0; i < serverList.length; i += 4) {
+          const chunk = serverList.slice(i, i + 4);
+          const chunkResults = yield Promise.all(chunk.map((ser) => __async(this, null, function* () {
+            const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
             const direct = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
             if (direct && direct.url) {
               let finalUrl = direct.url;
@@ -688,13 +701,15 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
                 headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
               };
             }
-          } catch (e2) {
             return null;
-          }
-          return null;
-        })));
-        const cleanResults = resolved.filter((r) => r !== null);
-        return yield finalizeStreams(cleanResults, "SoloLatino", mediaTitle);
+          })));
+          resolved.push(...chunkResults.filter((r) => r !== null));
+        }
+        const final = yield finalizeStreams(resolved, "SoloLatino", mediaTitle);
+        if (final.length > 0) {
+          RESULT_CACHE.set(cacheKey, { time: now, data: final });
+        }
+        return final;
       }
     } catch (e2) {
       console.log(`[SoloLatino] Error: ${e2.message}`);
