@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T17:05:18.646Z
+ * Generated: 2026-04-13T17:07:45.307Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -527,6 +527,7 @@ var require_engine = __commonJS({
         console.log(`[Engine] MODO TOTAL v5.6.95 - Sin filtros. Mostrando todo...`);
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
+        const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
           const isLatino = lang.toLowerCase().includes("lat") || lang.toLowerCase().includes("mex");
@@ -539,9 +540,13 @@ var require_engine = __commonJS({
             displayQuality = s.quality || "1080p";
             checkMark = " \u2705";
           }
+          const fullTitle = `${displayQuality}${checkMark} - ${lang} - ${server}`;
+          if (seenTitles.has(fullTitle))
+            continue;
+          seenTitles.add(fullTitle);
           processed.push({
             name: providerName || "Plugin Latino",
-            title: `${displayQuality}${checkMark} - ${lang} - ${server}`,
+            title: fullTitle,
             url: s.url,
             quality: displayQuality,
             serverName: server,
