@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T14:36:55.519Z
+ * Generated: 2026-04-13T14:40:23.666Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -128,7 +128,7 @@ var require_m3u8 = __commonJS({
         const { url, headers } = stream;
         try {
           const response = yield axios7.get(url, {
-            timeout: 8e3,
+            timeout: 5e3,
             skipSizeCheck: true,
             // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
             headers: __spreadValues({
@@ -1600,7 +1600,7 @@ var { getCorrectImdbId } = require_id_mapper();
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
-var INDIVIDUAL_TIMEOUT = 1e4;
+var INDIVIDUAL_TIMEOUT = 15e3;
 function decodeJwtPayload(token) {
   try {
     const parts = token.split(".");
