@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-13T21:59:01.870Z
+ * Generated: 2026-04-13T23:01:27.215Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1429,6 +1429,53 @@ var init_embedseek = __esm({
   }
 });
 
+// src/resolvers/tplayer.js
+var require_tplayer = __commonJS({
+  "src/resolvers/tplayer.js"(exports2, module2) {
+    var { fetchJson: fetchJson2, getStealthHeaders } = require_http2();
+    function resolve8(embedUrl) {
+      return __async(this, null, function* () {
+        try {
+          console.log("[TPlayer] Resolviendo: " + embedUrl);
+          const idMatch = embedUrl.match(/\/embed\/([a-zA-Z0-9_-]+)/);
+          if (!idMatch) {
+            console.log("[TPlayer] No se pudo encontrar un ID v\xE1lido en la URL.");
+            return null;
+          }
+          const fileId = idMatch[1];
+          const baseUrl = new URL(embedUrl).origin;
+          const apiUrl = `${baseUrl}/api/resolve/${fileId}`;
+          const headers = getStealthHeaders();
+          headers["Referer"] = embedUrl;
+          headers["X-Requested-With"] = "XMLHttpRequest";
+          const data = yield fetchJson2(apiUrl, { headers });
+          if (!data || !data.success || !data.streamUrl) {
+            console.log("[TPlayer] La API no devolvi\xF3 un enlace v\xE1lido.");
+            return null;
+          }
+          const streamUrl = data.streamUrl.startsWith("http") ? data.streamUrl : `${baseUrl}${data.streamUrl}`;
+          console.log("[TPlayer] \u2713 Stream capturado con \xE9xito.");
+          return {
+            url: streamUrl,
+            quality: "1080p",
+            isDirect: true,
+            // Forzar anclaje .mp4 en applyPiping
+            headers: {
+              "User-Agent": headers["User-Agent"],
+              "Referer": embedUrl,
+              "Origin": baseUrl
+            }
+          };
+        } catch (e) {
+          console.error("[TPlayer] Error en resoluci\xF3n: " + e.message);
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve8 };
+  }
+});
+
 // src/utils/mirrors.js
 var require_mirrors = __commonJS({
   "src/utils/mirrors.js"(exports2, module2) {
@@ -1527,6 +1574,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolvePlaymogo } = require_playmogo();
     var { resolve: resolveTurbovid } = (init_turbovid(), __toCommonJS(turbovid_exports));
     var { resolve: resolveEmbedseek } = (init_embedseek(), __toCommonJS(embedseek_exports));
+    var { resolve: resolveTplayer } = require_tplayer();
     var { getSessionUA } = require_http2();
     var { isMirror } = require_mirrors();
     var UA4 = getSessionUA();
@@ -1633,6 +1681,8 @@ var require_resolvers = __commonJS({
           return applyPiping(yield resolveTurbovid(url));
         if (isMirror(s, "PIXELDRAIN"))
           return applyPiping(yield resolvePixeldrain(url));
+        if (s.includes("tplayer.pelisgo.online"))
+          return applyPiping(yield resolveTplayer(url));
         if (s.includes("embedseek"))
           return applyPiping(yield resolveEmbedseek(url));
         const finalHeaders = getDirectCdnHeaders(url);
