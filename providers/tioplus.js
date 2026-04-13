@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-13T00:17:04.640Z
+ * Generated: 2026-04-13T00:19:46.932Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -806,7 +806,7 @@ var require_filemoon = __commonJS({
       return __async(this, null, function* () {
         try {
           const hostname = new URL(url).hostname;
-          const codeMatch = url.match(/\/(?:e|tmgk|d)\/([a-zA-Z0-9]+)/);
+          const codeMatch = url.match(/\/([a-zA-Z0-9]{8,15})(?:\.html)?$/) || url.match(/\/([a-zA-Z0-9]{8,15})\/?$/);
           if (!codeMatch)
             return null;
           const code = codeMatch[1];
