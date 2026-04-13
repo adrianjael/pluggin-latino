@@ -1,6 +1,6 @@
 /**
  * cine24h - Built from src/cine24h/
- * Generated: 2026-04-13T01:41:17.926Z
+ * Generated: 2026-04-13T01:42:48.852Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -935,12 +935,17 @@ var require_playmogo = __commonJS({
 var { fetchHtml: fetchHtml2, DEFAULT_UA: DEFAULT_UA2 } = (init_http(), __toCommonJS(http_exports));
 var { finalizeStreams } = require_engine();
 var BASE_URL = "https://cine24h.online";
+var BYPASS_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+  "Cookie": "cf_clearance=digA8xWG8gOuhLZxx5ltqac.tt3HKxheaJvD57JBGF0-1776043525-1.2.1.1-EI5KC1UZ5keF5WKY69CmdG_os3GxgBCSw6_.0WTfHL2Zl6.4XOvOJNNc7H_rFeaNIELxeZg_bCcUOWLSihx6.T5dKSyoNNul.JxhY94gIys9wXxjdET7HWazgsZiK1xAhaYuEhXRn8r9Q4tukV9gUVJPQwUYonT4vRQPUV0anDroHQs5.W4pD.D.gvgStRQn1tLPHRcSl4luJU0LT586bJ_K52uuQM7_MW92rHyzlXkfvj76IXcjGrzyop9Z8UUbttuWZSackYl_rokVbKaOMVPjrzJxy6fumGB7RPity84rC2GFDpDrHuf6NklZ4IOQspz4Y_WfnSXWwpabNzfkog",
+  "Referer": "https://cine24h.online/"
+};
 function resolveAnyEmbed(url) {
   return __async(this, null, function* () {
     let target = url;
     if (url.includes("trembed=")) {
       try {
-        const html = yield fetchHtml2(url);
+        const html = yield fetchHtml2(url, { headers: BYPASS_HEADERS });
         const iframeMatch = html.match(/<iframe[^>]+src="([^"]+)"/i);
         if (iframeMatch) {
           target = iframeMatch[1].replace(/&#038;/g, "&");
@@ -982,7 +987,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         return [];
       console.log(`[Cine24h] Buscando: ${mediaTitle}`);
       let searchUrl = `${BASE_URL}/?s=${encodeURIComponent(mediaTitle)}`;
-      let html = yield fetchHtml2(searchUrl);
+      let html = yield fetchHtml2(searchUrl, { headers: BYPASS_HEADERS });
       const candidates = extractCandidates(html);
       const candidate = candidates.find((c) => c.title.toLowerCase().includes(mediaTitle.toLowerCase()));
       if (!candidate) {
@@ -992,7 +997,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       console.log(`[Cine24h] Seleccionado: ${candidate.title} (${candidate.url})`);
       let targetUrl = candidate.url;
       if (mediaType === "serie" && season && episode) {
-        const seriesHtml = yield fetchHtml2(candidate.url);
+        const seriesHtml = yield fetchHtml2(candidate.url, { headers: BYPASS_HEADERS });
         const epUrl = extractEpisodeFromTable(seriesHtml, season, episode);
         if (epUrl)
           targetUrl = epUrl;
@@ -1001,7 +1006,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           return [];
         }
       }
-      const contentHtml = yield fetchHtml2(targetUrl);
+      const contentHtml = yield fetchHtml2(targetUrl, { headers: BYPASS_HEADERS });
       const embeds = extractEmbedUrls(contentHtml);
       console.log(`[Cine24h] Encontradas ${embeds.length} URLs de servidores.`);
       const results = [];
