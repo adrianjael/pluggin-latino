@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T03:38:49.251Z
+ * Generated: 2026-04-13T03:41:26.636Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -297,9 +297,11 @@ var require_engine = __commonJS({
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
-      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual"))
-        return "Latino";
-      return "Desconocido";
+      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
+        return "Espa\xF1ol";
+      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
+        return "Subtitulado";
+      return "Latino";
     }
     function normalizeServer(server, url = "") {
       if (!server || server === "Servidor" || server === "Server") {
