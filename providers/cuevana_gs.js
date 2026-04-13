@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T04:06:30.619Z
+ * Generated: 2026-04-13T04:17:25.646Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1225,7 +1225,7 @@ var require_id_mapper = __commonJS({
           return res;
         } catch (e) {
           console.log(`[ID Mapper] Error en API: ${e.message}`);
-          const fail = { imdbId: null, offset: 0, fromMapping: false, title: title || null };
+          const fail = { imdbId: null, offset: 0, fromMapping: false };
           return fail;
         }
       });
@@ -1247,13 +1247,13 @@ function getTmdbInfo(tmdbId, mediaType) {
       const res = yield fetch(url);
       const json = yield res.json();
       if (json && json.id) {
-        var title2 = json.title || json.name || "";
+        var title = json.title || json.name || "";
         var originalTitle = json.original_title || json.original_name || "";
         var year = "";
         var date = json.release_date || json.first_air_date || "";
         if (date)
           year = date.split("-")[0];
-        return { title: title2, originalTitle, year };
+        return { title, originalTitle, year };
       }
     } catch (e) {
     }
@@ -1494,17 +1494,17 @@ var require_tmdb = __commonJS({
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id`;
             const { data } = yield axios3.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-            const title2 = result ? result.name || result.title : null;
-            if (title2)
-              titleCache.set(cacheKey, title2);
-            return title2;
+            const title = result ? result.name || result.title : null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}`;
             const { data } = yield axios3.get(url, { timeout: 6e3 });
-            const title2 = data.name || data.title || null;
-            if (title2)
-              titleCache.set(cacheKey, title2);
-            return title2;
+            const title = data.name || data.title || null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
           }
         } catch (e) {
           if (retries > 0) {
@@ -1536,10 +1536,10 @@ var require_tmdb = __commonJS({
             result = data;
           }
           if (result) {
-            const title2 = result.name || result.title;
+            const title = result.name || result.title;
             const date = result.release_date || result.first_air_date || "";
             const year = date.split("-")[0];
-            return { title: title2, year };
+            return { title, year };
           }
           return null;
         } catch (e) {
@@ -1555,10 +1555,10 @@ var require_tmdb = __commonJS({
 var { extractStreams: extractStreams2 } = (init_extractor(), __toCommonJS(extractor_exports));
 var { finalizeStreams: finalizeStreams2 } = require_engine();
 var { getTmdbTitle } = require_tmdb();
-function getStreams(tmdbId, mediaType, season, episode, title2) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
-      let mediaTitle = title2;
+      let mediaTitle = title;
       if (!mediaTitle && tmdbId) {
         mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
       }

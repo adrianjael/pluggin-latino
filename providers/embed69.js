@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T04:06:30.629Z
+ * Generated: 2026-04-13T04:17:25.657Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1225,7 +1225,7 @@ var require_id_mapper = __commonJS({
           return res;
         } catch (e) {
           console.log(`[ID Mapper] Error en API: ${e.message}`);
-          const fail = { imdbId: null, offset: 0, fromMapping: false, title: title || null };
+          const fail = { imdbId: null, offset: 0, fromMapping: false };
           return fail;
         }
       });
@@ -1246,9 +1246,12 @@ var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
 function decodeJwtPayload(token) {
   try {
     const parts = token.split(".");
+    if (parts.length < 2)
+      return null;
     let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     payload += "=".repeat((4 - payload.length % 4) % 4);
-    return JSON.parse(Buffer.from(payload, "base64").toString("utf8"));
+    const decoded = typeof Buffer !== "undefined" ? Buffer.from(payload, "base64").toString("utf8") : typeof atob !== "undefined" ? atob(payload) : null;
+    return decoded ? JSON.parse(decoded) : null;
   } catch (e) {
     return null;
   }
@@ -1263,23 +1266,13 @@ function parseDataLink(html) {
     return null;
   }
 }
-function getStreams(tmdbId, mediaType, season, episode, title2) {
+function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
-    const startTime = Date.now();
-    const mediaTitle = title2 || "Contenido";
+    const mediaTitle = title || "Contenido";
+    console.log(`[Embed69] Iniciando b\xFAsqueda para: ${mediaTitle} (${mediaType})`);
     try {
-      let imdbId = null;
-      if (typeof tmdbId === "string" && tmdbId.startsWith("tt")) {
-        imdbId = tmdbId;
-        console.log(`[Embed69] Usando IMDB ID directo: ${imdbId}`);
-      } else {
-        try {
-          const mapper = yield getCorrectImdbId(tmdbId, mediaType);
-          imdbId = mapper ? mapper.imdbId : null;
-        } catch (e) {
-          console.log(`[Embed69] Mapeador fall\xF3 (posible red): ${e.message}`);
-        }
-      }
+      const mapper = yield getCorrectImdbId(tmdbId, mediaType);
+      const imdbId = mapper ? mapper.imdbId : null;
       let embedUrl = "";
       if (imdbId) {
         embedUrl = `${BASE_URL}/f/${imdbId}`;
@@ -1289,24 +1282,30 @@ function getStreams(tmdbId, mediaType, season, episode, title2) {
           embedUrl = `${embedUrl}-${s}x${e}`;
         }
       } else {
-        console.log(`[Embed69] Sin IMDB ID. Saltando a b\xFAsqueda por t\xEDtulo: ${mediaTitle}`);
+        console.log(`[Embed69] Sin IMDb ID. Usando b\xFAsqueda por t\xEDtulo.`);
         embedUrl = `${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`;
       }
       console.log(`[Embed69] Fetching: ${embedUrl}`);
       const { data: html } = yield axios3.get(embedUrl, {
         timeout: 1e4,
-        headers: { "User-Agent": UA2, "Referer": "https://sololatino.net/" }
+        headers: {
+          "User-Agent": UA2,
+          "Referer": "https://sololatino.net/",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        }
       });
-      const dataLink = parseDataLink(html);
-      if (!dataLink) {
-        console.log("[Embed69] No se encontr\xF3 dataLink. \xBFContenido no disponible?");
+      const dataLinkRaw = parseDataLink(html);
+      if (!dataLinkRaw) {
+        console.log("[Embed69] No se encontr\xF3 dataLink. \xBFNo disponible o bloqueado?");
         return [];
       }
+      const sections = Array.isArray(dataLinkRaw) ? dataLinkRaw : Object.values(dataLinkRaw);
       const byLang = {};
-      const sections = Array.isArray(dataLink) ? dataLink : Object.values(dataLink);
-      for (const section of sections) {
-        byLang[(section.video_language || "UNKNOWN").toUpperCase()] = section;
-      }
+      sections.forEach((s) => {
+        if (s.video_language) {
+          byLang[s.video_language.toUpperCase()] = s;
+        }
+      });
       const rawStreams = [];
       const seenUrls = /* @__PURE__ */ new Set();
       for (const langCode of LANG_PRIORITY) {
@@ -1315,6 +1314,7 @@ function getStreams(tmdbId, mediaType, season, episode, title2) {
           continue;
         const embeds = section.sortedEmbeds || section.embeds || [];
         const langLabel = langCode === "LAT" ? "Latino" : langCode === "ESP" ? "Espa\xF1ol" : "Subtitulado";
+        console.log(`[Embed69] Procesando ${embeds.length} servidores en ${langLabel}...`);
         const batch = [];
         for (const embed of embeds) {
           if (!embed.link || embed.servername === "download")
@@ -1326,9 +1326,17 @@ function getStreams(tmdbId, mediaType, season, episode, title2) {
               continue;
             seenUrls.add(url);
             batch.push(
-              resolveEmbed(url).then(
-                (res) => res ? __spreadProps(__spreadValues({}, res), { langLabel, serverLabel: embed.servername }) : null
-              )
+              resolveEmbed(url).then((res) => {
+                if (res) {
+                  return __spreadProps(__spreadValues({}, res), {
+                    langLabel,
+                    serverLabel: embed.servername,
+                    siteQuality: res.quality
+                    // Backup de calidad si la verificación falla
+                  });
+                }
+                return null;
+              }).catch(() => null)
             );
           }
         }
@@ -1337,6 +1345,10 @@ function getStreams(tmdbId, mediaType, season, episode, title2) {
           if (r.status === "fulfilled" && r.value)
             rawStreams.push(r.value);
         });
+        if (langCode === "LAT" && rawStreams.length > 0) {
+          console.log("[Embed69] Resultados en Latino encontrados. Deteniendo cascada.");
+          break;
+        }
       }
       return yield finalizeStreams(rawStreams, "Embed69", mediaTitle);
     } catch (error) {
