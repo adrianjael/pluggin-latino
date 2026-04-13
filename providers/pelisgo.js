@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-13T05:47:42.341Z
+ * Generated: 2026-04-13T05:50:34.863Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -632,6 +632,7 @@ var require_hlswish = __commonJS({
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
     var axios6 = require("axios");
+    var UA_PHP = "Mozilla/5.0 (Windows NT 10.0; rv:81.0) Gecko/20100101 Firefox/81.0";
     function unpack(p, a, c, k, e, d) {
       while (c--) {
         if (k[c]) {
@@ -643,36 +644,39 @@ var require_filemoon = __commonJS({
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          console.log(`[Filemoon] Resolving Legacy: ${url}`);
+          console.log(`[Filemoon] Resolving PHP-Clone: ${url}`);
           const { data: html } = yield axios6.get(url, {
             headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "User-Agent": UA_PHP,
               "Referer": url
             },
-            timeout: 8e3
+            timeout: 1e4
           });
-          const packerRegex = /eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/g;
-          let match;
-          while ((match = packerRegex.exec(html)) !== null) {
-            const unpacked = unpack(match[1], parseInt(match[2]), parseInt(match[3]), match[4].split("|"), 0, {});
-            const m3u8Match = unpacked.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/i);
-            if (m3u8Match) {
-              console.log("[Filemoon] \u2713 Stream encontrado via Legacy-Unpacker.");
-              return {
-                url: m3u8Match[1],
-                quality: "1080p",
-                verified: true,
-                serverName: "Filemoon",
-                headers: {
-                  "Referer": "https://arbitrarydecisions.com/",
-                  "Origin": "https://arbitrarydecisions.com"
-                }
-              };
+          const packerRegex = /eval\(function\(p,a,c,k,e,[r|d]?/i;
+          if (packerRegex.test(html)) {
+            const parts = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+            if (parts) {
+              const unpacked = unpack(parts[1], parseInt(parts[2]), parseInt(parts[3]), parts[4].split("|"), 0, {});
+              const m3u8Match = unpacked.match(/sources\s*:\s*\[\s*\{\s*file\s*:\s*["']([^"']+)["']/i);
+              if (m3u8Match) {
+                console.log("[Filemoon] \u2713 Stream encontrado via PHP-Unpacker.");
+                return {
+                  url: m3u8Match[1],
+                  quality: "1080p",
+                  verified: true,
+                  serverName: "Filemoon",
+                  headers: {
+                    "User-Agent": UA_PHP,
+                    "Referer": "https://filemoon.sx",
+                    "Origin": "https://filemoon.sx"
+                  }
+                };
+              }
             }
           }
           return null;
         } catch (error) {
-          console.error(`[Filemoon] Error: ${error.message}`);
+          console.error(`[Filemoon] Error en Clon PHP: ${error.message}`);
           return null;
         }
       });
@@ -1467,7 +1471,7 @@ var require_resolvers = __commonJS({
           const res = yield resolveHlswish(url);
           return res ? applyPiping(res) : null;
         }
-        if (s.includes("filemoon") || s.includes("moonalu") || s.includes("moonembed") || s.includes("bysedikamoum") || s.includes("r66nv9ed.com")) {
+        if (s.includes("filemoon") || s.includes("moonalu") || s.includes("moonembed") || s.includes("bysedikamoum") || s.includes("r66nv9ed")) {
           const res = yield resolveFilemoon(url);
           return res ? applyPiping(res) : null;
         }
