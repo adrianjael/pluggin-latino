@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-12T23:57:44.137Z
+ * Generated: 2026-04-13T00:01:18.167Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -537,22 +537,6 @@ var init_config = __esm({
 });
 
 // src/resolvers/filemoon.js
-function formatPipedUrl(url, referer) {
-  if (!url || !referer)
-    return url;
-  try {
-    const origin = new URL(referer).origin;
-    return `${url}|Referer=${referer}|Origin=${origin}|User-Agent=${UA2}`;
-  } catch (e) {
-    return `${url}|Referer=${referer}|User-Agent=${UA2}`;
-  }
-}
-function unpack(p, a, c, k, e, d) {
-  while (c--)
-    if (k[c])
-      p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
-  return p;
-}
 function decryptByse(playback) {
   return __async(this, null, function* () {
     try {
@@ -588,41 +572,69 @@ function decryptByse(playback) {
 function resolve3(url) {
   return __async(this, null, function* () {
     try {
-      const idMatch = url.match(/\/(?:e|tmgk|d)\/([a-zA-Z0-9]+)/);
-      if (!idMatch)
-        return null;
-      const id = idMatch[1];
       const hostname = new URL(url).hostname;
-      console.log(`[Filemoon] Resolviendo Premium v5.6.2 (GnulaHD Fix): ${id} en ${hostname}`);
-      const gnulaHeaders = {
-        "x-embed-origin": "ww3.gnulahd.nu",
-        "x-embed-referer": "https://ww3.gnulahd.nu/",
-        "x-embed-parent": url,
+      const codeMatch = url.match(/\/(?:e|tmgk|d)\/([a-zA-Z0-9]+)/);
+      if (!codeMatch)
+        return null;
+      const code = codeMatch[1];
+      console.log(`[Byse/Filemoon] Resolviendo Estructural v5.6.5: ${code} (${hostname})`);
+      const defaultHeaders = {
+        "User-Agent": UA2,
         "Referer": url,
-        "User-Agent": UA2
+        "Origin": `https://${hostname}`,
+        "x-embed-origin": "ww3.gnulahd.nu",
+        // Autorización GnulaHD
+        "x-embed-referer": "https://ww3.gnulahd.nu/",
+        "x-embed-parent": url
       };
       if (API_KEYS.FILEMOON) {
         try {
-          const apiRes = yield fetch(`https://filemoon.sx/api/file/direct_link?key=${API_KEYS.FILEMOON}&file_code=${id}`);
+          const apiRes = yield fetch(`https://filemoon.sx/api/file/direct_link?key=${API_KEYS.FILEMOON}&file_code=${code}`);
           const apiData = yield apiRes.json();
           if (apiData.result && apiData.result.url) {
-            console.log(`[Filemoon] API Success!`);
             return {
               url: apiData.result.url,
               quality: "HD",
               serverName: "Filemoon",
-              headers: gnulaHeaders
-              // CABECERAS DINÁMICAS (Piping las recogerá)
+              headers: defaultHeaders
             };
           }
         } catch (e) {
-          console.log(`[Filemoon API] Fail: ${e.message}`);
         }
       }
       try {
-        const apiRes = yield fetch(`https://${hostname}/api/videos/${id}`, {
-          headers: gnulaHeaders
-        });
+        const detailsRes = yield fetch(`https://${hostname}/api/videos/${code}/embed/details`, { headers: defaultHeaders });
+        const details = yield detailsRes.json();
+        let targetCode = code;
+        let targetHost = hostname;
+        let refererForPlayback = url;
+        if (details.embed_frame_url) {
+          const frameUrl = details.embed_frame_url;
+          const frameUri = new URL(frameUrl);
+          targetCode = frameUri.pathname.split("/").pop();
+          targetHost = frameUri.hostname;
+          refererForPlayback = frameUrl;
+        }
+        const playbackHeaders = __spreadProps(__spreadValues({}, defaultHeaders), { "Referer": refererForPlayback, "x-embed-parent": url });
+        const playbackRes = yield fetch(`https://${targetHost}/api/videos/${targetCode}/embed/playback`, { headers: playbackHeaders });
+        const playbackData = yield playbackRes.json();
+        if (playbackData.playback) {
+          const decrypted = yield decryptByse(playbackData.playback);
+          if (decrypted && decrypted.sources) {
+            const best = decrypted.sources[0];
+            return {
+              url: best.url,
+              quality: "HD",
+              serverName: "Filemoon/Byse",
+              headers: playbackHeaders
+            };
+          }
+        }
+      } catch (apiErr) {
+        console.log(`[Byse/Filemoon] API Flow failed: ${apiErr.message}`);
+      }
+      try {
+        const apiRes = yield fetch(`https://${hostname}/api/videos/${code}`, { headers: defaultHeaders });
         const data = yield apiRes.json();
         if (data.playback) {
           const decrypted = yield decryptByse(data.playback);
@@ -632,31 +644,15 @@ function resolve3(url) {
               url: best.url,
               quality: "HD",
               serverName: "Filemoon",
-              headers: gnulaHeaders
+              headers: defaultHeaders
             };
           }
         }
-      } catch (apiErr) {
-        console.log(`[Filemoon] API Byse Failed: ${apiErr.message}`);
-      }
-      const res = yield fetch(url, { headers: { "User-Agent": UA2, "Referer": url } });
-      const html = yield res.text();
-      const evalMatch = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
-      if (evalMatch) {
-        const unpacked = unpack(evalMatch[1], parseInt(evalMatch[2]), parseInt(evalMatch[3]), evalMatch[4].split("|"), 0, {});
-        const fm = unpacked.match(/file\s*:\s*["']([^"']+)["']/);
-        if (fm) {
-          return {
-            url: formatPipedUrl(fm[1], url),
-            quality: "HD",
-            serverName: "Filemoon",
-            headers: { "Referer": url }
-          };
-        }
+      } catch (e) {
       }
       return null;
     } catch (e) {
-      console.error(`[Filemoon] Error Global: ${e.message}`);
+      console.error(`[Filemoon] Global Error: ${e.message}`);
       return null;
     }
   });
@@ -688,12 +684,18 @@ function getDirectCdnHeaders(url) {
       return { "User-Agent": UA3, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
     }
   }
-  if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("398fitus.com") || s.includes("bysevepoin.com")) {
+  if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("byse") || s.includes("398fitus.com")) {
     let domain = "filemoon.sx";
     if (s.includes("398fitus"))
       domain = "398fitus.com";
     if (s.includes("bysevepoin"))
       domain = "bysevepoin.com";
+    if (s.includes("bysebuho"))
+      domain = "bysebuho.com";
+    if (s.includes("bysezejataos"))
+      domain = "bysezejataos.com";
+    if (s.includes("byseqekaho"))
+      domain = "byseqekaho.com";
     const referer = `https://${domain}/`;
     return {
       "Referer": referer,
@@ -755,7 +757,7 @@ function resolveEmbed(url) {
       const res = yield resolve2(targetUrl);
       return res ? applyPiping(res) : null;
     }
-    if (s.includes("filemoon") || s.includes("398fitus") || s.includes("r66nv9ed") || s.includes("bysevepoin")) {
+    if (s.includes("filemoon") || s.includes("398fitus") || s.includes("r66nv9ed") || s.includes("byse")) {
       const res = yield resolve3(targetUrl);
       return res ? applyPiping(res) : null;
     }
