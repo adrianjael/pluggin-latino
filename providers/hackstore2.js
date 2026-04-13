@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-13T05:43:45.253Z
+ * Generated: 2026-04-13T05:47:42.330Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -276,6 +276,7 @@ var require_voe = __commonJS({
                   url: data.source,
                   quality: "1080p",
                   verified: true,
+                  serverName: "VOE",
                   headers: {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                     "Referer": url
@@ -292,6 +293,7 @@ var require_voe = __commonJS({
               url: m3u8Match[1],
               quality: "1080p",
               verified: false,
+              serverName: "VOE",
               headers: { "Referer": url }
             };
           }
@@ -437,8 +439,8 @@ var require_filemoon = __commonJS({
                 url: m3u8Match[1],
                 quality: "1080p",
                 verified: true,
+                serverName: "Filemoon",
                 headers: {
-                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                   "Referer": "https://arbitrarydecisions.com/",
                   "Origin": "https://arbitrarydecisions.com"
                 }
@@ -1242,7 +1244,7 @@ var require_resolvers = __commonJS({
           const res = yield resolveHlswish(url);
           return res ? applyPiping(res) : null;
         }
-        if (s.includes("filemoon") || s.includes("bysedikamoum") || s.includes("398fitus") || s.includes("r66nv9ed") || s.includes("byse") || s.includes("bysevepoin") || s.includes("bysezejataos") || s.includes("moonalu") || s.includes("moonembed")) {
+        if (s.includes("filemoon") || s.includes("moonalu") || s.includes("moonembed") || s.includes("bysedikamoum") || s.includes("r66nv9ed.com")) {
           const res = yield resolveFilemoon(url);
           return res ? applyPiping(res) : null;
         }
@@ -1602,37 +1604,40 @@ var require_engine = __commonJS({
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
-      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual")) {
+      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dub") || l.includes("dual")) {
         return "Latino";
       }
       if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
         return "Espa\xF1ol";
       }
-      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original")) {
-        return "Subtitulado";
-      }
       return lang || "Latino";
     }
-    function normalizeServer(server, url = "") {
+    function normalizeServer(server, url = "", resolvedServerName = null) {
+      if (resolvedServerName)
+        return resolvedServerName;
       const u = (url || "").toLowerCase();
       const s = (server || "").toLowerCase();
       if (u.includes("acek-cdn.com") || u.includes("minochinos.com") || s.includes("vidhide"))
         return "VidHide";
-      if (u.includes("embedwish.com") || u.includes("streamwish") || s.includes("streamwish"))
+      if (u.includes("embedwish.com") || u.includes("awish.pro") || s.includes("streamwish"))
         return "StreamWish";
       if (u.includes("cloudwindow-route.com") || u.includes("marissashare") || u.includes("voe.sx") || s.includes("voe"))
         return "VOE";
-      if (u.includes("filemoon.sx") || u.includes("fmoon") || s.includes("filemoon"))
+      if (u.includes("moonalu.com") || u.includes("moonembed.pro") || u.includes("filemoon.sx") || s.includes("filemoon"))
         return "Filemoon";
-      if (u.includes("vms.sh") || u.includes("waaw") || s.includes("netu"))
-        return "Netu";
       return server || "Servidor";
+    }
+    function getVideoId(url) {
+      if (!url)
+        return null;
+      const match = url.match(/\/(?:e|v|f)\/([a-zA-Z0-9]{8,})/);
+      return match ? match[1] : url;
     }
     function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Nombres Quir\xFArgicos v5.6.80 - Procesando ${streams.length} streams...`);
+        console.log(`[Engine] Autenticaci\xF3n Directa v5.6.81 - Procesando ${streams.length} streams...`);
         let validated = streams;
         try {
           const results = yield Promise.allSettled(streams.map((s) => validateStream2(s)));
@@ -1640,14 +1645,22 @@ var require_engine = __commonJS({
         } catch (e) {
         }
         const sorted = sortStreamsByQuality2(validated);
-        const processed = sorted.map((s) => {
+        const processed = [];
+        const seenVideoIds = /* @__PURE__ */ new Set();
+        for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
           if (lang !== "Latino")
-            return null;
+            continue;
+          const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
+          const videoId = getVideoId(s.url);
+          const isDirect = s.url.includes(".m3u8") || s.url.includes(".mp4");
+          if (seenVideoIds.has(videoId)) {
+            continue;
+          }
+          seenVideoIds.add(videoId);
           let q = s.verified ? s.quality : s.siteQuality || "HD";
-          const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           const check = s.verified ? " \u2705" : "";
-          return {
+          processed.push({
             name: providerName || "Plugin Latino",
             title: `[${q}${check}] \xB7 ${lang} \xB7 ${server}`,
             url: s.url,
@@ -1655,18 +1668,9 @@ var require_engine = __commonJS({
             headers: s.headers || {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
-          };
-        });
-        const uniqueUrls = /* @__PURE__ */ new Set();
-        const finalized = processed.filter((s) => {
-          if (s === null)
-            return false;
-          if (uniqueUrls.has(s.url))
-            return false;
-          uniqueUrls.add(s.url);
-          return true;
-        }).slice(0, 30);
-        return finalized;
+          });
+        }
+        return processed.slice(0, 30);
       });
     }
     module2.exports = { finalizeStreams: finalizeStreams2 };
