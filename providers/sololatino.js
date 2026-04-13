@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T17:28:17.282Z
+ * Generated: 2026-04-13T17:34:42.802Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -293,7 +293,7 @@ var require_m3u8 = __commonJS({
       return "1080p";
     }
     var VALIDATION_CACHE = /* @__PURE__ */ new Map();
-    function validateStream2(stream) {
+    function validateStream(stream) {
       return __async(this, null, function* () {
         if (!stream || !stream.url)
           return stream;
@@ -339,7 +339,7 @@ var require_m3u8 = __commonJS({
         }
       });
     }
-    module2.exports = { validateStream: validateStream2, getQualityFromHeight };
+    module2.exports = { validateStream, getQualityFromHeight };
   }
 });
 
@@ -483,7 +483,7 @@ var require_mirrors = __commonJS({
 // src/utils/engine.js
 var require_engine = __commonJS({
   "src/utils/engine.js"(exports2, module2) {
-    var { validateStream: validateStream2 } = require_m3u8();
+    var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     var { isMirror: isMirror2 } = require_mirrors();
     function normalizeLanguage(lang) {
@@ -527,17 +527,12 @@ var require_engine = __commonJS({
           return [];
         console.log(`[Engine] MODO TOTAL v5.6.95 - Sin filtros. Mostrando todo...`);
         const seenTitles = /* @__PURE__ */ new Set();
-        const seenServerLangs = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
           const isLatino = lang.toLowerCase().includes("lat") || lang.toLowerCase().includes("mex");
           if (!isLatino)
             continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          const qualityKey = `${server}-${lang}`.toLowerCase();
-          if (seenServerLangs.has(qualityKey))
-            continue;
-          seenServerLangs.add(qualityKey);
           let displayQuality = s.quality || "HD";
           let checkMark = "";
           if (s.verified) {
@@ -573,7 +568,6 @@ var { finalizeStreams } = require_engine();
 var { getSessionUA, setSessionUA } = require_http();
 var { getRandomUA } = require_ua();
 var { isMirror } = require_mirrors();
-var { validateStream } = require_m3u8();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 function getImdbIdInternal(idOrQuery, mediaType) {
@@ -686,14 +680,13 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               else if (isMirror(direct.url, "VOE"))
                 techName = "VOE";
               const fullName = techName ? `${name} - ${techName}` : name;
-              const streamData = {
+              return {
                 langLabel: "Latino",
                 serverName: fullName,
                 url: finalUrl,
                 quality: "1080p",
                 headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
               };
-              return yield validateStream(streamData);
             }
           } catch (e2) {
             return null;
