@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-13T02:13:49.489Z
+ * Generated: 2026-04-13T02:23:17.621Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -323,7 +323,7 @@ var import_axios, DEFAULT_UA2, MOBILE_UA;
 var init_http2 = __esm({
   "src/utils/http.js"() {
     import_axios = __toESM(require("axios"));
-    DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
     MOBILE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36";
   }
 });
