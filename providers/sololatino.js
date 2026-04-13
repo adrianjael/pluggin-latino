@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T05:15:56.238Z
+ * Generated: 2026-04-13T05:17:30.304Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -361,7 +361,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${mediaTitle} | ${q}${check} | ${lang} | ${server}`,
+            title: `${q}${check} | ${lang} | ${server}`,
             url: s.url,
             quality: q,
             serverName: server,

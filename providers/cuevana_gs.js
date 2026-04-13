@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T05:15:56.150Z
+ * Generated: 2026-04-13T05:17:30.216Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -499,7 +499,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${mediaTitle} | ${q}${check} | ${lang} | ${server}`,
+            title: `${q}${check} | ${lang} | ${server}`,
             url: s.url,
             quality: q,
             serverName: server,

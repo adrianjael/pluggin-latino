@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-13T05:15:56.253Z
+ * Generated: 2026-04-13T05:17:30.319Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -293,7 +293,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${mediaTitle} | ${q}${check} | ${lang} | ${server}`,
+            title: `${q}${check} | ${lang} | ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
