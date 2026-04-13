@@ -345,29 +345,6 @@
       ],
       "limited": false,
       "supportsExternalPlayer": true
-    },
-    {
-      "id": "cine24h",
-      "name": "Cine24h",
-      "description": "Port de extensión Tachiyomi para Cine24h.online. Películas y series con alta variedad de servidores.",
-      "version": "2.0.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/cine24h.js",
-      "enabled": true,
-      "logo": "https://cine24h.online/wp-content/uploads/2025/07/cine24h-icon.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
     }
   ]
 }
