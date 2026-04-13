@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T05:17:30.304Z
+ * Generated: 2026-04-13T05:21:26.587Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -283,11 +283,13 @@ var require_engine = __commonJS({
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
+      if (l.includes("latino") || l.includes("lat"))
+        return "Latino";
       if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
         return "Espa\xF1ol";
       if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
         return "Subtitulado";
-      return "Latino";
+      return "Otro";
     }
     function normalizeServer(server, url = "") {
       if (!server || server === "Servidor" || server === "Server") {
@@ -349,7 +351,6 @@ var require_engine = __commonJS({
           const allowed = ["latino", "lat"];
           const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
           if (!isAllowed) {
-            console.log(`[Engine] Filtrado por idioma (${lang}): ${server}`);
             return null;
           }
           let q = "HD";
