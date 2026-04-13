@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-13T02:59:52.217Z
+ * Generated: 2026-04-13T03:00:40.815Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1225,6 +1225,7 @@ var require_engine = __commonJS({
             headers: s.headers || {}
           };
         });
+        const MAX_RESULTS = 8;
         const uniqueUrls = /* @__PURE__ */ new Set();
         const finalized = processed.filter((s) => {
           if (s === null)
@@ -1235,8 +1236,8 @@ var require_engine = __commonJS({
           }
           uniqueUrls.add(s.url);
           return true;
-        });
-        console.log(`[Engine] FIN: ${finalized.length} resultados finales enviados a Nuvio para ${providerName}.`);
+        }).slice(0, MAX_RESULTS);
+        console.log(`[Engine] FIN: ${finalized.length} resultados finales (L\xEDmite: ${MAX_RESULTS}) enviados a Nuvio para ${providerName}.`);
         return finalized;
       });
     }
