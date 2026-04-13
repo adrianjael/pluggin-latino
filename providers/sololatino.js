@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T17:07:45.307Z
+ * Generated: 2026-04-13T17:12:13.177Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -159,11 +159,11 @@ var require_ua = __commonJS({
       // Mac - Safari
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15"
     ];
-    function getRandomUA() {
+    function getRandomUA2() {
       const index = Math.floor(Math.random() * UA_POOL.length);
       return UA_POOL[index];
     }
-    module2.exports = { getRandomUA, UA_POOL };
+    module2.exports = { getRandomUA: getRandomUA2, UA_POOL };
   }
 });
 
@@ -171,9 +171,9 @@ var require_ua = __commonJS({
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
     var axios3 = require("axios");
-    var { getRandomUA } = require_ua();
+    var { getRandomUA: getRandomUA2 } = require_ua();
     var sessionUA = null;
-    function setSessionUA(ua) {
+    function setSessionUA2(ua) {
       sessionUA = ua;
     }
     function getSessionUA2() {
@@ -236,7 +236,7 @@ var require_http = __commonJS({
       fetchHtml,
       fetchJson,
       getSessionUA: getSessionUA2,
-      setSessionUA,
+      setSessionUA: setSessionUA2,
       DEFAULT_UA,
       MOBILE_UA
     };
@@ -567,7 +567,8 @@ var require_engine = __commonJS({
 var axios2 = require("axios");
 var { getTmdbTitle } = require_tmdb();
 var { finalizeStreams } = require_engine();
-var { getSessionUA } = require_http();
+var { getSessionUA, setSessionUA } = require_http();
+var { getRandomUA } = require_ua();
 var { isMirror } = require_mirrors();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
@@ -610,7 +611,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
-    const UA = getSessionUA();
+    const UA = getRandomUA();
+    setSessionUA(UA);
     const SESSION_HEADERS = {
       "User-Agent": UA,
       "Accept": "*/*",
@@ -634,7 +636,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      console.log(`[SoloLatino] v6.3.3 - Iniciando Sesi\xF3n Deduplicada: ${slug}`);
+      console.log(`[SoloLatino] STABILITY v6.4.2 - Sesi\xF3n: ${slug}`);
       const { data: html, headers: respHeaders } = yield axios2.get(playerUrl, { headers: SESSION_HEADERS, timeout: 6e3 });
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
       const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
@@ -689,14 +691,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           }
           return null;
         })));
-        const seenNames = /* @__PURE__ */ new Set();
-        const cleanResults = [];
-        for (const r of resolved) {
-          if (r && r.serverName && !seenNames.has(r.serverName)) {
-            seenNames.add(r.serverName);
-            cleanResults.push(r);
-          }
-        }
+        const cleanResults = resolved.filter((r) => r !== null);
         return yield finalizeStreams(cleanResults, "SoloLatino", mediaTitle);
       }
     } catch (e2) {
