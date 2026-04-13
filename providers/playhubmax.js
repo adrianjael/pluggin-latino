@@ -1,6 +1,6 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-13T21:55:02.266Z
+ * Generated: 2026-04-13T21:59:01.881Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -412,8 +412,8 @@ var require_mirrors = __commonJS({
     function isMirror(url, groupName) {
       if (!url || !MIRRORS[groupName])
         return false;
-      const s2 = url.toLowerCase();
-      return MIRRORS[groupName].some((m) => s2.includes(m));
+      const s = url.toLowerCase();
+      return MIRRORS[groupName].some((m) => s.includes(m));
     }
     module2.exports = { MIRRORS, isMirror };
   }
@@ -442,14 +442,14 @@ var require_engine = __commonJS({
       if (resolvedServerName)
         return resolvedServerName;
       const u = (url || "").toLowerCase();
-      const s2 = (server || "").toLowerCase();
-      if (isMirror(u, "VIDHIDE") || isMirror(s2, "VIDHIDE"))
+      const s = (server || "").toLowerCase();
+      if (isMirror(u, "VIDHIDE") || isMirror(s, "VIDHIDE"))
         return "VidHide";
-      if (isMirror(u, "STREAMWISH") || isMirror(s2, "STREAMWISH"))
+      if (isMirror(u, "STREAMWISH") || isMirror(s, "STREAMWISH"))
         return "StreamWish";
-      if (isMirror(u, "VOE") || isMirror(s2, "VOE"))
+      if (isMirror(u, "VOE") || isMirror(s, "VOE"))
         return "VOE";
-      if (isMirror(u, "FILEMOON") || isMirror(s2, "FILEMOON"))
+      if (isMirror(u, "FILEMOON") || isMirror(s, "FILEMOON"))
         return "Filemoon";
       if (url) {
         try {
@@ -468,15 +468,15 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
-        for (const s2 of sorted) {
-          const lang = normalizeLanguage(s2.langLabel || s2.language || s2.Audio || s2.audio);
+        for (const s of sorted) {
+          const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
           const isLatino = lang.toLowerCase().includes("lat") || lang.toLowerCase().includes("mex");
           if (!isLatino)
             continue;
-          const server = normalizeServer(s2.serverLabel || s2.serverName || s2.servername, s2.url, s2.serverName);
-          let displayQuality = s2.quality || "HD";
+          const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
+          let displayQuality = s.quality || "HD";
           let checkMark = "";
-          if (s2.verified) {
+          if (s.verified) {
             checkMark = " \u2705";
           }
           const fullTitle = `${displayQuality}${checkMark} - ${lang} - ${server}`;
@@ -486,11 +486,11 @@ var require_engine = __commonJS({
           processed.push({
             name: providerName || "Plugin Latino",
             title: fullTitle,
-            url: s2.url,
+            url: s.url,
             quality: displayQuality,
             serverName: server,
             lang,
-            headers: s2.headers || {
+            headers: s.headers || {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             }
           });
@@ -908,17 +908,17 @@ var require_vidhide = __commonJS({
         c = parseInt(c);
         k = k.split("|");
         const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
-        const decode = (l, s2) => {
+        const decode = (l, s) => {
           let res = "";
           while (l > 0) {
-            res = chars[l % s2] + res;
-            l = Math.floor(l / s2);
+            res = chars[l % s] + res;
+            l = Math.floor(l / s);
           }
           return res || "0";
         };
         const unpacked = p.replace(/\b\w+\b/g, (l) => {
-          const s2 = parseInt(l, 36);
-          return s2 < k.length && k[s2] ? k[s2] : decode(s2, a);
+          const s = parseInt(l, 36);
+          return s < k.length && k[s] ? k[s] : decode(s, a);
         });
         return unpacked;
       } catch (e) {
@@ -1535,18 +1535,18 @@ function generateKey(hostname) {
   return import_crypto_js.default.lib.WordArray.create(keyArr);
 }
 function generateIV(hostname, hash) {
-  const s2 = hostname;
-  const p = s2 + "//";
+  const s = hostname;
+  const p = s + "//";
   const o = hash;
-  const g = s2.length * p.length;
+  const g = s.length * p.length;
   let b = "";
   for (let i = 1; i < 10; i++)
     b += String.fromCharCode(i + g);
   const re = "111";
   const pe = 3 * o.charCodeAt(0);
-  const tt = 111 + s2.length;
+  const tt = 111 + s.length;
   const k = tt + 4;
-  const ie = s2.charCodeAt(1);
+  const ie = s.charCodeAt(1);
   const me = ie - 2;
   b += String.fromCharCode(g, 111, pe, tt, k, ie, me);
   const ivArr = new Uint8Array(16);
@@ -1599,7 +1599,7 @@ var require_resolvers = __commonJS({
       if (!url)
         return null;
       const { getStealthHeaders } = require_http();
-      const s2 = url.toLowerCase();
+      const s = url.toLowerCase();
       try {
         const domain = new URL(url).hostname;
         const baseOrigin = `https://${domain}`;
@@ -1607,10 +1607,10 @@ var require_resolvers = __commonJS({
           "Referer": baseOrigin,
           "Origin": baseOrigin
         });
-        if (isMirror(s2, "FILEMOON") || isMirror(s2, "VIDHIDE")) {
+        if (isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE")) {
           headers["X-Requested-With"] = "XMLHttpRequest";
           headers["x-embed-origin"] = domain;
-          if (isMirror(s2, "FILEMOON")) {
+          if (isMirror(s, "FILEMOON")) {
             headers["x-embed-origin"] = "ww3.gnulahd.nu";
             headers["x-embed-parent"] = baseOrigin;
           }
@@ -1624,6 +1624,7 @@ var require_resolvers = __commonJS({
       if (!result || !result.url)
         return result;
       let url = result.url;
+      const s = url.toLowerCase();
       if (result.headers) {
         const parts = Object.entries(result.headers).map(([k, v]) => `${k}=${v}`);
         if (parts.length > 0) {
@@ -1633,7 +1634,7 @@ var require_resolvers = __commonJS({
       if (!url.toLowerCase().includes(".m3u8") && !url.toLowerCase().includes(".mp4")) {
         const isDirectFile = s.includes("pixeldrain") || s.includes("buzzheavier") || result.isDirect;
         const anchor = isDirectFile ? "#.mp4" : "#.m3u8";
-        url = `${url}|x=${anchor}`;
+        url = `${url}${anchor}`;
       }
       result.url = url;
       return result;
@@ -1642,62 +1643,62 @@ var require_resolvers = __commonJS({
       return __async(this, null, function* () {
         if (!url)
           return null;
-        const s2 = url.toLowerCase();
-        if (s2.includes("hqq.ac") || s2.includes("hqq.tv") || s2.includes("netu.tv") || s2.includes("waaw.to")) {
+        const s = url.toLowerCase();
+        if (s.includes("hqq.ac") || s.includes("hqq.tv") || s.includes("netu.tv") || s.includes("waaw.to")) {
           return null;
         }
-        if (isMirror(s2, "VOE")) {
+        if (isMirror(s, "VOE")) {
           const res = yield resolveVoe(url);
           if (res)
             return applyPiping(res);
         }
-        if (isMirror(s2, "STREAMWISH") || s2.includes("filelions")) {
+        if (isMirror(s, "STREAMWISH") || s.includes("filelions")) {
           const res = yield resolveHlswish(url);
           if (res)
             return applyPiping(res);
         }
-        if (isMirror(s2, "FILEMOON")) {
+        if (isMirror(s, "FILEMOON")) {
           const res = yield resolveFilemoon(url);
           if (res)
             return applyPiping(res);
         }
-        if (isMirror(s2, "VIDHIDE") || s2.includes("mdfury") || s2.includes("dintezuvio")) {
+        if (isMirror(s, "VIDHIDE") || s.includes("mdfury") || s.includes("dintezuvio")) {
           const res = yield resolveVidhide(url);
           if (res)
             return applyPiping(res);
         }
-        if (isMirror(s2, "FASTREAM")) {
+        if (isMirror(s, "FASTREAM")) {
           const res = yield resolveFastream(url);
           if (res)
             return applyPiping(res);
         }
-        if (s2.includes("vimeos") || s2.includes("vms.sh")) {
+        if (s.includes("vimeos") || s.includes("vms.sh")) {
           const res = yield resolveVimeos(url);
           if (res)
             return applyPiping(res);
         }
-        if (isMirror(s2, "OKRU")) {
+        if (isMirror(s, "OKRU")) {
           const res = yield resolveOkru(url);
           if (res)
             return applyPiping(res);
         }
-        if (isMirror(s2, "BUZZHEAVIER")) {
+        if (isMirror(s, "BUZZHEAVIER")) {
           const res = yield resolveBuzzheavier(url);
           if (res)
             return applyPiping(res);
         }
-        if (isMirror(s2, "GOODSTREAM")) {
+        if (isMirror(s, "GOODSTREAM")) {
           const res = yield resolveGoodstream(url);
           if (res)
             return applyPiping(res);
         }
-        if (s2.includes("playmogo"))
+        if (s.includes("playmogo"))
           return applyPiping(yield resolvePlaymogo(url));
-        if (s2.includes("turbovid"))
+        if (s.includes("turbovid"))
           return applyPiping(yield resolveTurbovid(url));
-        if (isMirror(s2, "PIXELDRAIN"))
+        if (isMirror(s, "PIXELDRAIN"))
           return applyPiping(yield resolvePixeldrain(url));
-        if (s2.includes("embedseek"))
+        if (s.includes("embedseek"))
           return applyPiping(yield resolveEmbedseek(url));
         const finalHeaders = getDirectCdnHeaders(url);
         return applyPiping({
@@ -1844,73 +1845,73 @@ function aesKeyExpansion(keyBytes) {
   return w;
 }
 function aesDecryptBlock(block, roundKeys) {
-  let s2 = [[block[0], block[1], block[2], block[3]], [block[4], block[5], block[6], block[7]], [block[8], block[9], block[10], block[11]], [block[12], block[13], block[14], block[15]]];
+  let s = [[block[0], block[1], block[2], block[3]], [block[4], block[5], block[6], block[7]], [block[8], block[9], block[10], block[11]], [block[12], block[13], block[14], block[15]]];
   for (let c = 0; c < 4; c++) {
     let rk = roundKeys[56 + c];
     for (let r = 0; r < 4; r++)
-      s2[c][r] ^= rk[r];
+      s[c][r] ^= rk[r];
   }
   for (let round = 13; round >= 1; round--) {
-    let t12 = s2[3][1];
-    s2[3][1] = s2[2][1];
-    s2[2][1] = s2[1][1];
-    s2[1][1] = s2[0][1];
-    s2[0][1] = t12;
-    let t22 = s2[0][2];
-    s2[0][2] = s2[2][2];
-    s2[2][2] = t22;
-    t22 = s2[1][2];
-    s2[1][2] = s2[3][2];
-    s2[3][2] = t22;
-    let t32 = s2[0][3];
-    s2[0][3] = s2[1][3];
-    s2[1][3] = s2[2][3];
-    s2[2][3] = s2[3][3];
-    s2[3][3] = t32;
+    let t12 = s[3][1];
+    s[3][1] = s[2][1];
+    s[2][1] = s[1][1];
+    s[1][1] = s[0][1];
+    s[0][1] = t12;
+    let t22 = s[0][2];
+    s[0][2] = s[2][2];
+    s[2][2] = t22;
+    t22 = s[1][2];
+    s[1][2] = s[3][2];
+    s[3][2] = t22;
+    let t32 = s[0][3];
+    s[0][3] = s[1][3];
+    s[1][3] = s[2][3];
+    s[2][3] = s[3][3];
+    s[3][3] = t32;
     for (let c = 0; c < 4; c++)
       for (let r = 0; r < 4; r++)
-        s2[c][r] = AES_SBOX_INV[s2[c][r]];
+        s[c][r] = AES_SBOX_INV[s[c][r]];
     for (let c = 0; c < 4; c++) {
       let rk = roundKeys[round * 4 + c];
       for (let r = 0; r < 4; r++)
-        s2[c][r] ^= rk[r];
+        s[c][r] ^= rk[r];
     }
     for (let c = 0; c < 4; c++) {
-      let a = s2[c].slice();
-      s2[c][0] = gmul(a[0], 14) ^ gmul(a[1], 11) ^ gmul(a[2], 13) ^ gmul(a[3], 9);
-      s2[c][1] = gmul(a[0], 9) ^ gmul(a[1], 14) ^ gmul(a[2], 11) ^ gmul(a[3], 13);
-      s2[c][2] = gmul(a[0], 13) ^ gmul(a[1], 9) ^ gmul(a[2], 14) ^ gmul(a[3], 11);
-      s2[c][3] = gmul(a[0], 11) ^ gmul(a[1], 13) ^ gmul(a[2], 9) ^ gmul(a[3], 14);
+      let a = s[c].slice();
+      s[c][0] = gmul(a[0], 14) ^ gmul(a[1], 11) ^ gmul(a[2], 13) ^ gmul(a[3], 9);
+      s[c][1] = gmul(a[0], 9) ^ gmul(a[1], 14) ^ gmul(a[2], 11) ^ gmul(a[3], 13);
+      s[c][2] = gmul(a[0], 13) ^ gmul(a[1], 9) ^ gmul(a[2], 14) ^ gmul(a[3], 11);
+      s[c][3] = gmul(a[0], 11) ^ gmul(a[1], 13) ^ gmul(a[2], 9) ^ gmul(a[3], 14);
     }
   }
-  let t1 = s2[3][1];
-  s2[3][1] = s2[2][1];
-  s2[2][1] = s2[1][1];
-  s2[1][1] = s2[0][1];
-  s2[0][1] = t1;
-  let t2 = s2[0][2];
-  s2[0][2] = s2[2][2];
-  s2[2][2] = t2;
-  t2 = s2[1][2];
-  s2[1][2] = s2[3][2];
-  s2[3][2] = t2;
-  let t3 = s2[0][3];
-  s2[0][3] = s2[1][3];
-  s2[1][3] = s2[2][3];
-  s2[2][3] = s2[3][3];
-  s2[3][3] = t3;
+  let t1 = s[3][1];
+  s[3][1] = s[2][1];
+  s[2][1] = s[1][1];
+  s[1][1] = s[0][1];
+  s[0][1] = t1;
+  let t2 = s[0][2];
+  s[0][2] = s[2][2];
+  s[2][2] = t2;
+  t2 = s[1][2];
+  s[1][2] = s[3][2];
+  s[3][2] = t2;
+  let t3 = s[0][3];
+  s[0][3] = s[1][3];
+  s[1][3] = s[2][3];
+  s[2][3] = s[3][3];
+  s[3][3] = t3;
   for (let c = 0; c < 4; c++)
     for (let r = 0; r < 4; r++)
-      s2[c][r] = AES_SBOX_INV[s2[c][r]];
+      s[c][r] = AES_SBOX_INV[s[c][r]];
   for (let c = 0; c < 4; c++) {
     let rk = roundKeys[c];
     for (let r = 0; r < 4; r++)
-      s2[c][r] ^= rk[r];
+      s[c][r] ^= rk[r];
   }
   let out = [];
   for (let c = 0; c < 4; c++)
     for (let r = 0; r < 4; r++)
-      out.push(s2[c][r]);
+      out.push(s[c][r]);
   return out;
 }
 function decryptSources(b64) {
@@ -1954,9 +1955,9 @@ function getSources(type, uuid) {
       if (!data.data)
         return [];
       const sources = decryptSources(data.data);
-      return sources.filter((s2) => {
+      return sources.filter((s) => {
         var _a;
-        return (_a = s2.languages) == null ? void 0 : _a.includes("es");
+        return (_a = s.languages) == null ? void 0 : _a.includes("es");
       });
     } catch (e) {
       return [];
@@ -1994,7 +1995,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       let finalSources = [];
       if (type === "tv") {
         const detail = yield getContentDetail(match.uuid);
-        const seasonObj = (_a = detail.seasons) == null ? void 0 : _a.find((s2) => parseInt(s2.seasonNumber) === parseInt(season));
+        const seasonObj = (_a = detail.seasons) == null ? void 0 : _a.find((s) => parseInt(s.seasonNumber) === parseInt(season));
         if (!seasonObj)
           return [];
         const { data: episodes } = yield axios5.get(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
@@ -2005,12 +2006,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       } else {
         finalSources = yield getSources("content", match.uuid);
       }
-      const streams = (yield Promise.allSettled(finalSources.map((s2) => __async(this, null, function* () {
-        const result = yield resolveEmbed(s2.url);
-        const finalUrl = result && result.url ? result.url : s2.url;
+      const streams = (yield Promise.allSettled(finalSources.map((s) => __async(this, null, function* () {
+        const result = yield resolveEmbed(s.url);
+        const finalUrl = result && result.url ? result.url : s.url;
         return {
           langLabel: "Latino",
-          serverLabel: s2.hostName || "PlayHub",
+          serverLabel: s.hostName || "PlayHub",
           url: finalUrl,
           quality: "1080p",
           headers: result && result.headers ? result.headers : { "User-Agent": UA4, "Referer": "https://www.playhubmax.com/" }

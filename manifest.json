@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "6.9.8",
+  "version": "6.9.9",
   "scrapers": [
     {
       "id": "embed69",
@@ -52,7 +52,7 @@
       "id": "pelisgo",
       "name": "PelisGo",
       "description": "Descargas directas y streaming de alta fidelidad.",
-      "version": "2.1.0",
+      "version": "6.9.9",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
