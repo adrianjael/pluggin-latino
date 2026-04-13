@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T02:56:53.513Z
+ * Generated: 2026-04-13T02:59:52.176Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1030,37 +1030,58 @@ var require_id_mapper = __commonJS({
         offset: 9
       }
     };
+    var ID_CACHE = /* @__PURE__ */ new Map();
     function getCorrectImdbId2(tmdbId, mediaType) {
       return __async(this, null, function* () {
         const realId = tmdbId ? tmdbId.toString().split(":")[0] : "";
+        if (!realId)
+          return { imdbId: null, offset: 0, title: null };
+        const cacheKey = `${mediaType}_${realId}`;
+        if (ID_CACHE.has(cacheKey)) {
+          return ID_CACHE.get(cacheKey);
+        }
         const mapping = SERIES_MAPPINGS[realId];
         if (mapping && mapping.replacementId) {
-          return {
+          const res = {
             imdbId: mapping.replacementId,
             offset: mapping.offset || 0,
             title: mapping.title || null,
             fromMapping: true
           };
+          ID_CACHE.set(cacheKey, res);
+          return res;
         }
         if (realId.startsWith("tt")) {
-          return { imdbId: realId, offset: 0, fromMapping: false };
+          const res = { imdbId: realId, offset: 0, fromMapping: false };
+          ID_CACHE.set(cacheKey, res);
+          return res;
         }
         try {
-          const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${realId}/external_ids?api_key=${TMDB_API_KEY2}` : `https://api.themoviedb.org/3/tv/${realId}/external_ids?api_key=${TMDB_API_KEY2}`;
-          const { data } = yield axios2.get(endpoint, {
-            timeout: 5e3,
-            headers: { "User-Agent": UA2 }
-          });
-          return {
-            imdbId: data.imdb_id || null,
+          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+          const idUrl = `https://api.themoviedb.org/3/${type}/${realId}/external_ids?api_key=${TMDB_API_KEY2}`;
+          const infoUrl = `https://api.themoviedb.org/3/${type}/${realId}?api_key=${TMDB_API_KEY2}&language=es-MX`;
+          const [idsRes, infoRes] = yield Promise.all([
+            axios2.get(idUrl, { timeout: 4e3, headers: { "User-Agent": UA2 } }),
+            axios2.get(infoUrl, { timeout: 4e3, headers: { "User-Agent": UA2 } })
+          ]);
+          const res = {
+            imdbId: idsRes.data.imdb_id || null,
+            title: infoRes.data.title || infoRes.data.name || null,
+            originalTitle: infoRes.data.original_title || infoRes.data.original_name || null,
+            year: (infoRes.data.release_date || infoRes.data.first_air_date || "").split("-")[0],
             offset: 0,
             fromMapping: false
           };
+          ID_CACHE.set(cacheKey, res);
+          return res;
         } catch (e) {
-          return { imdbId: null, offset: 0, fromMapping: false };
+          const fail = { imdbId: null, offset: 0, fromMapping: false, title: null };
+          ID_CACHE.set(cacheKey, fail);
+          return fail;
         }
       });
     }
+    module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
     module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
   }
 });
@@ -1156,6 +1177,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       };
       var searchResults = [];
       var queriesToTry = [
+        mapperResult.imdbId,
+        // PRIORIDAD 1: Búsqueda exacta por ID
         searchTitle,
         originalTitle,
         // Intentar con el título original (importante para traducciones)
