@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T05:10:14.503Z
+ * Generated: 2026-04-13T05:14:08.324Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -243,6 +243,10 @@ var require_engine = __commonJS({
         return "StreamWish";
       if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
         return "VidHide";
+      if (s.includes("filemoon") || u.includes("fmoon") || u.includes("moonembed") || u.includes("moonalu"))
+        return "Filemoon";
+      if (s.includes("voe") || u.includes("voe-sx") || u.includes("voe.sx"))
+        return "VOE";
       if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || s.includes("vms.sh") || u.includes("waaw") || u.includes("vms.sh"))
         return "Netu";
       if (s.includes("fastream") || s.includes("fastplay"))
@@ -281,9 +285,10 @@ var require_engine = __commonJS({
             check = " \u2705";
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
+          const suffix = s.isFallback ? " (Espejo)" : "";
           return {
             name: providerName || "Plugin Latino",
-            title: `${server} | ${q}${check} | ${lang}`,
+            title: `${mediaTitle} | ${q}${check}${suffix} | ${lang} | ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
@@ -294,16 +299,7 @@ var require_engine = __commonJS({
         });
         const MAX_RESULTS = 25;
         const uniqueUrls = /* @__PURE__ */ new Set();
-        const finalized = processed.filter((s) => {
-          if (s === null)
-            return false;
-          if (uniqueUrls.has(s.url)) {
-            console.log(`[Engine] Filtrado por duplicado (mismo URL): ${s.title}`);
-            return false;
-          }
-          uniqueUrls.add(s.url);
-          return true;
-        }).slice(0, MAX_RESULTS);
+        const finalized = processed.filter((s) => s !== null).slice(0, MAX_RESULTS);
         console.log(`[Engine] FIN: ${finalized.length} resultados finales (L\xEDmite: ${MAX_RESULTS}) enviados a Nuvio para ${providerName}.`);
         return finalized;
       });
@@ -1807,6 +1803,7 @@ var { getCorrectImdbId } = require_id_mapper();
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 var LANG_PRIORITY = ["LAT", "ESP", "SUB"];
+var INDIVIDUAL_TIMEOUT = 5e3;
 function decodeJwtPayload(token) {
   try {
     const parts = token.split(".");
@@ -1814,8 +1811,11 @@ function decodeJwtPayload(token) {
       return null;
     let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     payload += "=".repeat((4 - payload.length % 4) % 4);
-    const decoded = typeof Buffer !== "undefined" ? Buffer.from(payload, "base64").toString("utf8") : typeof atob !== "undefined" ? atob(payload) : null;
-    return decoded ? JSON.parse(decoded) : null;
+    if (typeof atob !== "undefined")
+      return JSON.parse(atob(payload));
+    if (typeof Buffer !== "undefined")
+      return JSON.parse(Buffer.from(payload, "base64").toString("utf8"));
+    return null;
   } catch (e) {
     return null;
   }
@@ -1833,8 +1833,7 @@ function parseDataLink(html) {
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     const mediaTitle = title || "Contenido";
-    console.log(`[Embed69] CRITICAL DEBUG: v5.6.61 - RELOADED - ${(/* @__PURE__ */ new Date()).toISOString()}`);
-    console.log(`[Embed69] Iniciando b\xFAsqueda para: ${mediaTitle} (${mediaType})`);
+    console.log(`[Embed69] RESTORATION v5.6.72 - Iniciando b\xFAsqueda para: ${mediaTitle}`);
     try {
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = mapper ? mapper.imdbId : null;
@@ -1847,29 +1846,21 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           embedUrl = `${embedUrl}-${s}x${e}`;
         }
       } else {
-        console.log(`[Embed69] Sin IMDb ID. Usando b\xFAsqueda por t\xEDtulo.`);
         embedUrl = `${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`;
       }
       console.log(`[Embed69] Fetching: ${embedUrl}`);
       const { data: html } = yield axios6.get(embedUrl, {
         timeout: 1e4,
-        headers: {
-          "User-Agent": UA4,
-          "Referer": "https://sololatino.net/",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-        }
+        headers: { "User-Agent": UA4, "Referer": "https://sololatino.net/" }
       });
       const dataLinkRaw = parseDataLink(html);
-      if (!dataLinkRaw) {
-        console.log("[Embed69] No se encontr\xF3 dataLink. \xBFNo disponible o bloqueado?");
+      if (!dataLinkRaw)
         return [];
-      }
       const sections = Array.isArray(dataLinkRaw) ? dataLinkRaw : Object.values(dataLinkRaw);
       const byLang = {};
       sections.forEach((s) => {
-        if (s.video_language) {
+        if (s.video_language)
           byLang[s.video_language.toUpperCase()] = s;
-        }
       });
       const rawStreams = [];
       const seenUrls = /* @__PURE__ */ new Set();
@@ -1879,11 +1870,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           continue;
         const embeds = section.sortedEmbeds || section.embeds || [];
         const langLabel = langCode === "LAT" ? "Latino" : langCode === "ESP" ? "Espa\xF1ol" : "Subtitulado";
-        console.log(`[Embed69] Procesando ${embeds.length} servidores en ${langLabel}...`);
+        console.log(`[Embed69] Lote quir\xFArgico: ${embeds.length} en ${langLabel}`);
         const batch = [];
         for (const embed of embeds) {
           const sName = (embed.servername || "").toLowerCase();
-          if (!embed.link || sName === "download" || sName.includes("descarga"))
+          if (!embed.link || sName === "download")
             continue;
           const payload = decodeJwtPayload(embed.link);
           if (payload && payload.link) {
@@ -1891,39 +1882,18 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             if (seenUrls.has(url))
               continue;
             seenUrls.add(url);
-            console.log(`[Embed69] Decodificado (${sName}): ${url.substring(0, 60)}...`);
-            batch.push(
+            const sLabel = embed.servername || "Servidor";
+            const promise = Promise.race([
               resolveEmbed(url).then((res) => {
-                if (res) {
-                  console.log(`[Embed69] \u2705 RESOLVED ${sName}`);
-                  return __spreadProps(__spreadValues({}, res), {
-                    langLabel,
-                    serverLabel: embed.servername,
-                    siteQuality: res.quality
-                    // Backup de calidad si la verificación falla
-                  });
-                }
-                console.log(`[Embed69] \u26A0\uFE0F FALLBACK ${sName} (Original link): ${url.substring(0, 30)}...`);
-                return {
-                  url,
-                  quality: "HD",
-                  langLabel,
-                  serverLabel: embed.servername,
-                  serverName: embed.servername,
-                  isFallback: true
-                };
-              }).catch((err) => {
-                console.log(`[Embed69] \u26A0\uFE0F ERROR ${sName}: ${err.message}`);
-                return {
-                  url,
-                  quality: "HD",
-                  langLabel,
-                  serverLabel: embed.servername,
-                  serverName: embed.servername,
-                  isFallback: true
-                };
-              })
-            );
+                if (res)
+                  return __spreadProps(__spreadValues({}, res), { langLabel, serverLabel: sLabel });
+                return { url, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
+            ]).catch(() => {
+              return { url, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
+            });
+            batch.push(promise);
           }
         }
         const results = yield Promise.allSettled(batch);
@@ -1931,10 +1901,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           if (r.status === "fulfilled" && r.value)
             rawStreams.push(r.value);
         });
-        if (langCode === "LAT" && rawStreams.length > 0) {
-          console.log("[Embed69] Resultados en Latino encontrados. Deteniendo cascada.");
-          break;
-        }
       }
       return yield finalizeStreams(rawStreams, "Embed69", mediaTitle);
     } catch (error) {

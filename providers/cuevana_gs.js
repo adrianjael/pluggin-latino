@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T05:10:14.491Z
+ * Generated: 2026-04-13T05:14:08.313Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -449,6 +449,10 @@ var require_engine = __commonJS({
         return "StreamWish";
       if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
         return "VidHide";
+      if (s.includes("filemoon") || u.includes("fmoon") || u.includes("moonembed") || u.includes("moonalu"))
+        return "Filemoon";
+      if (s.includes("voe") || u.includes("voe-sx") || u.includes("voe.sx"))
+        return "VOE";
       if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || s.includes("vms.sh") || u.includes("waaw") || u.includes("vms.sh"))
         return "Netu";
       if (s.includes("fastream") || s.includes("fastplay"))
@@ -487,9 +491,10 @@ var require_engine = __commonJS({
             check = " \u2705";
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
+          const suffix = s.isFallback ? " (Espejo)" : "";
           return {
             name: providerName || "Plugin Latino",
-            title: `${server} | ${q}${check} | ${lang}`,
+            title: `${mediaTitle} | ${q}${check}${suffix} | ${lang} | ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
@@ -500,16 +505,7 @@ var require_engine = __commonJS({
         });
         const MAX_RESULTS = 25;
         const uniqueUrls = /* @__PURE__ */ new Set();
-        const finalized = processed.filter((s) => {
-          if (s === null)
-            return false;
-          if (uniqueUrls.has(s.url)) {
-            console.log(`[Engine] Filtrado por duplicado (mismo URL): ${s.title}`);
-            return false;
-          }
-          uniqueUrls.add(s.url);
-          return true;
-        }).slice(0, MAX_RESULTS);
+        const finalized = processed.filter((s) => s !== null).slice(0, MAX_RESULTS);
         console.log(`[Engine] FIN: ${finalized.length} resultados finales (L\xEDmite: ${MAX_RESULTS}) enviados a Nuvio para ${providerName}.`);
         return finalized;
       });
