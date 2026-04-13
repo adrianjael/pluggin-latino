@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T14:40:23.666Z
+ * Generated: 2026-04-13T14:46:52.931Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -121,12 +121,27 @@ var require_m3u8 = __commonJS({
       }
       return "1080p";
     }
+    var VALIDATION_CACHE = /* @__PURE__ */ new Map();
     function validateStream(stream) {
       return __async(this, null, function* () {
         if (!stream || !stream.url)
           return stream;
         const { url, headers } = stream;
+        if (VALIDATION_CACHE.has(url)) {
+          console.log(`[m3u8] Sirviendo desde cach\xE9: ${url.substring(0, 40)}...`);
+          return __spreadValues(__spreadValues({}, stream), VALIDATION_CACHE.get(url));
+        }
         try {
+          try {
+            yield axios7.head(url, {
+              timeout: 1500,
+              headers: __spreadValues({ "User-Agent": UA5 }, headers || {})
+            });
+          } catch (e) {
+            if (e.response && (e.response.status === 404 || e.response.status === 403)) {
+              return __spreadProps(__spreadValues({}, stream), { verified: false });
+            }
+          }
           const response = yield axios7.get(url, {
             timeout: 5e3,
             skipSizeCheck: true,
@@ -138,14 +153,18 @@ var require_m3u8 = __commonJS({
             responseType: "text"
           });
           const text = response.data;
+          let resultData = { verified: true };
           if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
             const realQuality = parseBestQuality(text, url);
-            return __spreadProps(__spreadValues({}, stream), { quality: realQuality, verified: true });
+            resultData.quality = realQuality;
           }
-          return __spreadProps(__spreadValues({}, stream), { verified: true });
+          VALIDATION_CACHE.set(url, resultData);
+          return __spreadValues(__spreadValues({}, stream), resultData);
         } catch (error) {
           const fallbackQuality = parseBestQuality("", url);
-          return __spreadProps(__spreadValues({}, stream), { quality: fallbackQuality, verified: true });
+          const resultData = { quality: fallbackQuality, verified: true };
+          VALIDATION_CACHE.set(url, resultData);
+          return __spreadValues(__spreadValues({}, stream), resultData);
         }
       });
     }
@@ -1630,34 +1649,52 @@ function parseDataLink(html) {
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     const mediaTitle = title || "Contenido";
-    console.log(`[Embed69] RESTORATION v5.6.97 - Iniciando b\xFAsqueda para: ${mediaTitle}`);
+    console.log(`[Embed69] PERFORMANCE v5.8.0 - Iniciando b\xFAsqueda para: ${mediaTitle}`);
     try {
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = mapper ? mapper.imdbId : null;
-      let embedUrl = "";
+      const searchUrls = [];
       if (imdbId) {
-        embedUrl = `${BASE_URL}/f/${imdbId}`;
+        let idUrl = `${BASE_URL}/f/${imdbId}`;
         if (mediaType !== "movie" && mediaType !== "movies") {
           const s = season || 1;
           const e = String(episode || 1).padStart(2, "0");
-          embedUrl = `${embedUrl}-${s}x${e}`;
+          idUrl = `${idUrl}-${s}x${e}`;
         }
-      } else {
-        embedUrl = `${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`;
+        searchUrls.push(idUrl);
       }
-      console.log(`[Embed69] Fetching: ${embedUrl}`);
-      const { data: html } = yield axios6.get(embedUrl, {
-        timeout: 1e4,
-        headers: { "User-Agent": UA4, "Referer": "https://sololatino.net/" }
+      searchUrls.push(`${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`);
+      console.log(`[Embed69] Fetching Parallel: ${searchUrls.length} hilos`);
+      const responses = yield Promise.all(searchUrls.map(
+        (url) => axios6.get(url, {
+          timeout: 1e4,
+          headers: { "User-Agent": UA4, "Referer": "https://sololatino.net/" }
+        }).catch(() => null)
+      ));
+      const allDataLinks = [];
+      responses.forEach((res) => {
+        if (res && res.data) {
+          const raw = parseDataLink(res.data);
+          if (raw) {
+            const arr = Array.isArray(raw) ? raw : Object.values(raw);
+            allDataLinks.push(...arr);
+          }
+        }
       });
-      const dataLinkRaw = parseDataLink(html);
-      if (!dataLinkRaw)
+      if (allDataLinks.length === 0)
         return [];
-      const sections = Array.isArray(dataLinkRaw) ? dataLinkRaw : Object.values(dataLinkRaw);
       const byLang = {};
-      sections.forEach((s) => {
-        if (s.video_language)
-          byLang[s.video_language.toUpperCase()] = s;
+      allDataLinks.forEach((s) => {
+        if (s.video_language) {
+          const langKey = s.video_language.toUpperCase();
+          if (!byLang[langKey])
+            byLang[langKey] = s;
+          else {
+            const existing = byLang[langKey].sortedEmbeds || byLang[langKey].embeds || [];
+            const newOnes = s.sortedEmbeds || s.embeds || [];
+            byLang[langKey].embeds = [...existing, ...newOnes];
+          }
+        }
       });
       const rawStreams = [];
       const seenUrls = /* @__PURE__ */ new Set();
