@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-13T05:54:26.524Z
+ * Generated: 2026-04-13T06:00:17.568Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -631,7 +631,7 @@ var require_hlswish = __commonJS({
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
     var axios6 = require("axios");
-    var UA_PHP = "Mozilla/5.0 (Windows NT 10.0; rv:81.0) Gecko/20100101 Firefox/81.0";
+    var UA_CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
     function unpack(p, a, c, k, e, d) {
       while (c--) {
         if (k[c]) {
@@ -640,42 +640,61 @@ var require_filemoon = __commonJS({
       }
       return p;
     }
+    var chromeHeaders = {
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Priority": "u=0, i",
+      "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+      "Sec-Ch-Ua-Mobile": "?0",
+      "Sec-Ch-Ua-Platform": '"Windows"',
+      "Sec-Fetch-Dest": "iframe",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-Site": "cross-site",
+      "User-Agent": UA_CHROME,
+      "Access-Control-Allow-Origin": "*"
+    };
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          console.log(`[Filemoon] Resolving PHP-Clone: ${url}`);
-          const { data: html } = yield axios6.get(url, {
-            headers: {
-              "User-Agent": UA_PHP,
-              "Referer": url
-            },
+          console.log(`[Filemoon] Resolving Pro-Edition: ${url}`);
+          const urlObj = new URL(url);
+          const { data: html1 } = yield axios6.get(url, {
+            headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": urlObj.origin, "Origin": urlObj.origin }),
             timeout: 1e4
           });
-          const packerRegex = /eval\(function\(p,a,c,k,e,[r|d]?/i;
-          if (packerRegex.test(html)) {
-            const parts = html.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
-            if (parts) {
-              const unpacked = unpack(parts[1], parseInt(parts[2]), parseInt(parts[3]), parts[4].split("|"), 0, {});
-              const m3u8Match = unpacked.match(/sources\s*:\s*\[\s*\{\s*file\s*:\s*["']([^"']+)["']/i);
-              if (m3u8Match) {
-                console.log("[Filemoon] \u2713 Stream encontrado via PHP-Unpacker.");
-                return {
-                  url: m3u8Match[1],
-                  quality: "1080p",
-                  verified: true,
-                  serverName: "Filemoon",
-                  headers: {
-                    "User-Agent": UA_PHP,
-                    "Referer": "https://filemoon.sx",
-                    "Origin": "https://filemoon.sx"
-                  }
-                };
-              }
+          let targetHtml = html1;
+          const iframeMatch = html1.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+          if (iframeMatch) {
+            const iframeUrl = iframeMatch[1].startsWith("//") ? `https:${iframeMatch[1]}` : iframeMatch[1];
+            console.log(`[Filemoon] Iframe detectado: ${iframeUrl}`);
+            const { data: html2 } = yield axios6.get(iframeUrl, {
+              headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": url, "Origin": urlObj.origin }),
+              timeout: 1e4
+            });
+            targetHtml = html2;
+          }
+          const evalMatch = targetHtml.match(/eval\(function\(p,a,c,k,e,(?:d|\w+)\)\{[\s\S]+?\}\s*\(([\s\S]+?)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*'([\s\S]+?)'\.split/);
+          if (evalMatch) {
+            const unpacked = unpack(evalMatch[1], parseInt(evalMatch[2]), parseInt(evalMatch[3]), evalMatch[4].split("|"), 0, {});
+            const m3u8Match = unpacked.match(/sources\s*:\s*\[\s*\{\s*file\s*:\s*["']([^"']+)["']/i);
+            if (m3u8Match) {
+              console.log("[Filemoon] \u2713 Stream encontrado via Pro-Unpacker.");
+              return {
+                url: m3u8Match[1],
+                quality: "1080p",
+                verified: true,
+                serverName: "Filemoon",
+                headers: {
+                  "User-Agent": UA_CHROME,
+                  "Referer": "https://filemoon.sx",
+                  "Origin": "https://filemoon.sx"
+                }
+              };
             }
           }
           return null;
         } catch (error) {
-          console.error(`[Filemoon] Error en Clon PHP: ${error.message}`);
+          console.error(`[Filemoon] Error en Pro-Edition: ${error.message}`);
           return null;
         }
       });
