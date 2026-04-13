@@ -1,6 +1,6 @@
 /**
  * gnulahd - Built from src/gnulahd/
- * Generated: 2026-04-13T00:30:37.795Z
+ * Generated: 2026-04-13T00:36:16.858Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -268,7 +268,8 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          if (lang !== "Latino" && lang !== "Espa\xF1ol" && lang !== "Subtitulado") {
+          const allowed = ["Latino", "Espa\xF1ol", "Subtitulado"];
+          if (!allowed.includes(lang)) {
             console.log(`[Engine] Rechazado por idioma (${lang}): ${s.url.substring(0, 40)}...`);
             return null;
           }
@@ -1219,12 +1220,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       searchHtml = yield getUrl(`${BASE_URL}/?s=${encodeURIComponent(firstWord)}`);
       candidates = getCandidates(searchHtml);
     }
-    if (candidates.length === 0)
-      return [];
-    const normalizedTarget = mediaTitle.toLowerCase().trim();
-    let bestMatch = candidates.find((c) => c.title.toLowerCase().trim() === normalizedTarget);
+    const cleanTitle = (t) => t.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+    const normalizedTarget = cleanTitle(mediaTitle);
+    let bestMatch = candidates.find((c) => cleanTitle(c.title) === normalizedTarget);
     if (!bestMatch) {
-      const matches = candidates.filter((c) => c.title.toLowerCase().includes(normalizedTarget));
+      const matches = candidates.filter((c) => cleanTitle(c.title).includes(normalizedTarget));
       if (matches.length > 0) {
         matches.sort((a, b) => a.title.length - b.title.length);
         bestMatch = matches[0];

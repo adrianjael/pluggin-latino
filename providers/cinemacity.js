@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-13T00:30:37.759Z
+ * Generated: 2026-04-13T00:36:16.826Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -258,7 +258,8 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          if (lang !== "Latino" && lang !== "Espa\xF1ol" && lang !== "Subtitulado") {
+          const allowed = ["Latino", "Espa\xF1ol", "Subtitulado"];
+          if (!allowed.includes(lang)) {
             console.log(`[Engine] Rechazado por idioma (${lang}): ${s.url.substring(0, 40)}...`);
             return null;
           }
