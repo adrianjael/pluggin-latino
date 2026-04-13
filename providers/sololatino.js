@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T05:21:26.587Z
+ * Generated: 2026-04-13T05:23:34.655Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -305,18 +305,14 @@ var require_engine = __commonJS({
       }
       const s = server.toLowerCase();
       const u = url.toLowerCase();
-      if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || u.includes("ugc-cdn") || u.includes("cloudwindow") || u.includes("shonydar"))
+      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx") || u.includes("voe.inc"))
         return "VOE";
-      if (s.includes("filemoon"))
+      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon") || u.includes("moonembed"))
         return "Filemoon";
-      if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud"))
+      if (s.includes("streamwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || u.includes("embedwish") || u.includes("strcloud") || u.includes("streamwish"))
         return "StreamWish";
-      if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
+      if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("vidhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh"))
         return "VidHide";
-      if (s.includes("filemoon") || u.includes("fmoon") || u.includes("moonembed") || u.includes("moonalu"))
-        return "Filemoon";
-      if (s.includes("voe") || u.includes("voe-sx") || u.includes("voe.sx"))
-        return "VOE";
       if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || s.includes("vms.sh") || u.includes("waaw") || u.includes("vms.sh"))
         return "Netu";
       if (s.includes("fastream") || s.includes("fastplay"))
