@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T06:45:43.777Z
+ * Generated: 2026-04-13T15:34:43.884Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -66,7 +66,7 @@ var __async = (__this, __arguments, generator) => {
 // src/utils/tmdb.js
 var require_tmdb = __commonJS({
   "src/utils/tmdb.js"(exports2, module2) {
-    var axios2 = require("axios");
+    var axios3 = require("axios");
     var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
     var titleCache = /* @__PURE__ */ new Map();
     function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
@@ -82,7 +82,7 @@ var require_tmdb = __commonJS({
           let url;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id`;
-            const { data } = yield axios2.get(url, { timeout: 6e3 });
+            const { data } = yield axios3.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
             const title = result ? result.name || result.title : null;
             if (title)
@@ -90,7 +90,7 @@ var require_tmdb = __commonJS({
             return title;
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}`;
-            const { data } = yield axios2.get(url, { timeout: 6e3 });
+            const { data } = yield axios3.get(url, { timeout: 6e3 });
             const title = data.name || data.title || null;
             if (title)
               titleCache.set(cacheKey, title);
@@ -118,11 +118,11 @@ var require_tmdb = __commonJS({
           let result;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id`;
-            const { data } = yield axios2.get(url, { timeout: 6e3 });
+            const { data } = yield axios3.get(url, { timeout: 6e3 });
             result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}`;
-            const { data } = yield axios2.get(url, { timeout: 6e3 });
+            const { data } = yield axios3.get(url, { timeout: 6e3 });
             result = data;
           }
           if (result) {
@@ -141,11 +141,113 @@ var require_tmdb = __commonJS({
   }
 });
 
+// src/utils/ua.js
+var require_ua = __commonJS({
+  "src/utils/ua.js"(exports2, module2) {
+    var UA_POOL = [
+      // Windows - Chrome
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+      // Windows - Edge
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
+      // Android - Chrome
+      "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+      "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36",
+      // iPhone - Safari
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+      // Mac - Safari
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15"
+    ];
+    function getRandomUA2() {
+      const index = Math.floor(Math.random() * UA_POOL.length);
+      return UA_POOL[index];
+    }
+    module2.exports = { getRandomUA: getRandomUA2, UA_POOL };
+  }
+});
+
+// src/utils/http.js
+var require_http = __commonJS({
+  "src/utils/http.js"(exports2, module2) {
+    var axios3 = require("axios");
+    var { getRandomUA: getRandomUA2 } = require_ua();
+    var sessionUA = null;
+    function setSessionUA2(ua) {
+      sessionUA = ua;
+    }
+    function getSessionUA2() {
+      return sessionUA || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    }
+    var DEFAULT_UA = getSessionUA2();
+    var MOBILE_UA = getSessionUA2();
+    function request(url, options) {
+      return __async(this, null, function* () {
+        var opt = options || {};
+        var currentUA = opt.headers && opt.headers["User-Agent"] ? opt.headers["User-Agent"] : getSessionUA2();
+        var headers = Object.assign({
+          "User-Agent": currentUA,
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+        }, opt.headers);
+        try {
+          var timeoutMs = opt.timeout || 5e3;
+          var controller = new AbortController();
+          var timeoutId = setTimeout(() => {
+            controller.abort();
+          }, timeoutMs);
+          var fetchOptions = Object.assign({
+            redirect: opt.redirect || "follow"
+          }, opt, {
+            headers,
+            signal: controller.signal
+          });
+          var response = yield fetch(url, fetchOptions);
+          clearTimeout(timeoutId);
+          if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
+            const redirectUrl = response.headers.get("location");
+            console.log(`[HTTP] Redirecci\xF3n detectada (Manual): ${redirectUrl}`);
+            return { status: response.status, redirectUrl, ok: false };
+          }
+          if (!response.ok && !opt.ignoreErrors) {
+            console.warn("[HTTP] Error " + response.status + " en " + url);
+          }
+          return response;
+        } catch (error) {
+          console.error("[HTTP] Error en " + url + ": " + error.message);
+          throw error;
+        }
+      });
+    }
+    function fetchHtml(url, options) {
+      return __async(this, null, function* () {
+        var res = yield request(url, options);
+        return yield res.text();
+      });
+    }
+    function fetchJson(url, options) {
+      return __async(this, null, function* () {
+        var res = yield request(url, options);
+        return yield res.json();
+      });
+    }
+    module2.exports = {
+      request,
+      fetchHtml,
+      fetchJson,
+      getSessionUA: getSessionUA2,
+      setSessionUA: setSessionUA2,
+      DEFAULT_UA,
+      MOBILE_UA
+    };
+  }
+});
+
 // src/utils/m3u8.js
 var require_m3u8 = __commonJS({
   "src/utils/m3u8.js"(exports2, module2) {
-    var axios2 = require("axios");
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    var { getSessionUA: getSessionUA2 } = require_http();
+    var UA = getSessionUA2();
     function getQualityFromHeight(height) {
       if (!height)
         return "1080p";
@@ -189,31 +291,50 @@ var require_m3u8 = __commonJS({
       }
       return "1080p";
     }
+    var VALIDATION_CACHE = /* @__PURE__ */ new Map();
     function validateStream(stream) {
       return __async(this, null, function* () {
         if (!stream || !stream.url)
           return stream;
         const { url, headers } = stream;
+        if (VALIDATION_CACHE.has(url)) {
+          console.log(`[m3u8] Sirviendo desde cach\xE9: ${url.substring(0, 40)}...`);
+          return __spreadValues(__spreadValues({}, stream), VALIDATION_CACHE.get(url));
+        }
         try {
-          const response = yield axios2.get(url, {
-            timeout: 8e3,
+          try {
+            yield axios.head(url, {
+              timeout: 1e3,
+              headers: __spreadValues({ "User-Agent": getSessionUA2() }, headers || {})
+            });
+          } catch (e) {
+            if (e.response && (e.response.status === 404 || e.response.status === 403)) {
+              return __spreadProps(__spreadValues({}, stream), { verified: false });
+            }
+          }
+          const response = yield axios.get(url, {
+            timeout: 3e3,
             skipSizeCheck: true,
             // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
             headers: __spreadValues({
-              "User-Agent": UA2,
+              "User-Agent": getSessionUA2(),
               "Range": "bytes=0-4096"
             }, headers || {}),
             responseType: "text"
           });
           const text = response.data;
+          let resultData = { verified: true };
           if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
             const realQuality = parseBestQuality(text, url);
-            return __spreadProps(__spreadValues({}, stream), { quality: realQuality, verified: true });
+            resultData.quality = realQuality;
           }
-          return __spreadProps(__spreadValues({}, stream), { verified: true });
+          VALIDATION_CACHE.set(url, resultData);
+          return __spreadValues(__spreadValues({}, stream), resultData);
         } catch (error) {
           const fallbackQuality = parseBestQuality("", url);
-          return __spreadProps(__spreadValues({}, stream), { quality: fallbackQuality, verified: true });
+          const resultData = { quality: fallbackQuality, verified: true };
+          VALIDATION_CACHE.set(url, resultData);
+          return __spreadValues(__spreadValues({}, stream), resultData);
         }
       });
     }
@@ -276,11 +397,94 @@ var init_sorting = __esm({
   }
 });
 
+// src/utils/mirrors.js
+var require_mirrors = __commonJS({
+  "src/utils/mirrors.js"(exports2, module2) {
+    var MIRRORS = {
+      VIDHIDE: [
+        "vidhide",
+        "minochinos",
+        "vadisov",
+        "vaiditv",
+        "amusemre",
+        "callistanise",
+        "vhaudm",
+        "mdfury",
+        "dintezuvio",
+        "acek-cdn",
+        "vedonm",
+        "vidhidepro",
+        "vidhidevip"
+      ],
+      STREAMWISH: [
+        "hlswish",
+        "streamwish",
+        "hglink",
+        "hglamioz",
+        "hglink.to",
+        "audinifer",
+        "embedwish",
+        "awish",
+        "dwish",
+        "strwish",
+        "filelions",
+        "wishembed",
+        "wishfast"
+      ],
+      FILEMOON: [
+        "filemoon",
+        "moonalu",
+        "moonembed",
+        "bysedikamoum",
+        "r66nv9ed",
+        "398fitus",
+        "filemoon.sx",
+        "filemoon.to"
+      ],
+      VOE: [
+        "voe.sx",
+        "voe-sx",
+        "voex.sx",
+        "marissashare",
+        "cloudwindow"
+      ],
+      FASTREAM: [
+        "fastream",
+        "fastplay",
+        "fembed"
+      ],
+      OKRU: [
+        "ok.ru",
+        "okru"
+      ],
+      PIXELDRAIN: [
+        "pixeldrain"
+      ],
+      BUZZHEAVIER: [
+        "buzzheavier",
+        "bzh.sh"
+      ],
+      GOODSTREAM: [
+        "goodstream",
+        "gs.one"
+      ]
+    };
+    function isMirror2(url, groupName) {
+      if (!url || !MIRRORS[groupName])
+        return false;
+      const s = url.toLowerCase();
+      return MIRRORS[groupName].some((m) => s.includes(m));
+    }
+    module2.exports = { MIRRORS, isMirror: isMirror2 };
+  }
+});
+
 // src/utils/engine.js
 var require_engine = __commonJS({
   "src/utils/engine.js"(exports2, module2) {
     var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
+    var { isMirror: isMirror2 } = require_mirrors();
     function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
       if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dub") || l.includes("dual")) {
@@ -299,13 +503,13 @@ var require_engine = __commonJS({
         return resolvedServerName;
       const u = (url || "").toLowerCase();
       const s = (server || "").toLowerCase();
-      if (u.includes("acek-cdn.com") || u.includes("minochinos.com") || s.includes("vidhide"))
+      if (isMirror2(u, "VIDHIDE") || isMirror2(s, "VIDHIDE"))
         return "VidHide";
-      if (u.includes("embedwish.com") || u.includes("awish.pro") || s.includes("streamwish"))
+      if (isMirror2(u, "STREAMWISH") || isMirror2(s, "STREAMWISH"))
         return "StreamWish";
-      if (u.includes("cloudwindow-route.com") || u.includes("marissashare") || u.includes("voe.sx") || s.includes("voe"))
+      if (isMirror2(u, "VOE") || isMirror2(s, "VOE"))
         return "VOE";
-      if (u.includes("moonalu.com") || u.includes("moonembed.pro") || u.includes("filemoon.sx") || u.includes("bysedikamoum.com") || u.includes("398fitus.com") || u.includes("r66nv9ed.com") || s.includes("filemoon"))
+      if (isMirror2(u, "FILEMOON") || isMirror2(s, "FILEMOON"))
         return "Filemoon";
       if (url) {
         try {
@@ -325,18 +529,25 @@ var require_engine = __commonJS({
         const processed = [];
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
+          const isLatino = lang.toLowerCase().includes("lat") || lang.toLowerCase().includes("mex");
+          if (!isLatino)
+            continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          const q = s.quality || "HD";
-          const check = " \u2705";
+          let displayQuality = "HD";
+          let checkMark = "";
+          if (s.verified) {
+            displayQuality = s.quality || "1080p";
+            checkMark = " \u2705";
+          }
           processed.push({
             name: providerName || "Plugin Latino",
-            title: `[${q}${check}] \xB7 ${lang} \xB7 ${server}`,
+            title: `${displayQuality}${checkMark} - ${lang} - ${server}`,
             url: s.url,
-            quality: q,
+            quality: displayQuality,
             serverName: server,
             lang,
             headers: s.headers || {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             }
           });
         }
@@ -348,19 +559,13 @@ var require_engine = __commonJS({
 });
 
 // src/sololatino/index.js
-var axios = require("axios");
+var axios2 = require("axios");
 var { getTmdbTitle } = require_tmdb();
 var { finalizeStreams } = require_engine();
+var { getRandomUA, getSessionUA, setSessionUA } = require_http();
+var { isMirror } = require_mirrors();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
-var HEADERS = {
-  "User-Agent": UA,
-  "Accept": "*/*",
-  "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
-  "X-Requested-With": "XMLHttpRequest",
-  "Referer": "https://sololatino.net/"
-};
 function getImdbIdInternal(idOrQuery, mediaType) {
   return __async(this, null, function* () {
     const rawId = idOrQuery.toString().split(":")[0];
@@ -369,29 +574,27 @@ function getImdbIdInternal(idOrQuery, mediaType) {
     try {
       const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
       const url = `https://api.themoviedb.org/3/${type}/${rawId}/external_ids?api_key=${TMDB_API_KEY}`;
-      const { data } = yield axios.get(url, { timeout: 5e3 });
+      const { data } = yield axios2.get(url, { timeout: 5e3 });
       return data.imdb_id || null;
     } catch (e) {
       return null;
     }
   });
 }
-function sleep(ms) {
-  return new Promise((res) => setTimeout(res, ms));
-}
-function getDirectStream(id, token, cookie, playerUrl) {
+function getDirectStream(id, token, cookie, playerUrl, sessionHeaders) {
   return __async(this, null, function* () {
     try {
       const body = new URLSearchParams({ a: "2", tok: token, v: id }).toString();
       const config = {
-        headers: __spreadProps(__spreadValues({}, HEADERS), {
+        timeout: 8e3,
+        headers: __spreadProps(__spreadValues({}, sessionHeaders), {
           "referer": playerUrl,
           "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
         })
       };
       if (cookie)
         config.headers["cookie"] = cookie;
-      const { data } = yield axios.post(`${BASE_URL}/s.php`, body, config);
+      const { data } = yield axios2.post(`${BASE_URL}/s.php`, body, config);
       return data && data.u ? { url: data.u, sig: data.sig } : null;
     } catch (e) {
       return null;
@@ -402,6 +605,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
+    const UA = getSessionUA();
+    const SESSION_HEADERS = {
+      "User-Agent": UA,
+      "Accept": "*/*",
+      "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
+      "X-Requested-With": "XMLHttpRequest",
+      "Referer": "https://sololatino.net/"
+    };
     const parts = tmdbId.toString().split(":");
     const realId = parts[0];
     const s = parseInt(parts[1] || season || 1);
@@ -414,25 +625,24 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const imdbId = yield getImdbIdInternal(realId, mediaType);
     if (!imdbId)
       return [];
-    const results = [];
     const epStr = e < 10 ? `0${e}` : e;
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      const { data: html, headers: respHeaders } = yield axios.get(playerUrl, { headers: HEADERS, timeout: 5e3 });
+      console.log(`[SoloLatino] v6.3.0 - Iniciando Sesi\xF3n Speed: ${slug}`);
+      const { data: html, headers: respHeaders } = yield axios2.get(playerUrl, { headers: SESSION_HEADERS, timeout: 6e3 });
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
       const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
       if (tokenMatch && tokenMatch[1]) {
         const token = tokenMatch[1];
-        const postH = __spreadProps(__spreadValues({}, HEADERS), {
+        const postH = __spreadProps(__spreadValues({}, SESSION_HEADERS), {
           "referer": playerUrl,
           "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
         });
         if (cookie)
           postH["cookie"] = cookie;
-        yield axios.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
-        yield sleep(1e3);
-        const { data: scanData } = yield axios.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
+        yield axios2.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
+        const { data: scanData } = yield axios2.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
         const uniqueServers = /* @__PURE__ */ new Map();
         (scanData && scanData.s || []).forEach((ser) => {
           if (ser[1])
@@ -446,27 +656,32 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             });
           });
         }
-        const servers = Array.from(uniqueServers.values());
-        for (const ser of servers.slice(0, 10)) {
+        const serverList = Array.from(uniqueServers.values()).slice(0, 10);
+        const results = yield Promise.all(serverList.map((ser) => __async(this, null, function* () {
           const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
-          const direct = yield getDirectStream(id, token, cookie, playerUrl);
+          const direct = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
           if (direct && direct.url) {
             let finalUrl = direct.url;
             if (direct.sig)
               finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
-            results.push({
+            return {
               langLabel: "Latino",
               serverLabel: name,
               url: finalUrl,
-              quality: "HD",
+              quality: "1080p",
+              // Optimismo inicial para validación
               headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
-            });
+            };
           }
-        }
+          return null;
+        })));
+        const cleanResults = results.filter((r) => r !== null);
+        return yield finalizeStreams(cleanResults, "SoloLatino", mediaTitle);
       }
     } catch (e2) {
+      console.log(`[SoloLatino] Error: ${e2.message}`);
     }
-    return yield finalizeStreams(results, "SoloLatino", mediaTitle);
+    return [];
   });
 }
 module.exports = { getStreams };
