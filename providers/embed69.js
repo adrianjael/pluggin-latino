@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T14:11:16.465Z
+ * Generated: 2026-04-13T14:25:28.999Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -257,12 +257,18 @@ var require_engine = __commonJS({
         const processed = [];
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
+          if (lang !== "Latino")
+            continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          const q = s.quality || "HD";
-          const checkMark = s.verified ? "[OK]" : "[MD]";
+          let displayQuality = "HD";
+          let checkMark = "";
+          if (s.verified) {
+            displayQuality = s.quality || "720p";
+            checkMark = " \u2705";
+          }
           processed.push({
             name: providerName || "Plugin Latino",
-            title: `${checkMark} ${q} - ${lang} - ${server}`,
+            title: `${displayQuality}${checkMark} - ${lang} - ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
@@ -1154,8 +1160,8 @@ function resolve5(embedUrl) {
         return null;
       }
       const sorted = videos.sort((a, b) => {
-        const ai = QUALITY_ORDER.findIndex((q) => a.type.toLowerCase().includes(q));
-        const bi = QUALITY_ORDER.findIndex((q) => b.type.toLowerCase().includes(q));
+        const ai = QUALITY_ORDER.findIndex((q2) => a.type.toLowerCase().includes(q2));
+        const bi = QUALITY_ORDER.findIndex((q2) => b.type.toLowerCase().includes(q2));
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       });
       const best = sorted[0];
@@ -1680,17 +1686,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               return { url: pipedUrl, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
             });
             batch.push(resolutionPromise);
-            if (isFilemoon) {
-              const directPromise = Promise.resolve({
-                url: `${url}|User-Agent=${UA4}|Referer=${url}#.m3u8`,
-                quality: "HD",
-                langLabel,
-                serverLabel: `${sLabel} (Mirror)`,
-                isFallback: true,
-                verified: false
-              });
-              batch.push(directPromise);
-            }
           }
         }
         const results = yield Promise.allSettled(batch);
