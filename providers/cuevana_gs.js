@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T23:01:27.132Z
+ * Generated: 2026-04-13T23:07:18.895Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1763,13 +1763,19 @@ var require_resolvers = __commonJS({
       let url = result.url;
       const s = url.toLowerCase();
       if (result.headers) {
-        const parts = Object.entries(result.headers).map(([k, v]) => `${k}=${v}`);
+        let entries = Object.entries(result.headers);
+        const refIdx = entries.findIndex(([k]) => k.toLowerCase() === "referer");
+        if (refIdx !== -1) {
+          const refEntry = entries.splice(refIdx, 1)[0];
+          entries.push(refEntry);
+        }
+        const parts = entries.map(([k, v]) => `${k}=${v}`);
         if (parts.length > 0) {
           url = `${url}|${parts.join("|")}`;
         }
       }
       if (!url.toLowerCase().includes(".m3u8") && !url.toLowerCase().includes(".mp4")) {
-        const isDirectFile = s.includes("pixeldrain") || s.includes("buzzheavier") || result.isDirect;
+        const isDirectFile = s.includes("pixeldrain") || s.includes("buzzheavier") || s.includes("tplayer") || result.isDirect;
         const anchor = isDirectFile ? "#.mp4" : "#.m3u8";
         url = `${url}${anchor}`;
       }
