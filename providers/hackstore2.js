@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-13T05:06:11.120Z
+ * Generated: 2026-04-13T05:10:14.522Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -288,10 +288,12 @@ var require_voe = __commonJS({
             return null;
           const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
           const scanAndReturn = (text) => {
+            if (!text || typeof text !== "string")
+              return null;
             let m;
             while ((m = catcherRegex.exec(text)) !== null) {
               const l = m[1];
-              if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("cdn-test")) {
+              if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("google")) {
                 return l;
               }
             }
@@ -548,7 +550,7 @@ var require_filemoon = __commonJS({
     var { decryptGCM: decryptGCM2 } = (init_aes_gcm(), __toCommonJS(aes_gcm_exports));
     var { base64Decode: base64Decode2, utf8Decode: utf8Decode2 } = (init_string(), __toCommonJS(string_exports));
     var { API_KEYS: API_KEYS2 } = (init_config(), __toCommonJS(config_exports));
-    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
     function decryptByse(playback) {
       return __async(this, null, function* () {
         try {
@@ -577,7 +579,7 @@ var require_filemoon = __commonJS({
           const decryptedStr = decryptGCM2(key, iv, ciphertextWithTag);
           return decryptedStr ? JSON.parse(decryptedStr) : null;
         } catch (e) {
-          console.error(`[Byse Decrypt] Error: ${e.message}`);
+          console.log(`[Byse Decrypt] Error: ${e.message}`);
           return null;
         }
       });
@@ -585,56 +587,74 @@ var require_filemoon = __commonJS({
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          const hostname = new URL(url).hostname;
-          const codeMatch = url.match(/\/([a-zA-Z0-9]{8,15})(?:\.html)?$/) || url.match(/\/([a-zA-Z0-9]{8,15})\/?$/);
-          if (!codeMatch)
-            return null;
-          const code = codeMatch[1];
-          console.log(`[Byse/Filemoon] Resolviendo CJS v5.6.7: ${code} (${hostname})`);
-          const defaultHeaders = {
-            "User-Agent": UA4,
-            "Referer": url,
-            "Origin": `https://${hostname}`,
-            "Accept": "*/*",
-            "x-embed-parent": url
-          };
-          let response = yield axios6.get(url, { headers: defaultHeaders, timeout: 8e3 });
+          const defaultHeaders = { "User-Agent": UA4, "Referer": url };
+          console.log(`[Filemoon] Resolving v5.6.71: ${url}`);
+          let response = yield axios6.get(url, {
+            headers: defaultHeaders,
+            timeout: 1e4,
+            skipSizeCheck: true
+          });
           let html = response.data;
-          if (typeof html === "string" && (html.includes("Redirecting...") || html.length < 1500)) {
-            const redirectMatch = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+          if (typeof html !== "string")
+            return null;
+          const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
+          const scanAndReturn = (text) => {
+            let m;
+            while ((m = catcherRegex.exec(text)) !== null) {
+              const l = m[1];
+              if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("google")) {
+                return l;
+              }
+            }
+            return null;
+          };
+          const firstFind = scanAndReturn(html);
+          if (firstFind) {
+            console.log("[Filemoon] \u2705 Enlace detectado proactivamente.");
+            return {
+              url: firstFind,
+              quality: "1080p",
+              serverName: "Filemoon",
+              headers: defaultHeaders
+            };
+          }
+          if (html.includes("location.href") || html.includes("Redirecting...") || html.length < 2e3) {
+            const redirectMatch = html.match(/(?:location\.href|location\.replace|location\.assign|window\.location\.href)\s*=\s*['"]([^'"]+)['"]/i);
             if (redirectMatch) {
               const newUrl = redirectMatch[1];
-              console.log("[Filemoon] -> Siguiendo redirecci\xF3n JS: " + newUrl);
-              response = yield axios6.get(newUrl, { headers: __spreadProps(__spreadValues({}, defaultHeaders), { "Referer": url }), timeout: 8e3 });
+              console.log(`[Filemoon] -> Siguiendo redirecci\xF3n JS: ${newUrl}`);
+              response = yield axios6.get(newUrl, {
+                headers: { "User-Agent": UA4, "Referer": url },
+                timeout: 1e4,
+                skipSizeCheck: true
+              });
               html = response.data;
-            }
-          }
-          if (API_KEYS2.FILEMOON) {
-            console.log("[Filemoon] Probando API Premium...");
-            try {
-              const { data: apiData } = yield axios6.get(`https://filemoon.sx/api/file/direct_link?key=${API_KEYS2.FILEMOON}&file_code=${code}`, { timeout: 8e3 });
-              if (apiData.result && apiData.result.url) {
-                console.log("[Filemoon] \u2705 URL obtenida por API Premium.");
+              const secondFind = scanAndReturn(html);
+              if (secondFind) {
+                console.log("[Filemoon] \u2705 Enlace detectado tras redirecci\xF3n.");
                 return {
-                  url: apiData.result.url,
+                  url: secondFind,
                   quality: "1080p",
                   serverName: "Filemoon",
-                  headers: defaultHeaders
+                  headers: { "User-Agent": UA4, "Referer": newUrl }
                 };
               }
-            } catch (e) {
-              console.log(`[Filemoon] API Premium fall\xF3: ${e.message}`);
             }
           }
-          console.log("[Filemoon] Probando flujo de dos pasos (Playback API)...");
           try {
-            const { data: details } = yield axios6.get(`https://${hostname}/api/videos/${code}/embed/details`, { headers: defaultHeaders, timeout: 8e3 });
-            let targetCode = code;
+            const codeMatch = url.match(/\/([a-zA-Z0-9]{8,20})(?:\.html)?$/);
+            const code = codeMatch ? codeMatch[1] : url.split("/").pop();
+            const hostname = new URL(url).hostname;
             let targetHost = hostname;
+            let targetCode = code;
             let refererForPlayback = url;
-            if (details.embed_frame_url) {
+            const detailsUrl = `https://${targetHost}/api/videos/${targetCode}/embed/details`;
+            const { data: details } = yield axios6.get(detailsUrl, {
+              headers: __spreadProps(__spreadValues({}, defaultHeaders), { "x-embed-origin": "ww3.gnulahd.nu" }),
+              timeout: 5e3
+            });
+            if (details && details.embed_frame_url) {
               const frameUrl = details.embed_frame_url;
-              console.log(`[Filemoon] Frame detectado: ${frameUrl}`);
               const frameUri = new URL(frameUrl);
               targetCode = frameUri.pathname.split("/").pop();
               targetHost = frameUri.hostname;
@@ -645,7 +665,7 @@ var require_filemoon = __commonJS({
             if (pbData.playback) {
               const decrypted = yield decryptByse(pbData.playback);
               if (decrypted && decrypted.sources) {
-                console.log("[Filemoon] \u2705 URL obtenida por Flow de Reproducci\xF3n.");
+                console.log("[Filemoon] \u2705 URL obtenida por API Byse.");
                 const best = decrypted.sources[0];
                 return {
                   url: best.url,
@@ -656,31 +676,21 @@ var require_filemoon = __commonJS({
               }
             }
           } catch (apiErr) {
-            console.log(`[Filemoon] Playback Flow fall\xF3: ${apiErr.message}`);
+            console.log(`[Filemoon] API Byse fall\xF3: ${apiErr.message}`);
           }
-          console.log("[Filemoon] Probando b\xFAsqueda por Catcher Regex broad...");
-          const catcherRegex = /(https?:\/\/[^"']+?\.(?:m3u8|mp4|mkv)[^"']*?)(?=["']|$)/gi;
-          let match;
-          let foundLinks = [];
-          while ((match = catcherRegex.exec(html)) !== null) {
-            const l = match[1];
-            if (!l.includes("test-videos") && !l.includes("BigBuckBunny") && !l.includes("google")) {
-              foundLinks.push(l);
-            }
-          }
-          if (foundLinks.length > 0) {
-            console.log("[Filemoon] \u2705 URL encontrada por Catcher Regex.");
+          const lastFind = scanAndReturn(html);
+          if (lastFind) {
+            console.log("[Filemoon] \u2705 URL encontrada por Catcher Regex Final.");
             return {
-              url: foundLinks[0],
+              url: lastFind,
               quality: "1080p",
               serverName: "Filemoon",
               headers: defaultHeaders
             };
           }
-          console.log("[Filemoon] No se pudieron obtener enlaces en v5.6.67.");
           return null;
         } catch (e) {
-          console.error(`[Filemoon] Error cr\xEDtico: ${e.message}`);
+          console.log(`[Filemoon] Error en resoluci\xF3n: ${e.message}`);
           return null;
         }
       });
