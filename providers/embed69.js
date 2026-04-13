@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T04:37:03.210Z
+ * Generated: 2026-04-13T04:42:53.881Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -279,7 +279,7 @@ var require_engine = __commonJS({
             return null;
           }
           let q = s.verified ? s.quality : s.siteQuality || "HD";
-          const check = s.verified ? " \u2714\uFE0F" : "";
+          const check = s.verified ? " \u2705" : "";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
@@ -468,17 +468,26 @@ var require_voe = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log("[VOE] Resolving (Axios): " + url);
-          const response = yield axios7.get(url, { headers: { "User-Agent": UA5 }, timeout: 8e3 });
+          const response = yield axios7.get(url, {
+            headers: {
+              "User-Agent": UA5,
+              "Referer": url
+              // Algunos espejos requieren esto para mostrar el JSON
+            },
+            timeout: 8e3
+          });
           let html = response.data;
           if (html.indexOf("Redirecting") !== -1 || html.length < 1500) {
+            console.log("[VOE] Detectada redirecci\xF3n interna...");
             const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
             if (rm) {
-              const res2 = yield axios7.get(rm[1], { headers: { "User-Agent": UA5 }, timeout: 8e3 });
+              const res2 = yield axios7.get(rm[1], { headers: { "User-Agent": UA5, "Referer": url }, timeout: 8e3 });
               html = res2.data;
             }
           }
           const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
           if (jsonMatch) {
+            console.log("[VOE] Bloque JSON encontrado. Descifrando...");
             try {
               const parsed = JSON.parse(jsonMatch[1].trim());
               const encText = Array.isArray(parsed) ? parsed[0] : parsed;
@@ -504,6 +513,7 @@ var require_voe = __commonJS({
               const data = JSON.parse(base64Decode2(reversed));
               if (data && (data.source || data.mp4)) {
                 const finalUrl = data.source || data.mp4;
+                console.log("[VOE] -> Decriptaci\xF3n Exitosa");
                 let q = "1080p";
                 if (data.video_height) {
                   const h = parseInt(data.video_height);
@@ -533,6 +543,7 @@ var require_voe = __commonJS({
           }
           const m3u8MatchRaw = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
           if (m3u8MatchRaw) {
+            console.log("[VOE] URL m3u8 encontrada por regex directo.");
             const finalUrl = m3u8MatchRaw[1];
             return {
               url: finalUrl,
@@ -545,6 +556,7 @@ var require_voe = __commonJS({
               }
             };
           }
+          console.log("[VOE] No se encontraron datos de video en el HTML.");
           return null;
         } catch (e) {
           console.error("[VOE] Error resolviedo: " + e.message);
@@ -768,9 +780,11 @@ var require_filemoon = __commonJS({
             "x-embed-parent": url
           };
           if (API_KEYS2.FILEMOON) {
+            console.log("[Filemoon] Probando API Premium...");
             try {
               const { data: apiData } = yield axios7.get(`https://filemoon.sx/api/file/direct_link?key=${API_KEYS2.FILEMOON}&file_code=${code}`, { timeout: 8e3 });
               if (apiData.result && apiData.result.url) {
+                console.log("[Filemoon] \u2705 URL obtenida por API Premium.");
                 return {
                   url: apiData.result.url,
                   quality: "HD",
@@ -779,8 +793,10 @@ var require_filemoon = __commonJS({
                 };
               }
             } catch (e) {
+              console.log(`[Filemoon] API Premium fall\xF3: ${e.message}`);
             }
           }
+          console.log("[Filemoon] Probando flujo de dos pasos (Playback API)...");
           try {
             const { data: details } = yield axios7.get(`https://${hostname}/api/videos/${code}/embed/details`, { headers: defaultHeaders, timeout: 8e3 });
             let targetCode = code;
@@ -788,6 +804,7 @@ var require_filemoon = __commonJS({
             let refererForPlayback = url;
             if (details.embed_frame_url) {
               const frameUrl = details.embed_frame_url;
+              console.log(`[Filemoon] Frame detectado: ${frameUrl}`);
               const frameUri = new URL(frameUrl);
               targetCode = frameUri.pathname.split("/").pop();
               targetHost = frameUri.hostname;
@@ -798,6 +815,7 @@ var require_filemoon = __commonJS({
             if (pbData.playback) {
               const decrypted = yield decryptByse(pbData.playback);
               if (decrypted && decrypted.sources) {
+                console.log("[Filemoon] \u2705 URL obtenida por Flow de Reproducci\xF3n.");
                 const best = decrypted.sources[0];
                 return {
                   url: best.url,
@@ -808,13 +826,15 @@ var require_filemoon = __commonJS({
               }
             }
           } catch (apiErr) {
-            console.log(`[Byse] Flow failed: ${apiErr.message}`);
+            console.log(`[Filemoon] Playback Flow fall\xF3: ${apiErr.message}`);
           }
+          console.log("[Filemoon] Probando Fallback Simple...");
           try {
             const { data } = yield axios7.get(`https://${hostname}/api/videos/${code}`, { headers: defaultHeaders, timeout: 1e4 });
             if (data.playback) {
               const decrypted = yield decryptByse(data.playback);
               if (decrypted && decrypted.sources) {
+                console.log("[Filemoon] \u2705 URL obtenida por Fallback.");
                 const best = decrypted.sources[0];
                 return {
                   url: best.url,
@@ -825,7 +845,9 @@ var require_filemoon = __commonJS({
               }
             }
           } catch (e) {
+            console.log(`[Filemoon] Fallback fall\xF3: ${e.message}`);
           }
+          console.log("[Filemoon] No se pudieron obtener enlaces.");
           return null;
         } catch (e) {
           console.error(`[Filemoon] Error: ${e.message}`);
@@ -1839,9 +1861,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             if (seenUrls.has(url))
               continue;
             seenUrls.add(url);
+            console.log(`[Embed69] Decodificado (${sName}): ${url.substring(0, 60)}...`);
             batch.push(
               resolveEmbed(url).then((res) => {
                 if (res) {
+                  console.log(`[Embed69] \u2705 RESOLVED ${sName}`);
                   return __spreadProps(__spreadValues({}, res), {
                     langLabel,
                     serverLabel: embed.servername,
@@ -1849,8 +1873,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
                     // Backup de calidad si la verificación falla
                   });
                 }
+                console.log(`[Embed69] \u274C FAILED ${sName} (No direct link)`);
                 return null;
-              }).catch(() => null)
+              }).catch((err) => {
+                console.log(`[Embed69] \u26A0\uFE0F ERROR ${sName}: ${err.message}`);
+                return null;
+              })
             );
           }
         }
