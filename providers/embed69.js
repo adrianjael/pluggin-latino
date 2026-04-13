@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T03:18:24.370Z
+ * Generated: 2026-04-13T03:20:50.045Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -305,8 +305,11 @@ var require_engine = __commonJS({
             name: providerName || "Plugin Latino",
             title: `${prefix}${qualityPart}${lang} | ${server}`,
             url: finalUrl,
-            quality: q || "",
-            headers: s.headers || {}
+            quality: q || "HD",
+            serverName: server,
+            headers: __spreadProps(__spreadValues({}, s.headers || {}), {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            })
           };
         });
         const MAX_RESULTS = 8;
@@ -1192,7 +1195,7 @@ var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
 var { getCorrectImdbId } = require_id_mapper();
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var BASE_URL = "https://embed69.org";
 function parseDataLink(html) {
   try {
@@ -1212,9 +1215,9 @@ function getStreams(tmdbId, mediaType, season, episode, title2) {
     try {
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = mapper.imdbId;
-      const mediaTitle = title2 || mapper.title || "Pel\xEDcula";
-      if (!imdbId) {
-        console.log(`[Embed69] No IMDB ID found for ${tmdbId}`);
+      const mediaTitle = title2 || mapper.title || mapper.originalTitle || "Pel\xEDcula";
+      if (!imdbId && !mediaTitle) {
+        console.log(`[Embed69] No IMDB ID or Title found for ${tmdbId}`);
         return [];
       }
       let embedUrl = "";

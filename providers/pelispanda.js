@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-13T03:18:24.404Z
+ * Generated: 2026-04-13T03:20:50.080Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1239,8 +1239,11 @@ var require_engine = __commonJS({
             name: providerName || "Plugin Latino",
             title: `${prefix}${qualityPart}${lang} | ${server}`,
             url: finalUrl,
-            quality: q || "",
-            headers: s.headers || {}
+            quality: q || "HD",
+            serverName: server,
+            headers: __spreadProps(__spreadValues({}, s.headers || {}), {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            })
           };
         });
         const MAX_RESULTS = 8;
