@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-13T05:14:08.273Z
+ * Generated: 2026-04-13T05:15:56.110Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -278,6 +278,12 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
+          const allowed = ["latino", "lat"];
+          const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
+          if (!isAllowed) {
+            console.log(`[Engine] Filtrado por idioma (${lang}): ${server}`);
+            return null;
+          }
           let q = "HD";
           let check = "";
           if (s.verified && s.quality && s.quality !== "Unknown") {
@@ -285,10 +291,9 @@ var require_engine = __commonJS({
             check = " \u2705";
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
-          const suffix = s.isFallback ? " (Espejo)" : "";
           return {
             name: providerName || "Plugin Latino",
-            title: `${mediaTitle} | ${q}${check}${suffix} | ${lang} | ${server}`,
+            title: `${mediaTitle} | ${q}${check} | ${lang} | ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
@@ -299,7 +304,14 @@ var require_engine = __commonJS({
         });
         const MAX_RESULTS = 25;
         const uniqueUrls = /* @__PURE__ */ new Set();
-        const finalized = processed.filter((s) => s !== null).slice(0, MAX_RESULTS);
+        const finalized = processed.filter((s) => {
+          if (s === null)
+            return false;
+          if (uniqueUrls.has(s.url))
+            return false;
+          uniqueUrls.add(s.url);
+          return true;
+        }).slice(0, MAX_RESULTS);
         console.log(`[Engine] FIN: ${finalized.length} resultados finales (L\xEDmite: ${MAX_RESULTS}) enviados a Nuvio para ${providerName}.`);
         return finalized;
       });
