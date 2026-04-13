@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T21:18:35.342Z
+ * Generated: 2026-04-13T21:52:22.677Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1383,7 +1383,7 @@ function resolve5(embedUrl) {
         return null;
       }
       const fileId = idMatch[2];
-      const directUrl = `https://pixeldrain.com/api/file/${fileId}`;
+      const directUrl = `https://pixeldrain.com/api/file/${fileId}?download=1`;
       console.log("[Pixeldrain] \u2713 URL Directa generada.");
       return {
         url: directUrl,
@@ -1631,7 +1631,7 @@ var require_resolvers = __commonJS({
         }
       }
       if (!url.toLowerCase().includes(".m3u8") && !url.toLowerCase().includes(".mp4")) {
-        url = `${url}#.m3u8`;
+        url = `${url}|x=#.m3u8`;
       }
       result.url = url;
       return result;
@@ -1641,6 +1641,9 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
+        if (s.includes("hqq.ac") || s.includes("hqq.tv") || s.includes("netu.tv") || s.includes("waaw.to")) {
+          return null;
+        }
         if (isMirror(s, "VOE")) {
           const res = yield resolveVoe(url);
           if (res)
@@ -1897,7 +1900,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
             ]).catch(() => {
-              const pipedUrl = `${url}|User-Agent=${UA4}|Referer=${url}#.m3u8`;
+              const pipedUrl = `${url}|User-Agent=${UA4}|Referer=${url}|x=#.m3u8`;
               return { url: pipedUrl, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
             });
             batch.push(resolutionPromise);

@@ -1,12 +1,12 @@
 {
   "name": "Nuvio Latino",
-  "version": "6.9.6",
+  "version": "6.9.7",
   "scrapers": [
     {
       "id": "embed69",
       "name": "Embed69",
       "description": "Peliculas y series via embed69.org (V2.1.4) - RESTORATION v5.7.1",
-      "version": "2.1.5",
+      "version": "2.1.6",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -52,7 +52,7 @@
       "id": "pelisgo",
       "name": "PelisGo",
       "description": "Descargas directas y streaming de alta fidelidad.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",

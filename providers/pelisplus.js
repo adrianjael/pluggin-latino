@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-13T21:18:35.399Z
+ * Generated: 2026-04-13T21:52:22.729Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1236,7 +1236,7 @@ function resolve5(embedUrl) {
         return null;
       }
       const fileId = idMatch[2];
-      const directUrl = `https://pixeldrain.com/api/file/${fileId}`;
+      const directUrl = `https://pixeldrain.com/api/file/${fileId}?download=1`;
       console.log("[Pixeldrain] \u2713 URL Directa generada.");
       return {
         url: directUrl,
@@ -1566,7 +1566,7 @@ var require_resolvers = __commonJS({
         }
       }
       if (!url.toLowerCase().includes(".m3u8") && !url.toLowerCase().includes(".mp4")) {
-        url = `${url}#.m3u8`;
+        url = `${url}|x=#.m3u8`;
       }
       result.url = url;
       return result;
@@ -1576,6 +1576,9 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
+        if (s.includes("hqq.ac") || s.includes("hqq.tv") || s.includes("netu.tv") || s.includes("waaw.to")) {
+          return null;
+        }
         if (isMirror(s, "VOE")) {
           const res = yield resolveVoe(url);
           if (res)
