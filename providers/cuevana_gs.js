@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T04:28:36.297Z
+ * Generated: 2026-04-13T04:32:46.626Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -822,8 +822,7 @@ var require_filemoon = __commonJS({
             "User-Agent": UA4,
             "Referer": url,
             "Origin": `https://${hostname}`,
-            "x-embed-origin": "ww3.gnulahd.nu",
-            "x-embed-referer": "https://ww3.gnulahd.nu/",
+            "Accept": "*/*",
             "x-embed-parent": url
           };
           if (API_KEYS2.FILEMOON) {
@@ -1618,7 +1617,7 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
-        if (s.includes("voe") || s.includes("voe.sx") || s.includes("jessicaclearout") || s.includes("shonydar") || s.includes("ugc-cdn") || s.includes("cloudwindow") || s.includes("voe-sx") || s.includes("voex.sx")) {
+        if (s.includes("voe") || s.includes("voe.sx") || s.includes("jessicaclearout") || s.includes("shonydar") || s.includes("marissashare") || s.includes("reithen") || s.includes("ugc-cdn") || s.includes("cloudwindow") || s.includes("voe-sx") || s.includes("voex.sx")) {
           const res = yield resolveVoe(url);
           return res ? applyPiping(res) : null;
         }
