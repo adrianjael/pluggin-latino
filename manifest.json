@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "5.6.13",
+  "version": "5.6.14",
   "scrapers": [
     {
       "id": "embed69",
@@ -336,29 +336,6 @@
       "filename": "providers/tioplus.js",
       "enabled": true,
       "logo": "https://tioplus.app/images/logo2.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    },
-    {
-      "id": "gnulahd",
-      "name": "GnulaHD",
-      "description": "Películas y series en alta definición (Latino, Castellano y Subtitulado) desde ww3.gnulahd.nu.",
-      "version": "2.0.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/gnulahd.js",
-      "enabled": true,
-      "logo": "https://i3.wp.com/ww3.gnulahd.nu/wp-content/uploads/2025/07/cropped-faviconhd3-192x192.png",
       "contentLanguage": [
         "es"
       ],
