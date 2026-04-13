@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-13T05:34:08.177Z
+ * Generated: 2026-04-13T05:40:04.584Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -360,15 +360,17 @@ var require_engine = __commonJS({
     var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
-      const l = (lang || "").toUpperCase();
-      if (l.includes("LAT") || l.includes("MEX") || l.includes("COL") || l.includes("ARG") || l.includes("CHI") || l.includes("PER") || l.includes("DUB") || l.includes("DUAL")) {
+      const l = (lang || "").toLowerCase();
+      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual")) {
         return "Latino";
       }
-      if (l.includes("ESP") || l.includes("CAS") || l.includes("SPA"))
+      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
         return "Espa\xF1ol";
-      if (l.includes("SUB") || l.includes("VOSE") || l.includes("ENG"))
+      }
+      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original")) {
         return "Subtitulado";
-      return "Otro";
+      }
+      return lang || "Latino";
     }
     function normalizeServer(server, url = "") {
       if (!server || server === "Servidor" || server === "Server") {
@@ -383,16 +385,16 @@ var require_engine = __commonJS({
         return "Servidor";
       }
       const s = server.toLowerCase();
-      const u2 = url.toLowerCase();
-      if (s.includes("voe") || u2.includes("voe.sx") || u2.includes("voe-sx") || u2.includes("voe.inc"))
+      const u = url.toLowerCase();
+      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx"))
         return "VOE";
-      if (s.includes("filemoon") || u2.includes("filemoon") || u2.includes("fmoon") || u2.includes("moonembed"))
+      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon"))
         return "Filemoon";
-      if (s.includes("streamwish") || u2.includes("streamwish") || u2.includes("strcloud") || u2.includes("embedwish") || s.includes("awish") || s.includes("dwish"))
+      if (s.includes("streamwish") || u.includes("streamwish") || u.includes("strcloud") || u.includes("awish"))
         return "StreamWish";
-      if (s.includes("vidhide") || u2.includes("vidhide") || u2.includes("dintezuvio") || s.includes("movhide"))
+      if (s.includes("vidhide") || u.includes("vidhide") || u.includes("dintezuvio"))
         return "VidHide";
-      if (s.includes("waaw") || s.includes("netu") || u2.includes("vms.sh"))
+      if (s.includes("waaw") || s.includes("netu") || u.includes("waaw") || u.includes("vms.sh"))
         return "Netu";
       return server;
     }
@@ -400,21 +402,12 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Proto-Processing ${streams.length} streams...`);
-        const validated = [];
-        for (const s of streams) {
-          if (!s.url)
-            continue;
-          if (s.verified) {
-            validated.push(s);
-            continue;
-          }
-          try {
-            const v = yield validateStream(s);
-            validated.push(v);
-          } catch (e) {
-            validated.push(__spreadProps(__spreadValues({}, s), { quality: "HD", verified: true }));
-          }
+        console.log(`[Engine] Restaurando L\xF3gica 71269c - Procesando ${streams.length} streams...`);
+        let validated = streams;
+        try {
+          const results = yield Promise.allSettled(streams.map((s) => validateStream(s)));
+          validated = results.map((r, i) => r.status === "fulfilled" ? r.value : streams[i]);
+        } catch (e) {
         }
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
@@ -422,18 +415,17 @@ var require_engine = __commonJS({
           if (lang !== "Latino") {
             return null;
           }
-          let q = s.quality || "1080p";
-          let check = s.verified ? " \u2705" : "";
+          let q = s.verified ? s.quality : s.siteQuality || "HD";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
+          const check = s.verified ? " \u2705" : "";
           return {
             name: providerName || "Plugin Latino",
-            title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+            title: `[${q}${check}] \xB7 ${lang} \xB7 ${server}`,
             url: s.url,
-            quality: q,
-            serverName: server,
-            headers: __spreadProps(__spreadValues({}, s.headers || {}), {
+            quality: q || "",
+            headers: s.headers || {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            })
+            }
           };
         });
         const uniqueUrls = /* @__PURE__ */ new Set();
@@ -444,8 +436,8 @@ var require_engine = __commonJS({
             return false;
           uniqueUrls.add(s.url);
           return true;
-        }).slice(0, 30);
-        console.log(`[Engine] Proto-Finalizado: ${finalized.length} resultados.`);
+        }).slice(0, 35);
+        console.log(`[Engine] FIN: ${finalized.length} resultados enviados.`);
         return finalized;
       });
     }
@@ -1476,7 +1468,7 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
-        if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx") || u.includes("voex.sx")) {
+        if (s.includes("voe") || s.includes("voe.sx") || s.includes("voe-sx") || s.includes("voex.sx")) {
           const res = yield resolveVoe(url);
           return res ? applyPiping(res) : null;
         }

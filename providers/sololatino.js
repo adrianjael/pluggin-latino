@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T05:34:08.221Z
+ * Generated: 2026-04-13T05:40:04.636Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -282,15 +282,17 @@ var require_engine = __commonJS({
     var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
-      const l = (lang || "").toUpperCase();
-      if (l.includes("LAT") || l.includes("MEX") || l.includes("COL") || l.includes("ARG") || l.includes("CHI") || l.includes("PER") || l.includes("DUB") || l.includes("DUAL")) {
+      const l = (lang || "").toLowerCase();
+      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual")) {
         return "Latino";
       }
-      if (l.includes("ESP") || l.includes("CAS") || l.includes("SPA"))
+      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
         return "Espa\xF1ol";
-      if (l.includes("SUB") || l.includes("VOSE") || l.includes("ENG"))
+      }
+      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original")) {
         return "Subtitulado";
-      return "Otro";
+      }
+      return lang || "Latino";
     }
     function normalizeServer(server, url = "") {
       if (!server || server === "Servidor" || server === "Server") {
@@ -306,15 +308,15 @@ var require_engine = __commonJS({
       }
       const s = server.toLowerCase();
       const u = url.toLowerCase();
-      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx") || u.includes("voe.inc"))
+      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx"))
         return "VOE";
-      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon") || u.includes("moonembed"))
+      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon"))
         return "Filemoon";
-      if (s.includes("streamwish") || u.includes("streamwish") || u.includes("strcloud") || u.includes("embedwish") || s.includes("awish") || s.includes("dwish"))
+      if (s.includes("streamwish") || u.includes("streamwish") || u.includes("strcloud") || u.includes("awish"))
         return "StreamWish";
-      if (s.includes("vidhide") || u.includes("vidhide") || u.includes("dintezuvio") || s.includes("movhide"))
+      if (s.includes("vidhide") || u.includes("vidhide") || u.includes("dintezuvio"))
         return "VidHide";
-      if (s.includes("waaw") || s.includes("netu") || u.includes("vms.sh"))
+      if (s.includes("waaw") || s.includes("netu") || u.includes("waaw") || u.includes("vms.sh"))
         return "Netu";
       return server;
     }
@@ -322,21 +324,12 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Proto-Processing ${streams.length} streams...`);
-        const validated = [];
-        for (const s of streams) {
-          if (!s.url)
-            continue;
-          if (s.verified) {
-            validated.push(s);
-            continue;
-          }
-          try {
-            const v = yield validateStream(s);
-            validated.push(v);
-          } catch (e) {
-            validated.push(__spreadProps(__spreadValues({}, s), { quality: "HD", verified: true }));
-          }
+        console.log(`[Engine] Restaurando L\xF3gica 71269c - Procesando ${streams.length} streams...`);
+        let validated = streams;
+        try {
+          const results = yield Promise.allSettled(streams.map((s) => validateStream(s)));
+          validated = results.map((r, i) => r.status === "fulfilled" ? r.value : streams[i]);
+        } catch (e) {
         }
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
@@ -344,18 +337,17 @@ var require_engine = __commonJS({
           if (lang !== "Latino") {
             return null;
           }
-          let q = s.quality || "1080p";
-          let check = s.verified ? " \u2705" : "";
+          let q = s.verified ? s.quality : s.siteQuality || "HD";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
+          const check = s.verified ? " \u2705" : "";
           return {
             name: providerName || "Plugin Latino",
-            title: `${q}${check} \xB7 ${lang} \xB7 ${server}`,
+            title: `[${q}${check}] \xB7 ${lang} \xB7 ${server}`,
             url: s.url,
-            quality: q,
-            serverName: server,
-            headers: __spreadProps(__spreadValues({}, s.headers || {}), {
+            quality: q || "",
+            headers: s.headers || {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            })
+            }
           };
         });
         const uniqueUrls = /* @__PURE__ */ new Set();
@@ -366,8 +358,8 @@ var require_engine = __commonJS({
             return false;
           uniqueUrls.add(s.url);
           return true;
-        }).slice(0, 30);
-        console.log(`[Engine] Proto-Finalizado: ${finalized.length} resultados.`);
+        }).slice(0, 35);
+        console.log(`[Engine] FIN: ${finalized.length} resultados enviados.`);
         return finalized;
       });
     }
