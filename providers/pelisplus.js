@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-13T06:08:24.890Z
+ * Generated: 2026-04-13T06:11:54.320Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1799,17 +1799,11 @@ var require_engine = __commonJS({
         return "Filemoon";
       return server || "Servidor";
     }
-    function getVideoId(url) {
-      if (!url)
-        return null;
-      const match = url.match(/\/(?:e|v|f)\/([a-zA-Z0-9]{8,})/);
-      return match ? match[1] : url;
-    }
     function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Transparencia Total v5.6.83 - Procesando ${streams.length} streams...`);
+        console.log(`[Engine] Exposici\xF3n Total v5.6.87 - Procesando ${streams.length} streams...`);
         let validated = streams;
         try {
           const results = yield Promise.allSettled(streams.map((s) => validateStream(s)));
@@ -1818,14 +1812,9 @@ var require_engine = __commonJS({
         }
         const sorted = sortStreamsByQuality2(validated);
         const processed = [];
-        const seenVideoIds = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          const videoId = getVideoId(s.url);
-          if (videoId && seenVideoIds.has(videoId)) {
-          }
-          seenVideoIds.add(videoId);
           let q = s.verified ? s.quality : s.siteQuality || "HD";
           const check = s.verified ? " \u2705" : "";
           processed.push({
@@ -1838,7 +1827,7 @@ var require_engine = __commonJS({
             }
           });
         }
-        return processed.slice(0, 40);
+        return processed;
       });
     }
     module2.exports = { finalizeStreams: finalizeStreams2 };
