@@ -1,6 +1,6 @@
 /**
  * gnulahd - Built from src/gnulahd/
- * Generated: 2026-04-13T00:19:46.863Z
+ * Generated: 2026-04-13T00:21:36.208Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1075,36 +1075,16 @@ var require_tmdb = __commonJS({
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
-var spawnSync = null;
-try {
-  spawnSync = require("child_process").spawnSync;
-} catch (e) {
-}
 var BASE_URL = "https://ww3.gnulahd.nu";
-var USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function getUrl(_0) {
   return __async(this, arguments, function* (url, options = {}) {
-    try {
-      if (spawnSync && typeof process !== "undefined") {
-        const curlOptions = [
-          "-s",
-          "-L",
-          "--user-agent",
-          USER_AGENT,
-          "--header",
-          "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-          "--header",
-          "Accept-Language: es-ES,es;q=0.9",
-          url
-        ];
-        const result = spawnSync("curl.exe", curlOptions, { encoding: "utf-8", timeout: 15e3 });
-        if (result.status === 0 && result.stdout)
-          return result.stdout;
-      }
-    } catch (e) {
-    }
     const response = yield fetch(url, __spreadValues({
-      headers: __spreadValues({ "User-Agent": USER_AGENT }, options.headers)
+      headers: __spreadValues({
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9"
+      }, options.headers)
     }, options));
     return yield response.text();
   });
@@ -1117,79 +1097,58 @@ function resolveByseInternal(url) {
     const id = idMatch[1];
     const apiUrl = `https://bysevepoin.com/api/videos/${id}/embed/details`;
     try {
-      let jsonStr = "";
-      if (spawnSync && typeof process !== "undefined") {
-        const result = spawnSync("curl.exe", [
-          "-s",
-          "-L",
-          "-A",
-          USER_AGENT,
-          "-H",
-          "Accept: */*",
-          "-H",
-          "x-embed-origin: ww3.gnulahd.nu",
-          "-H",
-          `x-embed-referer: ${BASE_URL}/`,
-          "-H",
-          `referer: ${url}`,
-          apiUrl
-        ], { encoding: "utf-8", timeout: 1e4 });
-        jsonStr = result.stdout || "";
-      } else {
-        const resp = yield fetch(apiUrl, {
-          headers: {
-            "User-Agent": USER_AGENT,
-            "Accept": "*/*",
-            "x-embed-origin": "ww3.gnulahd.nu",
-            "x-embed-referer": `${BASE_URL}/`,
-            "referer": url
-          }
-        });
-        if (resp.ok)
-          jsonStr = yield resp.text();
-      }
-      if (jsonStr) {
-        const data = JSON.parse(jsonStr);
-        if (data && data.embed_frame_url) {
-          const resolved = yield resolveEmbed(data.embed_frame_url);
-          if (resolved) {
-            const resArray = Array.isArray(resolved) ? resolved : [resolved];
-            return resArray.map((s) => __spreadProps(__spreadValues({}, s), {
-              name: s.serverName || "Byse (Premium)",
-              quality: s.quality || "HD",
-              headers: s.headers || {}
-              // Aseguramos que los headers viajen
-            }));
-          }
+      const resp = yield fetch(apiUrl, {
+        headers: {
+          "User-Agent": USER_AGENT,
+          "Accept": "*/*",
+          "x-embed-origin": "ww3.gnulahd.nu",
+          "x-embed-referer": "https://ww3.gnulahd.nu/",
+          "x-embed-parent": url,
+          "Referer": url
+        }
+      });
+      if (!resp.ok)
+        return [];
+      const data = yield resp.json();
+      if (data && data.embed_frame_url) {
+        console.log("[GnulaHD] Byse Frame Found: " + data.embed_frame_url);
+        const resolved = yield resolveEmbed(data.embed_frame_url);
+        if (resolved) {
+          const resArray = Array.isArray(resolved) ? resolved : [resolved];
+          return resArray.map((s) => __spreadProps(__spreadValues({}, s), {
+            name: s.serverName || "Byse",
+            quality: s.quality || "HD",
+            langLabel: "Latino"
+            // Gnula prioriza Latino
+          }));
         }
       }
     } catch (e) {
+      console.log("[GnulaHD] Byse Error: " + e.message);
     }
     return [];
   });
 }
-function extractStreamsFromPage(html, resolvers) {
+function extractStreamsFromPage(html) {
   return __async(this, null, function* () {
     const streams = [];
     const dataMatch = html.match(/var\s+(_gd|_gnpv_ep_langs)\s*=\s*(\[[\s\S]*?\])\s*;/);
-    if (!dataMatch) {
-      console.log("[GnulaHD] No se encontr\xF3 el bloque de servidores (_gd)");
+    if (!dataMatch)
       return streams;
-    }
     try {
       const data = JSON.parse(dataMatch[2]);
       for (const langObj of data) {
         if (!langObj)
           continue;
-        const langName = (langObj.label || langObj.name || "").toLowerCase();
-        let lang = null;
-        if (langName.includes("latino"))
-          lang = "LAT";
-        if (!lang)
-          continue;
+        const label = (langObj.label || langObj.name || "").toLowerCase();
+        let lang = "Latino";
+        if (label.includes("sub"))
+          lang = "Subtitulado";
+        if (label.includes("cast") || label.includes("esp"))
+          lang = "Espa\xF1ol";
         const serverList = langObj.servers || langObj.data || [];
         for (const player of serverList) {
-          let serverName = (player.title || player.name || "GNULA").toUpperCase();
+          let serverName = (player.title || player.name || "Server").toUpperCase();
           let streamUrl = player.src || "";
           if (!streamUrl && player.frame) {
             let frameMatch = player.frame.match(/src="([^"]+)"/);
@@ -1202,18 +1161,15 @@ function extractStreamsFromPage(html, resolvers) {
             streamUrl = "https:" + streamUrl;
           if (streamUrl.includes("bysevepoin.com")) {
             const byseStreams = yield resolveByseInternal(streamUrl);
-            streams.push(...byseStreams.map((s) => __spreadProps(__spreadValues({}, s), {
-              langLabel: lang === "LAT" ? "Latino" : lang === "ESP" ? "Espa\xF1ol" : "Subtitulado",
-              serverLabel: "Byse (Premium)"
-            })));
+            streams.push(...byseStreams.map((s) => __spreadProps(__spreadValues({}, s), { langLabel: lang })));
             continue;
           }
           const resolved = yield resolveEmbed(streamUrl);
-          if (resolved && (resolved.url || Array.isArray(resolved) && resolved.length > 0)) {
+          if (resolved) {
             const streamsArray = Array.isArray(resolved) ? resolved : [resolved];
             streamsArray.forEach((s) => {
               streams.push(__spreadProps(__spreadValues({}, s), {
-                langLabel: lang === "LAT" ? "Latino" : lang === "ESP" ? "Espa\xF1ol" : "Subtitulado",
+                langLabel: lang,
                 serverLabel: serverName
               }));
             });
@@ -1221,6 +1177,7 @@ function extractStreamsFromPage(html, resolvers) {
         }
       }
     } catch (e) {
+      console.log("[GnulaHD] JSON Error: " + e.message);
     }
     return streams;
   });
@@ -1229,59 +1186,48 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
-    const parts = tmdbId.toString().split(":");
-    const realTmdbId = parts[0];
-    const s = parseInt(parts[1] || season || 1);
-    const e = parseInt(parts[2] || episode || 1);
     const isMovie = mediaType === "movie" || mediaType === "movies";
     let mediaTitle = title;
     if (!mediaTitle) {
-      mediaTitle = yield getTmdbTitle(realTmdbId, mediaType);
+      mediaTitle = yield getTmdbTitle(tmdbId.toString().split(":")[0], mediaType);
     }
     if (!mediaTitle)
       return [];
-    console.log(`[GnulaHD] Scrapping: ${mediaTitle} (${mediaType})`);
-    let searchUrl = `${BASE_URL}/?s=${encodeURIComponent(mediaTitle)}`;
-    let searchHtml = yield getUrl(searchUrl);
+    console.log(`[GnulaHD] Buscando: ${mediaTitle}`);
+    let searchHtml = yield getUrl(`${BASE_URL}/?s=${encodeURIComponent(mediaTitle)}`);
     const getCandidates = (html) => {
       const res = [];
       const articles = html.match(/<article class="bs"[^>]*>([\s\S]*?)<\/article>/g) || [];
       articles.forEach((art) => {
         const linkMatch = art.match(/href="([^"]+)"/);
         const titleMatch = art.match(/title="([^"]+)"/);
-        if (linkMatch && titleMatch) {
+        if (linkMatch && titleMatch)
           res.push({ url: linkMatch[1], title: titleMatch[1] });
-        }
       });
       return res;
     };
     let candidates = getCandidates(searchHtml);
     if (candidates.length === 0 && mediaTitle.includes(" ")) {
       const firstWord = mediaTitle.split(" ")[0];
-      console.log(`[GnulaHD] No hay resultados directos, probando con: ${firstWord}`);
-      searchUrl = `${BASE_URL}/?s=${encodeURIComponent(firstWord)}`;
-      searchHtml = yield getUrl(searchUrl);
+      searchHtml = yield getUrl(`${BASE_URL}/?s=${encodeURIComponent(firstWord)}`);
       candidates = getCandidates(searchHtml);
     }
-    if (candidates.length === 0) {
-      console.log(`[GnulaHD] Sin resultados para: ${mediaTitle}`);
+    if (candidates.length === 0)
       return [];
-    }
     const normalizedTarget = mediaTitle.toLowerCase();
-    let bestMatch = candidates.find((c) => c.title.toLowerCase().includes(normalizedTarget)) || candidates[0];
+    const bestMatch = candidates.find((c) => c.title.toLowerCase().includes(normalizedTarget)) || candidates[0];
     let results = [];
     if (isMovie) {
       results = yield extractStreamsFromPage(yield getUrl(bestMatch.url));
     } else {
       const serieHtml = yield getUrl(bestMatch.url);
-      const epSlug = `${s}x${e.toString().padStart(2, "0")}`;
-      const epRegex = new RegExp(`href="([^"]*?${epSlug}[^"]*?)"`, "i");
-      const epMatch = serieHtml.match(epRegex);
-      let epUrl = epMatch ? epMatch[1] : null;
-      if (!epUrl) {
-        epUrl = bestMatch.url.replace(/\/$/, "") + `-${s}x${e.toString().padStart(2, "0")}/`;
+      const epSlug = `${season}x${episode.toString().padStart(2, "0")}`;
+      const epMatch = serieHtml.match(new RegExp(`href="([^"]*?${epSlug}[^"]*?)"`, "i"));
+      if (epMatch) {
+        results = yield extractStreamsFromPage(yield getUrl(epMatch[1]));
+      } else {
+        results = yield extractStreamsFromPage(serieHtml);
       }
-      results = yield extractStreamsFromPage(yield getUrl(epUrl));
     }
     return yield finalizeStreams(results, "GnulaHD", mediaTitle);
   });
