@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T05:03:42.818Z
+ * Generated: 2026-04-13T05:06:11.099Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -274,12 +274,6 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          const allowed = ["latino", "lat"];
-          const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
-          if (!isAllowed) {
-            console.log(`[Engine] Rechazado por idioma no Latino (${lang}): ${s.url.substring(0, 40)}...`);
-            return null;
-          }
           let q = "HD";
           let check = "";
           if (s.verified && s.quality && s.quality !== "Unknown") {
@@ -289,7 +283,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${mediaTitle} | ${q}${check} | ${lang} | ${server}`,
+            title: `${server} | ${q}${check} | ${lang}`,
             url: s.url,
             quality: q,
             serverName: server,
@@ -1899,11 +1893,25 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
                     // Backup de calidad si la verificación falla
                   });
                 }
-                console.log(`[Embed69] \u274C FAILED ${sName} (No direct link)`);
-                return null;
+                console.log(`[Embed69] \u26A0\uFE0F FALLBACK ${sName} (Original link): ${url.substring(0, 30)}...`);
+                return {
+                  url,
+                  quality: "HD",
+                  langLabel,
+                  serverLabel: embed.servername,
+                  serverName: embed.servername,
+                  isFallback: true
+                };
               }).catch((err) => {
                 console.log(`[Embed69] \u26A0\uFE0F ERROR ${sName}: ${err.message}`);
-                return null;
+                return {
+                  url,
+                  quality: "HD",
+                  langLabel,
+                  serverLabel: embed.servername,
+                  serverName: embed.servername,
+                  isFallback: true
+                };
               })
             );
           }

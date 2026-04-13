@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-13T05:03:42.848Z
+ * Generated: 2026-04-13T05:06:11.130Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -420,12 +420,6 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          const allowed = ["latino", "lat"];
-          const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
-          if (!isAllowed) {
-            console.log(`[Engine] Rechazado por idioma no Latino (${lang}): ${s.url.substring(0, 40)}...`);
-            return null;
-          }
           let q = "HD";
           let check = "";
           if (s.verified && s.quality && s.quality !== "Unknown") {
@@ -435,7 +429,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           return {
             name: providerName || "Plugin Latino",
-            title: `${mediaTitle} | ${q}${check} | ${lang} | ${server}`,
+            title: `${server} | ${q}${check} | ${lang}`,
             url: s.url,
             quality: q,
             serverName: server,
