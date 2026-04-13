@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-13T02:43:17.620Z
+ * Generated: 2026-04-13T02:43:44.988Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -424,10 +424,14 @@ var require_engine = __commonJS({
           const check = s.verified ? " \u2713" : "";
           const prefix = mediaTitle ? `${mediaTitle} | ` : "";
           const qualityPart = q ? `[${q}${check}] | ` : "";
+          let finalUrl = s.url;
+          if (!finalUrl.includes("#") && !finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
+            finalUrl += "#.m3u8";
+          }
           return {
             name: providerName || "Plugin Latino",
             title: `${prefix}${qualityPart}${lang} | ${server}`,
-            url: s.url,
+            url: finalUrl,
             quality: q || "",
             headers: s.headers || {}
           };
