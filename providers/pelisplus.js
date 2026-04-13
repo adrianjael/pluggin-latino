@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-13T05:28:39.532Z
+ * Generated: 2026-04-13T05:34:08.195Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1169,7 +1169,7 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
-        if (s.includes("voe") || s.includes("voe.sx") || s.includes("jessicaclearout") || s.includes("shonydar") || s.includes("marissashare") || s.includes("reithen") || s.includes("ugc-cdn") || s.includes("cloudwindow") || s.includes("voe-sx") || s.includes("voex.sx")) {
+        if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx") || u.includes("voex.sx")) {
           const res = yield resolveVoe(url);
           return res ? applyPiping(res) : null;
         }
@@ -1659,14 +1659,13 @@ var require_engine = __commonJS({
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
       const l = (lang || "").toUpperCase();
-      if (l === "LAT" || l.includes("LATINO"))
+      if (l.includes("LAT") || l.includes("MEX") || l.includes("COL") || l.includes("ARG") || l.includes("CHI") || l.includes("PER") || l.includes("DUB") || l.includes("DUAL")) {
         return "Latino";
-      if (l === "ESP" || l.includes("ESPA\xD1A") || l.includes("CASTELLANO"))
+      }
+      if (l.includes("ESP") || l.includes("CAS") || l.includes("SPA"))
         return "Espa\xF1ol";
-      if (l === "SUB" || l.includes("SUBTITULADO") || l.includes("VOSE"))
+      if (l.includes("SUB") || l.includes("VOSE") || l.includes("ENG"))
         return "Subtitulado";
-      if (l.includes("MEX") || l.includes("ARG") || l.includes("COL"))
-        return "Latino";
       return "Otro";
     }
     function normalizeServer(server, url = "") {
@@ -1682,16 +1681,16 @@ var require_engine = __commonJS({
         return "Servidor";
       }
       const s = server.toLowerCase();
-      const u = url.toLowerCase();
-      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx"))
+      const u2 = url.toLowerCase();
+      if (s.includes("voe") || u2.includes("voe.sx") || u2.includes("voe-sx") || u2.includes("voe.inc"))
         return "VOE";
-      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon"))
+      if (s.includes("filemoon") || u2.includes("filemoon") || u2.includes("fmoon") || u2.includes("moonembed"))
         return "Filemoon";
-      if (s.includes("streamwish") || u.includes("streamwish") || u.includes("strcloud"))
+      if (s.includes("streamwish") || u2.includes("streamwish") || u2.includes("strcloud") || u2.includes("embedwish") || s.includes("awish") || s.includes("dwish"))
         return "StreamWish";
-      if (s.includes("vidhide") || u.includes("vidhide") || u.includes("dintezuvio"))
+      if (s.includes("vidhide") || u2.includes("vidhide") || u2.includes("dintezuvio") || s.includes("movhide"))
         return "VidHide";
-      if (s.includes("waaw") || s.includes("netu") || u.includes("vms.sh"))
+      if (s.includes("waaw") || s.includes("netu") || u2.includes("vms.sh"))
         return "Netu";
       return server;
     }
@@ -1699,7 +1698,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Legacy Processing ${streams.length} streams...`);
+        console.log(`[Engine] Proto-Processing ${streams.length} streams...`);
         const validated = [];
         for (const s of streams) {
           if (!s.url)
@@ -1735,7 +1734,6 @@ var require_engine = __commonJS({
             })
           };
         });
-        const MAX_RESULTS = 25;
         const uniqueUrls = /* @__PURE__ */ new Set();
         const finalized = processed.filter((s) => {
           if (s === null)
@@ -1744,8 +1742,8 @@ var require_engine = __commonJS({
             return false;
           uniqueUrls.add(s.url);
           return true;
-        }).slice(0, MAX_RESULTS);
-        console.log(`[Engine] FIN: ${finalized.length} resultados.`);
+        }).slice(0, 30);
+        console.log(`[Engine] Proto-Finalizado: ${finalized.length} resultados.`);
         return finalized;
       });
     }
