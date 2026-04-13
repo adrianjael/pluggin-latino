@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T16:44:31.888Z
+ * Generated: 2026-04-13T17:00:02.246Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -656,8 +656,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             });
           });
         }
-        const serverList = Array.from(uniqueServers.values()).slice(0, 10);
-        const results = yield Promise.all(serverList.map((ser) => __async(this, null, function* () {
+        const serverList = Array.from(uniqueServers.values()).slice(0, 15);
+        const resolved = yield Promise.all(serverList.map((ser) => __async(this, null, function* () {
           const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
           const direct = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
           if (direct && direct.url) {
@@ -684,7 +684,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           }
           return null;
         })));
-        const cleanResults = results.filter((r) => r !== null);
+        const seenUrls = /* @__PURE__ */ new Set();
+        const cleanResults = [];
+        for (const r of resolved) {
+          if (r && r.url && !seenUrls.has(r.url)) {
+            seenUrls.add(r.url);
+            cleanResults.push(r);
+          }
+        }
         return yield finalizeStreams(cleanResults, "SoloLatino", mediaTitle);
       }
     } catch (e2) {
