@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-13T03:00:40.861Z
+ * Generated: 2026-04-13T03:02:15.952Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -178,16 +178,24 @@ function sortStreamsByQuality(streams) {
   return [...streams].sort((a, b) => {
     const scoreA = QUALITY_SCORE[a.quality] || 0;
     const scoreB = QUALITY_SCORE[b.quality] || 0;
-    if (scoreA === scoreB) {
-      if (a.quality === "Auto")
-        return 1;
-      if (b.quality === "Auto")
-        return -1;
+    if (scoreA !== scoreB) {
+      return scoreB - scoreA;
     }
-    return scoreB - scoreA;
+    const serverA = (a.serverLabel || "").split(" ")[0];
+    const serverB = (b.serverLabel || "").split(" ")[0];
+    const speedA = SERVER_SCORE[serverA] || 0;
+    const speedB = SERVER_SCORE[serverB] || 0;
+    if (speedA !== speedB) {
+      return speedB - speedA;
+    }
+    if (a.verified && !b.verified)
+      return -1;
+    if (!a.verified && b.verified)
+      return 1;
+    return 0;
   });
 }
-var QUALITY_SCORE;
+var QUALITY_SCORE, SERVER_SCORE;
 var init_sorting = __esm({
   "src/utils/sorting.js"() {
     QUALITY_SCORE = {
@@ -200,6 +208,16 @@ var init_sorting = __esm({
       "240p": 40,
       "Auto": 30,
       "Unknown": 0
+    };
+    SERVER_SCORE = {
+      "VOE": 10,
+      "Filemoon": 10,
+      "Tplayer": 10,
+      "Vimeos": 10,
+      "Netu": 5,
+      "GoodStream": 10,
+      "StreamWish": -5,
+      "VidHide": -5
     };
   }
 });
