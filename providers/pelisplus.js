@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-13T06:19:57.469Z
+ * Generated: 2026-04-13T06:37:10.162Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1802,6 +1802,13 @@ var require_engine = __commonJS({
         return "VOE";
       if (u.includes("moonalu.com") || u.includes("moonembed.pro") || u.includes("filemoon.sx") || u.includes("bysedikamoum.com") || u.includes("398fitus.com") || u.includes("r66nv9ed.com") || s.includes("filemoon"))
         return "Filemoon";
+      if (url) {
+        try {
+          const domain = new URL(url).hostname.replace("www.", "");
+          return domain.charAt(0).toUpperCase() + domain.slice(1);
+        } catch (e) {
+        }
+      }
       return server || "Servidor";
     }
     function finalizeStreams2(streams, providerName, mediaTitle) {
