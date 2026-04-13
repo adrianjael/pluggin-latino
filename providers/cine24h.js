@@ -1,6 +1,6 @@
 /**
  * cine24h - Built from src/cine24h/
- * Generated: 2026-04-13T01:38:55.011Z
+ * Generated: 2026-04-13T01:39:29.598Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
