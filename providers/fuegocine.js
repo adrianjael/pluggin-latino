@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-13T06:42:29.404Z
+ * Generated: 2026-04-13T06:45:43.610Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -252,26 +252,19 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Simulaci\xF3n Hermes v5.6.88 - Formateando para Nuvio Mobile...`);
-        let validated = streams;
-        try {
-          const results = yield Promise.allSettled(streams.map((s) => validateStream(s)));
-          validated = results.map((r, i) => r.status === "fulfilled" ? r.value : streams[i]);
-        } catch (e) {
-        }
-        const sorted = sortStreamsByQuality2(validated);
+        console.log(`[Engine] MODO TOTAL v5.6.95 - Sin filtros. Mostrando todo...`);
+        const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          let q = s.verified ? s.quality : s.siteQuality || "HD";
-          const check = s.verified ? " \u2705" : "";
+          const q = s.quality || "HD";
+          const check = " \u2705";
           processed.push({
             name: providerName || "Plugin Latino",
             title: `[${q}${check}] \xB7 ${lang} \xB7 ${server}`,
-            // Visualización compatible
             url: s.url,
-            quality: q || "HD",
+            quality: q,
             serverName: server,
             lang,
             headers: s.headers || {
