@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T03:30:57.671Z
+ * Generated: 2026-04-13T03:33:10.217Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -299,11 +299,7 @@ var require_engine = __commonJS({
       const l = (lang || "").toLowerCase();
       if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dublado") || l.includes("dual"))
         return "Latino";
-      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast"))
-        return "Espa\xF1ol";
-      if (l.includes("sub") || l.includes("vose") || l.includes("eng") || l.includes("original"))
-        return "Subtitulado";
-      return lang || "Latino";
+      return "Desconocido";
     }
     function normalizeServer(server, url = "") {
       if (!server || server === "Servidor" || server === "Server") {
