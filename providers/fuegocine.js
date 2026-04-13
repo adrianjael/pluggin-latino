@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-13T06:00:17.548Z
+ * Generated: 2026-04-13T06:05:35.973Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -237,7 +237,7 @@ var require_engine = __commonJS({
         return "StreamWish";
       if (u.includes("cloudwindow-route.com") || u.includes("marissashare") || u.includes("voe.sx") || s.includes("voe"))
         return "VOE";
-      if (u.includes("moonalu.com") || u.includes("moonembed.pro") || u.includes("filemoon.sx") || s.includes("filemoon"))
+      if (u.includes("moonalu.com") || u.includes("moonembed.pro") || u.includes("filemoon.sx") || u.includes("bysedikamoum") || u.includes("398fitus") || u.includes("r66nv9ed") || s.includes("filemoon"))
         return "Filemoon";
       return server || "Servidor";
     }
@@ -481,10 +481,68 @@ var require_hlswish = __commonJS({
   }
 });
 
+// src/utils/aes_gcm.js
+var require_aes_gcm = __commonJS({
+  "src/utils/aes_gcm.js"(exports2, module2) {
+    var CryptoJS2 = require("crypto-js");
+    function base64ToUint8Array(base64) {
+      const binary = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+    function decryptGCM(key, iv, ciphertextWithTag) {
+      try {
+        const tagSize = 16;
+        const ciphertext = ciphertextWithTag.slice(0, -tagSize);
+        const keyWA = CryptoJS2.lib.WordArray.create(key);
+        const ivCounter = new Uint8Array(16);
+        ivCounter.set(iv, 0);
+        ivCounter[15] = 2;
+        const ivWA = CryptoJS2.lib.WordArray.create(ivCounter);
+        const decrypted = CryptoJS2.AES.decrypt(
+          { ciphertext: CryptoJS2.lib.WordArray.create(ciphertext) },
+          keyWA,
+          {
+            iv: ivWA,
+            mode: CryptoJS2.mode.CTR,
+            padding: CryptoJS2.pad.NoPadding
+          }
+        );
+        return decrypted.toString(CryptoJS2.enc.Utf8);
+      } catch (e) {
+        console.error("[AES-GCM] Error:", e.message);
+        return null;
+      }
+    }
+    function decryptByse(playback) {
+      try {
+        if (!playback || !playback.key_parts || !playback.payload || !playback.iv)
+          return null;
+        const keyArr = [];
+        for (const p of playback.key_parts) {
+          base64ToUint8Array(p).forEach((b) => keyArr.push(b));
+        }
+        const iv = base64ToUint8Array(playback.iv);
+        const payload = base64ToUint8Array(playback.payload);
+        return decryptGCM(new Uint8Array(keyArr), iv, payload);
+      } catch (e) {
+        console.error("[Byse] Decrypt Failed:", e.message);
+        return null;
+      }
+    }
+    module2.exports = { decryptByse };
+  }
+});
+
 // src/resolvers/filemoon.js
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
     var axios7 = require("axios");
+    var { decryptByse } = require_aes_gcm();
     var UA_CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
     function unpack(p, a, c, k, e, d) {
       while (c--) {
@@ -510,8 +568,45 @@ var require_filemoon = __commonJS({
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
-          console.log(`[Filemoon] Resolving Pro-Edition: ${url}`);
+          console.log(`[Filemoon] Resolving Hermes: ${url}`);
           const urlObj = new URL(url);
+          const hostname = urlObj.hostname;
+          const pathParts = urlObj.pathname.split("/");
+          const videoId = pathParts[pathParts.length - 1];
+          try {
+            const playbackUrl = `https://${hostname}/api/videos/${videoId}/embed/playback`;
+            console.log(`[Filemoon] Intentando Byse API: ${playbackUrl}`);
+            const { data: playbackData } = yield axios7.get(playbackUrl, {
+              headers: __spreadProps(__spreadValues({}, chromeHeaders), {
+                "Referer": url,
+                "Origin": `https://${hostname}`
+              }),
+              timeout: 8e3
+            });
+            if (playbackData && playbackData.playback) {
+              console.log("[Filemoon] Payload Byse detectado. Descifrando...");
+              const decrypted = decryptByse(playbackData.playback);
+              if (decrypted) {
+                const m3u8Match = decrypted.match(/["']?file["']?\s*:\s*["']([^"']+\.m3u8[^"']*)["']/i);
+                if (m3u8Match) {
+                  console.log("[Filemoon] \u2713 Stream descifrado con \xE9xito (AES-GCM).");
+                  return {
+                    url: m3u8Match[1],
+                    quality: "1080p",
+                    verified: true,
+                    serverName: "Filemoon",
+                    headers: {
+                      "User-Agent": UA_CHROME,
+                      "Referer": `https://${hostname}/`,
+                      "Origin": `https://${hostname}`
+                    }
+                  };
+                }
+              }
+            }
+          } catch (e) {
+            console.log(`[Filemoon] Byse fall\xF3 o no disponible: ${e.message}`);
+          }
           const { data: html1 } = yield axios7.get(url, {
             headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": urlObj.origin, "Origin": urlObj.origin }),
             timeout: 1e4
@@ -520,7 +615,6 @@ var require_filemoon = __commonJS({
           const iframeMatch = html1.match(/<iframe[^>]+src=["']([^"']+)["']/i);
           if (iframeMatch) {
             const iframeUrl = iframeMatch[1].startsWith("//") ? `https:${iframeMatch[1]}` : iframeMatch[1];
-            console.log(`[Filemoon] Iframe detectado: ${iframeUrl}`);
             const { data: html2 } = yield axios7.get(iframeUrl, {
               headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": url, "Origin": urlObj.origin }),
               timeout: 1e4
@@ -532,7 +626,7 @@ var require_filemoon = __commonJS({
             const unpacked = unpack(evalMatch[1], parseInt(evalMatch[2]), parseInt(evalMatch[3]), evalMatch[4].split("|"), 0, {});
             const m3u8Match = unpacked.match(/sources\s*:\s*\[\s*\{\s*file\s*:\s*["']([^"']+)["']/i);
             if (m3u8Match) {
-              console.log("[Filemoon] \u2713 Stream encontrado via Pro-Unpacker.");
+              console.log("[Filemoon] \u2713 Stream encontrado via Pro-Unpacker (Fallback).");
               return {
                 url: m3u8Match[1],
                 quality: "1080p",
@@ -540,15 +634,15 @@ var require_filemoon = __commonJS({
                 serverName: "Filemoon",
                 headers: {
                   "User-Agent": UA_CHROME,
-                  "Referer": "https://filemoon.sx",
-                  "Origin": "https://filemoon.sx"
+                  "Referer": `https://${hostname}`,
+                  "Origin": `https://${hostname}`
                 }
               };
             }
           }
           return null;
         } catch (error) {
-          console.error(`[Filemoon] Error en Pro-Edition: ${error.message}`);
+          console.error(`[Filemoon] Error en Hermes-Edition: ${error.message}`);
           return null;
         }
       });
