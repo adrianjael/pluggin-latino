@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T17:22:36.696Z
+ * Generated: 2026-04-13T17:28:17.282Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -526,19 +526,21 @@ var require_engine = __commonJS({
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
         console.log(`[Engine] MODO TOTAL v5.6.95 - Sin filtros. Mostrando todo...`);
-        const sorted = sortStreamsByQuality2(streams);
-        const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
+        const seenServerLangs = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
           const isLatino = lang.toLowerCase().includes("lat") || lang.toLowerCase().includes("mex");
           if (!isLatino)
             continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          let displayQuality = "HD";
+          const qualityKey = `${server}-${lang}`.toLowerCase();
+          if (seenServerLangs.has(qualityKey))
+            continue;
+          seenServerLangs.add(qualityKey);
+          let displayQuality = s.quality || "HD";
           let checkMark = "";
           if (s.verified) {
-            displayQuality = s.quality || "1080p";
             checkMark = " \u2705";
           }
           const fullTitle = `${displayQuality}${checkMark} - ${lang} - ${server}`;
