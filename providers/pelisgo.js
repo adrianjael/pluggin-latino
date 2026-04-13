@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-13T06:11:54.300Z
+ * Generated: 2026-04-13T06:17:44.257Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -391,7 +391,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Exposici\xF3n Total v5.6.87 - Procesando ${streams.length} streams...`);
+        console.log(`[Engine] Simulaci\xF3n Hermes v5.6.88 - Formateando para Nuvio Mobile...`);
         let validated = streams;
         try {
           const results = yield Promise.allSettled(streams.map((s) => validateStream(s)));
@@ -408,8 +408,11 @@ var require_engine = __commonJS({
           processed.push({
             name: providerName || "Plugin Latino",
             title: `[${q}${check}] \xB7 ${lang} \xB7 ${server}`,
+            // Visualización compatible
             url: s.url,
             quality: q || "HD",
+            serverName: server,
+            lang,
             headers: s.headers || {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
@@ -1552,6 +1555,9 @@ var require_resolvers = __commonJS({
         if (parts.length > 0) {
           url = `${url}|${parts.join("|")}`;
         }
+      }
+      if (!url.toLowerCase().includes(".m3u8") && !url.toLowerCase().includes(".mp4")) {
+        url = `${url}#.m3u8`;
       }
       result.url = url;
       return result;
