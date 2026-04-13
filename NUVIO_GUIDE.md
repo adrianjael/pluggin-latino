@@ -223,3 +223,18 @@ Para que Nuvio acepte un enlace, este debe ser **Directo** (`.m3u8` o `.mp4`).
 - **Resolución de Byse**: Para servidores como `bysevepoin.com`, se debe consultar su API de detalles (`/api/videos/{id}/embed/details`) inyectando el encabezado `x-embed-origin` con el dominio del sitio original (ej: `ww3.gnulahd.nu`).
 - **Búsqueda Relajada**: Si el buscador del sitio es muy estricto, aplicar un fallback que intente buscar solo con la primera palabra del título. Esto aumenta la probabilidad de éxito en un 70% para series.
 - **Estandarización de Etiquetas**: Asegurar que los objetos de stream pasados a `finalizeStreams` contengan los campos `langLabel` y `serverLabel`. Sin ellos, el motor central no puede construir los títulos para la interfaz de Nuvio.
+
+---
+
+### [2026-04-12] Selección Inteligente y Anclaje de Extensiones (v5.6.12)
+- **Problema de Selección (Avatar)**: Títulos cortos generan falsos positivos (ej: "Avatar" seleccionando "Avatar: Fuego y ceniza" de 2025).
+    - **Solución**: Priorizar coincidencia exacta (`===`) y, en su defecto, ordenar candidatos por longitud de título para elegir el más cercano al original.
+- **Detección de Video en Nuvio [CRÍTICO]**: La app ignora cualquier enlace que no termine en `.m3u8` o `.mp4`. El sistema de cabeceras (`URL|Headers`) rompía esta regla.
+    - **Solución (Anclaje)**: Se modificó `applyPiping` en `resolvers.js` para añadir un ancla técnica al final de la cadena de headers (ej: `...|Referer=...#.m3u8`). Esto engaña a la validación de la app sin afectar la carga de cabeceras.
+- **Flujo de Despliegue Obligatorio [REGLA DE ORO]**:
+    Para que un cambio sea efectivo en Nuvio, se DEBE seguir este orden:
+    1.  **Modificar**: Realizar cambios en `src/`.
+    2.  **Build**: Ejecutar `node build.js [proveedor]` para actualizar el bundle en `providers/`.
+    3.  **Versión**: Incrementar el campo `"version"` en `manifest.json`. **Sin esto, Nuvio no recargará el código nuevo.**
+    4.  **Test**: Validar con el script de prueba correspondiente (ej: `test-gnulahd.js`).
+    5.  **GitHub**: Realizar `git add .`, `git commit` y `git push`.
