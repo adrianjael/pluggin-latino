@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T03:07:58.822Z
+ * Generated: 2026-04-13T03:14:28.715Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1191,19 +1191,6 @@ var { getTmdbTitle } = require_tmdb();
 var { getCorrectImdbId } = require_id_mapper();
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
 var BASE_URL = "https://embed69.org";
-function decodeJwtPayload(token) {
-  try {
-    const parts = token.split(".");
-    if (parts.length < 2)
-      return null;
-    let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    payload += "=".repeat((4 - payload.length % 4) % 4);
-    const decoded = Buffer.from(payload, "base64").toString("utf8");
-    return JSON.parse(decoded);
-  } catch (e) {
-    return null;
-  }
-}
 function parseDataLink(html) {
   try {
     const match = html.match(/let\s+dataLink\s*=\s*((\[[\s\S]*?\])|(\{[\s\S]*?\}))\s*;/);
@@ -1242,45 +1229,82 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           "Accept": "text/html,application/xhtml+xml"
         }
       });
-      const dataLinkRaw = parseDataLink(html);
-      if (!dataLinkRaw) {
-        console.log("[Embed69] No dataLink found in HTML");
-        return [];
-      }
-      const dataLink = Array.isArray(dataLinkRaw) ? dataLinkRaw : Object.values(dataLinkRaw);
-      const allEmbeds = [];
-      for (const section of dataLink) {
-        const langCode = (section.video_language || "UNKNOWN").toUpperCase();
-        const langLabel = langCode === "LAT" ? "Latino" : langCode === "ESP" ? "Espa\xF1ol" : "Subtitulado";
-        const embeds = section.sortedEmbeds || section.embeds || [];
-        for (const embed of embeds) {
-          if (embed.servername === "download" || !embed.link)
-            continue;
-          const payload = decodeJwtPayload(embed.link);
-          if (payload && payload.link) {
-            allEmbeds.push({
-              url: payload.link,
-              langLabel,
-              serverLabel: embed.servername || "Online"
-            });
-          }
+      const dataLink = parseDataLink(html);
+      const allTokens = [];
+      const tokenMetadata = /* @__PURE__ */ new Map();
+      if (dataLink) {
+        console.log("[Embed69] Structured dataLink found.");
+        const sections = Array.isArray(dataLink) ? dataLink : Object.values(dataLink);
+        sections.forEach((section) => {
+          const langCode = (section.video_language || "LAT").toUpperCase();
+          const langLabel = langCode === "LAT" ? "Latino" : langCode === "ESP" ? "Espa\xF1ol" : "Subtitulado";
+          const embeds = section.sortedEmbeds || section.embeds || [];
+          embeds.forEach((embed) => {
+            if (embed.servername !== "download" && embed.link) {
+              allTokens.push(embed.link);
+              tokenMetadata.set(embed.link, {
+                langLabel,
+                serverLabel: embed.servername || "Online"
+              });
+            }
+          });
+        });
+      } else {
+        console.log("[Embed69] Falling back to universal JWT scan...");
+        const jwtRegex = /"([^"]*eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9[^"]*)"/g;
+        let m;
+        while ((m = jwtRegex.exec(html)) !== null) {
+          allTokens.push(m[1]);
         }
       }
-      if (allEmbeds.length === 0)
+      if (allTokens.length === 0) {
+        console.log("[Embed69] No links found for this title.");
         return [];
-      console.log(`[Embed69] Resolving ${allEmbeds.length} links...`);
+      }
+      let decryptedLinks = [];
+      try {
+        const decryptRes = yield axios2.post(
+          `${BASE_URL}/api/decrypt`,
+          { links: [...new Set(allTokens)] },
+          {
+            timeout: 8e3,
+            headers: {
+              "User-Agent": UA2,
+              "Content-Type": "application/json",
+              "Referer": embedUrl,
+              "Origin": BASE_URL
+            }
+          }
+        );
+        if (decryptRes.data && decryptRes.data.success) {
+          decryptedLinks = decryptRes.data.links;
+        }
+      } catch (e) {
+        console.log(`[Embed69] API Decrypt failed: ${e.message}`);
+      }
+      const finalStreams = decryptedLinks.map((item) => {
+        const originalToken = allTokens[item.index] || null;
+        const meta = tokenMetadata.get(originalToken) || { langLabel: "Latino", serverLabel: "Online" };
+        return {
+          url: item.link,
+          langLabel: meta.langLabel,
+          serverLabel: meta.serverLabel.charAt(0).toUpperCase() + meta.serverLabel.slice(1)
+        };
+      });
+      if (finalStreams.length === 0)
+        return [];
+      console.log(`[Embed69] Resolving ${finalStreams.length} verified links...`);
       const resolvedResults = yield Promise.allSettled(
-        allEmbeds.map(
+        finalStreams.map(
           (item) => resolveEmbed(item.url).then((res) => res ? __spreadProps(__spreadValues({}, res), { langLabel: item.langLabel, serverLabel: item.serverLabel }) : null)
         )
       );
       const rawStreams = resolvedResults.filter((r) => r.status === "fulfilled" && r.value && r.value.url).map((r) => r.value);
       return yield finalizeStreams(rawStreams, "Embed69", mediaTitle);
     } catch (error) {
-      console.log(`[Embed69] Error: ${error.message}`);
+      console.log(`[Embed69] Fatal Error: ${error.message}`);
       return [];
     }
   });
 }
-module.exports = { getStreams };
 module.exports = { getStreams };
