@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T18:17:00.567Z
+ * Generated: 2026-04-13T20:19:26.530Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -526,6 +526,8 @@ var require_engine = __commonJS({
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
         console.log(`[Engine] MODO TOTAL v5.6.95 - Sin filtros. Mostrando todo...`);
+        const sorted = sortStreamsByQuality2(streams);
+        const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);

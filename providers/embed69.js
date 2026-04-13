@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T20:12:46.626Z
+ * Generated: 2026-04-13T20:19:26.416Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -458,6 +458,8 @@ var require_engine = __commonJS({
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
         console.log(`[Engine] MODO TOTAL v5.6.95 - Sin filtros. Mostrando todo...`);
+        const sorted = sortStreamsByQuality2(streams);
+        const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
@@ -1319,12 +1321,12 @@ function resolve4(embedUrl) {
         console.log("[OkRu] No se encontraron URLs");
         return null;
       }
-      const sorted2 = videos.sort((a, b) => {
+      const sorted = videos.sort((a, b) => {
         const ai = QUALITY_ORDER.findIndex((q) => a.type.toLowerCase().includes(q));
         const bi = QUALITY_ORDER.findIndex((q) => b.type.toLowerCase().includes(q));
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       });
-      const best = sorted2[0];
+      const best = sorted[0];
       console.log(`[OkRu] URL encontrada (${best.type}): ${best.url.substring(0, 80)}...`);
       const QUALITY_MAP = { full: "1080p", hd: "720p", sd: "480p", low: "360p", lowest: "240p" };
       return {
