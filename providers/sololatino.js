@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T05:50:34.910Z
+ * Generated: 2026-04-13T05:54:26.570Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -289,6 +289,9 @@ var require_engine = __commonJS({
       if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
         return "Espa\xF1ol";
       }
+      if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
+        return "Subtitulado";
+      }
       return lang || "Latino";
     }
     function normalizeServer(server, url = "", resolvedServerName = null) {
@@ -316,7 +319,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Autenticaci\xF3n Directa v5.6.81 - Procesando ${streams.length} streams...`);
+        console.log(`[Engine] Transparencia Total v5.6.83 - Procesando ${streams.length} streams...`);
         let validated = streams;
         try {
           const results = yield Promise.allSettled(streams.map((s) => validateStream(s)));
@@ -328,13 +331,9 @@ var require_engine = __commonJS({
         const seenVideoIds = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
-          if (lang !== "Latino")
-            continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const videoId = getVideoId(s.url);
-          const isDirect = s.url.includes(".m3u8") || s.url.includes(".mp4");
-          if (seenVideoIds.has(videoId)) {
-            continue;
+          if (videoId && seenVideoIds.has(videoId)) {
           }
           seenVideoIds.add(videoId);
           let q = s.verified ? s.quality : s.siteQuality || "HD";
@@ -349,7 +348,7 @@ var require_engine = __commonJS({
             }
           });
         }
-        return processed.slice(0, 30);
+        return processed.slice(0, 40);
       });
     }
     module2.exports = { finalizeStreams: finalizeStreams2 };

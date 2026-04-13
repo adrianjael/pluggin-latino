@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-13T05:50:34.872Z
+ * Generated: 2026-04-13T05:54:26.532Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1253,9 +1253,6 @@ var require_resolvers = __commonJS({
       if (!result || !result.url)
         return result;
       let url = result.url;
-      if (!url.includes(".m3u8") && !url.includes(".mp4")) {
-        url += ".m3u8";
-      }
       if (result.headers) {
         const parts = Object.entries(result.headers).map(([k, v]) => `${k}=${v}`);
         if (parts.length > 0) {
@@ -1314,15 +1311,13 @@ var require_resolvers = __commonJS({
           return applyPiping(yield resolvePixeldrain(url));
         if (s.includes("embedseek"))
           return applyPiping(yield resolveEmbedseek(url));
-        if (s.includes(".m3u8") || s.includes(".mp4")) {
-          const directHeaders = getDirectCdnHeaders(url);
-          return applyPiping({
-            url,
-            quality: "HD",
-            headers: directHeaders
-          });
-        }
-        return null;
+        const finalHeaders = getDirectCdnHeaders(url);
+        return applyPiping({
+          url,
+          quality: "SD",
+          verified: false,
+          headers: finalHeaders
+        });
       });
     }
     module2.exports = { resolveEmbed: resolveEmbed2 };
@@ -1626,6 +1621,9 @@ var require_engine = __commonJS({
       if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
         return "Espa\xF1ol";
       }
+      if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
+        return "Subtitulado";
+      }
       return lang || "Latino";
     }
     function normalizeServer(server, url = "", resolvedServerName = null) {
@@ -1653,7 +1651,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Autenticaci\xF3n Directa v5.6.81 - Procesando ${streams.length} streams...`);
+        console.log(`[Engine] Transparencia Total v5.6.83 - Procesando ${streams.length} streams...`);
         let validated = streams;
         try {
           const results = yield Promise.allSettled(streams.map((s) => validateStream2(s)));
@@ -1665,13 +1663,9 @@ var require_engine = __commonJS({
         const seenVideoIds = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
-          if (lang !== "Latino")
-            continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const videoId = getVideoId(s.url);
-          const isDirect = s.url.includes(".m3u8") || s.url.includes(".mp4");
-          if (seenVideoIds.has(videoId)) {
-            continue;
+          if (videoId && seenVideoIds.has(videoId)) {
           }
           seenVideoIds.add(videoId);
           let q = s.verified ? s.quality : s.siteQuality || "HD";
@@ -1686,7 +1680,7 @@ var require_engine = __commonJS({
             }
           });
         }
-        return processed.slice(0, 30);
+        return processed.slice(0, 40);
       });
     }
     module2.exports = { finalizeStreams: finalizeStreams2 };
