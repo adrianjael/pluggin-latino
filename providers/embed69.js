@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T06:45:43.591Z
+ * Generated: 2026-04-13T13:56:49.542Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -499,6 +499,8 @@ var require_aes_gcm = __commonJS({
     function decryptGCM(key, iv, ciphertextWithTag) {
       try {
         const tagSize = 16;
+        if (ciphertextWithTag.length <= tagSize)
+          return null;
         const ciphertext = ciphertextWithTag.slice(0, -tagSize);
         const keyWA = _CryptoJS.lib.WordArray.create(key);
         const ivCounter = new Uint8Array(16);
@@ -561,6 +563,7 @@ var require_filemoon = __commonJS({
     };
     function resolve9(url) {
       return __async(this, null, function* () {
+        var _a, _b, _c, _d;
         try {
           console.log(`[Filemoon] Resolving Shield: ${url}`);
           const urlObj = new URL(url);
@@ -572,7 +575,8 @@ var require_filemoon = __commonJS({
             const response = yield fetch(playbackUrl, {
               headers: __spreadProps(__spreadValues({}, chromeHeaders), {
                 "Referer": url,
-                "Origin": `https://${hostname}`
+                "Origin": `https://${hostname}`,
+                "X-Embed-Parent": url
               })
             });
             if (response.ok) {
@@ -581,9 +585,25 @@ var require_filemoon = __commonJS({
                 console.log("[Filemoon] Payload Byse Shield detectado. Descifrando...");
                 const decrypted = decryptByse(playbackData.playback);
                 if (decrypted) {
+                  const data = decrypted.includes("{") ? JSON.parse(decrypted) : null;
+                  const directUrl = ((_b = (_a = data == null ? void 0 : data.sources) == null ? void 0 : _a[0]) == null ? void 0 : _b.url) || (data == null ? void 0 : data.url);
+                  if (directUrl) {
+                    console.log("[Filemoon] \u2713 Stream descifrado con \xE9xito (Shield).");
+                    return {
+                      url: directUrl,
+                      quality: ((_d = (_c = data == null ? void 0 : data.sources) == null ? void 0 : _c[0]) == null ? void 0 : _d.label) || "1080p",
+                      verified: true,
+                      serverName: "Filemoon",
+                      headers: {
+                        "User-Agent": UA_CHROME,
+                        "Referer": `https://${hostname}/`,
+                        "Origin": `https://${hostname}`,
+                        "x-embed-origin": "ww3.gnulahd.nu"
+                      }
+                    };
+                  }
                   const m3u8Match = decrypted.match(/["']?file["']?\s*:\s*["']([^"']+\.m3u8[^"']*)["']/i);
                   if (m3u8Match) {
-                    console.log("[Filemoon] \u2713 Stream descifrado con \xE9xito (Shield).");
                     return {
                       url: m3u8Match[1],
                       quality: "1080p",
@@ -592,7 +612,8 @@ var require_filemoon = __commonJS({
                       headers: {
                         "User-Agent": UA_CHROME,
                         "Referer": `https://${hostname}/`,
-                        "Origin": `https://${hostname}`
+                        "Origin": `https://${hostname}`,
+                        "x-embed-origin": "ww3.gnulahd.nu"
                       }
                     };
                   }
@@ -600,7 +621,7 @@ var require_filemoon = __commonJS({
               }
             }
           } catch (e) {
-            console.log(`[Filemoon] Byse Shield fall\xF3 o no disponible: ${e.message}`);
+            console.log(`[Filemoon] Byse Shield fall\xF3: ${e.message}`);
           }
           const { data: html1 } = yield axios7.get(url, {
             headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": urlObj.origin, "Origin": urlObj.origin }),
@@ -1465,7 +1486,7 @@ var require_resolvers = __commonJS({
           return applyPiping(yield resolveTurbovid(url));
         if (s.includes("pixeldrain"))
           return applyPiping(yield resolvePixeldrain(url));
-        if (s.includes("embedseek"))
+        if (s.includes("embedseek") || s.includes("398fitus.com") || s.includes("r66nv9ed.com"))
           return applyPiping(yield resolveEmbedseek(url));
         const finalHeaders = getDirectCdnHeaders(url);
         return applyPiping({
@@ -1645,11 +1666,15 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               resolveEmbed(url).then((res) => {
                 if (res)
                   return __spreadProps(__spreadValues({}, res), { langLabel, serverLabel: sLabel });
-                return { url, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
+                return resolveEmbed(url).then((fallbackRes) => {
+                  return __spreadProps(__spreadValues({}, fallbackRes || {}), { url: (fallbackRes == null ? void 0 : fallbackRes.url) || url, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true });
+                });
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
             ]).catch(() => {
-              return { url, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
+              const finalHeaders = { "User-Agent": UA4, "Referer": url };
+              const pipedUrl = `${url}|User-Agent=${UA4}|Referer=${url}#.m3u8`;
+              return { url: pipedUrl, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
             });
             batch.push(promise);
           }
