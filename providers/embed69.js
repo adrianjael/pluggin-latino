@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T13:56:49.542Z
+ * Generated: 2026-04-13T14:05:32.007Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -477,48 +477,40 @@ var require_hlswish = __commonJS({
 var require_aes_gcm = __commonJS({
   "src/utils/aes_gcm.js"(exports2, module2) {
     var _CryptoJS = typeof CryptoJS !== "undefined" ? CryptoJS : require("crypto-js");
-    function base64ToUint8Array(base64) {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-      const str = base64.replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "");
-      const len = str.length;
-      const bytes = new Uint8Array(Math.floor(len * 0.75));
-      let i, j = 0, enc1, enc2, enc3, enc4;
-      for (i = 0; i < len; i += 4) {
-        enc1 = chars.indexOf(str[i]);
-        enc2 = chars.indexOf(str[i + 1]);
-        enc3 = chars.indexOf(str[i + 2] || "A");
-        enc4 = chars.indexOf(str[i + 3] || "A");
-        bytes[j++] = enc1 << 2 | enc2 >> 4;
-        if (enc3 !== -1 && j < bytes.length)
-          bytes[j++] = (enc2 & 15) << 4 | enc3 >> 2;
-        if (enc4 !== -1 && j < bytes.length)
-          bytes[j++] = (enc3 & 3) << 6 | enc4;
-      }
-      return bytes;
-    }
-    function decryptGCM(key, iv, ciphertextWithTag) {
+    function parseB64(b64) {
+      if (!b64)
+        return null;
       try {
-        const tagSize = 16;
-        if (ciphertextWithTag.length <= tagSize)
+        const normalized = b64.replace(/-/g, "+").replace(/_/g, "/");
+        return _CryptoJS.enc.Base64.parse(normalized);
+      } catch (e) {
+        return null;
+      }
+    }
+    function decryptGCM(keyWA, ivWA, ciphertextWithTagWA) {
+      try {
+        if (!keyWA || !ivWA || !ciphertextWithTagWA)
           return null;
-        const ciphertext = ciphertextWithTag.slice(0, -tagSize);
-        const keyWA = _CryptoJS.lib.WordArray.create(key);
-        const ivCounter = new Uint8Array(16);
-        ivCounter.set(iv, 0);
-        ivCounter[15] = 2;
-        const ivWA = _CryptoJS.lib.WordArray.create(ivCounter);
+        const tagSizeWords = 4;
+        const ciphertextWords = ciphertextWithTagWA.words.slice(0, ciphertextWithTagWA.words.length - tagSizeWords);
+        const ciphertextWA = _CryptoJS.lib.WordArray.create(
+          ciphertextWords,
+          ciphertextWithTagWA.sigBytes - 16
+        );
+        let counterWA = ivWA.clone();
+        counterWA.concat(_CryptoJS.lib.WordArray.create([2], 4));
         const decrypted = _CryptoJS.AES.decrypt(
-          { ciphertext: _CryptoJS.lib.WordArray.create(ciphertext) },
+          { ciphertext: ciphertextWA },
           keyWA,
           {
-            iv: ivWA,
+            iv: counterWA,
             mode: _CryptoJS.mode.CTR,
             padding: _CryptoJS.pad.NoPadding
           }
         );
         return decrypted.toString(_CryptoJS.enc.Utf8);
       } catch (e) {
-        console.error("[AES-GCM-Hermes] Error:", e.message);
+        console.error("[AES-GCM-Hermes] Error Cr\xEDtico:", e.message);
         return null;
       }
     }
@@ -526,13 +518,15 @@ var require_aes_gcm = __commonJS({
       try {
         if (!playback || !playback.key_parts || !playback.payload || !playback.iv)
           return null;
-        const keyArr = [];
-        for (const p of playback.key_parts) {
-          base64ToUint8Array(p).forEach((b) => keyArr.push(b));
+        let keyWA = parseB64(playback.key_parts[0]);
+        for (let i = 1; i < playback.key_parts.length; i++) {
+          const part = parseB64(playback.key_parts[i]);
+          if (part)
+            keyWA.concat(part);
         }
-        const iv = base64ToUint8Array(playback.iv);
-        const payload = base64ToUint8Array(playback.payload);
-        return decryptGCM(new Uint8Array(keyArr), iv, payload);
+        const ivWA = parseB64(playback.iv);
+        const ciphertextWithTagWA = parseB64(playback.payload);
+        return decryptGCM(keyWA, ivWA, ciphertextWithTagWA);
       } catch (e) {
         console.error("[Byse-Hermes] Decrypt Failed:", e.message);
         return null;
@@ -1446,39 +1440,48 @@ var require_resolvers = __commonJS({
         const s = url.toLowerCase();
         if (s.includes("voe") || s.includes("voe.sx") || s.includes("voe-sx") || s.includes("voex.sx")) {
           const res = yield resolveVoe(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
         if (s.includes("hlswish") || s.includes("streamwish") || s.includes("hglink") || s.includes("hglamioz") || s.includes("hglink.to") || s.includes("audinifer") || s.includes("embedwish") || s.includes("awish") || s.includes("dwish") || s.includes("strwish") || s.includes("filelions") || s.includes("wishembed")) {
           const res = yield resolveHlswish(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
-        if (s.includes("filemoon") || s.includes("moonalu") || s.includes("moonembed") || s.includes("bysedikamoum") || s.includes("r66nv9ed")) {
+        if (s.includes("filemoon") || s.includes("moonalu") || s.includes("moonembed") || s.includes("bysedikamoum") || s.includes("r66nv9ed") || s.includes("398fitus")) {
           const res = yield resolveFilemoon(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
         if (s.includes("vidhide") || s.includes("minochinos") || s.includes("vadisov") || s.includes("vaiditv") || s.includes("amusemre") || s.includes("callistanise") || s.includes("vhaudm") || s.includes("embedseek") || s.includes("mdfury") || s.includes("dintezuvio") || s.includes("acek-cdn") || s.includes("vedonm")) {
           const res = yield resolveVidhide(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
         if (s.includes("fastream") || s.includes("fastplay")) {
           const res = yield resolveFastream(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
         if (s.includes("vimeos") || s.includes("vms.sh")) {
           const res = yield resolveVimeos(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
         if (s.includes("ok.ru") || s.includes("okru")) {
           const res = yield resolveOkru(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
         if (s.includes("buzzheavier")) {
           const res = yield resolveBuzzheavier(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
         if (s.includes("goodstream") || s.includes("gs.one")) {
           const res = yield resolveGoodstream(url);
-          return res ? applyPiping(res) : null;
+          if (res)
+            return applyPiping(res);
         }
         if (s.includes("playmogo"))
           return applyPiping(yield resolvePlaymogo(url));
@@ -1612,7 +1615,7 @@ function parseDataLink(html) {
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     const mediaTitle = title || "Contenido";
-    console.log(`[Embed69] RESTORATION v5.6.72 - Iniciando b\xFAsqueda para: ${mediaTitle}`);
+    console.log(`[Embed69] RESTORATION v5.6.97 - Iniciando b\xFAsqueda para: ${mediaTitle}`);
     try {
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = mapper ? mapper.imdbId : null;
@@ -1664,15 +1667,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             const sLabel = embed.servername || "Servidor";
             const promise = Promise.race([
               resolveEmbed(url).then((res) => {
-                if (res)
-                  return __spreadProps(__spreadValues({}, res), { langLabel, serverLabel: sLabel });
-                return resolveEmbed(url).then((fallbackRes) => {
-                  return __spreadProps(__spreadValues({}, fallbackRes || {}), { url: (fallbackRes == null ? void 0 : fallbackRes.url) || url, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true });
-                });
+                return __spreadProps(__spreadValues({}, res || {}), { langLabel, serverLabel: sLabel });
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
             ]).catch(() => {
-              const finalHeaders = { "User-Agent": UA4, "Referer": url };
               const pipedUrl = `${url}|User-Agent=${UA4}|Referer=${url}#.m3u8`;
               return { url: pipedUrl, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
             });
