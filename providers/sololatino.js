@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T04:17:25.772Z
+ * Generated: 2026-04-13T04:21:53.063Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -309,10 +309,14 @@ var require_engine = __commonJS({
         return "StreamWish";
       if (s.includes("vidhide") || s.includes("dintezuvio") || s.includes("movhide") || u.includes("acek-cdn") || u.includes("premilkyway") || u.includes("hf-ovh") || u.includes("mx9skjnui4es"))
         return "VidHide";
-      if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || u.includes("waaw") || u.includes("vms.sh"))
+      if (s.includes("waaw") || s.includes("netu") || s.includes("vimeos") || s.includes("vms.sh") || u.includes("waaw") || u.includes("vms.sh"))
         return "Netu";
       if (s.includes("fastream") || s.includes("fastplay"))
         return "Fastream";
+      if (s.includes("buzzheavier"))
+        return "Buzzheavier";
+      if (s.includes("ok.ru") || s.includes("okru"))
+        return "Okru";
       if (/^[a-zA-Z0-9-]{15,}$/.test(server) || server.includes("cdn-caching")) {
         return "Servidor Privado";
       }
