@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T14:05:32.007Z
+ * Generated: 2026-04-13T14:11:16.465Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -259,10 +259,10 @@ var require_engine = __commonJS({
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const q = s.quality || "HD";
-          const check = " \u2705";
+          const checkMark = s.verified ? "[OK]" : "[MD]";
           processed.push({
             name: providerName || "Plugin Latino",
-            title: `[${q}${check}] \xB7 ${lang} \xB7 ${server}`,
+            title: `${checkMark} ${q} - ${lang} - ${server}`,
             url: s.url,
             quality: q,
             serverName: server,
@@ -559,11 +559,15 @@ var require_filemoon = __commonJS({
       return __async(this, null, function* () {
         var _a, _b, _c, _d;
         try {
-          console.log(`[Filemoon] Resolving Shield: ${url}`);
           const urlObj = new URL(url);
           const hostname = urlObj.hostname;
-          const pathParts = urlObj.pathname.split("/");
+          const pathParts = urlObj.pathname.split("/").filter((p) => !!p);
           const videoId = pathParts[pathParts.length - 1];
+          if (!videoId) {
+            console.log(`[Filemoon] ERROR: No se pudo extraer videoId de ${url}`);
+            return null;
+          }
+          console.log(`[Filemoon] Resolving Shield: ${url} (ID: ${videoId})`);
           try {
             const playbackUrl = `https://${hostname}/api/videos/${videoId}/embed/playback`;
             const response = yield fetch(playbackUrl, {
@@ -1665,7 +1669,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               continue;
             seenUrls.add(url);
             const sLabel = embed.servername || "Servidor";
-            const promise = Promise.race([
+            const isFilemoon = sName.includes("filemoon") || sName.includes("byse") || url.includes("filemoon") || url.includes("398fitus") || url.includes("r66nv9ed");
+            const resolutionPromise = Promise.race([
               resolveEmbed(url).then((res) => {
                 return __spreadProps(__spreadValues({}, res || {}), { langLabel, serverLabel: sLabel });
               }),
@@ -1674,7 +1679,18 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               const pipedUrl = `${url}|User-Agent=${UA4}|Referer=${url}#.m3u8`;
               return { url: pipedUrl, quality: "HD", langLabel, serverLabel: sLabel, isFallback: true };
             });
-            batch.push(promise);
+            batch.push(resolutionPromise);
+            if (isFilemoon) {
+              const directPromise = Promise.resolve({
+                url: `${url}|User-Agent=${UA4}|Referer=${url}#.m3u8`,
+                quality: "HD",
+                langLabel,
+                serverLabel: `${sLabel} (Mirror)`,
+                isFallback: true,
+                verified: false
+              });
+              batch.push(directPromise);
+            }
           }
         }
         const results = yield Promise.allSettled(batch);
