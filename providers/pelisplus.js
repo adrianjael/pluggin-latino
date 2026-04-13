@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-13T03:36:38.791Z
+ * Generated: 2026-04-13T03:38:49.224Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1025,7 +1025,7 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
-        if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || s.includes("voe-sx")) {
+        if (s.includes("voe") || s.includes("jessicaclearout") || s.includes("shonydar") || s.includes("ugc-cdn") || s.includes("cloudwindow") || s.includes("voe-sx")) {
           const res = yield resolveVoe(url);
           return res ? applyPiping(res) : null;
         }
@@ -1033,7 +1033,7 @@ var require_resolvers = __commonJS({
           const res = yield resolveHlswish(url);
           return res ? applyPiping(res) : null;
         }
-        if (s.includes("filemoon") || s.includes("398fitus") || s.includes("r66nv9ed") || s.includes("byse")) {
+        if (s.includes("filemoon") || s.includes("398fitus") || s.includes("r66nv9ed") || s.includes("byse") || s.includes("bysevepoin") || s.includes("bysezejataos")) {
           const res = yield resolveFilemoon(url);
           return res ? applyPiping(res) : null;
         }
