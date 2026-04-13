@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T17:37:22.342Z
+ * Generated: 2026-04-13T18:17:00.567Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -570,6 +570,7 @@ var { getRandomUA } = require_ua();
 var { isMirror } = require_mirrors();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 var RESULT_CACHE = /* @__PURE__ */ new Map();
 var CACHE_TTL = 5 * 60 * 1e3;
 function getImdbIdInternal(idOrQuery, mediaType) {
@@ -621,7 +622,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     if (RESULT_CACHE.has(cacheKey)) {
       const cached = RESULT_CACHE.get(cacheKey);
       if (now - cached.time < CACHE_TTL) {
-        console.log(`[SoloLatino] Servido desde cach\xE9 inteligente: ${cacheKey}`);
+        console.log(`[SoloLatino] STEALTH: Servido desde cach\xE9 inteligente: ${cacheKey}`);
         return cached.data;
       }
     }
@@ -645,8 +646,9 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      console.log(`[SoloLatino] ULTRA v6.7.0 - Iniciando Sesi\xF3n Blindada: ${slug}`);
+      console.log(`[SoloLatino] STEALTH v6.8.0 - Navegaci\xF3n de Sigilo Iniciada: ${slug}`);
       const { data: html, headers: respHeaders } = yield axios.get(playerUrl, { headers: SESSION_HEADERS, timeout: 6e3 });
+      yield sleep(1e3);
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
       const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
       if (tokenMatch && tokenMatch[1]) {
@@ -658,6 +660,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         if (cookie)
           postH["cookie"] = cookie;
         yield axios.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
+        yield sleep(1500);
         const { data: scanData } = yield axios.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
         const uniqueServers = /* @__PURE__ */ new Map();
         (scanData && scanData.s || []).forEach((ser) => {
@@ -672,12 +675,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             });
           });
         }
-        const serverList = Array.from(uniqueServers.values()).slice(0, 8);
+        const serverList = Array.from(uniqueServers.values()).slice(0, 6);
         const resolved = [];
-        for (let i = 0; i < serverList.length; i += 4) {
-          const chunk = serverList.slice(i, i + 4);
-          const chunkResults = yield Promise.all(chunk.map((ser) => __async(this, null, function* () {
-            const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
+        for (const ser of serverList) {
+          const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
+          try {
+            console.log(`[SoloLatino] Resolviendo servidor: ${name}...`);
             const direct = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
             if (direct && direct.url) {
               let finalUrl = direct.url;
@@ -693,17 +696,19 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               else if (isMirror(direct.url, "VOE"))
                 techName = "VOE";
               const fullName = techName ? `${name} - ${techName}` : name;
-              return {
+              resolved.push({
                 langLabel: "Latino",
                 serverName: fullName,
                 url: finalUrl,
                 quality: "1080p",
                 headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
-              };
+              });
+              console.log(`[SoloLatino] Esperando 3.5s antes del siguiente servidor...`);
+              yield sleep(3500);
             }
-            return null;
-          })));
-          resolved.push(...chunkResults.filter((r) => r !== null));
+          } catch (e2) {
+            console.log(`[SoloLatino] Error resolviendo servidor, saltando...`);
+          }
         }
         const final = yield finalizeStreams(resolved, "SoloLatino", mediaTitle);
         if (final.length > 0) {
@@ -712,7 +717,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         return final;
       }
     } catch (e2) {
-      console.log(`[SoloLatino] Error: ${e2.message}`);
+      console.log(`[SoloLatino] Error en Stealth: ${e2.message}`);
     }
     return [];
   });
