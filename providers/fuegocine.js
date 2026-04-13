@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-13T21:00:14.909Z
+ * Generated: 2026-04-13T21:08:19.025Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -105,9 +105,16 @@ var require_http = __commonJS({
     function getStealthHeaders() {
       return {
         "User-Agent": getSessionUA(),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "es-US,es;q=0.9,en-US;q=0.8,en;q=0.7,es-419;q=0.6",
         "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
         "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"'
+        "sec-ch-ua-platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1"
       };
     }
     var DEFAULT_UA3 = getSessionUA();
@@ -923,10 +930,18 @@ var require_vidhide = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log(`[VidHide] Resolviendo: ${url}`);
-          const { data: html } = yield axios6.get(url, {
+          const response = yield axios6.get(url, {
             timeout: 1e4,
             headers: { "User-Agent": UA5, "Referer": "https://embed69.org/" }
           });
+          const html = response.data;
+          let cookies = [];
+          const setCookie = response.headers["set-cookie"] || [];
+          if (Array.isArray(setCookie)) {
+            cookies = setCookie.map((c) => c.split(";")[0]);
+          } else if (typeof setCookie === "string") {
+            cookies = [setCookie.split(";")[0]];
+          }
           let finalUrl = null;
           let quality = "1080p";
           const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
@@ -951,15 +966,22 @@ var require_vidhide = __commonJS({
           if (!finalUrl.startsWith("http")) {
             finalUrl = new URL(url).origin + finalUrl;
           }
+          if (!finalUrl.includes("referer=")) {
+            finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
+          }
+          const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+            "Referer": url.split("?")[0],
+            "Origin": new URL(url).origin,
+            "X-Requested-With": "XMLHttpRequest"
+          });
+          if (cookies.length > 0) {
+            headers["Cookie"] = cookies.join("; ");
+          }
           const stream = {
             url: finalUrl,
             quality,
             serverName: "VidHide",
-            headers: __spreadProps(__spreadValues({}, getStealthHeaders()), {
-              "Referer": url.split("?")[0],
-              "Origin": new URL(url).origin,
-              "X-Requested-With": "XMLHttpRequest"
-            })
+            headers
           };
           return yield validateStream(stream);
         } catch (e) {
