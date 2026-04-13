@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-13T02:43:44.996Z
+ * Generated: 2026-04-13T02:50:56.253Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1010,10 +1010,11 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
       if (!movieMatch) {
         movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId);
       }
-      if (!movieMatch) {
-        movieMatch = searchData.results[0];
+      if (!movieMatch || !movieMatch.slug) {
+        console.log("[PelisPanda] No se encontr\xF3 ninguna coincidencia v\xE1lida en los resultados.");
+        return [];
       }
-      console.log(`[PelisPanda] Selecci\xF3n final: ${movieMatch.title} (Slug: ${movieMatch.slug})`);
+      console.log(`[PelisPanda] Selecci\xF3n final: ${movieMatch.title || "Desconocido"} (Slug: ${movieMatch.slug})`);
       const endpointType = mediaType === "movie" ? "movie" : "serie";
       const playersUrl = `https://pelispanda.org/wp-json/wpreact/v1/${endpointType}/${movieMatch.slug}/related`;
       const playersRes = yield fetch(playersUrl);
@@ -1201,8 +1202,9 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          const allowed = ["Latino", "Espa\xF1ol", "Subtitulado"];
-          if (!allowed.includes(lang)) {
+          const allowed = ["latino", "espa\xF1ol", "subtitulado"];
+          const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
+          if (!isAllowed) {
             console.log(`[Engine] Rechazado por idioma (${lang}): ${s.url.substring(0, 40)}...`);
             return null;
           }

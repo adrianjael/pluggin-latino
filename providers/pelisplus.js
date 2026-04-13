@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-13T02:43:45.005Z
+ * Generated: 2026-04-13T02:50:56.263Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1336,8 +1336,9 @@ var require_engine = __commonJS({
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
           const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          const allowed = ["Latino", "Espa\xF1ol", "Subtitulado"];
-          if (!allowed.includes(lang)) {
+          const allowed = ["latino", "espa\xF1ol", "subtitulado"];
+          const isAllowed = allowed.some((a) => lang.toLowerCase().includes(a));
+          if (!isAllowed) {
             console.log(`[Engine] Rechazado por idioma (${lang}): ${s.url.substring(0, 40)}...`);
             return null;
           }
