@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T02:51:30.879Z
+ * Generated: 2026-04-13T02:55:50.204Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1271,8 +1271,8 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
             rawResults.push({
               url: resolved.url,
               quality: resolved.quality,
-              serverLabel: stream.label,
-              langLabel: stream.lang,
+              serverLabel: stream.serverLabel,
+              langLabel: stream.langLabel,
               headers: resolved.headers || {}
             });
           }
