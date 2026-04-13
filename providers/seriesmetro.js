@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-13T05:40:04.622Z
+ * Generated: 2026-04-13T05:43:45.303Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -227,36 +227,25 @@ var require_engine = __commonJS({
       return lang || "Latino";
     }
     function normalizeServer(server, url = "") {
-      if (!server || server === "Servidor" || server === "Server") {
-        if (url && url.startsWith("http")) {
-          try {
-            const domain = new URL(url).hostname.replace("www.", "").split(".")[0];
-            return domain.charAt(0).toUpperCase() + domain.slice(1);
-          } catch (e) {
-            return "Servidor";
-          }
-        }
-        return "Servidor";
-      }
-      const s = server.toLowerCase();
-      const u = url.toLowerCase();
-      if (s.includes("voe") || u.includes("voe.sx") || u.includes("voe-sx"))
-        return "VOE";
-      if (s.includes("filemoon") || u.includes("filemoon") || u.includes("fmoon"))
-        return "Filemoon";
-      if (s.includes("streamwish") || u.includes("streamwish") || u.includes("strcloud") || u.includes("awish"))
-        return "StreamWish";
-      if (s.includes("vidhide") || u.includes("vidhide") || u.includes("dintezuvio"))
+      const u = (url || "").toLowerCase();
+      const s = (server || "").toLowerCase();
+      if (u.includes("acek-cdn.com") || u.includes("minochinos.com") || s.includes("vidhide"))
         return "VidHide";
-      if (s.includes("waaw") || s.includes("netu") || u.includes("waaw") || u.includes("vms.sh"))
+      if (u.includes("embedwish.com") || u.includes("streamwish") || s.includes("streamwish"))
+        return "StreamWish";
+      if (u.includes("cloudwindow-route.com") || u.includes("marissashare") || u.includes("voe.sx") || s.includes("voe"))
+        return "VOE";
+      if (u.includes("filemoon.sx") || u.includes("fmoon") || s.includes("filemoon"))
+        return "Filemoon";
+      if (u.includes("vms.sh") || u.includes("waaw") || s.includes("netu"))
         return "Netu";
-      return server;
+      return server || "Servidor";
     }
     function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] Restaurando L\xF3gica 71269c - Procesando ${streams.length} streams...`);
+        console.log(`[Engine] Nombres Quir\xFArgicos v5.6.80 - Procesando ${streams.length} streams...`);
         let validated = streams;
         try {
           const results = yield Promise.allSettled(streams.map((s) => validateStream(s)));
@@ -265,10 +254,9 @@ var require_engine = __commonJS({
         }
         const sorted = sortStreamsByQuality2(validated);
         const processed = sorted.map((s) => {
-          const lang = normalizeLanguage(s.langLabel || s.language || s.lang || s.audio);
-          if (lang !== "Latino") {
+          const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
+          if (lang !== "Latino")
             return null;
-          }
           let q = s.verified ? s.quality : s.siteQuality || "HD";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
           const check = s.verified ? " \u2705" : "";
@@ -276,7 +264,7 @@ var require_engine = __commonJS({
             name: providerName || "Plugin Latino",
             title: `[${q}${check}] \xB7 ${lang} \xB7 ${server}`,
             url: s.url,
-            quality: q || "",
+            quality: q || "HD",
             headers: s.headers || {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
@@ -290,8 +278,7 @@ var require_engine = __commonJS({
             return false;
           uniqueUrls.add(s.url);
           return true;
-        }).slice(0, 35);
-        console.log(`[Engine] FIN: ${finalized.length} resultados enviados.`);
+        }).slice(0, 30);
         return finalized;
       });
     }
