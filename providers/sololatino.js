@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T03:51:16.372Z
+ * Generated: 2026-04-13T04:06:30.697Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -142,96 +142,80 @@ var require_tmdb = __commonJS({
 });
 
 // src/utils/m3u8.js
-var m3u8_exports = {};
-__export(m3u8_exports, {
-  getQualityFromHeight: () => getQualityFromHeight,
-  validateStream: () => validateStream
-});
-function getQualityFromHeight(height) {
-  if (!height)
-    return "Auto";
-  const h = parseInt(height);
-  if (h >= 2160)
-    return "4K";
-  if (h >= 1440)
-    return "1440p";
-  if (h >= 1080)
-    return "1080p";
-  if (h >= 720)
-    return "720p";
-  if (h >= 480)
-    return "480p";
-  if (h >= 360)
-    return "360p";
-  return "240p";
-}
-function parseBestQuality(content, url = "") {
-  const lines = content.split("\n");
-  let bestHeight = 0;
-  for (const line of lines) {
-    if (line.includes("RESOLUTION=")) {
-      const match = line.match(/RESOLUTION=\d+x(\d+)/i);
-      if (match) {
-        const height = parseInt(match[1]);
-        if (height > bestHeight)
-          bestHeight = height;
-      }
+var require_m3u8 = __commonJS({
+  "src/utils/m3u8.js"(exports2, module2) {
+    var axios2 = require("axios");
+    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    function getQualityFromHeight(height) {
+      if (!height)
+        return "1080p";
+      const h = parseInt(height);
+      if (h >= 2160)
+        return "4K";
+      if (h >= 1440)
+        return "1440p";
+      if (h >= 1080)
+        return "1080p";
+      if (h >= 720)
+        return "720p";
+      if (h >= 480)
+        return "480p";
+      if (h >= 360)
+        return "360p";
+      return "1080p";
     }
-  }
-  if (bestHeight > 0)
-    return getQualityFromHeight(bestHeight);
-  const urlPattern = url.match(/[_-](\d{3,4})[pP]?/);
-  if (urlPattern) {
-    const h = parseInt(urlPattern[1]);
-    if (h >= 360 && h <= 4320)
-      return getQualityFromHeight(h);
-  }
-  return "720p";
-}
-function validateStream(stream) {
-  return __async(this, null, function* () {
-    if (!stream || !stream.url)
-      return stream;
-    const { url, headers } = stream;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12e3);
-    try {
-      const response = yield fetch(url, {
-        signal: controller.signal,
-        headers: __spreadValues({
-          "Accept": "*/*",
-          "Range": "bytes=0-8192",
-          "User-Agent": UA
-        }, headers || {})
-      });
-      clearTimeout(timeout);
-      if (!response.ok && response.status !== 206 && response.status !== 403) {
-        throw new Error(`HTTP ${response.status}`);
+    function parseBestQuality(content, url = "") {
+      if (content) {
+        const lines = content.split("\n");
+        let bestHeight = 0;
+        for (const line of lines) {
+          if (line.includes("RESOLUTION=")) {
+            const match = line.match(/RESOLUTION=\d+x(\d+)/i);
+            if (match) {
+              const height = parseInt(match[1]);
+              if (height > bestHeight)
+                bestHeight = height;
+            }
+          }
+        }
+        if (bestHeight > 0)
+          return getQualityFromHeight(bestHeight);
       }
-      const text = yield response.text();
-      if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
-        const realQuality = parseBestQuality(text, url);
-        return __spreadProps(__spreadValues({}, stream), {
-          quality: realQuality,
-          verified: true
-        });
+      const qMatch = url.match(/[_-](\d{3,4})[pP]?/);
+      if (qMatch) {
+        const h = parseInt(qMatch[1]);
+        if (h >= 360 && h <= 4320)
+          return getQualityFromHeight(h);
       }
-      return __spreadProps(__spreadValues({}, stream), { verified: true });
-    } catch (error) {
-      clearTimeout(timeout);
-      const fallbackQuality = parseBestQuality("", url) || "HD";
-      const isKnown = url.includes("awish") || url.includes("vimeos") || url.includes("voe") || url.includes("filemoon") || url.includes("vidhide") || url.includes("cloudwindow");
-      return __spreadProps(__spreadValues({}, stream), {
-        quality: fallbackQuality,
-        verified: isKnown
+      return "1080p";
+    }
+    function validateStream(stream) {
+      return __async(this, null, function* () {
+        if (!stream || !stream.url)
+          return stream;
+        const { url, headers } = stream;
+        try {
+          const response = yield axios2.get(url, {
+            timeout: 8e3,
+            headers: __spreadValues({
+              "User-Agent": UA2,
+              "Range": "bytes=0-4096"
+            }, headers || {}),
+            responseType: "text"
+          });
+          const text = response.data;
+          if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
+            const realQuality = parseBestQuality(text, url);
+            return __spreadProps(__spreadValues({}, stream), { quality: realQuality, verified: true });
+          }
+          return __spreadProps(__spreadValues({}, stream), { verified: true });
+        } catch (error) {
+          const fallbackQuality = parseBestQuality("", url);
+          return __spreadProps(__spreadValues({}, stream), { quality: fallbackQuality, verified: true });
+        }
       });
     }
-  });
-}
-var UA;
-var init_m3u8 = __esm({
-  "src/utils/m3u8.js"() {
-    UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    module2.exports = { validateStream, getQualityFromHeight };
   }
 });
 
@@ -293,7 +277,7 @@ var init_sorting = __esm({
 // src/utils/engine.js
 var require_engine = __commonJS({
   "src/utils/engine.js"(exports2, module2) {
-    var { validateStream: validateStream2 } = (init_m3u8(), __toCommonJS(m3u8_exports));
+    var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
@@ -342,7 +326,7 @@ var require_engine = __commonJS({
         let validated = streams;
         try {
           const results = yield Promise.allSettled(
-            streams.map((s) => validateStream2(s))
+            streams.map((s) => validateStream(s))
           );
           validated = results.map(
             (r, i) => r.status === "fulfilled" ? r.value : streams[i]
@@ -397,9 +381,9 @@ var { getTmdbTitle } = require_tmdb();
 var { finalizeStreams } = require_engine();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
 var HEADERS = {
-  "User-Agent": UA2,
+  "User-Agent": UA,
   "Accept": "*/*",
   "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
   "X-Requested-With": "XMLHttpRequest",
@@ -503,7 +487,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
               serverLabel: name,
               url: finalUrl,
               quality: "HD",
-              headers: { "User-Agent": UA2, "Referer": playerUrl, "Origin": BASE_URL }
+              headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
             });
           }
         }
