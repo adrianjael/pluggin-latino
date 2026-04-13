@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T03:41:26.636Z
+ * Generated: 2026-04-13T03:47:48.959Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -360,18 +360,11 @@ var require_engine = __commonJS({
           }
           let q = s.verified ? s.quality : s.siteQuality || "HD";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
-          const check = s.verified ? " \u2713" : "";
-          const prefix = mediaTitle ? `${mediaTitle} | ` : "";
-          const qualityPart = q ? `[${q}${check}] | ` : "";
-          let finalUrl = s.url;
-          if (!finalUrl.includes("#") && !finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
-            finalUrl += "#.m3u8";
-          }
           return {
             name: providerName || "Plugin Latino",
-            title: `${prefix}${qualityPart}${lang} | ${server}`,
-            url: finalUrl,
-            quality: q || "HD",
+            title: `${q} \xB7 ${lang} \xB7 ${server}`,
+            url: s.url,
+            quality: q,
             serverName: server,
             headers: __spreadProps(__spreadValues({}, s.headers || {}), {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"

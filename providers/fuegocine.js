@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-13T03:41:26.574Z
+ * Generated: 2026-04-13T03:47:48.829Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -292,18 +292,11 @@ var require_engine = __commonJS({
           }
           let q = s.verified ? s.quality : s.siteQuality || "HD";
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url);
-          const check = s.verified ? " \u2713" : "";
-          const prefix = mediaTitle ? `${mediaTitle} | ` : "";
-          const qualityPart = q ? `[${q}${check}] | ` : "";
-          let finalUrl = s.url;
-          if (!finalUrl.includes("#") && !finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
-            finalUrl += "#.m3u8";
-          }
           return {
             name: providerName || "Plugin Latino",
-            title: `${prefix}${qualityPart}${lang} | ${server}`,
-            url: finalUrl,
-            quality: q || "HD",
+            title: `${q} \xB7 ${lang} \xB7 ${server}`,
+            url: s.url,
+            quality: q,
             serverName: server,
             headers: __spreadProps(__spreadValues({}, s.headers || {}), {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -1143,65 +1136,32 @@ var require_resolvers = __commonJS({
       if (!url)
         return null;
       const s = url.toLowerCase();
-      if (s.includes("vidhide") || s.includes("vhaudm") || s.includes("embedseek") || s.includes("mdfury") || s.includes("minochinos") || s.includes("vadisov") || s.includes("vaiditv") || s.includes("amusemre") || s.includes("callistanise") || s.includes("acek-cdn") || s.includes("premilkyway") || s.includes("hf-ovh") || s.includes("mx9skjnui4es")) {
-        try {
-          const domain = new URL(url).hostname;
-          return {
-            "User-Agent": UA6,
-            "Referer": `https://${domain}/`,
-            "Origin": `https://${domain}`
-          };
-        } catch (e) {
-          return { "User-Agent": UA6, "Referer": "https://vidhide.com/", "Origin": "https://vidhide.com" };
+      try {
+        const domain = new URL(url).hostname;
+        const headers = { "User-Agent": UA6, "Referer": `https://${domain}/`, "Origin": `https://${domain}` };
+        if (s.includes("filemoon") || s.includes("byse") || s.includes("r66nv9ed")) {
+          headers["x-embed-origin"] = "ww3.gnulahd.nu";
+          headers["x-embed-parent"] = `https://${domain}/`;
         }
+        return headers;
+      } catch (e) {
+        return { "User-Agent": UA6, "Referer": url };
       }
-      if (s.includes("r66nv9ed.com") || s.includes("filemoon") || s.includes("byse") || s.includes("398fitus.com")) {
-        let domain = "filemoon.sx";
-        if (s.includes("398fitus"))
-          domain = "398fitus.com";
-        if (s.includes("bysevepoin"))
-          domain = "bysevepoin.com";
-        if (s.includes("bysebuho"))
-          domain = "bysebuho.com";
-        if (s.includes("bysezejataos"))
-          domain = "bysezejataos.com";
-        if (s.includes("byseqekaho"))
-          domain = "byseqekaho.com";
-        const referer = `https://${domain}/`;
-        return {
-          "Referer": referer,
-          "Origin": `https://${domain}`,
-          "User-Agent": UA6,
-          "x-embed-origin": "ww3.gnulahd.nu",
-          "x-embed-referer": "https://ww3.gnulahd.nu/",
-          "x-embed-parent": referer
-        };
-      }
-      if (s.includes("cloudwindow-route.com") || s.includes("awish.pro") || s.includes("streamwish") || s.includes("hglink") || s.includes("hglamioz") || s.includes("audinifer") || s.includes("embedwish") || s.includes("strwish") || s.includes("dwish")) {
-        return { "User-Agent": UA6, "Referer": "https://streamwish.to/", "Origin": "https://streamwish.to" };
-      }
-      return null;
     }
     function applyPiping(result) {
       if (!result || !result.url)
         return result;
-      if (result.url.includes("|") || !result.headers)
-        return result;
-      const headers = result.headers;
-      const parts = [];
-      for (const [key, value] of Object.entries(headers)) {
-        if (value)
-          parts.push(`${key}=${value}`);
+      let url = result.url;
+      if (!url.includes(".m3u8") && !url.includes(".mp4")) {
+        url += url.includes("?") ? "&format=.m3u8" : "#.m3u8";
       }
-      if (parts.length > 0) {
-        let suffix = "";
-        const lowerUrl = result.url.toLowerCase();
-        if (lowerUrl.includes(".m3u8"))
-          suffix = "#.m3u8";
-        else if (lowerUrl.includes(".mp4"))
-          suffix = "#.mp4";
-        result.url = `${result.url}|${parts.join("|")}${suffix}`;
+      if (result.headers) {
+        const parts = Object.entries(result.headers).map(([k, v]) => `${k}=${v}`);
+        if (parts.length > 0) {
+          url = `${url}|${parts.join("|")}`;
+        }
       }
+      result.url = url;
       return result;
     }
     function resolveEmbed2(url) {
@@ -1229,8 +1189,8 @@ var require_resolvers = __commonJS({
           const res = yield resolveGoodstream(url);
           return res ? applyPiping(res) : null;
         }
-        if (s.includes(".m3u8") || s.includes(".mp4") || s.includes(".txt")) {
-          const directHeaders = getDirectCdnHeaders(url) || { "User-Agent": UA6, "Referer": url };
+        if (s.includes(".m3u8") || s.includes(".mp4")) {
+          const directHeaders = getDirectCdnHeaders(url);
           return applyPiping({
             url,
             quality: "HD",
