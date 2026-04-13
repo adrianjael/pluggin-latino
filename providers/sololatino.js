@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T17:12:13.177Z
+ * Generated: 2026-04-13T17:22:36.696Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -66,7 +66,7 @@ var __async = (__this, __arguments, generator) => {
 // src/utils/tmdb.js
 var require_tmdb = __commonJS({
   "src/utils/tmdb.js"(exports2, module2) {
-    var axios3 = require("axios");
+    var axios2 = require("axios");
     var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
     var titleCache = /* @__PURE__ */ new Map();
     function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
@@ -82,7 +82,7 @@ var require_tmdb = __commonJS({
           let url;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
+            const { data } = yield axios2.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
             const title = result ? result.name || result.title : null;
             if (title)
@@ -90,7 +90,7 @@ var require_tmdb = __commonJS({
             return title;
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
+            const { data } = yield axios2.get(url, { timeout: 6e3 });
             const title = data.name || data.title || null;
             if (title)
               titleCache.set(cacheKey, title);
@@ -118,11 +118,11 @@ var require_tmdb = __commonJS({
           let result;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
+            const { data } = yield axios2.get(url, { timeout: 6e3 });
             result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
+            const { data } = yield axios2.get(url, { timeout: 6e3 });
             result = data;
           }
           if (result) {
@@ -170,7 +170,7 @@ var require_ua = __commonJS({
 // src/utils/http.js
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
-    var axios3 = require("axios");
+    var axios2 = require("axios");
     var { getRandomUA: getRandomUA2 } = require_ua();
     var sessionUA = null;
     function setSessionUA2(ua) {
@@ -246,6 +246,7 @@ var require_http = __commonJS({
 // src/utils/m3u8.js
 var require_m3u8 = __commonJS({
   "src/utils/m3u8.js"(exports2, module2) {
+    var axios2 = require("axios");
     var { getSessionUA: getSessionUA2 } = require_http();
     var UA = getSessionUA2();
     function getQualityFromHeight(height) {
@@ -292,7 +293,7 @@ var require_m3u8 = __commonJS({
       return "1080p";
     }
     var VALIDATION_CACHE = /* @__PURE__ */ new Map();
-    function validateStream(stream) {
+    function validateStream2(stream) {
       return __async(this, null, function* () {
         if (!stream || !stream.url)
           return stream;
@@ -303,7 +304,7 @@ var require_m3u8 = __commonJS({
         }
         try {
           try {
-            yield axios.head(url, {
+            yield axios2.head(url, {
               timeout: 1e3,
               headers: __spreadValues({ "User-Agent": getSessionUA2() }, headers || {})
             });
@@ -312,7 +313,7 @@ var require_m3u8 = __commonJS({
               return __spreadProps(__spreadValues({}, stream), { verified: false });
             }
           }
-          const response = yield axios.get(url, {
+          const response = yield axios2.get(url, {
             timeout: 3e3,
             skipSizeCheck: true,
             // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
@@ -338,7 +339,7 @@ var require_m3u8 = __commonJS({
         }
       });
     }
-    module2.exports = { validateStream, getQualityFromHeight };
+    module2.exports = { validateStream: validateStream2, getQualityFromHeight };
   }
 });
 
@@ -482,7 +483,7 @@ var require_mirrors = __commonJS({
 // src/utils/engine.js
 var require_engine = __commonJS({
   "src/utils/engine.js"(exports2, module2) {
-    var { validateStream } = require_m3u8();
+    var { validateStream: validateStream2 } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     var { isMirror: isMirror2 } = require_mirrors();
     function normalizeLanguage(lang) {
@@ -564,12 +565,13 @@ var require_engine = __commonJS({
 });
 
 // src/sololatino/index.js
-var axios2 = require("axios");
+var axios = require("axios");
 var { getTmdbTitle } = require_tmdb();
 var { finalizeStreams } = require_engine();
 var { getSessionUA, setSessionUA } = require_http();
 var { getRandomUA } = require_ua();
 var { isMirror } = require_mirrors();
+var { validateStream } = require_m3u8();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 function getImdbIdInternal(idOrQuery, mediaType) {
@@ -580,7 +582,7 @@ function getImdbIdInternal(idOrQuery, mediaType) {
     try {
       const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
       const url = `https://api.themoviedb.org/3/${type}/${rawId}/external_ids?api_key=${TMDB_API_KEY}`;
-      const { data } = yield axios2.get(url, { timeout: 5e3 });
+      const { data } = yield axios.get(url, { timeout: 5e3 });
       return data.imdb_id || null;
     } catch (e) {
       return null;
@@ -600,7 +602,7 @@ function getDirectStream(id, token, cookie, playerUrl, sessionHeaders) {
       };
       if (cookie)
         config.headers["cookie"] = cookie;
-      const { data } = yield axios2.post(`${BASE_URL}/s.php`, body, config);
+      const { data } = yield axios.post(`${BASE_URL}/s.php`, body, config);
       return data && data.u ? { url: data.u, sig: data.sig } : null;
     } catch (e) {
       return null;
@@ -637,7 +639,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
       console.log(`[SoloLatino] STABILITY v6.4.2 - Sesi\xF3n: ${slug}`);
-      const { data: html, headers: respHeaders } = yield axios2.get(playerUrl, { headers: SESSION_HEADERS, timeout: 6e3 });
+      const { data: html, headers: respHeaders } = yield axios.get(playerUrl, { headers: SESSION_HEADERS, timeout: 6e3 });
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
       const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
       if (tokenMatch && tokenMatch[1]) {
@@ -648,8 +650,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         });
         if (cookie)
           postH["cookie"] = cookie;
-        yield axios2.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
-        const { data: scanData } = yield axios2.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
+        yield axios.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
+        const { data: scanData } = yield axios.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
         const uniqueServers = /* @__PURE__ */ new Map();
         (scanData && scanData.s || []).forEach((ser) => {
           if (ser[1])
@@ -666,28 +668,33 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const serverList = Array.from(uniqueServers.values()).slice(0, 10);
         const resolved = yield Promise.all(serverList.map((ser) => __async(this, null, function* () {
           const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
-          const direct = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
-          if (direct && direct.url) {
-            let finalUrl = direct.url;
-            if (direct.sig)
-              finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
-            let techName = "";
-            if (isMirror(direct.url, "VIDHIDE"))
-              techName = "VidHide";
-            else if (isMirror(direct.url, "FILEMOON"))
-              techName = "Filemoon";
-            else if (isMirror(direct.url, "STREAMWISH"))
-              techName = "StreamWish";
-            else if (isMirror(direct.url, "VOE"))
-              techName = "VOE";
-            const fullName = techName ? `${name} - ${techName}` : name;
-            return {
-              langLabel: "Latino",
-              serverName: fullName,
-              url: finalUrl,
-              quality: "1080p",
-              headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
-            };
+          try {
+            const direct = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
+            if (direct && direct.url) {
+              let finalUrl = direct.url;
+              if (direct.sig)
+                finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
+              let techName = "";
+              if (isMirror(direct.url, "VIDHIDE"))
+                techName = "VidHide";
+              else if (isMirror(direct.url, "FILEMOON"))
+                techName = "Filemoon";
+              else if (isMirror(direct.url, "STREAMWISH"))
+                techName = "StreamWish";
+              else if (isMirror(direct.url, "VOE"))
+                techName = "VOE";
+              const fullName = techName ? `${name} - ${techName}` : name;
+              const streamData = {
+                langLabel: "Latino",
+                serverName: fullName,
+                url: finalUrl,
+                quality: "1080p",
+                headers: { "User-Agent": UA, "Referer": playerUrl, "Origin": BASE_URL }
+              };
+              return yield validateStream(streamData);
+            }
+          } catch (e2) {
+            return null;
           }
           return null;
         })));
