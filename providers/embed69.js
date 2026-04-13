@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-13T14:32:32.842Z
+ * Generated: 2026-04-13T14:36:55.519Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -407,6 +407,7 @@ var require_hlswish = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
+    var { validateStream } = require_m3u8();
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
@@ -460,7 +461,7 @@ var require_hlswish = __commonJS({
           const qMatch = finalUrl.match(/[_-](\d{3,4})[pP]?/);
           if (qMatch)
             quality = qMatch[1] + "p";
-          return {
+          const stream = {
             url: finalUrl,
             quality,
             serverName: "StreamWish",
@@ -470,6 +471,7 @@ var require_hlswish = __commonJS({
               "Origin": baseOrigin
             }
           };
+          return yield validateStream(stream);
         } catch (e) {
           console.log(`[StreamWish] Error: ${e.message}`);
           return null;
@@ -703,6 +705,7 @@ var require_vidhide = __commonJS({
         return null;
       }
     }
+    var { validateStream } = require_m3u8();
     function resolve9(url) {
       return __async(this, null, function* () {
         try {
@@ -736,12 +739,13 @@ var require_vidhide = __commonJS({
             finalUrl = new URL(url).origin + finalUrl;
           }
           const domain = new URL(url).origin;
-          return {
+          const stream = {
             url: finalUrl,
             quality,
             serverName: "VidHide",
             headers: { "User-Agent": UA5, "Referer": domain + "/", "Origin": domain }
           };
+          return yield validateStream(stream);
         } catch (e) {
           console.log(`[VidHide] Error: ${e.message}`);
           return null;
