@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-13T06:05:36.050Z
+ * Generated: 2026-04-13T06:08:24.923Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -237,7 +237,7 @@ var require_engine = __commonJS({
         return "StreamWish";
       if (u.includes("cloudwindow-route.com") || u.includes("marissashare") || u.includes("voe.sx") || s.includes("voe"))
         return "VOE";
-      if (u.includes("moonalu.com") || u.includes("moonembed.pro") || u.includes("filemoon.sx") || u.includes("bysedikamoum") || u.includes("398fitus") || u.includes("r66nv9ed") || s.includes("filemoon"))
+      if (u.includes("moonalu.com") || u.includes("moonembed.pro") || u.includes("filemoon.sx") || u.includes("bysedikamoum.com") || u.includes("398fitus.com") || u.includes("r66nv9ed.com") || s.includes("filemoon"))
         return "Filemoon";
       return server || "Servidor";
     }
