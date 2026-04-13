@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-13T00:21:36.179Z
+ * Generated: 2026-04-13T00:30:37.767Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -954,8 +954,15 @@ var require_resolvers = __commonJS({
         if (value)
           parts.push(`${key}=${value}`);
       }
-      if (parts.length > 0)
-        result.url = `${result.url}|${parts.join("|")}`;
+      if (parts.length > 0) {
+        let suffix = "";
+        const lowerUrl = result.url.toLowerCase();
+        if (lowerUrl.includes(".m3u8"))
+          suffix = "#.m3u8";
+        else if (lowerUrl.includes(".mp4"))
+          suffix = "#.mp4";
+        result.url = `${result.url}|${parts.join("|")}${suffix}`;
+      }
       return result;
     }
     function resolveEmbed2(url) {
