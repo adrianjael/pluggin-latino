@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T03:33:10.217Z
+ * Generated: 2026-04-13T03:36:38.822Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -376,7 +376,7 @@ var require_engine = __commonJS({
             })
           };
         });
-        const MAX_RESULTS = 8;
+        const MAX_RESULTS = 25;
         const uniqueUrls = /* @__PURE__ */ new Set();
         const finalized = processed.filter((s) => {
           if (s === null)
