@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-13T17:00:02.246Z
+ * Generated: 2026-04-13T17:05:18.646Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -159,11 +159,11 @@ var require_ua = __commonJS({
       // Mac - Safari
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15"
     ];
-    function getRandomUA2() {
+    function getRandomUA() {
       const index = Math.floor(Math.random() * UA_POOL.length);
       return UA_POOL[index];
     }
-    module2.exports = { getRandomUA: getRandomUA2, UA_POOL };
+    module2.exports = { getRandomUA, UA_POOL };
   }
 });
 
@@ -171,9 +171,9 @@ var require_ua = __commonJS({
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
     var axios3 = require("axios");
-    var { getRandomUA: getRandomUA2 } = require_ua();
+    var { getRandomUA } = require_ua();
     var sessionUA = null;
-    function setSessionUA2(ua) {
+    function setSessionUA(ua) {
       sessionUA = ua;
     }
     function getSessionUA2() {
@@ -236,7 +236,7 @@ var require_http = __commonJS({
       fetchHtml,
       fetchJson,
       getSessionUA: getSessionUA2,
-      setSessionUA: setSessionUA2,
+      setSessionUA,
       DEFAULT_UA,
       MOBILE_UA
     };
@@ -562,7 +562,7 @@ var require_engine = __commonJS({
 var axios2 = require("axios");
 var { getTmdbTitle } = require_tmdb();
 var { finalizeStreams } = require_engine();
-var { getRandomUA, getSessionUA, setSessionUA } = require_http();
+var { getSessionUA } = require_http();
 var { isMirror } = require_mirrors();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
@@ -629,7 +629,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      console.log(`[SoloLatino] v6.3.0 - Iniciando Sesi\xF3n Speed: ${slug}`);
+      console.log(`[SoloLatino] v6.3.3 - Iniciando Sesi\xF3n Deduplicada: ${slug}`);
       const { data: html, headers: respHeaders } = yield axios2.get(playerUrl, { headers: SESSION_HEADERS, timeout: 6e3 });
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
       const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
@@ -656,7 +656,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             });
           });
         }
-        const serverList = Array.from(uniqueServers.values()).slice(0, 15);
+        const serverList = Array.from(uniqueServers.values()).slice(0, 10);
         const resolved = yield Promise.all(serverList.map((ser) => __async(this, null, function* () {
           const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
           const direct = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
@@ -665,13 +665,13 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             if (direct.sig)
               finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(direct.url)}&sig=${direct.sig}`;
             let techName = "";
-            if (isMirror(finalUrl, "VIDHIDE"))
+            if (isMirror(direct.url, "VIDHIDE"))
               techName = "VidHide";
-            else if (isMirror(finalUrl, "FILEMOON"))
+            else if (isMirror(direct.url, "FILEMOON"))
               techName = "Filemoon";
-            else if (isMirror(finalUrl, "STREAMWISH"))
+            else if (isMirror(direct.url, "STREAMWISH"))
               techName = "StreamWish";
-            else if (isMirror(finalUrl, "VOE"))
+            else if (isMirror(direct.url, "VOE"))
               techName = "VOE";
             const fullName = techName ? `${name} - ${techName}` : name;
             return {
@@ -684,11 +684,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           }
           return null;
         })));
-        const seenUrls = /* @__PURE__ */ new Set();
+        const seenNames = /* @__PURE__ */ new Set();
         const cleanResults = [];
         for (const r of resolved) {
-          if (r && r.url && !seenUrls.has(r.url)) {
-            seenUrls.add(r.url);
+          if (r && r.serverName && !seenNames.has(r.serverName)) {
+            seenNames.add(r.serverName);
             cleanResults.push(r);
           }
         }
