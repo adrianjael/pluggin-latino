@@ -1,6 +1,6 @@
 /**
  * prueba - Built from src/prueba/
- * Generated: 2026-04-14T14:36:04.146Z
+ * Generated: 2026-04-14T14:41:21.439Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -10190,11 +10190,18 @@ function decodeJwtPayload(token) {
 }
 function parseDataLink(html) {
   try {
-    const match = html.match(/let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/);
-    if (!match)
+    console.log("[Embed69] Analizando HTML en busca de dataLink...");
+    const match = html.match(/(?:let|const|var)\s+dataLink\s*=\s*((\[[\s\S]*?\])|(\{[\s\S]*?\}))\s*;?/);
+    if (!match) {
+      console.log("[Embed69] \u274C No se encontr\xF3 la variable dataLink en el HTML");
       return null;
-    return JSON.parse(match[1]);
+    }
+    const data = JSON.parse(match[1]);
+    const results = Array.isArray(data) ? data : Object.values(data);
+    console.log(`[Embed69] \u2713 Se encontraron ${results.length} secciones de video.`);
+    return results;
   } catch (e) {
+    console.log(`[Embed69] \u274C Error al parsear dataLink: ${e.message}`);
     return null;
   }
 }
@@ -10212,13 +10219,16 @@ function getImdbId(tmdbId, mediaType) {
     const tId = tmdbId.toString();
     const endpoint = mediaType === "movie" || mediaType === "movies" ? `https://api.themoviedb.org/3/movie/${tId}/external_ids?api_key=${TMDB_API_KEY}` : `https://api.themoviedb.org/3/tv/${tId}/external_ids?api_key=${TMDB_API_KEY}`;
     try {
+      console.log(`[Embed69] Consultando IMDB ID en TMDB para: ${tId}`);
       const { data } = yield import_axios2.default.get(endpoint, {
-        timeout: 5e3,
+        timeout: 6e3,
         headers: { "User-Agent": UA2 }
       });
+      if (!data.imdb_id)
+        console.log("[Embed69] \u26A0\uFE0F TMDB no devolvi\xF3 un imdb_id.");
       return data.imdb_id || null;
     } catch (e) {
-      console.log(`[Embed69] TMDB error: ${e.message}`);
+      console.log(`[Embed69] \u274C Fallo en TMDB: ${e.message}`);
       return null;
     }
   });

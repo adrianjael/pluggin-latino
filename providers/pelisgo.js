@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-14T14:36:04.068Z
+ * Generated: 2026-04-14T14:41:21.358Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
