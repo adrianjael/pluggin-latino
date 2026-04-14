@@ -1,12 +1,12 @@
 {
   "name": "Nuvio Latino (TV PRO)",
-  "version": "7.5.1",
+  "version": "7.6.0",
   "scrapers": [
     {
       "id": "embed69",
       "name": "Embed69 Latino (TV PRO)",
       "description": "Películas y series vía embed69.org",
-      "version": "2.4.8",
+      "version": "2.5.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",

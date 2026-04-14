@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T20:48:41.433Z
+ * Generated: 2026-04-14T21:02:47.277Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -538,30 +538,36 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] FILTRO LATINO ESTRICTO v7.4.0 - Descartando Castellano y Subtitulados...`);
+        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.0`);
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
-          const lang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio);
-          if (lang !== "Latino") {
+          const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
+          const isLatino = rawLang.toLowerCase().includes("latino");
+          if (!isLatino) {
+            console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
             continue;
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${providerName || "LATINO"} - ${server} [${displayQuality}${checkMark}]`;
-          const streamTitle = `${mediaTitle || "Contenido"} (${lang})`;
-          if (seenTitles.has(streamName + streamTitle))
+          const streamName = `[${rawLang}] ${providerName || "LATINO"} - ${server} (${displayQuality}${checkMark})`;
+          const streamTitle = `${mediaTitle || "Contenido"}`;
+          if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
-          seenTitles.add(streamName + streamTitle);
+          seenTitles.add(streamName + streamTitle + s.url);
           processed.push({
             name: streamName,
+            // Nombre que verá el usuario en la lista
             title: streamTitle,
+            // Título de la película/serie
             url: s.url,
             quality: displayQuality,
-            serverName: server,
-            lang,
+            provider: server,
+            // Mapeado a 'provider' en LocalScraperResult
+            language: rawLang,
+            // Mapeado a 'language' en LocalScraperResult
             headers: s.headers || {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             }
