@@ -1,7 +1,3 @@
-/**
- * pelispedia - Built from src/pelispedia/
- * Generated: 2026-04-07T22:55:51.527Z
- */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -68,8 +64,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/pelispedia/extractor.js
 var extractor_exports = {};
 __export(extractor_exports, {
   extractStreams: () => extractStreams
@@ -137,21 +131,13 @@ var init_extractor = __esm({
     UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
   }
 });
-
-// src/pelispedia/index.js
 var import_axios7 = __toESM(require("axios"));
-
-// src/utils/string.js
 function normalizeTitle(t) {
   if (!t)
     return "";
   return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
-
-// src/pelispedia/index.js
 init_extractor();
-
-// src/resolvers/voe.js
 var import_axios2 = __toESM(require("axios"));
 var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function decodeBase64(input) {
@@ -222,11 +208,7 @@ function resolve(url) {
     }
   });
 }
-
-// src/resolvers/filemoon.js
 var import_axios3 = __toESM(require("axios"));
-
-// src/utils/aes-gcm.js
 var import_crypto_js = __toESM(require("crypto-js"));
 function decryptGCM(key, iv, ciphertextWithTag) {
   try {
@@ -252,8 +234,6 @@ function decryptGCM(key, iv, ciphertextWithTag) {
     return null;
   }
 }
-
-// src/resolvers/filemoon.js
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 function base64UrlDecode(input) {
   let s = input.replace(/-/g, "+").replace(/_/g, "/");
@@ -321,8 +301,6 @@ function resolve2(url) {
     }
   });
 }
-
-// src/resolvers/hlswish.js
 var import_axios4 = __toESM(require("axios"));
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpack(p, a, c, k, e, d) {
@@ -386,8 +364,6 @@ function resolve3(url) {
     }
   });
 }
-
-// src/resolvers/vidhide.js
 var import_axios5 = __toESM(require("axios"));
 var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function unpackVidHide(script) {
@@ -447,8 +423,6 @@ function resolve4(url) {
     }
   });
 }
-
-// src/resolvers/uqload.js
 var import_axios6 = __toESM(require("axios"));
 var UA6 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function resolve5(url) {
@@ -498,8 +472,6 @@ function parseHtml(html, url) {
   }
   return null;
 }
-
-// src/pelispedia/index.js
 var import_cheerio_without_node_native2 = __toESM(require("cheerio-without-node-native"));
 var BASE = "https://pelispedia.mov";
 var UA7 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";

@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:22:03.391Z
+ * Generated: 2026-04-14T16:27:12.598Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -76,7 +76,7 @@ var __async = (__this, __arguments, generator) => {
 // src/utils/id_mapper.js
 var require_id_mapper = __commonJS({
   "src/utils/id_mapper.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var ID_CACHE = /* @__PURE__ */ new Map();
     var SERIES_MAPPINGS = {
@@ -89,8 +89,8 @@ var require_id_mapper = __commonJS({
           const url = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
           const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
           const [idRes, metaRes] = yield Promise.all([
-            axios6.get(url).catch(() => null),
-            axios6.get(metaUrl).catch(() => null)
+            axios5.get(url).catch(() => null),
+            axios5.get(metaUrl).catch(() => null)
           ]);
           if (idRes && idRes.data && idRes.data.imdb_id) {
             const title = metaRes && metaRes.data ? metaRes.data.title || metaRes.data.name : "Contenido";
@@ -113,7 +113,7 @@ var require_id_mapper = __commonJS({
       return __async(this, null, function* () {
         try {
           const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-          const response = yield axios6.get(url, { timeout: 5e3 }).catch(() => null);
+          const response = yield axios5.get(url, { timeout: 5e3 }).catch(() => null);
           if (!response || !response.data)
             return { imdbId: null, title: "Contenido" };
           const html = response.data;
@@ -171,7 +171,7 @@ var require_ua = __commonJS({
 // src/utils/http.js
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { getRandomUA } = require_ua();
     var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
     var sessionUA = null;
@@ -264,9 +264,9 @@ var require_http = __commonJS({
 // src/utils/m3u8.js
 var require_m3u8 = __commonJS({
   "src/utils/m3u8.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { getSessionUA } = require_http();
-    var UA5 = getSessionUA();
+    var UA4 = getSessionUA();
     function getQualityFromHeight(height) {
       if (!height)
         return "1080p";
@@ -322,7 +322,7 @@ var require_m3u8 = __commonJS({
         }
         try {
           try {
-            yield axios6.head(url, {
+            yield axios5.head(url, {
               timeout: 1e3,
               headers: __spreadValues({ "User-Agent": getSessionUA() }, headers || {})
             });
@@ -331,7 +331,7 @@ var require_m3u8 = __commonJS({
               return __spreadProps(__spreadValues({}, stream), { verified: false });
             }
           }
-          const response = yield axios6.get(url, {
+          const response = yield axios5.get(url, {
             timeout: 3e3,
             skipSizeCheck: true,
             // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
@@ -584,7 +584,7 @@ var require_engine = __commonJS({
 // src/resolvers/voe.js
 var require_voe = __commonJS({
   "src/resolvers/voe.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     function base64Decode(input) {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
       let str = String(input).replace(/=+$/, "");
@@ -608,7 +608,7 @@ var require_voe = __commonJS({
         try {
           console.log(`[VOE] Resolving Legacy: ${url}`);
           const { getSessionUA } = require_http();
-          const { data: html } = yield axios6.get(url, {
+          const { data: html } = yield axios5.get(url, {
             headers: { "User-Agent": getSessionUA() },
             timeout: 8e3
           });
@@ -682,9 +682,9 @@ var require_voe = __commonJS({
 // src/resolvers/hlswish.js
 var require_hlswish = __commonJS({
   "src/resolvers/hlswish.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { getSessionUA } = require_http();
-    var UA5 = getSessionUA();
+    var UA4 = getSessionUA();
     function unpackEval(payload, radix, symtab) {
       const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const unbase = (str) => {
@@ -721,8 +721,8 @@ var require_hlswish = __commonJS({
           console.log(`[StreamWish] Resolviendo CJS v5.6.9: ${rawId}`);
           for (const mirror of mirrors) {
             try {
-              const response = yield axios6.get(mirror, {
-                headers: { "User-Agent": UA5, "Referer": "https://embed69.org/" },
+              const response = yield axios5.get(mirror, {
+                headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" },
                 timeout: 5e3
               });
               html = response.data;
@@ -763,7 +763,7 @@ var require_hlswish = __commonJS({
             quality,
             serverName: "StreamWish",
             headers: {
-              "User-Agent": UA5,
+              "User-Agent": UA4,
               "Referer": baseOrigin + "/",
               "Origin": baseOrigin
             }
@@ -845,7 +845,7 @@ var require_aes_gcm = __commonJS({
 // src/resolvers/filemoon.js
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { decryptByse } = require_aes_gcm();
     var { getSessionUA } = require_http();
     var UA_CHROME = getSessionUA();
@@ -928,7 +928,7 @@ var require_filemoon = __commonJS({
           } catch (e) {
             console.log(`[Filemoon] Byse Shield fall\xF3: ${e.message}`);
           }
-          const { data: html1 } = yield axios6.get(url, {
+          const { data: html1 } = yield axios5.get(url, {
             headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": urlObj.origin, "Origin": urlObj.origin }),
             timeout: 1e4
           });
@@ -936,7 +936,7 @@ var require_filemoon = __commonJS({
           const iframeMatch = html1.match(/<iframe[^>]+src=["']([^"']+)["']/i);
           if (iframeMatch) {
             const iframeUrl = iframeMatch[1].startsWith("//") ? `https:${iframeMatch[1]}` : iframeMatch[1];
-            const { data: html2 } = yield axios6.get(iframeUrl, {
+            const { data: html2 } = yield axios5.get(iframeUrl, {
               headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": url, "Origin": urlObj.origin }),
               timeout: 1e4
             });
@@ -974,9 +974,9 @@ var require_filemoon = __commonJS({
 // src/resolvers/vidhide.js
 var require_vidhide = __commonJS({
   "src/resolvers/vidhide.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { getSessionUA, getStealthHeaders } = require_http();
-    var UA5 = getSessionUA();
+    var UA4 = getSessionUA();
     function unpackVidHide(script) {
       try {
         const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
@@ -1009,9 +1009,9 @@ var require_vidhide = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log(`[VidHide] Resolviendo: ${url}`);
-          const response = yield axios6.get(url, {
+          const response = yield axios5.get(url, {
             timeout: 1e4,
-            headers: { "User-Agent": UA5, "Referer": "https://embed69.org/" }
+            headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" }
           });
           const html = response.data;
           let cookies = [];
@@ -1076,17 +1076,17 @@ var require_vidhide = __commonJS({
 // src/resolvers/quality.js
 var require_quality = __commonJS({
   "src/resolvers/quality.js"(exports2, module2) {
-    var axios6 = require("axios");
-    var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+    var axios5 = require("axios");
+    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     function detectQuality2(_0) {
       return __async(this, arguments, function* (url, headers = {}) {
         try {
           if (!url || !url.includes(".m3u8"))
             return "1080p";
-          const { data } = yield axios6.get(url, {
+          const { data } = yield axios5.get(url, {
             timeout: 5e3,
             headers: __spreadValues({
-              "User-Agent": UA5
+              "User-Agent": UA4
             }, headers),
             responseType: "text"
           });
@@ -1182,7 +1182,7 @@ var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
     var { fetchHtml: fetchHtml3, getSessionUA } = require_http();
     var { detectQuality: detectQuality2 } = require_quality();
-    var UA5 = getSessionUA();
+    var UA4 = getSessionUA();
     function unpackPacker(data) {
       var match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
       if (!match)
@@ -1202,7 +1202,7 @@ var require_fastream = __commonJS({
         try {
           console.log("[Fastream] Resolviendo: " + url);
           var data = yield fetchHtml3(url, {
-            headers: { "User-Agent": UA5, "Referer": "https://www3.seriesmetro.net/" }
+            headers: { "User-Agent": UA4, "Referer": "https://www3.seriesmetro.net/" }
           });
           var unpacked = unpackPacker(data);
           var m3u8Match;
@@ -1214,7 +1214,7 @@ var require_fastream = __commonJS({
                 url: url1,
                 quality: "1080p",
                 serverName: "Fastream",
-                headers: { "User-Agent": UA5, "Referer": "https://fastream.to/" }
+                headers: { "User-Agent": UA4, "Referer": "https://fastream.to/" }
               };
             }
             return null;
@@ -1228,7 +1228,7 @@ var require_fastream = __commonJS({
             url: m3u8Url,
             quality: quality || "1080p",
             serverName: "Fastream",
-            headers: { "User-Agent": UA5, "Referer": "https://fastream.to/" }
+            headers: { "User-Agent": UA4, "Referer": "https://fastream.to/" }
           };
         } catch (e) {
           console.log("[Fastream] Error: " + e.message);
@@ -1721,7 +1721,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolveTplayer } = require_tplayer();
     var { getSessionUA } = require_http();
     var { isMirror } = require_mirrors();
-    var UA5 = getSessionUA();
+    var UA4 = getSessionUA();
     function getDirectCdnHeaders(url) {
       if (!url)
         return null;
@@ -1744,7 +1744,7 @@ var require_resolvers = __commonJS({
         }
         return headers;
       } catch (e) {
-        return { "User-Agent": UA5, "referer": url.split("?")[0] };
+        return { "User-Agent": UA4, "referer": url.split("?")[0] };
       }
     }
     function applyPiping(result) {
@@ -1849,13 +1849,12 @@ var require_resolvers = __commonJS({
 });
 
 // src/embed69/index.js
-var axios5 = require("axios");
 var CryptoJS3 = require("crypto-js");
 var { getCorrectImdbId } = require_id_mapper();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var INDIVIDUAL_TIMEOUT = 5e3;
-var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+var GLOBAL_FETCH_TIMEOUT = 8e3;
 var EMERGENCY_MAP = {
   "157336": "tt0816692",
   // Interstellar
@@ -1875,45 +1874,49 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
       const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId).trim().toLowerCase() : "";
       const displayTitle = title || "Contenido";
-      console.log(`[Embed69] Hard-Fix v7.3.3 | ID: ${rawId} | S: ${s} | E: ${e}`);
+      console.log(`[Embed69] NativeFetch-V7.3.4 | ID: ${rawId} | S: ${s} | E: ${e}`);
       if (!rawId)
         return [];
       let finalImdbId = null;
       if (rawId.startsWith("tt")) {
         finalImdbId = rawId;
       } else if (EMERGENCY_MAP[rawId]) {
-        console.log(`[Embed69] \u{1F6A8} Bypass Maestro detectado para ${rawId} -> ${EMERGENCY_MAP[rawId]}`);
         finalImdbId = EMERGENCY_MAP[rawId];
       } else {
         const meta = yield getCorrectImdbId(rawId, mediaType).catch(() => null);
         finalImdbId = meta ? meta.imdbId : null;
       }
-      if (!finalImdbId) {
-        console.log(`[Embed69] \u274C Fallo total de identificaci\xF3n para ID: ${rawId}`);
+      if (!finalImdbId)
         return [];
-      }
       let url;
-      const isSerie = s !== null && e !== null;
-      if (isSerie) {
+      if (s !== null && e !== null) {
         url = `https://embed69.org/f/${finalImdbId}-${s}x${e}`;
       } else {
         url = `https://embed69.org/f/${finalImdbId}`;
       }
-      console.log(`[Embed69] Solicitando link: ${url}`);
-      const response = yield axios5.get(url, {
-        timeout: 6e3,
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), GLOBAL_FETCH_TIMEOUT);
+      const response = yield fetch(url, {
+        method: "GET",
         headers: {
-          "User-Agent": UA4,
-          "Referer": "https://embed69.org/",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-        }
-      }).catch(() => null);
-      if (!response || !response.data) {
-        console.log(`[Embed69] \u26A0\uFE0F Error de red en el sitio Embed69.`);
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Referer": "https://embed69.org/"
+        },
+        signal: controller.signal
+      }).catch((err) => {
+        console.error(`[Embed69] Fetch Error: ${err.message}`);
+        return null;
+      });
+      clearTimeout(timeoutId);
+      if (!response || !response.ok) {
+        console.log(`[Embed69] HTTP Error: ${response ? response.status : "No response"}`);
         return [];
       }
+      const html = yield response.text();
+      if (!html)
+        return [];
       const dataLinkRegex = /let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/;
-      const match = response.data.match(dataLinkRegex);
+      const match = html.match(dataLinkRegex);
       if (!match)
         return [];
       let data;
@@ -1948,14 +1951,14 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
             if (seenUrls.has(decodedLink))
               continue;
             seenUrls.add(decodedLink);
-            const sName = embed.servername || "Servidor";
+            const sLabel = embed.servername || "Servidor";
             const resPromise = Promise.race([
               resolveEmbed(decodedLink).then((res) => {
                 if (!res)
                   return null;
                 return __spreadProps(__spreadValues({}, res), {
                   langLabel,
-                  serverLabel: sName
+                  serverLabel: sLabel
                 });
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
@@ -1964,7 +1967,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                 url: decodedLink,
                 quality: "HD",
                 langLabel,
-                serverLabel: sName,
+                serverLabel: sLabel,
                 verified: false
               };
             });
@@ -1976,7 +1979,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
       return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Error 7.3.3: ${error.message}`);
+      console.error(`[Embed69] Critical v7.3.4: ${error.message}`);
       return [];
     }
   });
