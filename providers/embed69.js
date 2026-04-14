@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T15:39:25.811Z
+ * Generated: 2026-04-14T15:42:48.279Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1854,12 +1854,12 @@ var CryptoJS3 = require("crypto-js");
 var { getCorrectImdbId } = require_id_mapper();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var INDIVIDUAL_TIMEOUT = 5e3;
+var INDIVIDUAL_TIMEOUT = 4e3;
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
-      console.log(`[Embed69] Resolviendo Calidad Real v7.2.4 - ID: ${tmdbId}`);
+      console.log(`[Embed69] R\xE1faga v7.2.8 - ID: ${tmdbId}`);
       const meta = yield getCorrectImdbId(tmdbId, mediaType);
       if (!meta.imdbId)
         return [];
@@ -1873,7 +1873,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
         url = `https://embed69.org/f/${meta.imdbId}-${s}x${e}`;
       }
       const response = yield axios5.get(url, {
-        timeout: INDIVIDUAL_TIMEOUT,
+        timeout: 5e3,
         headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" }
       }).catch(() => null);
       if (!response || !response.data)
@@ -1909,9 +1909,9 @@ function getStreams(tmdbId, mediaType, season, episode) {
               } catch (e) {
               }
             }
-            if (seenUrls.has(decodedLink))
+            if (decodedLink.includes("/d/"))
               continue;
-            if (decodedLink.includes("embed69.org/d/"))
+            if (seenUrls.has(decodedLink))
               continue;
             seenUrls.add(decodedLink);
             const sLabel = embed.servername || "Servidor";
@@ -1924,7 +1924,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
                   serverLabel: sLabel
                 });
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5e3))
+              new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
             ]).catch(() => {
               return {
                 url: decodedLink,
@@ -1938,12 +1938,12 @@ function getStreams(tmdbId, mediaType, season, episode) {
           }
         }
       }
-      console.log(`[Embed69] Procesando ${batch.length} servidores en paralelo...`);
+      console.log(`[Embed69] R\xE1faga activada: Procesando ${batch.length} servidores (L\xEDmite 4s)...`);
       const results = yield Promise.allSettled(batch);
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
       return yield finalizeStreams(rawStreams, "Embed69", title);
     } catch (error) {
-      console.error(`[Embed69] Error Cr\xEDtico: ${error.message}`);
+      console.error(`[Embed69] Fallo Cr\xEDtico: ${error.message}`);
       return [];
     }
   });
