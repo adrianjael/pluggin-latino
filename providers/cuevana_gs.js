@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-14T15:06:08.345Z
+ * Generated: 2026-04-14T15:16:06.240Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -11155,9 +11155,24 @@ var require_id_mapper = __commonJS({
               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
             }
           });
-          const imdbMatch = html.match(/href="[^"]*?external_id=(tt\d+)[^"]*?"/i) || html.match(/imdb.com\/title\/(tt\d+)/i) || html.match(/"imdb_id":"(tt\d+)"/i);
-          const imdbId = imdbMatch ? imdbMatch[1] : null;
-          const titleMatch = html.match(/<title>([^<]+?)\s+[—-]\s+The\s+Movie\s+Database/i) || html.match(/<h2[^>]*><a[^>]*>([^<]+)<\/a>/i) || html.match(/"name":"([^"]+)"/i);
+          let imdbMatch = html.match(/"imdb_id"\s*:\s*"(tt\d+)"/i) || html.match(/href="[^"]*?external_id=(tt\d+)[^"]*?"/i) || html.match(/imdb.com\/title\/(tt\d+)/i);
+          let imdbId = imdbMatch ? imdbMatch[1] : null;
+          if (!imdbId) {
+            console.log(`[ID Mapper] \u{1F504} Scraping fallido, intentando API de TMDB...`);
+            try {
+              const apiKey = "439c478a771f35c05022f9feabcca01c";
+              const type2 = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+              const apiUrl = `https://api.themoviedb.org/3/${type2}/${tmdbId}/external_ids?api_key=${apiKey}`;
+              const apiRes = yield axios5.get(apiUrl, { timeout: 5e3 }).catch(() => null);
+              if (apiRes && apiRes.data && apiRes.data.imdb_id) {
+                imdbId = apiRes.data.imdb_id;
+                console.log(`[ID Mapper] \u2705 IMDb ID obtenido v\xEDa API: ${imdbId}`);
+              }
+            } catch (apiErr) {
+              console.log(`[ID Mapper] \u274C Fallo tambi\xE9n en API: ${apiErr.message}`);
+            }
+          }
+          const titleMatch = html.match(/<title>([^<]+?)\s+[—-]\s+The\s+Movie\s+Database/i) || html.match(/<h2[^>]*><a[^>]*>([^<]+)<\/a>/i) || html.match(/"title":"([^"]+)"/i) || html.match(/"name":"([^"]+)"/i);
           const title = titleMatch ? titleMatch[1].trim() : null;
           const yearMatch = html.match(/class="release_date">\((\d{4})\)<\/span>/i) || html.match(/"release_date":"(\d{4})/i) || html.match(/"first_air_date":"(\d{4})/i);
           const year = yearMatch ? yearMatch[1] : null;
@@ -11168,16 +11183,14 @@ var require_id_mapper = __commonJS({
             offset: 0,
             fromMapping: false
           };
-          if (imdbId)
-            console.log(`[ID Mapper] \u2713 IMDb ID encontrado: ${imdbId}`);
+          if (imdbId && !res.fromMapping)
+            console.log(`[ID Mapper] \u2713 IMDb ID final: ${imdbId}`);
           if (title)
             console.log(`[ID Mapper] \u2713 Metadatos: ${title} (${year || "?"})`);
-          if (!imdbId && !title)
-            console.log(`[ID Mapper] \u26A0\uFE0F No se pudo extraer informaci\xF3n del HTML.`);
           ID_CACHE.set(cacheKey, res);
           return res;
         } catch (e) {
-          console.log(`[ID Mapper] \u274C Error en Scraping: ${e.message}`);
+          console.log(`[ID Mapper] \u274C Error cr\xEDtico: ${e.message}`);
           return { imdbId: null, title: null, year: null, offset: 0, fromMapping: false };
         }
       });
