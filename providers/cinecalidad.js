@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-14T14:41:21.225Z
+ * Generated: 2026-04-14T14:47:42.397Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
