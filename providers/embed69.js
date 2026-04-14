@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T17:44:34.230Z
+ * Generated: 2026-04-14T17:57:02.290Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1853,12 +1853,11 @@ var require_resolvers = __commonJS({
 });
 
 // src/embed69/index.js
-var CryptoJS3 = require("crypto-js");
+var CryptoJS3 = typeof require !== "undefined" ? require("crypto-js") : globalThis.CryptoJS || {};
 var { getCorrectImdbId } = require_id_mapper();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var INDIVIDUAL_TIMEOUT = 7e3;
-var GLOBAL_FETCH_TIMEOUT = 1e4;
+var INDIVIDUAL_TIMEOUT = 15e3;
 var EMERGENCY_MAP = {
   "157336": "tt0816692",
   // Interstellar
@@ -1898,17 +1897,13 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       } else {
         url = `https://embed69.org/f/${finalImdbId}`;
       }
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), GLOBAL_FETCH_TIMEOUT);
       const response = yield fetch(url, {
         method: "GET",
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
           "Referer": "https://embed69.org/"
-        },
-        signal: controller.signal
+        }
       }).catch(() => null);
-      clearTimeout(timeoutId);
       if (!response || !response.ok)
         return [];
       const html = yield response.text();
