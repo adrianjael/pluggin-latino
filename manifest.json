@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino (TV PRO)",
-  "version": "7.6.9",
+  "version": "7.7.0",
   "scrapers": [
     {
       "id": "embed69",
@@ -13,6 +13,27 @@
         "tv"
       ],
       "filename": "providers/embed69.js",
+      "enabled": true,
+      "logo": "https://play-lh.googleusercontent.com/5oy8Mdjfj1sEzBWe5WxuQ_8MqFRC6Yu-PM2c4QkXEN_isAQvqrWeMwZV7z3__lDm8Q",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ]
+    },
+    {
+      "id": "embed69-android",
+      "name": "Embed69 android",
+      "description": "Películas y series vía embed69.org",
+      "version": "2.5.9",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/embed69-android.js",
       "enabled": true,
       "logo": "https://play-lh.googleusercontent.com/5oy8Mdjfj1sEzBWe5WxuQ_8MqFRC6Yu-PM2c4QkXEN_isAQvqrWeMwZV7z3__lDm8Q",
       "contentLanguage": [
