@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T17:21:13.846Z
+ * Generated: 2026-04-14T17:32:20.590Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -448,7 +448,8 @@ var require_mirrors = __commonJS({
         "strwish",
         "filelions",
         "wishembed",
-        "wishfast"
+        "wishfast",
+        "hanerix"
       ],
       FILEMOON: [
         "filemoon",
@@ -717,7 +718,7 @@ var require_hlswish = __commonJS({
           ];
           let html = "";
           let usedUrl = targetUrl;
-          console.log(`[StreamWish] Resolviendo CJS v5.6.9: ${rawId}`);
+          console.log(`[StreamWish] Resolviendo CJS v6.2.1 (FullReferer): ${rawId}`);
           for (const mirror of mirrors) {
             try {
               const response = yield axios5.get(mirror, {
@@ -762,8 +763,7 @@ var require_hlswish = __commonJS({
             quality,
             serverName: "StreamWish",
             headers: {
-              "User-Agent": UA4,
-              "Referer": baseOrigin + "/",
+              "Referer": usedUrl,
               "Origin": baseOrigin
             }
           };
