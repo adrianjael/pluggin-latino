@@ -1,12 +1,12 @@
 {
   "name": "Nuvio Latino",
   "id": "nuviolatino.plugin",
-  "version": "7.1.6",
+  "version": "7.1.7",
   "scrapers": [
     {
       "id": "embed69",
       "name": "Embed69",
-      "description": "Peliculas y series via embed69.org (V2.1.4) - RESTORATION v5.7.1",
+      "description": "Películas y series vía embed69.org",
       "version": "2.1.6",
       "author": "AdrianJael",
       "supportedTypes": [

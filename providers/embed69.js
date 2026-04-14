@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T15:01:26.398Z
+ * Generated: 2026-04-14T15:06:08.364Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -11140,18 +11140,14 @@ function getStreams(tmdbId, mediaType, season, episode, providedTitle) {
     const headers = {
       "User-Agent": UA4,
       "Referer": "https://embed69.org/",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
-      "Cache-Control": "no-cache",
-      "Pragma": "no-cache"
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     };
-    console.log(`[Embed69] \u{1F4FA} Iniciando b\xFAsqueda v6.1.6 (Modo Robusto)`);
     try {
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = mapper ? mapper.imdbId : null;
       const mediaTitle = (mapper == null ? void 0 : mapper.title) || providedTitle || "Contenido";
       const mediaYear = (mapper == null ? void 0 : mapper.year) || "";
-      console.log(`[Embed69] \u{1F3F7}\uFE0F Metadatos: ${mediaTitle} (${mediaYear}) - ID: ${imdbId || "N/A"}`);
+      console.log(`[Embed69] Buscando: ${mediaTitle} (${mediaYear})`);
       const allDataLinks = [];
       if (imdbId) {
         let idUrl = `${BASE_URL}/f/${imdbId}`;
@@ -11160,34 +11156,28 @@ function getStreams(tmdbId, mediaType, season, episode, providedTitle) {
           const e = String(episode || 1).padStart(2, "0");
           idUrl = `${idUrl}-${s}x${e}`;
         }
-        console.log(`[Embed69] \u{1F50D} Acceso directo: ${idUrl}`);
-        const idRes = yield axios5.get(idUrl, { timeout: 9e3, headers }).catch(() => null);
+        const idRes = yield axios5.get(idUrl, { timeout: 8e3, headers }).catch(() => null);
         if (idRes && idRes.data) {
           const raw = parseDataLink(idRes.data);
           if (raw) {
             const arr = Array.isArray(raw) ? raw : Object.values(raw);
             allDataLinks.push(...arr);
-            console.log(`[Embed69] \u2705 ${allDataLinks.length} resultados por ID.`);
           }
         }
       }
       if (allDataLinks.length === 0 && mediaTitle !== "Contenido") {
-        console.log(`[Embed69] \u{1F50D} B\xFAsqueda por Texto: ${mediaTitle} ${mediaYear}`);
-        const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(mediaTitle + " " + mediaYear)}`;
-        const textRes = yield axios5.get(searchUrl, { timeout: 9e3, headers }).catch(() => null);
+        const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`;
+        const textRes = yield axios5.get(searchUrl, { timeout: 8e3, headers }).catch(() => null);
         if (textRes && textRes.data) {
           const raw = parseDataLink(textRes.data);
           if (raw) {
             const arr = Array.isArray(raw) ? raw : Object.values(raw);
             allDataLinks.push(...arr);
-            console.log(`[Embed69] \u2705 ${allDataLinks.length} resultados por Texto.`);
           }
         }
       }
-      if (allDataLinks.length === 0) {
-        console.log(`[Embed69] \u{1F6D1} No se encontraron resultados.`);
+      if (allDataLinks.length === 0)
         return [];
-      }
       const byLang = {};
       allDataLinks.forEach((s) => {
         if (s.video_language) {
@@ -11239,10 +11229,9 @@ function getStreams(tmdbId, mediaType, season, episode, providedTitle) {
         if (r.status === "fulfilled" && r.value)
           rawStreams.push(r.value);
       });
-      console.log(`[Embed69] \u2728 ${rawStreams.length} resultados listos.`);
       return yield finalizeStreams(rawStreams, "Embed69", mediaTitle);
     } catch (error) {
-      console.log(`[Embed69] \u274C Error: ${error.message}`);
+      console.log(`[Embed69] Error: ${error.message}`);
       return [];
     }
   });
