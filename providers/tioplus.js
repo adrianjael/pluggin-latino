@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-14T17:57:02.401Z
+ * Generated: 2026-04-14T20:30:51.874Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -118,7 +118,7 @@ var require_http = __commonJS({
     }
     var DEFAULT_UA3 = getSessionUA();
     var MOBILE_UA = getSessionUA();
-    function request(url, options) {
+    function request2(url, options) {
       return __async(this, null, function* () {
         var opt = options || {};
         var currentUA = opt.headers && opt.headers["User-Agent"] ? opt.headers["User-Agent"] : getSessionUA();
@@ -128,19 +128,12 @@ var require_http = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
           var fetchOptions = Object.assign({
             redirect: opt.redirect || "follow"
           }, opt, {
-            headers,
-            signal: controller.signal
+            headers
           });
           var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
           if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
             const redirectUrl = response.headers.get("location");
             console.log(`[HTTP] Redirecci\xF3n detectada (Manual): ${redirectUrl}`);
@@ -156,21 +149,21 @@ var require_http = __commonJS({
         }
       });
     }
-    function fetchHtml3(url, options) {
+    function fetchHtml4(url, options) {
       return __async(this, null, function* () {
-        var res = yield request(url, options);
+        var res = yield request2(url, options);
         return yield res.text();
       });
     }
     function fetchJson2(url, options) {
       return __async(this, null, function* () {
-        var res = yield request(url, options);
+        var res = yield request2(url, options);
         return yield res.json();
       });
     }
     module2.exports = {
-      request,
-      fetchHtml: fetchHtml3,
+      request: request2,
+      fetchHtml: fetchHtml4,
       fetchJson: fetchJson2,
       getSessionUA,
       setSessionUA,
@@ -605,7 +598,7 @@ var require_voe = __commonJS({
 // src/resolvers/hlswish.js
 var require_hlswish = __commonJS({
   "src/resolvers/hlswish.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3 } = require_http();
+    var { fetchHtml: fetchHtml4 } = require_http();
     var { getSessionUA } = require_http();
     var UA5 = getSessionUA();
     function unpackEval(payload, radix, symtab) {
@@ -645,7 +638,7 @@ var require_hlswish = __commonJS({
           for (const mirror of mirrors) {
             try {
               console.log(`[StreamWish] Intentando mirror: ${mirror}`);
-              html = yield fetchHtml3(mirror, {
+              html = yield fetchHtml4(mirror, {
                 headers: {
                   "Referer": mirror,
                   "User-Agent": UA5
@@ -1106,7 +1099,7 @@ var init_goodstream = __esm({
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3, getSessionUA } = require_http();
+    var { fetchHtml: fetchHtml4, getSessionUA } = require_http();
     var { detectQuality: detectQuality2 } = require_quality();
     var UA5 = getSessionUA();
     function unpackPacker(data) {
@@ -1127,7 +1120,7 @@ var require_fastream = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log("[Fastream] Resolviendo: " + url);
-          var data = yield fetchHtml3(url, {
+          var data = yield fetchHtml4(url, {
             headers: { "User-Agent": UA5, "Referer": "https://www3.seriesmetro.net/" }
           });
           var unpacked = unpackPacker(data);
@@ -1412,7 +1405,7 @@ var init_pixeldrain = __esm({
 // src/resolvers/playmogo.js
 var require_playmogo = __commonJS({
   "src/resolvers/playmogo.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3, DEFAULT_UA: DEFAULT_UA3 } = require_http();
+    var { fetchHtml: fetchHtml4, DEFAULT_UA: DEFAULT_UA3 } = require_http();
     function resolve8(url) {
       return __async(this, null, function* () {
         try {
@@ -1856,6 +1849,7 @@ var require_tmdb = __commonJS({
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle, getTmdbInfo } = require_tmdb();
+var { fetchHtml: fetchHtml3, request } = require_http();
 var spawnSync = null;
 try {
   spawnSync = require("child_process").spawnSync;
@@ -1885,11 +1879,9 @@ function getRedirectUrl(serverEncoded, referer) {
           const result = spawnSync("curl.exe", args);
           html = result.stdout ? result.stdout.toString() : "";
         } else {
-          const response = yield fetch(playerUrl, {
+          html = yield fetchHtml3(playerUrl, {
             headers: { "User-Agent": UA4, "Referer": referer }
           });
-          if (response.ok)
-            html = yield response.text();
         }
         if (html.includes("saturando la red")) {
           if (isRetry)
@@ -1936,9 +1928,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             const result = spawnSync("curl.exe", args);
             html = result.stdout ? result.stdout.toString() : "";
           } else {
-            const response = yield fetch(url, { headers: { "User-Agent": UA4 } });
-            if (response.ok)
-              html = yield response.text();
+            html = yield fetchHtml3(url, { headers: { "User-Agent": UA4 } });
           }
         } catch (e) {
           console.log(`[TioPlus] Error en b\xFAsqueda de ${titleQuery}: ${e.message}`);
@@ -1995,12 +1985,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const e = parseInt(episode) || 1;
         finalMediaUrl = `${targetUrl}/season/${s}/episode/${e}`;
       }
-      const mediaResp = yield fetch(finalMediaUrl, {
+      const mediaHtml = yield fetchHtml3(finalMediaUrl, {
         headers: { "User-Agent": UA4, "Referer": lastSearchUrl }
       });
-      if (!mediaResp.ok)
+      if (!mediaHtml)
         return [];
-      const mediaHtml = yield mediaResp.text();
       const serverRegex = /data-server=['"]([^'"]+)['"][^>]*>[\s\S]*?<span>([^<]+)<\/span>/gi;
       let sMatch;
       const encodes = [];

@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T17:57:02.290Z
+ * Generated: 2026-04-14T20:30:51.784Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -128,19 +128,12 @@ var require_http = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
           var fetchOptions = Object.assign({
             redirect: opt.redirect || "follow"
           }, opt, {
-            headers,
-            signal: controller.signal
+            headers
           });
           var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
           if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
             const redirectUrl = response.headers.get("location");
             console.log(`[HTTP] Redirecci\xF3n detectada (Manual): ${redirectUrl}`);
@@ -1904,8 +1897,10 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           "Referer": "https://embed69.org/"
         }
       }).catch(() => null);
-      if (!response || !response.ok)
+      if (!response || !response.ok) {
+        console.log(`[Embed69] Error en respuesta de p\xE1gina: ${url}`);
         return [];
+      }
       const html = yield response.text();
       if (!html)
         return [];
@@ -1915,8 +1910,10 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         return [];
       let data;
       try {
-        data = JSON.parse(match[1].replace(/\\\//g, "/"));
+        const dataStr = match[1].replace(/\\\//g, "/");
+        data = JSON.parse(dataStr);
       } catch (err) {
+        console.error(`[Embed69] Fallo al parsear dataLink JSON: ${err.message}`);
         return [];
       }
       const batch = [];

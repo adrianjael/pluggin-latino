@@ -1,11 +1,10 @@
 {
-  "name": "Nuvio Latino",
-  "id": "nuviolatino.plugin",
-  "version": "7.4.8",
+  "name": "Nuvio Latino (TV PRO)",
+  "version": "7.4.9",
   "scrapers": [
     {
       "id": "embed69",
-      "name": "Embed69 Latino",
+      "name": "Embed69 Latino (TV PRO)",
       "description": "Películas y series vía embed69.org",
       "version": "2.4.6",
       "author": "AdrianJael",
@@ -18,13 +17,7 @@
       "logo": "https://play-lh.googleusercontent.com/5oy8Mdjfj1sEzBWe5WxuQ_8MqFRC6Yu-PM2c4QkXEN_isAQvqrWeMwZV7z3__lDm8Q",
       "contentLanguage": [
         "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
+      ]
     },
     {
       "id": "sololatino",

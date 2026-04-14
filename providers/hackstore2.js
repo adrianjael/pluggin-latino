@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-14T17:57:02.316Z
+ * Generated: 2026-04-14T20:30:51.805Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -74,6 +74,28 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/hackstore2/http.js
+function fetchText(_0) {
+  return __async(this, arguments, function* (url, options = {}) {
+    try {
+      const response = yield fetch(url, __spreadValues({
+        headers: __spreadValues(__spreadValues({}, COMMON_HEADERS), options.headers)
+      }, options));
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status} for ${url}`);
+      }
+      return yield response.text();
+    } catch (error) {
+      console.error(`[PelisPlusHD] Fetch error: ${error.message}`);
+      throw error;
+    }
+  });
+}
+function fetchJson(_0) {
+  return __async(this, arguments, function* (url, options = {}) {
+    const raw = yield fetchText(url, options);
+    return JSON.parse(raw);
+  });
+}
 function fetchHtml(url, referer) {
   return __async(this, null, function* () {
     try {
@@ -266,19 +288,12 @@ var require_http = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
           var fetchOptions = Object.assign({
             redirect: opt.redirect || "follow"
           }, opt, {
-            headers,
-            signal: controller.signal
+            headers
           });
           var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
           if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
             const redirectUrl = response.headers.get("location");
             console.log(`[HTTP] Redirecci\xF3n detectada (Manual): ${redirectUrl}`);
@@ -300,7 +315,7 @@ var require_http = __commonJS({
         return yield res.text();
       });
     }
-    function fetchJson2(url, options) {
+    function fetchJson3(url, options) {
       return __async(this, null, function* () {
         var res = yield request(url, options);
         return yield res.json();
@@ -309,7 +324,7 @@ var require_http = __commonJS({
     module2.exports = {
       request,
       fetchHtml: fetchHtml4,
-      fetchJson: fetchJson2,
+      fetchJson: fetchJson3,
       getSessionUA,
       setSessionUA,
       getStealthHeaders,
@@ -1499,7 +1514,7 @@ var init_embedseek = __esm({
 // src/resolvers/tplayer.js
 var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
-    var { fetchJson: fetchJson2, getStealthHeaders } = require_http();
+    var { fetchJson: fetchJson3, getStealthHeaders } = require_http();
     function resolve8(embedUrl) {
       return __async(this, null, function* () {
         try {
@@ -1515,7 +1530,7 @@ var require_tplayer = __commonJS({
           const headers = getStealthHeaders();
           headers["Referer"] = embedUrl;
           headers["X-Requested-With"] = "XMLHttpRequest";
-          const data = yield fetchJson2(apiUrl, { headers });
+          const data = yield fetchJson3(apiUrl, { headers });
           if (!data || !data.success || !data.streamUrl) {
             console.log("[TPlayer] La API no devolvi\xF3 un enlace v\xE1lido.");
             return null;
@@ -1832,8 +1847,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         console.log(`[HackStore2] Searching API for: ${query}`);
         const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${postType}&query=${encodeURIComponent(query)}`;
         try {
-          const searchRes = yield fetch(searchUrl);
-          const searchData = yield searchRes.json();
+          const searchData = yield fetchJson(searchUrl);
           if (!searchData || searchData.error || !searchData.data || !searchData.data.posts)
             continue;
           matchedPost = searchData.data.posts.find((p) => {
@@ -1864,8 +1878,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
       if (mediaType === "tv") {
         console.log(`[HackStore2] Fetching episodes for series ID: ${finalPostId}`);
         const episodesUrl = `https://hackstore2.com/api/rest/episodes?post_id=${finalPostId}`;
-        const episodesRes = yield fetch(episodesUrl);
-        const episodesData = yield episodesRes.json();
+        const episodesData = yield fetchJson(episodesUrl);
         if (!episodesData || !episodesData.data || !Array.isArray(episodesData.data)) {
           console.log("[HackStore2] No episodes found for this series.");
           return [];
@@ -1881,8 +1894,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
         finalPostId = episodeMatch._id;
       }
       const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${finalPostId}`;
-      const playerRes = yield fetch(playerUrl);
-      const playerData = yield playerRes.json();
+      const playerData = yield fetchJson(playerUrl);
       if (!playerData || playerData.error || !playerData.data || !Array.isArray(playerData.data)) {
         console.log("[HackStore2] No players found.");
         return [];
@@ -1928,7 +1940,7 @@ function extractStreams(tmdbId, mediaType, season, episode, providedTitle, provi
     }
   });
 }
-var import_resolvers, import_m3u8;
+var import_resolvers, import_m3u8, cheerio;
 var init_extractor = __esm({
   "src/hackstore2/extractor.js"() {
     init_http();
@@ -1936,6 +1948,7 @@ var init_extractor = __esm({
     init_crypto();
     import_resolvers = __toESM(require_resolvers());
     import_m3u8 = __toESM(require_m3u8());
+    cheerio = require("cheerio-without-node-native");
   }
 });
 

@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-14T17:57:02.383Z
+ * Generated: 2026-04-14T20:30:51.858Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -118,7 +118,7 @@ var require_http = __commonJS({
     }
     var DEFAULT_UA3 = getSessionUA();
     var MOBILE_UA = getSessionUA();
-    function request(url, options) {
+    function request2(url, options) {
       return __async(this, null, function* () {
         var opt = options || {};
         var currentUA = opt.headers && opt.headers["User-Agent"] ? opt.headers["User-Agent"] : getSessionUA();
@@ -128,19 +128,12 @@ var require_http = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
           var fetchOptions = Object.assign({
             redirect: opt.redirect || "follow"
           }, opt, {
-            headers,
-            signal: controller.signal
+            headers
           });
           var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
           if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
             const redirectUrl = response.headers.get("location");
             console.log(`[HTTP] Redirecci\xF3n detectada (Manual): ${redirectUrl}`);
@@ -156,21 +149,21 @@ var require_http = __commonJS({
         }
       });
     }
-    function fetchHtml3(url, options) {
+    function fetchHtml4(url, options) {
       return __async(this, null, function* () {
-        var res = yield request(url, options);
+        var res = yield request2(url, options);
         return yield res.text();
       });
     }
     function fetchJson2(url, options) {
       return __async(this, null, function* () {
-        var res = yield request(url, options);
+        var res = yield request2(url, options);
         return yield res.json();
       });
     }
     module2.exports = {
-      request,
-      fetchHtml: fetchHtml3,
+      request: request2,
+      fetchHtml: fetchHtml4,
       fetchJson: fetchJson2,
       getSessionUA,
       setSessionUA,
@@ -184,7 +177,7 @@ var require_http = __commonJS({
 // src/utils/m3u8.js
 var require_m3u8 = __commonJS({
   "src/utils/m3u8.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { getSessionUA } = require_http();
     var UA5 = getSessionUA();
     function getQualityFromHeight(height) {
@@ -242,7 +235,7 @@ var require_m3u8 = __commonJS({
         }
         try {
           try {
-            yield axios6.head(url, {
+            yield axios5.head(url, {
               timeout: 1e3,
               headers: __spreadValues({ "User-Agent": getSessionUA() }, headers || {})
             });
@@ -251,7 +244,7 @@ var require_m3u8 = __commonJS({
               return __spreadProps(__spreadValues({}, stream), { verified: false });
             }
           }
-          const response = yield axios6.get(url, {
+          const response = yield axios5.get(url, {
             timeout: 3e3,
             skipSizeCheck: true,
             // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
@@ -507,7 +500,7 @@ var require_engine = __commonJS({
 // src/resolvers/voe.js
 var require_voe = __commonJS({
   "src/resolvers/voe.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     function base64Decode(input) {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
       let str = String(input).replace(/=+$/, "");
@@ -531,7 +524,7 @@ var require_voe = __commonJS({
         try {
           console.log(`[VOE] Resolving Legacy: ${url}`);
           const { getSessionUA } = require_http();
-          const { data: html } = yield axios6.get(url, {
+          const { data: html } = yield axios5.get(url, {
             headers: { "User-Agent": getSessionUA() },
             timeout: 8e3
           });
@@ -605,7 +598,7 @@ var require_voe = __commonJS({
 // src/resolvers/hlswish.js
 var require_hlswish = __commonJS({
   "src/resolvers/hlswish.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3 } = require_http();
+    var { fetchHtml: fetchHtml4 } = require_http();
     var { getSessionUA } = require_http();
     var UA5 = getSessionUA();
     function unpackEval(payload, radix, symtab) {
@@ -645,7 +638,7 @@ var require_hlswish = __commonJS({
           for (const mirror of mirrors) {
             try {
               console.log(`[StreamWish] Intentando mirror: ${mirror}`);
-              html = yield fetchHtml3(mirror, {
+              html = yield fetchHtml4(mirror, {
                 headers: {
                   "Referer": mirror,
                   "User-Agent": UA5
@@ -771,7 +764,7 @@ var require_aes_gcm = __commonJS({
 // src/resolvers/filemoon.js
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { decryptByse } = require_aes_gcm();
     var { getSessionUA } = require_http();
     var UA_CHROME = getSessionUA();
@@ -854,7 +847,7 @@ var require_filemoon = __commonJS({
           } catch (e) {
             console.log(`[Filemoon] Byse Shield fall\xF3: ${e.message}`);
           }
-          const { data: html1 } = yield axios6.get(url, {
+          const { data: html1 } = yield axios5.get(url, {
             headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": urlObj.origin, "Origin": urlObj.origin }),
             timeout: 1e4
           });
@@ -862,7 +855,7 @@ var require_filemoon = __commonJS({
           const iframeMatch = html1.match(/<iframe[^>]+src=["']([^"']+)["']/i);
           if (iframeMatch) {
             const iframeUrl = iframeMatch[1].startsWith("//") ? `https:${iframeMatch[1]}` : iframeMatch[1];
-            const { data: html2 } = yield axios6.get(iframeUrl, {
+            const { data: html2 } = yield axios5.get(iframeUrl, {
               headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": url, "Origin": urlObj.origin }),
               timeout: 1e4
             });
@@ -900,7 +893,7 @@ var require_filemoon = __commonJS({
 // src/resolvers/vidhide.js
 var require_vidhide = __commonJS({
   "src/resolvers/vidhide.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { getSessionUA, getStealthHeaders } = require_http();
     var UA5 = getSessionUA();
     function unpackVidHide(script) {
@@ -935,7 +928,7 @@ var require_vidhide = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log(`[VidHide] Resolviendo: ${url}`);
-          const response = yield axios6.get(url, {
+          const response = yield axios5.get(url, {
             timeout: 1e4,
             headers: { "User-Agent": UA5, "Referer": "https://embed69.org/" }
           });
@@ -1002,14 +995,14 @@ var require_vidhide = __commonJS({
 // src/resolvers/quality.js
 var require_quality = __commonJS({
   "src/resolvers/quality.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     function detectQuality2(_0) {
       return __async(this, arguments, function* (url, headers = {}) {
         try {
           if (!url || !url.includes(".m3u8"))
             return "1080p";
-          const { data } = yield axios6.get(url, {
+          const { data } = yield axios5.get(url, {
             timeout: 5e3,
             headers: __spreadValues({
               "User-Agent": UA5
@@ -1106,7 +1099,7 @@ var init_goodstream = __esm({
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3, getSessionUA } = require_http();
+    var { fetchHtml: fetchHtml4, getSessionUA } = require_http();
     var { detectQuality: detectQuality2 } = require_quality();
     var UA5 = getSessionUA();
     function unpackPacker(data) {
@@ -1127,7 +1120,7 @@ var require_fastream = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log("[Fastream] Resolviendo: " + url);
-          var data = yield fetchHtml3(url, {
+          var data = yield fetchHtml4(url, {
             headers: { "User-Agent": UA5, "Referer": "https://www3.seriesmetro.net/" }
           });
           var unpacked = unpackPacker(data);
@@ -1412,7 +1405,7 @@ var init_pixeldrain = __esm({
 // src/resolvers/playmogo.js
 var require_playmogo = __commonJS({
   "src/resolvers/playmogo.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3, DEFAULT_UA: DEFAULT_UA3 } = require_http();
+    var { fetchHtml: fetchHtml4, DEFAULT_UA: DEFAULT_UA3 } = require_http();
     function resolve8(url) {
       return __async(this, null, function* () {
         try {
@@ -1777,7 +1770,7 @@ var require_resolvers = __commonJS({
 // src/utils/tmdb.js
 var require_tmdb = __commonJS({
   "src/utils/tmdb.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var titleCache = /* @__PURE__ */ new Map();
     function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
@@ -1793,7 +1786,7 @@ var require_tmdb = __commonJS({
           let url;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios6.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
             const title = result ? result.name || result.title : null;
             if (title)
@@ -1801,7 +1794,7 @@ var require_tmdb = __commonJS({
             return title;
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios6.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             const title = data.name || data.title || null;
             if (title)
               titleCache.set(cacheKey, title);
@@ -1829,11 +1822,11 @@ var require_tmdb = __commonJS({
           let result;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios6.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios6.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             result = data;
           }
           if (result) {
@@ -1853,7 +1846,7 @@ var require_tmdb = __commonJS({
 });
 
 // src/seriesmetro/index.js
-var axios5 = require("axios");
+var { fetchHtml: fetchHtml3, request } = require_http();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
@@ -1892,8 +1885,8 @@ function findContentUrl(tmdbInfo, mediaType) {
     for (const slug of slugs) {
       const url = `${BASE}/${category}/${slug}/`;
       try {
-        const { data } = yield axios5.get(url, { timeout: 8e3, headers: HEADERS });
-        if (data.includes("trembed=") || data.includes("data-post=")) {
+        const data = yield fetchHtml3(url, { headers: HEADERS });
+        if (data && (data.includes("trembed=") || data.includes("data-post="))) {
           console.log(`[SeriesMetro] \u2713 Encontrado: /${category}/${slug}/`);
           return { url, html: data };
         }
@@ -1910,11 +1903,12 @@ function getEpisodeUrl(serieUrl, serieHtml, season, episode) {
     if (!dpost)
       return null;
     try {
-      const { data: epData } = yield axios5.post(
-        `${BASE}/wp-admin/admin-ajax.php`,
-        new URLSearchParams({ action: "action_select_season", post: dpost, season: String(season) }),
-        { headers: __spreadProps(__spreadValues({}, HEADERS), { "Content-Type": "application/x-www-form-urlencoded", "Referer": serieUrl }) }
-      );
+      const res = yield request(`${BASE}/wp-admin/admin-ajax.php`, {
+        method: "POST",
+        body: new URLSearchParams({ action: "action_select_season", post: dpost, season: String(season) }),
+        headers: __spreadProps(__spreadValues({}, HEADERS), { "Content-Type": "application/x-www-form-urlencoded", "Referer": serieUrl })
+      });
+      const epData = yield res.text();
       const epUrls = [...epData.matchAll(/href="([^"]+\/capitulo\/[^"]+)"/g)].map((m) => m[1]);
       return epUrls.find((u) => {
         const m = u.match(/temporada-(\d+)-capitulo-(\d+)/);
@@ -1929,7 +1923,7 @@ function extractStreams(pageUrl, referer) {
   return __async(this, null, function* () {
     var _a;
     try {
-      const { data } = yield axios5.get(pageUrl, { timeout: 8e3, headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": referer }) });
+      const data = yield fetchHtml3(pageUrl, { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": referer }) });
       const options = [...data.matchAll(/href="#options-(\d+)"[^>]*>[\s\S]*?<span class="server">([\s\S]*?)<\/span>/g)];
       const trids = [...data.matchAll(/\?trembed=(\d+)(?:&#038;|&)trid=(\d+)(?:&#038;|&)trtype=(\d+)/g)];
       if (trids.length === 0 || options.length === 0)
@@ -1949,9 +1943,9 @@ function extractStreams(pageUrl, referer) {
         const langRaw = srvText.split("-").pop().trim().toLowerCase();
         const lang = LANG_MAP[langRaw] || langRaw;
         try {
-          const { data: embedPage } = yield axios5.get(
+          const embedPage = yield fetchHtml3(
             `${BASE}/?trembed=${idx}&trid=${trid}&trtype=${trtype}`,
-            { timeout: 8e3, headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": pageUrl }) }
+            { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": pageUrl }) }
           );
           const iframeUrl = (_a = embedPage.match(/<iframe[^>]*src="([^"]+)"/i)) == null ? void 0 : _a[1];
           if (!iframeUrl)

@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-14T17:57:02.348Z
+ * Generated: 2026-04-14T20:30:51.827Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -296,19 +296,12 @@ var require_http2 = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
           var fetchOptions = Object.assign({
             redirect: opt.redirect || "follow"
           }, opt, {
-            headers,
-            signal: controller.signal
+            headers
           });
           var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
           if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
             const redirectUrl = response.headers.get("location");
             console.log(`[HTTP] Redirecci\xF3n detectada (Manual): ${redirectUrl}`);

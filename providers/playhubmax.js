@@ -1,6 +1,6 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-14T17:57:02.371Z
+ * Generated: 2026-04-14T20:30:51.849Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -128,19 +128,12 @@ var require_http = __commonJS({
           "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
         }, opt.headers);
         try {
-          var timeoutMs = opt.timeout || 5e3;
-          var controller = new AbortController();
-          var timeoutId = setTimeout(() => {
-            controller.abort();
-          }, timeoutMs);
           var fetchOptions = Object.assign({
             redirect: opt.redirect || "follow"
           }, opt, {
-            headers,
-            signal: controller.signal
+            headers
           });
           var response = yield fetch(url, fetchOptions);
-          clearTimeout(timeoutId);
           if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
             const redirectUrl = response.headers.get("location");
             console.log(`[HTTP] Redirecci\xF3n detectada (Manual): ${redirectUrl}`);
@@ -162,7 +155,7 @@ var require_http = __commonJS({
         return yield res.text();
       });
     }
-    function fetchJson2(url, options) {
+    function fetchJson3(url, options) {
       return __async(this, null, function* () {
         var res = yield request(url, options);
         return yield res.json();
@@ -171,7 +164,7 @@ var require_http = __commonJS({
     module2.exports = {
       request,
       fetchHtml: fetchHtml3,
-      fetchJson: fetchJson2,
+      fetchJson: fetchJson3,
       getSessionUA,
       setSessionUA,
       getStealthHeaders,
@@ -184,7 +177,7 @@ var require_http = __commonJS({
 // src/utils/m3u8.js
 var require_m3u8 = __commonJS({
   "src/utils/m3u8.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { getSessionUA } = require_http();
     var UA5 = getSessionUA();
     function getQualityFromHeight(height) {
@@ -242,7 +235,7 @@ var require_m3u8 = __commonJS({
         }
         try {
           try {
-            yield axios6.head(url, {
+            yield axios5.head(url, {
               timeout: 1e3,
               headers: __spreadValues({ "User-Agent": getSessionUA() }, headers || {})
             });
@@ -251,7 +244,7 @@ var require_m3u8 = __commonJS({
               return __spreadProps(__spreadValues({}, stream), { verified: false });
             }
           }
-          const response = yield axios6.get(url, {
+          const response = yield axios5.get(url, {
             timeout: 3e3,
             skipSizeCheck: true,
             // REGLA CRÍTICA NUVIO: Ignorar detector de OOM para validación
@@ -507,7 +500,7 @@ var require_engine = __commonJS({
 // src/resolvers/voe.js
 var require_voe = __commonJS({
   "src/resolvers/voe.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     function base64Decode(input) {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
       let str = String(input).replace(/=+$/, "");
@@ -531,7 +524,7 @@ var require_voe = __commonJS({
         try {
           console.log(`[VOE] Resolving Legacy: ${url}`);
           const { getSessionUA } = require_http();
-          const { data: html } = yield axios6.get(url, {
+          const { data: html } = yield axios5.get(url, {
             headers: { "User-Agent": getSessionUA() },
             timeout: 8e3
           });
@@ -771,7 +764,7 @@ var require_aes_gcm = __commonJS({
 // src/resolvers/filemoon.js
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { decryptByse } = require_aes_gcm();
     var { getSessionUA } = require_http();
     var UA_CHROME = getSessionUA();
@@ -854,7 +847,7 @@ var require_filemoon = __commonJS({
           } catch (e) {
             console.log(`[Filemoon] Byse Shield fall\xF3: ${e.message}`);
           }
-          const { data: html1 } = yield axios6.get(url, {
+          const { data: html1 } = yield axios5.get(url, {
             headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": urlObj.origin, "Origin": urlObj.origin }),
             timeout: 1e4
           });
@@ -862,7 +855,7 @@ var require_filemoon = __commonJS({
           const iframeMatch = html1.match(/<iframe[^>]+src=["']([^"']+)["']/i);
           if (iframeMatch) {
             const iframeUrl = iframeMatch[1].startsWith("//") ? `https:${iframeMatch[1]}` : iframeMatch[1];
-            const { data: html2 } = yield axios6.get(iframeUrl, {
+            const { data: html2 } = yield axios5.get(iframeUrl, {
               headers: __spreadProps(__spreadValues({}, chromeHeaders), { "Referer": url, "Origin": urlObj.origin }),
               timeout: 1e4
             });
@@ -900,7 +893,7 @@ var require_filemoon = __commonJS({
 // src/resolvers/vidhide.js
 var require_vidhide = __commonJS({
   "src/resolvers/vidhide.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var { getSessionUA, getStealthHeaders } = require_http();
     var UA5 = getSessionUA();
     function unpackVidHide(script) {
@@ -935,7 +928,7 @@ var require_vidhide = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log(`[VidHide] Resolviendo: ${url}`);
-          const response = yield axios6.get(url, {
+          const response = yield axios5.get(url, {
             timeout: 1e4,
             headers: { "User-Agent": UA5, "Referer": "https://embed69.org/" }
           });
@@ -1002,14 +995,14 @@ var require_vidhide = __commonJS({
 // src/resolvers/quality.js
 var require_quality = __commonJS({
   "src/resolvers/quality.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     function detectQuality2(_0) {
       return __async(this, arguments, function* (url, headers = {}) {
         try {
           if (!url || !url.includes(".m3u8"))
             return "1080p";
-          const { data } = yield axios6.get(url, {
+          const { data } = yield axios5.get(url, {
             timeout: 5e3,
             headers: __spreadValues({
               "User-Agent": UA5
@@ -1584,7 +1577,7 @@ var init_embedseek = __esm({
 // src/resolvers/tplayer.js
 var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
-    var { fetchJson: fetchJson2, getStealthHeaders } = require_http();
+    var { fetchJson: fetchJson3, getStealthHeaders } = require_http();
     function resolve8(embedUrl) {
       return __async(this, null, function* () {
         try {
@@ -1600,7 +1593,7 @@ var require_tplayer = __commonJS({
           const headers = getStealthHeaders();
           headers["Referer"] = embedUrl;
           headers["X-Requested-With"] = "XMLHttpRequest";
-          const data = yield fetchJson2(apiUrl, { headers });
+          const data = yield fetchJson3(apiUrl, { headers });
           if (!data || !data.success || !data.streamUrl) {
             console.log("[TPlayer] La API no devolvi\xF3 un enlace v\xE1lido.");
             return null;
@@ -1777,7 +1770,7 @@ var require_resolvers = __commonJS({
 // src/utils/tmdb.js
 var require_tmdb = __commonJS({
   "src/utils/tmdb.js"(exports2, module2) {
-    var axios6 = require("axios");
+    var axios5 = require("axios");
     var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var titleCache = /* @__PURE__ */ new Map();
     function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
@@ -1793,7 +1786,7 @@ var require_tmdb = __commonJS({
           let url;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios6.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
             const title = result ? result.name || result.title : null;
             if (title)
@@ -1801,7 +1794,7 @@ var require_tmdb = __commonJS({
             return title;
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios6.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             const title = data.name || data.title || null;
             if (title)
               titleCache.set(cacheKey, title);
@@ -1829,11 +1822,11 @@ var require_tmdb = __commonJS({
           let result;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios6.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios6.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             result = data;
           }
           if (result) {
@@ -1853,7 +1846,7 @@ var require_tmdb = __commonJS({
 });
 
 // src/playhubmax/index.js
-var axios5 = require("axios");
+var { fetchJson: fetchJson2 } = require_http();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
@@ -2002,7 +1995,7 @@ function decryptSources(b64) {
 function searchContents(q) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield axios5.get(`${PHM_API}/US/en/contents?q=${encodeURIComponent(q)}`, { headers: API_HEADERS, timeout: 8e3 });
+      const data = yield fetchJson2(`${PHM_API}/US/en/contents?q=${encodeURIComponent(q)}`, { headers: API_HEADERS });
       return data.data || [];
     } catch (e) {
       return [];
@@ -2012,7 +2005,7 @@ function searchContents(q) {
 function getSources(type, uuid) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield axios5.get(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS, timeout: 8e3 });
+      const data = yield fetchJson2(`${PHM_API}/${type}/${uuid}/sources`, { headers: API_HEADERS });
       if (!data.data)
         return [];
       const sources = decryptSources(data.data);
@@ -2028,7 +2021,7 @@ function getSources(type, uuid) {
 function getContentDetail(uuid) {
   return __async(this, null, function* () {
     try {
-      const { data } = yield axios5.get(`${PHM_API}/en/contents/${uuid}`, { headers: API_HEADERS, timeout: 8e3 });
+      const data = yield fetchJson2(`${PHM_API}/en/contents/${uuid}`, { headers: API_HEADERS });
       return data;
     } catch (e) {
       return {};
@@ -2059,7 +2052,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const seasonObj = (_a = detail.seasons) == null ? void 0 : _a.find((s) => parseInt(s.seasonNumber) === parseInt(season));
         if (!seasonObj)
           return [];
-        const { data: episodes } = yield axios5.get(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
+        const episodes = yield fetchJson2(`${PHM_API}/en/episodes?season_id=${seasonObj.id}`, { headers: API_HEADERS });
         const ep = (_b = episodes.data) == null ? void 0 : _b.find((e) => parseInt(e.episodeNumber) === parseInt(episode));
         if (!ep)
           return [];
