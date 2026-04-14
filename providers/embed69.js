@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:49:34.159Z
+ * Generated: 2026-04-14T16:56:04.008Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -506,6 +506,8 @@ var require_engine = __commonJS({
     var { isMirror } = require_mirrors();
     function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
+      if (lang === "Latino" || lang === "Espa\xF1ol")
+        return lang;
       if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dub") || l.includes("dual")) {
         return "Latino";
       }
