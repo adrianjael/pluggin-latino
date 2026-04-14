@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T15:42:48.279Z
+ * Generated: 2026-04-14T15:56:05.570Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1856,21 +1856,26 @@ var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var INDIVIDUAL_TIMEOUT = 4e3;
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-function getStreams(tmdbId, mediaType, season, episode) {
+function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     try {
-      console.log(`[Embed69] R\xE1faga v7.2.8 - ID: ${tmdbId}`);
-      const meta = yield getCorrectImdbId(tmdbId, mediaType);
+      const s = season !== void 0 && season !== null && season !== "undefined" ? parseInt(season) : null;
+      const e = episode !== void 0 && episode !== null && episode !== "undefined" ? parseInt(episode) : null;
+      const id = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId) : null;
+      console.log(`[Embed69] Modo TV v7.3.0 - ID: ${id} | S: ${s} | E: ${e}`);
+      if (!id)
+        return [];
+      const meta = yield getCorrectImdbId(id, mediaType);
       if (!meta.imdbId)
         return [];
-      const title = meta.title || "Contenido";
+      const displayTitle = title || meta.title || "Contenido";
       let url;
       if (mediaType === "movie" || mediaType === "movies") {
         url = `https://embed69.org/f/${meta.imdbId}`;
-      } else {
-        const s = parseInt(season);
-        const e = parseInt(episode);
+      } else if (s !== null && e !== null) {
         url = `https://embed69.org/f/${meta.imdbId}-${s}x${e}`;
+      } else {
+        return [];
       }
       const response = yield axios5.get(url, {
         timeout: 5e3,
@@ -1885,7 +1890,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       let data;
       try {
         data = JSON.parse(match[1]);
-      } catch (e) {
+      } catch (err) {
         return [];
       }
       const batch = [];
@@ -1906,7 +1911,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
                   if (payload.link)
                     decodedLink = payload.link;
                 }
-              } catch (e) {
+              } catch (err) {
               }
             }
             if (decodedLink.includes("/d/"))
@@ -1938,12 +1943,11 @@ function getStreams(tmdbId, mediaType, season, episode) {
           }
         }
       }
-      console.log(`[Embed69] R\xE1faga activada: Procesando ${batch.length} servidores (L\xEDmite 4s)...`);
       const results = yield Promise.allSettled(batch);
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      return yield finalizeStreams(rawStreams, "Embed69", title);
+      return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Fallo Cr\xEDtico: ${error.message}`);
+      console.error(`[Embed69] Error TV: ${error.message}`);
       return [];
     }
   });
