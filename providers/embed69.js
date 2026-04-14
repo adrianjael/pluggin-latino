@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:27:12.598Z
+ * Generated: 2026-04-14T16:33:11.482Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1874,7 +1874,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
       const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId).trim().toLowerCase() : "";
       const displayTitle = title || "Contenido";
-      console.log(`[Embed69] NativeFetch-V7.3.4 | ID: ${rawId} | S: ${s} | E: ${e}`);
+      console.log(`[Embed69] Lang-Fix v7.3.5 | ID: ${rawId} | S: ${s} | E: ${e}`);
       if (!rawId)
         return [];
       let finalImdbId = null;
@@ -1908,10 +1908,8 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         return null;
       });
       clearTimeout(timeoutId);
-      if (!response || !response.ok) {
-        console.log(`[Embed69] HTTP Error: ${response ? response.status : "No response"}`);
+      if (!response || !response.ok)
         return [];
-      }
       const html = yield response.text();
       if (!html)
         return [];
@@ -1927,8 +1925,16 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       }
       const batch = [];
       const seenUrls = /* @__PURE__ */ new Set();
+      const langMap = {
+        "LAT": "Latino",
+        "ESP": "Castellano",
+        "SUB": "Subtitulado"
+      };
       for (const item of data) {
-        const langLabel = item.video_language || "Latino";
+        const videoLang = item.video_language || "";
+        const langLabel = langMap[videoLang.toUpperCase()] || videoLang || "Latino";
+        if (langLabel === "Subtitulado")
+          continue;
         if (!item.sortedEmbeds)
           continue;
         for (const embed of item.sortedEmbeds) {
@@ -1979,7 +1985,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
       return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Critical v7.3.4: ${error.message}`);
+      console.error(`[Embed69] Error v7.3.5: ${error.message}`);
       return [];
     }
   });
