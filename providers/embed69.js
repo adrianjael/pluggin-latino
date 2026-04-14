@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T15:29:58.842Z
+ * Generated: 2026-04-14T15:32:36.263Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -316,7 +316,7 @@ var require_m3u8 = __commonJS({
       return "1080p";
     }
     var VALIDATION_CACHE = /* @__PURE__ */ new Map();
-    function validateStream(stream) {
+    function validateStream2(stream) {
       return __async(this, null, function* () {
         if (!stream || !stream.url)
           return stream;
@@ -362,7 +362,7 @@ var require_m3u8 = __commonJS({
         }
       });
     }
-    module2.exports = { validateStream, getQualityFromHeight };
+    module2.exports = { validateStream: validateStream2, getQualityFromHeight };
   }
 });
 
@@ -506,7 +506,7 @@ var require_mirrors = __commonJS({
 // src/utils/engine.js
 var require_engine = __commonJS({
   "src/utils/engine.js"(exports2, module2) {
-    var { validateStream } = require_m3u8();
+    var { validateStream: validateStream2 } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     var { isMirror } = require_mirrors();
     function normalizeLanguage(lang) {
@@ -591,19 +591,18 @@ var axios = require("axios");
 var CryptoJS = require("crypto-js");
 var { getCorrectImdbId } = require_id_mapper();
 var { finalizeStreams } = require_engine();
-var INDIVIDUAL_TIMEOUT = 1e4;
+var { validateStream } = require_m3u8();
+var INDIVIDUAL_TIMEOUT = 12e3;
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
-      console.log(`[Embed69] Buscando v7.2.2 - ID: ${tmdbId}`);
+      console.log(`[Embed69] Buscando Calidad Real v7.2.3 - ID: ${tmdbId}`);
       const meta = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = meta.imdbId;
       const title = meta.title || "Contenido";
-      if (!imdbId) {
-        console.log("[Embed69] No se pudo obtener IMDb ID.");
+      if (!imdbId)
         return [];
-      }
       let url;
       if (mediaType === "movie" || mediaType === "movies") {
         url = `https://embed69.org/f/${imdbId}`;
@@ -612,18 +611,10 @@ function getStreams(tmdbId, mediaType, season, episode) {
         const e = parseInt(episode);
         url = `https://embed69.org/f/${imdbId}-${s}x${e}`;
       }
-      console.log(`[Embed69] Solicitando: ${url}`);
       const response = yield axios.get(url, {
         timeout: INDIVIDUAL_TIMEOUT,
-        headers: {
-          "User-Agent": UA,
-          "Referer": "https://embed69.org/",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-        }
-      }).catch((err) => {
-        console.log(`[Embed69] Error Axios: ${err.message}`);
-        return null;
-      });
+        headers: { "User-Agent": UA, "Referer": "https://embed69.org/" }
+      }).catch(() => null);
       if (!response || !response.data)
         return [];
       const html = response.data;
@@ -637,7 +628,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
       } catch (e) {
         return [];
       }
-      const rawStreams = [];
+      const embedsToValidate = [];
       const seenUrls = /* @__PURE__ */ new Set();
       for (const item of data) {
         const langLabel = item.video_language || "Latino";
@@ -665,11 +656,10 @@ function getStreams(tmdbId, mediaType, season, episode) {
             if (!streamUrl.toLowerCase().includes(".m3u8") && !streamUrl.toLowerCase().includes(".mp4")) {
               streamUrl += "#.m3u8";
             }
-            rawStreams.push({
+            embedsToValidate.push({
               url: streamUrl,
               serverLabel: embed.servername || "Servidor",
               langLabel,
-              quality: "HD",
               headers: {
                 "User-Agent": UA,
                 "Referer": url,
@@ -679,7 +669,20 @@ function getStreams(tmdbId, mediaType, season, episode) {
           }
         }
       }
-      return yield finalizeStreams(rawStreams, "Embed69", title);
+      const validatedStreams = yield Promise.all(
+        embedsToValidate.map((stream) => __async(this, null, function* () {
+          try {
+            const result = yield validateStream(stream);
+            if (result.verified) {
+              result.quality = `${result.quality || "HD"} \u2705`;
+            }
+            return result;
+          } catch (e) {
+            return __spreadProps(__spreadValues({}, stream), { quality: "HD" });
+          }
+        }))
+      );
+      return yield finalizeStreams(validatedStreams, "Embed69", title);
     } catch (error) {
       console.error(`[Embed69] Error: ${error.message}`);
       return [];
