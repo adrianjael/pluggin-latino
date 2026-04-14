@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:07:59.690Z
+ * Generated: 2026-04-14T16:13:33.802Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1861,42 +1861,45 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
     try {
       const s = season !== void 0 && season !== null && String(season) !== "undefined" ? parseInt(season) : null;
       const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
-      const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId) : "";
+      const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId).trim().toLowerCase() : "";
       const displayTitle = title || "Contenido";
-      console.log(`[Embed69] TV-Stabilization v7.3.1 | ID: ${rawId} | S: ${s} | E: ${e}`);
+      console.log(`[Embed69] Recon-V7.3.2 | ID: ${rawId} | S: ${s} | E: ${e}`);
       if (!rawId)
         return [];
       let finalImdbId = null;
       if (rawId.startsWith("tt")) {
-        console.log(`[Embed69] ID Nativo detectado (IMDb): ${rawId}`);
         finalImdbId = rawId;
       } else {
         const meta = yield getCorrectImdbId(rawId, mediaType).catch(() => null);
         finalImdbId = meta ? meta.imdbId : null;
       }
       if (!finalImdbId) {
-        console.log(`[Embed69] Error: No se pudo obtener IMDb ID para ${rawId}. Abortando.`);
+        console.log(`[Embed69] \u274C No se pudo resolver el ID para: ${rawId}`);
         return [];
       }
       let url;
-      if (mediaType === "movie" || mediaType === "movies") {
-        url = `https://embed69.org/f/${finalImdbId}`;
-      } else if (s !== null && e !== null) {
+      const isSerie = s !== null && e !== null;
+      if (isSerie) {
         url = `https://embed69.org/f/${finalImdbId}-${s}x${e}`;
+        console.log(`[Embed69] \u{1F3AC} Serie detectada: ${url}`);
       } else {
-        console.log("[Embed69] Fallo: Temporada/Episodio nulos en serie.");
-        return [];
+        url = `https://embed69.org/f/${finalImdbId}`;
+        console.log(`[Embed69] \u{1F3A5} Pel\xEDcula detectada: ${url}`);
       }
       const response = yield axios5.get(url, {
         timeout: 6e3,
         headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" }
       }).catch(() => null);
-      if (!response || !response.data)
+      if (!response || !response.data) {
+        console.log(`[Embed69] \u26A0\uFE0F Error de red o p\xE1gina vac\xEDa en: ${url}`);
         return [];
+      }
       const dataLinkRegex = /let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/;
       const match = response.data.match(dataLinkRegex);
-      if (!match)
+      if (!match) {
+        console.log(`[Embed69] \u26A0\uFE0F No se encontr\xF3 dataLink en la p\xE1gina.`);
         return [];
+      }
       let data;
       try {
         data = JSON.parse(match[1].replace(/\\\//g, "/"));
@@ -1953,12 +1956,12 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           }
         }
       }
-      console.log(`[Embed69] R\xE1faga: Procesando ${batch.length} servidores...`);
       const results = yield Promise.allSettled(batch);
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+      console.log(`[Embed69] \u2705 Finalizado con ${rawStreams.length} streams.`);
       return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Excepci\xF3n TV: ${error.message}`);
+      console.error(`[Embed69] Error Cr\xEDtico: ${error.message}`);
       return [];
     }
   });
