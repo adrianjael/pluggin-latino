@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:44:20.609Z
+ * Generated: 2026-04-14T16:49:34.159Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -548,7 +548,7 @@ var require_engine = __commonJS({
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
-          const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
+          const lang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio);
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           let displayQuality = s.quality || "HD";
           let checkMark = "";
