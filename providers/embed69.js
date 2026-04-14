@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:39:45.626Z
+ * Generated: 2026-04-14T16:44:20.609Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1871,7 +1871,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
       const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId).trim().toLowerCase() : "";
       const displayTitle = title || "Contenido";
-      console.log(`[Embed69] Lang-Fix v7.3.5 | ID: ${rawId} | S: ${s} | E: ${e}`);
+      console.log(`[Embed69] Audio-Lock v7.3.7 | ID: ${rawId} | S: ${s} | E: ${e}`);
       if (!rawId)
         return [];
       let finalImdbId = null;
@@ -1900,10 +1900,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           "Referer": "https://embed69.org/"
         },
         signal: controller.signal
-      }).catch((err) => {
-        console.error(`[Embed69] Fetch Error: ${err.message}`);
-        return null;
-      });
+      }).catch(() => null);
       clearTimeout(timeoutId);
       if (!response || !response.ok)
         return [];
@@ -1924,14 +1921,13 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const seenUrls = /* @__PURE__ */ new Set();
       const langMap = {
         "LAT": "Latino",
-        "ESP": "Castellano",
+        "ESP": "Latino",
+        // Unificar con Latino para evitar problemas de filtrado en App
         "SUB": "Subtitulado"
       };
       for (const item of data) {
         const videoLang = item.video_language || "";
-        const langLabel = langMap[videoLang.toUpperCase()] || videoLang || "Latino";
-        if (langLabel === "Subtitulado")
-          continue;
+        const normalizedLang = langMap[videoLang.toUpperCase()] || "Latino";
         if (!item.sortedEmbeds)
           continue;
         for (const embed of item.sortedEmbeds) {
@@ -1954,14 +1950,15 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
             if (seenUrls.has(decodedLink))
               continue;
             seenUrls.add(decodedLink);
-            const sLabel = embed.servername || "Servidor";
+            const sName = embed.servername || "Servidor";
             const resPromise = Promise.race([
               resolveEmbed(decodedLink).then((res) => {
                 if (!res)
                   return null;
                 return __spreadProps(__spreadValues({}, res), {
-                  langLabel,
-                  serverLabel: sLabel
+                  Audio: normalizedLang,
+                  // "Audio" tiene prioridad absoluta en engine.js
+                  serverLabel: sName
                 });
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
@@ -1969,8 +1966,8 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
               return {
                 url: decodedLink,
                 quality: "HD",
-                langLabel,
-                serverLabel: sLabel,
+                Audio: normalizedLang,
+                serverLabel: sName,
                 verified: false
               };
             });
@@ -1982,7 +1979,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
       return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Error v7.3.5: ${error.message}`);
+      console.error(`[Embed69] Error v7.3.7: ${error.message}`);
       return [];
     }
   });
