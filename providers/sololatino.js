@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-14T20:30:51.868Z
+ * Generated: 2026-04-14T20:40:54.849Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -537,18 +537,16 @@ var require_engine = __commonJS({
             continue;
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          let displayQuality = s.quality || "HD";
-          let checkMark = "";
-          if (s.verified) {
-            checkMark = " \u2705";
-          }
-          const fullTitle = `${displayQuality}${checkMark} - ${lang} - ${server}`;
-          if (seenTitles.has(fullTitle))
+          const displayQuality = s.quality || "HD";
+          const checkMark = s.verified ? " \u2705" : "";
+          const streamName = `${providerName || "LATINO"} - ${server} [${displayQuality}${checkMark}]`;
+          const streamTitle = `${mediaTitle || "Contenido"} (${lang})`;
+          if (seenTitles.has(streamName + streamTitle))
             continue;
-          seenTitles.add(fullTitle);
+          seenTitles.add(streamName + streamTitle);
           processed.push({
-            name: providerName || "Plugin Latino",
-            title: fullTitle,
+            name: streamName,
+            title: streamTitle,
             url: s.url,
             quality: displayQuality,
             serverName: server,

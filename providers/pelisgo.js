@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-14T20:30:51.817Z
+ * Generated: 2026-04-14T20:40:54.797Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -615,18 +615,16 @@ var require_engine = __commonJS({
             continue;
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          let displayQuality = s.quality || "HD";
-          let checkMark = "";
-          if (s.verified) {
-            checkMark = " \u2705";
-          }
-          const fullTitle = `${displayQuality}${checkMark} - ${lang} - ${server}`;
-          if (seenTitles.has(fullTitle))
+          const displayQuality = s.quality || "HD";
+          const checkMark = s.verified ? " \u2705" : "";
+          const streamName = `${providerName || "LATINO"} - ${server} [${displayQuality}${checkMark}]`;
+          const streamTitle = `${mediaTitle || "Contenido"} (${lang})`;
+          if (seenTitles.has(streamName + streamTitle))
             continue;
-          seenTitles.add(fullTitle);
+          seenTitles.add(streamName + streamTitle);
           processed.push({
-            name: providerName || "Plugin Latino",
-            title: fullTitle,
+            name: streamName,
+            title: streamTitle,
             url: s.url,
             quality: displayQuality,
             serverName: server,
@@ -2004,25 +2002,25 @@ var require_id_mapper = __commonJS({
       return __async(this, null, function* () {
         try {
           const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          const url = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
-          const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-          const [idRes, metaRes] = yield Promise.all([
-            fetchJson2(url).catch(() => null),
-            fetchJson2(metaUrl).catch(() => null)
-          ]);
-          if (idRes && idRes.imdb_id) {
-            const title = metaRes ? metaRes.title || metaRes.name : "Contenido";
-            const year = metaRes ? (metaRes.release_date || metaRes.first_air_date || "").split("-")[0] : null;
-            return {
-              imdbId: idRes.imdb_id,
-              title,
-              year,
-              offset: 0,
-              fromMapping: false
-            };
-          }
-          return null;
+          const apiKey = TMDB_API_KEY;
+          const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+          const idUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${apiKey}`;
+          const idRes = yield fetchJson2(idUrl, { headers: { "User-Agent": ua } }).catch(() => null);
+          if (!idRes || !idRes.imdb_id)
+            return null;
+          const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${apiKey}&language=es-MX`;
+          const metaRes = yield fetchJson2(metaUrl, { headers: { "User-Agent": ua } }).catch(() => null);
+          const title = metaRes ? metaRes.title || metaRes.name : "Contenido";
+          const year = metaRes ? (metaRes.release_date || metaRes.first_air_date || "").split("-")[0] : null;
+          return {
+            imdbId: idRes.imdb_id,
+            title,
+            year,
+            offset: 0,
+            fromMapping: false
+          };
         } catch (e) {
+          console.log(`[IDMapper] API error: ${e.message}`);
           return null;
         }
       });

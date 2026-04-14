@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T20:30:51.784Z
+ * Generated: 2026-04-14T20:40:54.766Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -187,25 +187,25 @@ var require_id_mapper = __commonJS({
       return __async(this, null, function* () {
         try {
           const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          const url = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
-          const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-          const [idRes, metaRes] = yield Promise.all([
-            fetchJson2(url).catch(() => null),
-            fetchJson2(metaUrl).catch(() => null)
-          ]);
-          if (idRes && idRes.imdb_id) {
-            const title = metaRes ? metaRes.title || metaRes.name : "Contenido";
-            const year = metaRes ? (metaRes.release_date || metaRes.first_air_date || "").split("-")[0] : null;
-            return {
-              imdbId: idRes.imdb_id,
-              title,
-              year,
-              offset: 0,
-              fromMapping: false
-            };
-          }
-          return null;
+          const apiKey = TMDB_API_KEY;
+          const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+          const idUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${apiKey}`;
+          const idRes = yield fetchJson2(idUrl, { headers: { "User-Agent": ua } }).catch(() => null);
+          if (!idRes || !idRes.imdb_id)
+            return null;
+          const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${apiKey}&language=es-MX`;
+          const metaRes = yield fetchJson2(metaUrl, { headers: { "User-Agent": ua } }).catch(() => null);
+          const title = metaRes ? metaRes.title || metaRes.name : "Contenido";
+          const year = metaRes ? (metaRes.release_date || metaRes.first_air_date || "").split("-")[0] : null;
+          return {
+            imdbId: idRes.imdb_id,
+            title,
+            year,
+            offset: 0,
+            fromMapping: false
+          };
         } catch (e) {
+          console.log(`[IDMapper] API error: ${e.message}`);
           return null;
         }
       });
@@ -547,18 +547,16 @@ var require_engine = __commonJS({
             continue;
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          let displayQuality = s.quality || "HD";
-          let checkMark = "";
-          if (s.verified) {
-            checkMark = " \u2705";
-          }
-          const fullTitle = `${displayQuality}${checkMark} - ${lang} - ${server}`;
-          if (seenTitles.has(fullTitle))
+          const displayQuality = s.quality || "HD";
+          const checkMark = s.verified ? " \u2705" : "";
+          const streamName = `${providerName || "LATINO"} - ${server} [${displayQuality}${checkMark}]`;
+          const streamTitle = `${mediaTitle || "Contenido"} (${lang})`;
+          if (seenTitles.has(streamName + streamTitle))
             continue;
-          seenTitles.add(fullTitle);
+          seenTitles.add(streamName + streamTitle);
           processed.push({
-            name: providerName || "Plugin Latino",
-            title: fullTitle,
+            name: streamName,
+            title: streamTitle,
             url: s.url,
             quality: displayQuality,
             serverName: server,
@@ -1851,63 +1849,51 @@ var { getCorrectImdbId } = require_id_mapper();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var INDIVIDUAL_TIMEOUT = 15e3;
-var EMERGENCY_MAP = {
-  "157336": "tt0816692",
-  // Interstellar
-  "155": "tt0468569",
-  // The Dark Knight
-  "27205": "tt1375666",
-  // Inception
-  "120": "tt0120737",
-  // LOTR: Fellowship
-  "603": "tt0133093"
-  // Matrix
-};
 function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     try {
       const s = season !== void 0 && season !== null && String(season) !== "undefined" ? parseInt(season) : null;
       const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
       const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId).trim().toLowerCase() : "";
-      const displayTitle = title || "Contenido";
+      let displayTitle = title || "Contenido";
       console.log(`[Embed69] ESTABLE-V7.4.2 | ID: ${rawId} | S: ${s} | E: ${e}`);
       if (!rawId)
         return [];
-      let finalImdbId = null;
-      if (rawId.startsWith("tt")) {
-        finalImdbId = rawId;
-      } else if (EMERGENCY_MAP[rawId]) {
-        finalImdbId = EMERGENCY_MAP[rawId];
-      } else {
-        const meta = yield getCorrectImdbId(rawId, mediaType).catch(() => null);
-        finalImdbId = meta ? meta.imdbId : null;
+      const tmdbIdOnly = String(tmdbId).split(":")[0];
+      console.log(`[Embed69] Buscando ID para: ${tmdbIdOnly} (${mediaType})`);
+      const imdbInfo = yield getCorrectImdbId(tmdbIdOnly, mediaType);
+      let finalImdbId = imdbInfo ? imdbInfo.imdbId : null;
+      displayTitle = imdbInfo ? imdbInfo.title : title;
+      if (!finalImdbId) {
+        console.log(`[Embed69] Mapeo IMDb fallido para ${tmdbIdOnly}. Reintentando con t\xEDtulo.`);
+        if (!displayTitle)
+          return [];
       }
-      if (!finalImdbId)
-        return [];
-      let url;
-      if (s !== null && e !== null) {
-        url = `https://embed69.org/f/${finalImdbId}-${s}x${e}`;
-      } else {
-        url = `https://embed69.org/f/${finalImdbId}`;
-      }
+      console.log(`[Embed69] Iniciando extracci\xF3n para: ${displayTitle}`);
+      const url = finalImdbId ? `https://embed69.org/f/${finalImdbId}` : `https://embed69.org/search/${encodeURIComponent(displayTitle)}`;
       const response = yield fetch(url, {
         method: "GET",
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
           "Referer": "https://embed69.org/"
         }
       }).catch(() => null);
       if (!response || !response.ok) {
-        console.log(`[Embed69] Error en respuesta de p\xE1gina: ${url}`);
+        console.log(`[Embed69] Error de red en p\xE1gina: ${url}`);
         return [];
       }
       const html = yield response.text();
-      if (!html)
+      if (!html) {
+        console.log(`[Embed69] HTML vac\xEDo recibido del servidor.`);
         return [];
+      }
+      console.log(`[Embed69] HTML cargado correctamente. Analizando scripts...`);
       const dataLinkRegex = /let\s+dataLink\s*=\s*(\[[\s\S]*?\]);/;
       const match = html.match(dataLinkRegex);
-      if (!match)
+      if (!match) {
+        console.log(`[Embed69] No se encontr\xF3 el objeto dataLink en la p\xE1gina.`);
         return [];
+      }
       let data;
       try {
         const dataStr = match[1].replace(/\\\//g, "/");
