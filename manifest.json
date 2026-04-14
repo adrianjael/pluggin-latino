@@ -17,6 +17,10 @@
       "logo": "https://play-lh.googleusercontent.com/5oy8Mdjfj1sEzBWe5WxuQ_8MqFRC6Yu-PM2c4QkXEN_isAQvqrWeMwZV7z3__lDm8Q",
       "contentLanguage": [
         "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
       ]
     },
     {
