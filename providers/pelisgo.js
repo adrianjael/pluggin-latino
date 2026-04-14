@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-14T17:32:20.630Z
+ * Generated: 2026-04-14T17:34:46.437Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -613,12 +613,15 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] MODO TRANSPARENTE v7.3.6 - Enviando todos los idiomas a la App...`);
+        console.log(`[Engine] FILTRO LATINO ESTRICTO v7.4.0 - Descartando Castellano y Subtitulados...`);
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio);
+          if (lang !== "Latino") {
+            continue;
+          }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           let displayQuality = s.quality || "HD";
           let checkMark = "";
