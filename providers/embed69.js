@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:56:04.008Z
+ * Generated: 2026-04-14T16:59:25.502Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -506,8 +506,8 @@ var require_engine = __commonJS({
     var { isMirror } = require_mirrors();
     function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
-      if (lang === "Latino" || lang === "Espa\xF1ol")
-        return lang;
+      if (l === "latino" || l === "espa\xF1ol")
+        return lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase();
       if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dub") || l.includes("dual")) {
         return "Latino";
       }
@@ -1852,8 +1852,8 @@ var CryptoJS3 = require("crypto-js");
 var { getCorrectImdbId } = require_id_mapper();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var INDIVIDUAL_TIMEOUT = 5e3;
-var GLOBAL_FETCH_TIMEOUT = 8e3;
+var INDIVIDUAL_TIMEOUT = 7e3;
+var GLOBAL_FETCH_TIMEOUT = 1e4;
 var EMERGENCY_MAP = {
   "157336": "tt0816692",
   // Interstellar
@@ -1873,7 +1873,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
       const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId).trim().toLowerCase() : "";
       const displayTitle = title || "Contenido";
-      console.log(`[Embed69] Audio-Lock v7.3.7 | ID: ${rawId} | S: ${s} | E: ${e}`);
+      console.log(`[Embed69] MASTER-V7.4.0 | ID: ${rawId} | S: ${s} | E: ${e}`);
       if (!rawId)
         return [];
       let finalImdbId = null;
@@ -1924,12 +1924,11 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const langMap = {
         "LAT": "Latino",
         "ESP": "Latino",
-        // Unificar con Latino para evitar problemas de filtrado en App
         "SUB": "Subtitulado"
       };
       for (const item of data) {
-        const videoLang = item.video_language || "";
-        const normalizedLang = langMap[videoLang.toUpperCase()] || "Latino";
+        const rawLang = (item.video_language || "").toUpperCase();
+        const normalizedLang = langMap[rawLang] || "Latino";
         if (!item.sortedEmbeds)
           continue;
         for (const embed of item.sortedEmbeds) {
@@ -1952,15 +1951,19 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
             if (seenUrls.has(decodedLink))
               continue;
             seenUrls.add(decodedLink);
-            const sName = embed.servername || "Servidor";
+            const serverName = embed.servername || "Servidor";
             const resPromise = Promise.race([
               resolveEmbed(decodedLink).then((res) => {
                 if (!res)
                   return null;
                 return __spreadProps(__spreadValues({}, res), {
                   Audio: normalizedLang,
-                  // "Audio" tiene prioridad absoluta en engine.js
-                  serverLabel: sName
+                  // Inyección Maestro
+                  langLabel: normalizedLang,
+                  // Redundancia
+                  language: normalizedLang,
+                  // Redundancia
+                  serverLabel: serverName
                 });
               }),
               new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
@@ -1969,7 +1972,8 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                 url: decodedLink,
                 quality: "HD",
                 Audio: normalizedLang,
-                serverLabel: sName,
+                langLabel: normalizedLang,
+                serverLabel: serverName,
                 verified: false
               };
             });
@@ -1979,9 +1983,9 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       }
       const results = yield Promise.allSettled(batch);
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
+      return yield finalizeStreams(rawStreams, "V7.4.0-MASTER", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Error v7.3.7: ${error.message}`);
+      console.error(`[Embed69] MASTER v7.4.0 Error: ${error.message}`);
       return [];
     }
   });
