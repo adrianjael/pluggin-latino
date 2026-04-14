@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-14T17:34:46.487Z
+ * Generated: 2026-04-14T17:44:34.314Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -160,7 +160,6 @@ var require_ua = __commonJS({
 // src/utils/http.js
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
-    var axios2 = require("axios");
     var { getRandomUA: getRandomUA2 } = require_ua();
     var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
     var sessionUA = null;

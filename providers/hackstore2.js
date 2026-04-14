@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-14T17:34:46.426Z
+ * Generated: 2026-04-14T17:44:34.251Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -230,7 +230,6 @@ var require_ua = __commonJS({
 // src/utils/http.js
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
-    var axios5 = require("axios");
     var { getRandomUA } = require_ua();
     var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
     var sessionUA = null;
@@ -521,7 +520,7 @@ var require_m3u8 = __commonJS({
 // src/resolvers/hlswish.js
 var require_hlswish = __commonJS({
   "src/resolvers/hlswish.js"(exports2, module2) {
-    var axios5 = require("axios");
+    var { fetchHtml: fetchHtml4 } = require_http();
     var { getSessionUA } = require_http();
     var UA4 = getSessionUA();
     function unpackEval2(payload, radix, symtab) {
@@ -560,16 +559,20 @@ var require_hlswish = __commonJS({
           console.log(`[StreamWish] Resolviendo CJS v6.2.1 (FullReferer): ${rawId}`);
           for (const mirror of mirrors) {
             try {
-              const response = yield axios5.get(mirror, {
-                headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" },
-                timeout: 5e3
+              console.log(`[StreamWish] Intentando mirror: ${mirror}`);
+              html = yield fetchHtml4(mirror, {
+                headers: {
+                  "Referer": mirror,
+                  "User-Agent": UA4
+                },
+                timeout: 15e3
               });
-              html = response.data;
-              usedUrl = mirror;
-              if (html.includes("eval(function") || html.includes(".m3u8"))
+              if (html && html.includes("file:")) {
+                usedUrl = mirror;
                 break;
+              }
             } catch (e) {
-              continue;
+              console.log(`[StreamWish] Mirror fallido (${mirror}): ${e.message}`);
             }
           }
           if (!html)

@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-14T17:34:46.394Z
+ * Generated: 2026-04-14T17:44:34.216Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -181,7 +181,6 @@ var require_ua = __commonJS({
 // src/utils/http.js
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
-    var axios5 = require("axios");
     var { getRandomUA } = require_ua();
     var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
     var sessionUA = null;
@@ -695,7 +694,7 @@ var require_voe = __commonJS({
 // src/resolvers/hlswish.js
 var require_hlswish = __commonJS({
   "src/resolvers/hlswish.js"(exports2, module2) {
-    var axios5 = require("axios");
+    var { fetchHtml: fetchHtml4 } = require_http();
     var { getSessionUA } = require_http();
     var UA4 = getSessionUA();
     function unpackEval(payload, radix, symtab) {
@@ -734,16 +733,20 @@ var require_hlswish = __commonJS({
           console.log(`[StreamWish] Resolviendo CJS v6.2.1 (FullReferer): ${rawId}`);
           for (const mirror of mirrors) {
             try {
-              const response = yield axios5.get(mirror, {
-                headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" },
-                timeout: 5e3
+              console.log(`[StreamWish] Intentando mirror: ${mirror}`);
+              html = yield fetchHtml4(mirror, {
+                headers: {
+                  "Referer": mirror,
+                  "User-Agent": UA4
+                },
+                timeout: 15e3
               });
-              html = response.data;
-              usedUrl = mirror;
-              if (html.includes("eval(function") || html.includes(".m3u8"))
+              if (html && html.includes("file:")) {
+                usedUrl = mirror;
                 break;
+              }
             } catch (e) {
-              continue;
+              console.log(`[StreamWish] Mirror fallido (${mirror}): ${e.message}`);
             }
           }
           if (!html)
@@ -1863,7 +1866,7 @@ var require_resolvers = __commonJS({
 // src/utils/id_mapper.js
 var require_id_mapper = __commonJS({
   "src/utils/id_mapper.js"(exports2, module2) {
-    var axios5 = require("axios");
+    var { fetchJson: fetchJson2, fetchHtml: fetchHtml4 } = require_http();
     var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
     var ID_CACHE = /* @__PURE__ */ new Map();
     var SERIES_MAPPINGS = {
@@ -1876,14 +1879,14 @@ var require_id_mapper = __commonJS({
           const url = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY2}`;
           const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY2}&language=es-MX`;
           const [idRes, metaRes] = yield Promise.all([
-            axios5.get(url).catch(() => null),
-            axios5.get(metaUrl).catch(() => null)
+            fetchJson2(url).catch(() => null),
+            fetchJson2(metaUrl).catch(() => null)
           ]);
-          if (idRes && idRes.data && idRes.data.imdb_id) {
-            const title = metaRes && metaRes.data ? metaRes.data.title || metaRes.data.name : "Contenido";
-            const year = metaRes && metaRes.data ? (metaRes.data.release_date || metaRes.data.first_air_date || "").split("-")[0] : null;
+          if (idRes && idRes.imdb_id) {
+            const title = metaRes ? metaRes.title || metaRes.name : "Contenido";
+            const year = metaRes ? (metaRes.release_date || metaRes.first_air_date || "").split("-")[0] : null;
             return {
-              imdbId: idRes.data.imdb_id,
+              imdbId: idRes.imdb_id,
               title,
               year,
               offset: 0,
@@ -1900,10 +1903,9 @@ var require_id_mapper = __commonJS({
       return __async(this, null, function* () {
         try {
           const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-          const response = yield axios5.get(url, { timeout: 5e3 }).catch(() => null);
-          if (!response || !response.data)
+          const html = yield fetchHtml4(url, { timeout: 1e4 }).catch(() => null);
+          if (!html)
             return { imdbId: null, title: "Contenido" };
-          const html = response.data;
           const imdbMatch = html.match(/href="https:\/\/www\.imdb\.com\/title\/(tt\d+)"/i);
           const titleMatch = html.match(/<title>(.*?) &#8212;/i);
           return {
