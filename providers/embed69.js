@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T17:03:45.207Z
+ * Generated: 2026-04-14T17:09:07.723Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -515,7 +515,7 @@ var require_engine = __commonJS({
         return "Espa\xF1ol";
       }
       if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
-        return "SUB-TEST-FIX";
+        return "Subtitulado";
       }
       return lang || "Latino";
     }
@@ -1873,7 +1873,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
       const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId).trim().toLowerCase() : "";
       const displayTitle = title || "Contenido";
-      console.log(`[Embed69] DIAG-V7.4.1 | ID: ${rawId} | S: ${s} | E: ${e}`);
+      console.log(`[Embed69] ESTABLE-V7.4.2 | ID: ${rawId} | S: ${s} | E: ${e}`);
       if (!rawId)
         return [];
       let finalImdbId = null;
@@ -1924,63 +1924,64 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const langMap = {
         "LAT": "Latino",
         "ESP": "Latino",
-        "SUB": "SUB-TEST-FIX"
-        // Etiqueta delatora
+        "SUB": "Subtitulado"
       };
-      for (const item of data) {
+      data.forEach((item) => {
         const rawLang = (item.video_language || "").toUpperCase();
-        const normalizedLang = langMap[rawLang] || "Latino";
-        if (!item.sortedEmbeds)
-          continue;
-        for (const embed of item.sortedEmbeds) {
-          if (embed.link) {
-            let decodedLink = embed.link;
-            if (decodedLink.includes(".")) {
-              try {
-                const parts = decodedLink.split(".");
-                if (parts.length === 3) {
-                  const decoded = CryptoJS3.enc.Base64.parse(parts[1]).toString(CryptoJS3.enc.Utf8);
-                  const payload = JSON.parse(decoded);
-                  if (payload.link)
-                    decodedLink = payload.link;
+        const currentLangLabel = langMap[rawLang] || "Latino";
+        if (item.sortedEmbeds && Array.isArray(item.sortedEmbeds)) {
+          item.sortedEmbeds.forEach((embed) => {
+            if (embed.link) {
+              let decodedLink = embed.link;
+              if (decodedLink.includes(".")) {
+                try {
+                  const parts = decodedLink.split(".");
+                  if (parts.length === 3) {
+                    const decoded = CryptoJS3.enc.Base64.parse(parts[1]).toString(CryptoJS3.enc.Utf8);
+                    const payload = JSON.parse(decoded);
+                    if (payload.link)
+                      decodedLink = payload.link;
+                  }
+                } catch (err) {
                 }
-              } catch (err) {
               }
+              if (decodedLink.includes("/d/") || decodedLink.includes("embed69.org/f/"))
+                return;
+              if (seenUrls.has(decodedLink))
+                return;
+              seenUrls.add(decodedLink);
+              const sName = embed.servername || "Servidor";
+              const finalLang = currentLangLabel;
+              const resPromise = Promise.race([
+                resolveEmbed(decodedLink).then((res) => {
+                  if (!res)
+                    return null;
+                  return __spreadProps(__spreadValues({}, res), {
+                    Audio: finalLang,
+                    // Asignación inamovible
+                    serverLabel: sName
+                  });
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
+              ]).catch(() => {
+                return {
+                  url: decodedLink,
+                  quality: "HD",
+                  Audio: finalLang,
+                  serverLabel: sName,
+                  verified: false
+                };
+              });
+              batch.push(resPromise);
             }
-            if (decodedLink.includes("/d/") || decodedLink.includes("embed69.org/f/"))
-              continue;
-            if (seenUrls.has(decodedLink))
-              continue;
-            seenUrls.add(decodedLink);
-            const serverName = embed.servername || "Servidor";
-            const resPromise = Promise.race([
-              resolveEmbed(decodedLink).then((res) => {
-                if (!res)
-                  return null;
-                return __spreadProps(__spreadValues({}, res), {
-                  Audio: normalizedLang,
-                  serverLabel: serverName
-                });
-              }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
-            ]).catch(() => {
-              return {
-                url: decodedLink,
-                quality: "HD",
-                Audio: normalizedLang,
-                serverLabel: serverName,
-                verified: false
-              };
-            });
-            batch.push(resPromise);
-          }
+          });
         }
-      }
+      });
       const results = yield Promise.allSettled(batch);
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      return yield finalizeStreams(rawStreams, "V7.4.1-DIAGNOSTIC", displayTitle);
+      return yield finalizeStreams(rawStreams, "V7.4.2-FINAL", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Critical v7.4.1 ERROR: ${error.message}`);
+      console.error(`[Embed69] Critical v7.4.2: ${error.message}`);
       return [];
     }
   });
