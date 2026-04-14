@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:59:25.502Z
+ * Generated: 2026-04-14T17:03:45.207Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -515,7 +515,7 @@ var require_engine = __commonJS({
         return "Espa\xF1ol";
       }
       if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
-        return "Subtitulado";
+        return "SUB-TEST-FIX";
       }
       return lang || "Latino";
     }
@@ -1873,7 +1873,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
       const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId).trim().toLowerCase() : "";
       const displayTitle = title || "Contenido";
-      console.log(`[Embed69] MASTER-V7.4.0 | ID: ${rawId} | S: ${s} | E: ${e}`);
+      console.log(`[Embed69] DIAG-V7.4.1 | ID: ${rawId} | S: ${s} | E: ${e}`);
       if (!rawId)
         return [];
       let finalImdbId = null;
@@ -1924,7 +1924,8 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const langMap = {
         "LAT": "Latino",
         "ESP": "Latino",
-        "SUB": "Subtitulado"
+        "SUB": "SUB-TEST-FIX"
+        // Etiqueta delatora
       };
       for (const item of data) {
         const rawLang = (item.video_language || "").toUpperCase();
@@ -1958,11 +1959,6 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                   return null;
                 return __spreadProps(__spreadValues({}, res), {
                   Audio: normalizedLang,
-                  // Inyección Maestro
-                  langLabel: normalizedLang,
-                  // Redundancia
-                  language: normalizedLang,
-                  // Redundancia
                   serverLabel: serverName
                 });
               }),
@@ -1972,7 +1968,6 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                 url: decodedLink,
                 quality: "HD",
                 Audio: normalizedLang,
-                langLabel: normalizedLang,
                 serverLabel: serverName,
                 verified: false
               };
@@ -1983,9 +1978,9 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       }
       const results = yield Promise.allSettled(batch);
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      return yield finalizeStreams(rawStreams, "V7.4.0-MASTER", displayTitle);
+      return yield finalizeStreams(rawStreams, "V7.4.1-DIAGNOSTIC", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] MASTER v7.4.0 Error: ${error.message}`);
+      console.error(`[Embed69] Critical v7.4.1 ERROR: ${error.message}`);
       return [];
     }
   });
