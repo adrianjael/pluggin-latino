@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T15:37:03.092Z
+ * Generated: 2026-04-14T15:39:25.811Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -77,90 +77,75 @@ var __async = (__this, __arguments, generator) => {
 var require_id_mapper = __commonJS({
   "src/utils/id_mapper.js"(exports2, module2) {
     var axios6 = require("axios");
-    var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-    var SERIES_MAPPINGS = {
-      // Scrubs Offset Case
-      "tt40197357": {
-        replacementId: "tt0285403",
-        title: "Scrubs",
-        offset: 9
-      }
-    };
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var ID_CACHE = /* @__PURE__ */ new Map();
-    function getCorrectImdbId2(tmdbId, mediaType) {
+    var SERIES_MAPPINGS = {
+      // Ejemplo: 'tmdb_id': 'imdb_id'
+    };
+    function getImdbIdFromApi(tmdbId, mediaType) {
       return __async(this, null, function* () {
-        const realId = tmdbId ? tmdbId.toString().split(":")[0] : "";
-        if (!realId)
-          return { imdbId: null, offset: 0, title: null };
-        const cacheKey = `${mediaType}_${realId}`;
-        if (ID_CACHE.has(cacheKey)) {
-          return ID_CACHE.get(cacheKey);
-        }
-        const mapping = SERIES_MAPPINGS[realId];
-        if (mapping && mapping.replacementId) {
-          const res = {
-            imdbId: mapping.replacementId,
-            offset: mapping.offset || 0,
-            title: mapping.title || null,
-            fromMapping: true
-          };
-          ID_CACHE.set(cacheKey, res);
-          return res;
-        }
-        if (realId.startsWith("tt")) {
-          const res = { imdbId: realId, offset: 0, fromMapping: false };
-          ID_CACHE.set(cacheKey, res);
-          return res;
-        }
         try {
           const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          const tmdbUrl = `https://www.themoviedb.org/${type}/${realId}?language=es-MX`;
-          console.log(`[ID Mapper] Scraping TMDB: ${tmdbUrl}`);
-          const { data: html } = yield axios6.get(tmdbUrl, {
-            timeout: 8e3,
-            headers: {
-              "User-Agent": UA5,
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-            }
-          });
-          let imdbMatch = html.match(/"imdb_id"\s*:\s*"(tt\d+)"/i) || html.match(/href="[^"]*?external_id=(tt\d+)[^"]*?"/i) || html.match(/imdb.com\/title\/(tt\d+)/i);
-          let imdbId = imdbMatch ? imdbMatch[1] : null;
-          if (!imdbId) {
-            console.log(`[ID Mapper] \u{1F504} Scraping fallido, intentando API de TMDB...`);
-            try {
-              const apiKey = "439c478a771f35c05022f9feabcca01c";
-              const type2 = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-              const apiUrl = `https://api.themoviedb.org/3/${type2}/${tmdbId}/external_ids?api_key=${apiKey}`;
-              const apiRes = yield axios6.get(apiUrl, { timeout: 5e3 }).catch(() => null);
-              if (apiRes && apiRes.data && apiRes.data.imdb_id) {
-                imdbId = apiRes.data.imdb_id;
-                console.log(`[ID Mapper] \u2705 IMDb ID obtenido v\xEDa API: ${imdbId}`);
-              }
-            } catch (apiErr) {
-              console.log(`[ID Mapper] \u274C Fallo tambi\xE9n en API: ${apiErr.message}`);
-            }
+          const url = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
+          const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
+          const [idRes, metaRes] = yield Promise.all([
+            axios6.get(url).catch(() => null),
+            axios6.get(metaUrl).catch(() => null)
+          ]);
+          if (idRes && idRes.data && idRes.data.imdb_id) {
+            const title = metaRes && metaRes.data ? metaRes.data.title || metaRes.data.name : "Contenido";
+            const year = metaRes && metaRes.data ? (metaRes.data.release_date || metaRes.data.first_air_date || "").split("-")[0] : null;
+            return {
+              imdbId: idRes.data.imdb_id,
+              title,
+              year,
+              offset: 0,
+              fromMapping: false
+            };
           }
-          const titleMatch = html.match(/<title>([^<]+?)\s+[—-]\s+The\s+Movie\s+Database/i) || html.match(/<h2[^>]*><a[^>]*>([^<]+)<\/a>/i) || html.match(/"title":"([^"]+)"/i) || html.match(/"name":"([^"]+)"/i);
-          const title = titleMatch ? titleMatch[1].trim() : null;
-          const yearMatch = html.match(/class="release_date">\((\d{4})\)<\/span>/i) || html.match(/"release_date":"(\d{4})/i) || html.match(/"first_air_date":"(\d{4})/i);
-          const year = yearMatch ? yearMatch[1] : null;
-          const res = {
-            imdbId,
-            title,
-            year,
+          return null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    function scrapeTmdbId(tmdbId, mediaType) {
+      return __async(this, null, function* () {
+        try {
+          const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
+          const response = yield axios6.get(url, { timeout: 5e3 }).catch(() => null);
+          if (!response || !response.data)
+            return { imdbId: null, title: "Contenido" };
+          const html = response.data;
+          const imdbMatch = html.match(/href="https:\/\/www\.imdb\.com\/title\/(tt\d+)"/i);
+          const titleMatch = html.match(/<title>(.*?) &#8212;/i);
+          return {
+            imdbId: imdbMatch ? imdbMatch[1] : null,
+            title: titleMatch ? titleMatch[1].trim() : "Contenido",
+            year: null,
             offset: 0,
             fromMapping: false
           };
-          if (imdbId && !res.fromMapping)
-            console.log(`[ID Mapper] \u2713 IMDb ID final: ${imdbId}`);
-          if (title)
-            console.log(`[ID Mapper] \u2713 Metadatos: ${title} (${year || "?"})`);
-          ID_CACHE.set(cacheKey, res);
-          return res;
         } catch (e) {
-          console.log(`[ID Mapper] \u274C Error cr\xEDtico: ${e.message}`);
-          return { imdbId: null, title: null, year: null, offset: 0, fromMapping: false };
+          return { imdbId: null, title: "Contenido" };
         }
+      });
+    }
+    function getCorrectImdbId2(tmdbId, mediaType) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return { imdbId: null, title: "" };
+        const cacheKey = `${mediaType}_${tmdbId}`;
+        if (ID_CACHE.has(cacheKey))
+          return ID_CACHE.get(cacheKey);
+        const apiResult = yield getImdbIdFromApi(tmdbId, mediaType);
+        if (apiResult && apiResult.imdbId) {
+          ID_CACHE.set(cacheKey, apiResult);
+          return apiResult;
+        }
+        const scrapeResult = yield scrapeTmdbId(tmdbId, mediaType);
+        ID_CACHE.set(cacheKey, scrapeResult);
+        return scrapeResult;
       });
     }
     module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
@@ -1869,7 +1854,7 @@ var CryptoJS3 = require("crypto-js");
 var { getCorrectImdbId } = require_id_mapper();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var INDIVIDUAL_TIMEOUT = 12e3;
+var INDIVIDUAL_TIMEOUT = 5e3;
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getStreams(tmdbId, mediaType, season, episode) {
   return __async(this, null, function* () {
@@ -1939,7 +1924,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
                   serverLabel: sLabel
                 });
               }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 1e4))
+              new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5e3))
             ]).catch(() => {
               return {
                 url: decodedLink,
