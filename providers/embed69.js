@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T17:16:13.363Z
+ * Generated: 2026-04-14T17:21:13.846Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1979,7 +1979,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       });
       const results = yield Promise.allSettled(batch);
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-      return yield finalizeStreams(rawStreams, "V7.4.2-FINAL", displayTitle);
+      return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
     } catch (error) {
       console.error(`[Embed69] Critical v7.4.2: ${error.message}`);
       return [];
