@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T15:56:05.570Z
+ * Generated: 2026-04-14T16:07:59.690Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1854,31 +1854,41 @@ var CryptoJS3 = require("crypto-js");
 var { getCorrectImdbId } = require_id_mapper();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var INDIVIDUAL_TIMEOUT = 4e3;
+var INDIVIDUAL_TIMEOUT = 5e3;
 var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     try {
-      const s = season !== void 0 && season !== null && season !== "undefined" ? parseInt(season) : null;
-      const e = episode !== void 0 && episode !== null && episode !== "undefined" ? parseInt(episode) : null;
-      const id = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId) : null;
-      console.log(`[Embed69] Modo TV v7.3.0 - ID: ${id} | S: ${s} | E: ${e}`);
-      if (!id)
+      const s = season !== void 0 && season !== null && String(season) !== "undefined" ? parseInt(season) : null;
+      const e = episode !== void 0 && episode !== null && String(episode) !== "undefined" ? parseInt(episode) : null;
+      const rawId = tmdbId !== void 0 && tmdbId !== null ? String(tmdbId) : "";
+      const displayTitle = title || "Contenido";
+      console.log(`[Embed69] TV-Stabilization v7.3.1 | ID: ${rawId} | S: ${s} | E: ${e}`);
+      if (!rawId)
         return [];
-      const meta = yield getCorrectImdbId(id, mediaType);
-      if (!meta.imdbId)
+      let finalImdbId = null;
+      if (rawId.startsWith("tt")) {
+        console.log(`[Embed69] ID Nativo detectado (IMDb): ${rawId}`);
+        finalImdbId = rawId;
+      } else {
+        const meta = yield getCorrectImdbId(rawId, mediaType).catch(() => null);
+        finalImdbId = meta ? meta.imdbId : null;
+      }
+      if (!finalImdbId) {
+        console.log(`[Embed69] Error: No se pudo obtener IMDb ID para ${rawId}. Abortando.`);
         return [];
-      const displayTitle = title || meta.title || "Contenido";
+      }
       let url;
       if (mediaType === "movie" || mediaType === "movies") {
-        url = `https://embed69.org/f/${meta.imdbId}`;
+        url = `https://embed69.org/f/${finalImdbId}`;
       } else if (s !== null && e !== null) {
-        url = `https://embed69.org/f/${meta.imdbId}-${s}x${e}`;
+        url = `https://embed69.org/f/${finalImdbId}-${s}x${e}`;
       } else {
+        console.log("[Embed69] Fallo: Temporada/Episodio nulos en serie.");
         return [];
       }
       const response = yield axios5.get(url, {
-        timeout: 5e3,
+        timeout: 6e3,
         headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" }
       }).catch(() => null);
       if (!response || !response.data)
@@ -1889,7 +1899,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         return [];
       let data;
       try {
-        data = JSON.parse(match[1]);
+        data = JSON.parse(match[1].replace(/\\\//g, "/"));
       } catch (err) {
         return [];
       }
@@ -1914,13 +1924,13 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
               } catch (err) {
               }
             }
-            if (decodedLink.includes("/d/"))
+            if (decodedLink.includes("/d/") || decodedLink.includes("embed69.org/f/"))
               continue;
             if (seenUrls.has(decodedLink))
               continue;
             seenUrls.add(decodedLink);
             const sLabel = embed.servername || "Servidor";
-            const resolutionPromise = Promise.race([
+            const resPromise = Promise.race([
               resolveEmbed(decodedLink).then((res) => {
                 if (!res)
                   return null;
@@ -1939,15 +1949,16 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                 verified: false
               };
             });
-            batch.push(resolutionPromise);
+            batch.push(resPromise);
           }
         }
       }
+      console.log(`[Embed69] R\xE1faga: Procesando ${batch.length} servidores...`);
       const results = yield Promise.allSettled(batch);
       const rawStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
       return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Error TV: ${error.message}`);
+      console.error(`[Embed69] Excepci\xF3n TV: ${error.message}`);
       return [];
     }
   });
