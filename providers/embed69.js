@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T16:33:11.482Z
+ * Generated: 2026-04-14T16:39:45.626Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -543,15 +543,12 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] MODO TOTAL v5.6.95 - Sin filtros. Mostrando todo...`);
+        console.log(`[Engine] MODO TRANSPARENTE v7.3.6 - Enviando todos los idiomas a la App...`);
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
           const lang = normalizeLanguage(s.langLabel || s.language || s.Audio || s.audio);
-          const isLatino = lang.toLowerCase().includes("lat") || lang.toLowerCase().includes("mex");
-          if (!isLatino)
-            continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           let displayQuality = s.quality || "HD";
           let checkMark = "";
