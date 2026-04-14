@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-14T14:54:32.477Z
+ * Generated: 2026-04-14T15:00:35.317Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -11157,9 +11157,9 @@ var require_id_mapper = __commonJS({
           });
           const imdbMatch = html.match(/href="[^"]*?external_id=(tt\d+)[^"]*?"/i) || html.match(/imdb.com\/title\/(tt\d+)/i) || html.match(/"imdb_id":"(tt\d+)"/i);
           const imdbId = imdbMatch ? imdbMatch[1] : null;
-          const titleMatch = html.match(/<title>([^<]+?)\s+[—-]\s+The\s+Movie\s+Database/i) || html.match(/<h2[^>]*><a[^>]*>([^<]+)<\/a>/i);
+          const titleMatch = html.match(/<title>([^<]+?)\s+[—-]\s+The\s+Movie\s+Database/i) || html.match(/<h2[^>]*><a[^>]*>([^<]+)<\/a>/i) || html.match(/"name":"([^"]+)"/i);
           const title = titleMatch ? titleMatch[1].trim() : null;
-          const yearMatch = html.match(/class="release_date">\((\d{4})\)<\/span>/i) || html.match(/release_date\s*:\s*"(\d{4})/i);
+          const yearMatch = html.match(/class="release_date">\((\d{4})\)<\/span>/i) || html.match(/"release_date":"(\d{4})/i) || html.match(/"first_air_date":"(\d{4})/i);
           const year = yearMatch ? yearMatch[1] : null;
           const res = {
             imdbId,
@@ -11170,14 +11170,15 @@ var require_id_mapper = __commonJS({
           };
           if (imdbId)
             console.log(`[ID Mapper] \u2713 IMDb ID encontrado: ${imdbId}`);
-          else
-            console.log(`[ID Mapper] \u26A0\uFE0F No se pudo extraer IMDb ID del HTML.`);
+          if (title)
+            console.log(`[ID Mapper] \u2713 Metadatos: ${title} (${year || "?"})`);
+          if (!imdbId && !title)
+            console.log(`[ID Mapper] \u26A0\uFE0F No se pudo extraer informaci\xF3n del HTML.`);
           ID_CACHE.set(cacheKey, res);
           return res;
         } catch (e) {
           console.log(`[ID Mapper] \u274C Error en Scraping: ${e.message}`);
-          const fail = { imdbId: null, offset: 0, fromMapping: false };
-          return fail;
+          return { imdbId: null, title: null, year: null, offset: 0, fromMapping: false };
         }
       });
     }
