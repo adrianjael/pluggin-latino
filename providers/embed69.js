@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-14T14:47:42.484Z
+ * Generated: 2026-04-14T14:54:32.497Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -11137,8 +11137,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const mediaTitle = title || "Contenido";
     const UA4 = getRandomUA();
     setSessionUA(UA4);
-    console.log(`[Embed69] STABILITY v6.1.0 - Usando UA: ${UA4.substring(0, 40)}...`);
+    console.log(`[Embed69] \u{1F4FA} Iniciando b\xFAsqueda v6.1.1 (TV Optimized)`);
+    console.log(`[Embed69] Info: ${mediaType} | ID: ${tmdbId} | T\xEDtulo: ${mediaTitle}`);
     try {
+      console.log(`[Embed69] \u{1F50D} Paso 1: Mapeando TMDB a IMDb...`);
       const mapper = yield getCorrectImdbId(tmdbId, mediaType);
       const imdbId = mapper ? mapper.imdbId : null;
       const allDataLinks = [];
@@ -11149,31 +11151,60 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           const e = String(episode || 1).padStart(2, "0");
           idUrl = `${idUrl}-${s}x${e}`;
         }
-        console.log(`[Embed69] Intentando por ID: ${imdbId}`);
-        const idRes = yield axios5.get(idUrl, { timeout: 7e3, headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" } }).catch(() => null);
+        console.log(`[Embed69] \u{1F50D} Paso 2: Intentando acceso directo ID -> ${idUrl}`);
+        const idRes = yield axios5.get(idUrl, {
+          timeout: 8e3,
+          headers: {
+            "User-Agent": UA4,
+            "Referer": "https://embed69.org/",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+          }
+        }).catch((err) => {
+          console.log(`[Embed69] \u274C Fallo en acceso directo: ${err.message}`);
+          return null;
+        });
         if (idRes && idRes.data) {
+          console.log(`[Embed69] \u{1F4C4} HTML Recibido (Directo). Tama\xF1o: ${idRes.data.length} bytes`);
           const raw = parseDataLink(idRes.data);
           if (raw) {
             const arr = Array.isArray(raw) ? raw : Object.values(raw);
             allDataLinks.push(...arr);
-            console.log(`[Embed69] \u2713 Resultados encontrados por ID. Saltando b\xFAsqueda por texto.`);
+            console.log(`[Embed69] \u2705 ${allDataLinks.length} resultados encontrados por ID.`);
+          } else {
+            console.log(`[Embed69] \u26A0\uFE0F dataLink no encontrado en el HTML de la p\xE1gina de ID.`);
           }
         }
       }
       if (allDataLinks.length === 0) {
-        console.log(`[Embed69] Intentando por Texto: ${mediaTitle}`);
+        console.log(`[Embed69] \u{1F50D} Paso 3: Intentando b\xFAsqueda por Texto -> ${mediaTitle}`);
         const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(mediaTitle)}`;
-        const textRes = yield axios5.get(searchUrl, { timeout: 7e3, headers: { "User-Agent": UA4, "Referer": "https://embed69.org/" } }).catch(() => null);
+        const textRes = yield axios5.get(searchUrl, {
+          timeout: 8e3,
+          headers: {
+            "User-Agent": UA4,
+            "Referer": "https://embed69.org/",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+          }
+        }).catch((err) => {
+          console.log(`[Embed69] \u274C Fallo en b\xFAsqueda texto: ${err.message}`);
+          return null;
+        });
         if (textRes && textRes.data) {
+          console.log(`[Embed69] \u{1F4C4} HTML Recibido (B\xFAsqueda). Tama\xF1o: ${textRes.data.length} bytes`);
           const raw = parseDataLink(textRes.data);
           if (raw) {
             const arr = Array.isArray(raw) ? raw : Object.values(raw);
             allDataLinks.push(...arr);
+            console.log(`[Embed69] \u2705 ${allDataLinks.length} resultados encontrados por Texto.`);
+          } else {
+            console.log(`[Embed69] \u26A0\uFE0F No se encontraron enlaces de video para este t\xEDtulo.`);
           }
         }
       }
-      if (allDataLinks.length === 0)
+      if (allDataLinks.length === 0) {
+        console.log(`[Embed69] \u{1F6D1} B\xFAsqueda finalizada sin resultados compatibles.`);
         return [];
+      }
       const byLang = {};
       allDataLinks.forEach((s) => {
         if (s.video_language) {
@@ -11196,7 +11227,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           continue;
         const embeds = section.sortedEmbeds || section.embeds || [];
         const langLabel = "Latino";
-        console.log(`[Embed69] Encolando: ${embeds.length} en ${langLabel}`);
+        console.log(`[Embed69] \u26A1 Procesando ${embeds.length} servidores en ${langLabel}`);
         for (const embed of embeds) {
           const sName = (embed.servername || "").toLowerCase();
           if (!embed.link || sName === "download")
@@ -11221,15 +11252,16 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           }
         }
       }
-      console.log(`[Embed69] R\xE1faga: Procesando ${batch.length} servidores en paralelo`);
+      console.log(`[Embed69] \u{1F680} Resolviendo ${batch.length} streams finales...`);
       const results = yield Promise.allSettled(batch);
       results.forEach((r) => {
         if (r.status === "fulfilled" && r.value)
           rawStreams.push(r.value);
       });
+      console.log(`[Embed69] \u2728 \xC9xito: ${rawStreams.length} resultados finales.`);
       return yield finalizeStreams(rawStreams, "Embed69", mediaTitle);
     } catch (error) {
-      console.log(`[Embed69] Error Cr\xEDtico: ${error.message}`);
+      console.log(`[Embed69] \u274C Error Cr\xEDtico: ${error.message}`);
       return [];
     }
   });

@@ -1,31 +1,8 @@
 {
   "name": "Nuvio Latino",
   "id": "nuviolatino.plugin",
-  "version": "7.1.4",
+  "version": "7.1.5",
   "scrapers": [
-    {
-      "id": "prueba",
-      "name": "Prueba TV",
-      "description": "Scraper de prueba basado en versión estable (Embed69 Legacy)",
-      "version": "1.0.0",
-      "author": "Antigravity",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/prueba.js",
-      "enabled": true,
-      "logo": "https://img.icons8.com/color/48/000000/test-passed.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    },
     {
       "id": "embed69",
       "name": "Embed69",
