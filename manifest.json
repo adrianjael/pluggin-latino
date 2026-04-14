@@ -1,6 +1,7 @@
 {
   "name": "Nuvio Latino",
-  "version": "7.1.0",
+  "id": "nuviolatino.plugin",
+  "version": "7.1.1",
   "scrapers": [
     {
       "id": "embed69",
