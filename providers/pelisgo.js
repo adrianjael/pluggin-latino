@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T20:35:23.152Z
+ * Generated: 2026-04-15T20:38:03.019Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2106,6 +2106,11 @@ function cleanTitle(str) {
     return "";
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim();
 }
+function cleanMetadata(val) {
+  if (!val)
+    return "";
+  return val.replace(/[\\"' ]+/g, "").replace(/\\u[\dA-F]{4}/gi, "").trim();
+}
 function fetchText(_0) {
   return __async(this, arguments, function* (url, referer = BASE) {
     try {
@@ -2134,17 +2139,12 @@ function resolvePelisGoDownload(id) {
 function validateBuzzLink(url) {
   return __async(this, null, function* () {
     try {
-      const res = yield fetch(url, { method: "HEAD", headers: getStealthHeaders(), timeout: 5e3 });
+      const res = yield fetch(url, { method: "HEAD", headers: getStealthHeaders(), timeout: 4e3 });
       return res.status >= 200 && res.status < 400;
     } catch (e) {
-      return false;
+      return true;
     }
   });
-}
-function cleanMetadata(val) {
-  if (!val)
-    return "";
-  return val.replace(/[\\"' ]+/g, "").trim();
 }
 function getOnlineStreams(rawHtml) {
   return __async(this, null, function* () {
@@ -2173,6 +2173,7 @@ function getOnlineStreams(rawHtml) {
               return {
                 name: "PelisGo",
                 langLabel: "Latino",
+                // Force Latino for Engine
                 serverLabel: result.serverName || serverName,
                 url: result.url,
                 quality: result.quality || "1080p",
@@ -2195,7 +2196,7 @@ function getOnlineStreams(rawHtml) {
     } catch (e) {
     }
     try {
-      const globalRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+(Buzzheavier|Pixeldrain)[^{}]*?\}/gi;
+      const globalRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([^\\",{} ]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\\",{} ]+)[^{}]*?\}/gi;
       let m;
       while ((m = globalRegex.exec(rawHtml)) !== null) {
         const objStr = m[0];
@@ -2211,6 +2212,8 @@ function getOnlineStreams(rawHtml) {
             const quality = cleanMetadata(qualityMatch ? qualityMatch[1] : "1080p");
             const lang = cleanMetadata(langMatch ? langMatch[1] : "Latino");
             const serverName = cleanMetadata(serverMatch[1]);
+            if (serverName.toLowerCase().includes("tplayer"))
+              return null;
             let directUrl = rawUrl;
             if (rawUrl.includes("/download/")) {
               const id = rawUrl.split("/").pop();
@@ -2224,9 +2227,10 @@ function getOnlineStreams(rawHtml) {
                   return null;
               }
               const resolved = yield resolveEmbed(directUrl);
+              const finalLang = lang.toLowerCase().includes("cast") ? "Latino (ES)" : "Latino";
               return {
                 name: "PelisGo",
-                langLabel: lang || "Latino",
+                langLabel: finalLang,
                 serverLabel: serverName,
                 url: resolved ? resolved.url : directUrl,
                 quality: (resolved ? resolved.quality : quality) || "1080p",
@@ -2279,24 +2283,35 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const meta = yield getCorrectImdbId(tmdbId, mediaType);
       const mediaTitle = meta.title || title;
       const imdbId = meta.imdbId;
-      console.log(`[PelisGo] v8.7.1 Buscando: "${mediaTitle}"`);
+      console.log(`[PelisGo] v8.7.2 Buscando: "${mediaTitle}"`);
       const paths = yield pelisgoSearch(mediaTitle, type);
       let bestPath = null;
       for (const path of paths) {
+        const currentSlug = path.split("/").pop();
+        if (cleanTitle(mediaTitle).replace(/\s+/g, "-") === currentSlug) {
+          bestPath = path;
+          break;
+        }
         const tempHtml = yield fetchText(`${BASE}${path}`);
         if (imdbId && tempHtml.includes(imdbId)) {
           bestPath = path;
           break;
         }
-        if (calculateSimilarity2(mediaTitle, path.split("/").pop().replace(/-/g, " ")) > 0.6) {
+        if (calculateSimilarity2(mediaTitle, currentSlug.replace(/-/g, " ")) > 0.7) {
           bestPath = path;
           break;
         }
+      }
+      if (!bestPath && mediaTitle) {
+        const directSlug = cleanTitle(mediaTitle).replace(/\s+/g, "-");
+        bestPath = type === "movie" ? `/movies/${directSlug}` : `/series/${directSlug}`;
       }
       const finalUrl = bestPath ? type === "movie" ? `${BASE}${bestPath}` : `${BASE}${bestPath}/temporada/${season || 1}/episodio/${episode || 1}` : null;
       if (!finalUrl)
         return [];
       const html = yield fetchText(finalUrl);
+      if (!html || html.includes("404"))
+        return [];
       const onlineStreams = yield getOnlineStreams(html);
       return yield finalizeStreams(onlineStreams, "PelisGo", mediaTitle);
     } catch (e) {
