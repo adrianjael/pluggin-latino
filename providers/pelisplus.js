@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T23:06:27.256Z
+ * Generated: 2026-04-15T23:08:32.094Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1983,7 +1983,7 @@ var require_engine = __commonJS({
       if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
         return "Subtitulado";
       }
-      return lang || "Latino";
+      return lang || "Desconocido";
     }
     function normalizeServer(server, url = "", resolvedServerName = null) {
       if (resolvedServerName)
@@ -2193,21 +2193,27 @@ var require_extractor = __commonJS({
                 rawResults.push({ serverUrl: url, serverName: "Active Player", language: lang });
               }
             }
-            const liUrlRegex = /<li[^>]*data-url="([^"]+)"[^>]*data-name="([^"]+)"[^>]*>([\s\S]*?)<\/li>/gi;
+            const liUrlRegex = /<li([^>]*data-url="([^"]+)"[^>]*data-name="([^"]+)"[^>]*?)>([\s\S]*?)<\/li>/gi;
             let m;
             while ((m = liUrlRegex.exec(block)) !== null) {
-              const url = m[1];
-              const resLang = m[2] || lang;
-              const serverName = m[3].replace(/<[^>]+>/g, "").trim() || "Server";
-              if (!isSubtitled(resLang) && !rawResults.some((r) => r.serverUrl === url)) {
+              const liStart = m[1];
+              const url = m[2];
+              const resLang = m[3] || lang;
+              const serverName = m[4].replace(/<[^>]+>/g, "").trim() || "Server";
+              if (liStart.includes("display: none"))
+                continue;
+              if (url && !rawResults.some((r) => r.serverUrl === url)) {
                 rawResults.push({ serverUrl: url, serverName, language: resLang });
               }
             }
-            const liIdRegex = /<li[^>]*data-id="(\d+)"[^>]*>([\s\S]*?)<\/li>/gi;
+            const liIdRegex = /<li([^>]*data-id="(\d+)"[^>]*?)>([\s\S]*?)<\/li>/gi;
             let mId;
             while ((mId = liIdRegex.exec(block)) !== null) {
-              const id = mId[1];
-              const serverName = mId[2].replace(/<[^>]+>/g, "").trim() || "Server";
+              const liStart = mId[1];
+              const id = mId[2];
+              const serverName = mId[3].replace(/<[^>]+>/g, "").trim() || "Server";
+              if (liStart.includes("display: none"))
+                continue;
               const linkRegex = new RegExp(`<span[^>]*lid="${id}"[^>]*url="([^"]+)"`, "i");
               const linkMatch = pageHtml.match(linkRegex);
               if (linkMatch) {
@@ -2227,8 +2233,9 @@ var require_extractor = __commonJS({
                 return null;
               }
               const rawLang = normalizeLanguage(res.language);
-              if (rawLang !== "Latino") {
-                console.log(`[PelisPlusHD] Skipping non-latino (${rawLang}): ${res.serverName}`);
+              const sName = (res.serverName || "").toLowerCase();
+              if (rawLang !== "Latino" || sName.includes("sub") || sName.includes("vose")) {
+                console.log(`[PelisPlusHD] Explicit skip: ${res.serverName} (${rawLang})`);
                 return null;
               }
               const finalUrl = yield resolveEmbed(url);

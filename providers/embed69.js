@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T23:06:27.204Z
+ * Generated: 2026-04-15T23:08:32.040Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -505,7 +505,7 @@ var require_engine = __commonJS({
       if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
         return "Subtitulado";
       }
-      return lang || "Latino";
+      return lang || "Desconocido";
     }
     function normalizeServer(server, url = "", resolvedServerName = null) {
       if (resolvedServerName)

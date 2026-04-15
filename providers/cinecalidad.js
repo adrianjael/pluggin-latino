@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-15T23:06:27.147Z
+ * Generated: 2026-04-15T23:08:31.986Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -432,7 +432,7 @@ var require_engine = __commonJS({
       if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
         return "Subtitulado";
       }
-      return lang || "Latino";
+      return lang || "Desconocido";
     }
     function normalizeServer(server, url = "", resolvedServerName = null) {
       if (resolvedServerName)
