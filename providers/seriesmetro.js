@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-15T22:30:47.894Z
+ * Generated: 2026-04-15T22:31:32.954Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
