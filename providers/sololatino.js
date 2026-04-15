@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-15T21:26:09.220Z
+ * Generated: 2026-04-15T21:31:13.388Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1256,49 +1256,64 @@ var require_buzzheavier = __commonJS({
           return null;
         try {
           const id = embedUrl.split("/").pop().split("|")[0];
-          const targetUrl = `https://buzzheavier.com/f/${id}`;
-          const downloadUrl = `https://buzzheavier.com/f/${id}/download`;
-          console.log(`[Buzzheavier] Resolviendo v8.8.0 (Oficial): ${id}`);
+          const targetUrl = `https://buzzheavier.com/${id}`;
+          const downloadUrl = `https://buzzheavier.com/${id}/download`;
+          console.log(`[Buzzheavier] Resolviendo v8.8.1 (H\xEDbrido): ${id}`);
           const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
             "Referer": targetUrl,
             "hx-current-url": targetUrl,
             "hx-request": "true",
             "Accept": "*/*"
           });
-          const response = yield axios5.get(downloadUrl, {
-            headers,
-            timeout: 8e3,
-            maxRedirects: 0,
-            // No seguir redirecciones automáticas para capturar Hx-Redirect
-            validateStatus: (status) => status >= 200 && status < 400
-          });
-          let directUrl = response.headers["hx-redirect"];
-          if (!directUrl) {
-            console.log("[Buzzheavier] No se encontr\xF3 hx-redirect, buscando fallback...");
-            if (response.data && response.data.includes("This file could not be found")) {
+          const predictableUrl = `https://buzzheavier.com/v/${id}/video.mp4`;
+          try {
+            const response = yield axios5.get(downloadUrl, {
+              headers,
+              timeout: 6e3,
+              maxRedirects: 0,
+              validateStatus: (status) => status >= 200 && status < 400
+            });
+            let hxDirect = response.headers["hx-redirect"];
+            if (hxDirect) {
+              if (hxDirect.startsWith("/"))
+                hxDirect = `https://buzzheavier.com${hxDirect}`;
+              console.log("[Buzzheavier] \u2713 Enlace obtenido via HTMX.");
+              return {
+                url: hxDirect,
+                quality: "1080p",
+                isDirect: true,
+                headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
+              };
+            }
+          } catch (htmxErr) {
+            console.log("[Buzzheavier] \u26A0\uFE0F HTMX fall\xF3 o requiere sesi\xF3n. Usando fallback...");
+          }
+          try {
+            const vCheck = yield axios5.head(predictableUrl, { headers: { "User-Agent": headers["User-Agent"] }, timeout: 4e3 });
+            if (vCheck.status === 200) {
+              console.log("[Buzzheavier] \u2713 Enlace verificado (Video Directo).");
+              return {
+                url: predictableUrl,
+                quality: "1080p",
+                isDirect: true,
+                headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
+              };
+            }
+          } catch (e) {
+            if (e.response && e.response.status === 404) {
+              console.log("[Buzzheavier] \u274C Archivo no encontrado (404).");
               return null;
             }
           }
-          if (directUrl) {
-            if (directUrl.startsWith("/")) {
-              directUrl = `https://buzzheavier.com${directUrl}`;
-            }
-            console.log("[Buzzheavier] \u2713 Enlace directo obtenido v\xEDa HTMX Redirect.");
-            return {
-              url: directUrl,
-              quality: "1080p",
-              isDirect: true,
-              headers: {
-                "User-Agent": headers["User-Agent"],
-                "Referer": targetUrl
-              }
-            };
-          }
-          return null;
-        } catch (e) {
-          if (e.response && e.response.status === 404) {
-            console.log("[Buzzheavier] \u274C 404 Not Found.");
-          }
+          console.log("[Buzzheavier] \u26A0\uFE0F No se pudo validar definitivamente, devolviendo sospechoso.");
+          return {
+            url: predictableUrl,
+            quality: "1080p",
+            isDirect: true,
+            headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
+          };
+        } catch (err) {
+          console.error("[Buzzheavier] Error cr\xEDtico: " + err.message);
           return null;
         }
       });
@@ -1365,8 +1380,57 @@ var init_okru = __esm({
 
 // src/resolvers/pixeldrain.js
 var require_pixeldrain = __commonJS({
-  "src/resolvers/pixeldrain.js"() {
+  "src/resolvers/pixeldrain.js"(exports2, module2) {
     var axios5 = require("axios");
+    function resolve5(embedUrl) {
+      return __async(this, null, function* () {
+        try {
+          console.log("[Pixeldrain] Resolviendo: " + embedUrl);
+          const idMatch = embedUrl.match(/\/(u|l|api\/file)\/([a-zA-Z0-9]+)/i);
+          if (!idMatch) {
+            console.log("[Pixeldrain] No se pudo encontrar un ID v\xE1lido en la URL.");
+            return null;
+          }
+          const fileId = idMatch[2];
+          const directUrl = `https://pixeldrain.com/api/file/${fileId}?download=1`;
+          try {
+            const check = yield axios5.get(directUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "Range": "bytes=0-0"
+                // Solo pedimos 1 byte para que sea una petición ultra-rápida
+              },
+              timeout: 5e3,
+              validateStatus: (status) => status < 500
+              // Considerar cualquier respuesta < 500 como "posiblemente vivo"
+            });
+            if (check.status === 404) {
+              console.log("[Pixeldrain] \u274C Archivo no encontrado confirmado (404).");
+              return null;
+            }
+          } catch (err) {
+            if (err.response && err.response.status === 404) {
+              console.log("[Pixeldrain] \u274C Archivo no encontrado confirmado (404).");
+              return null;
+            }
+            console.log("[Pixeldrain] \u26A0\uFE0F Validaci\xF3n dudosa (" + (err.response ? err.response.status : "Network Error") + "). Procediendo de todos modos.");
+          }
+          console.log("[Pixeldrain] \u2713 URL Directa generada y confirmada.");
+          return {
+            url: directUrl,
+            quality: "1080p",
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+              "Referer": "https://pixeldrain.com/"
+            }
+          };
+        } catch (e) {
+          console.error("[Pixeldrain] Error cr\xEDtico: " + e.message);
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve5 };
   }
 });
 
