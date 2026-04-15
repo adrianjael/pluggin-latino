@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T21:39:59.909Z
+ * Generated: 2026-04-15T21:43:56.142Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2135,7 +2135,7 @@ var { resolveEmbed } = require_resolvers();
 var { getStealthHeaders } = require_http();
 var { getCorrectImdbId } = require_id_mapper();
 var BASE = "https://pelisgo.online";
-var WHITELIST = ["Magi", "Filemoon", "Pixeldrain"];
+var WHITELIST = ["Magi", "Filemoon", "Pixeldrain", "Buzzheavier"];
 function getPelisGoHeaders(referer = BASE) {
   return __spreadProps(__spreadValues({}, getStealthHeaders()), {
     "Referer": referer,
