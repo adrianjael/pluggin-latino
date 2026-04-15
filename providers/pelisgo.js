@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T20:38:03.019Z
+ * Generated: 2026-04-15T20:39:26.612Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2094,6 +2094,7 @@ var { resolveEmbed } = require_resolvers();
 var { getStealthHeaders } = require_http();
 var { getCorrectImdbId } = require_id_mapper();
 var BASE = "https://pelisgo.online";
+var WHITELIST = ["Buzzheavier", "Magi", "Filemoon", "Pixeldrain"];
 function getPelisGoHeaders(referer = BASE) {
   return __spreadProps(__spreadValues({}, getStealthHeaders()), {
     "Referer": referer,
@@ -2162,7 +2163,9 @@ function getOnlineStreams(rawHtml) {
             continue;
           const serverName = cleanMetadata(serverMatch[1]);
           const cleanUrl = urlMatch[1].replace(/\\/g, "");
-          if (cleanUrl.includes("tplayer.pelisgo.online") || serverName.toLowerCase().includes("tplayer"))
+          if (!WHITELIST.some((w) => serverName.toLowerCase().includes(w.toLowerCase())))
+            continue;
+          if (cleanUrl.includes("tplayer.pelisgo.online"))
             continue;
           if (seenUrls.has(cleanUrl))
             continue;
@@ -2173,7 +2176,6 @@ function getOnlineStreams(rawHtml) {
               return {
                 name: "PelisGo",
                 langLabel: "Latino",
-                // Force Latino for Engine
                 serverLabel: result.serverName || serverName,
                 url: result.url,
                 quality: result.quality || "1080p",
@@ -2212,7 +2214,7 @@ function getOnlineStreams(rawHtml) {
             const quality = cleanMetadata(qualityMatch ? qualityMatch[1] : "1080p");
             const lang = cleanMetadata(langMatch ? langMatch[1] : "Latino");
             const serverName = cleanMetadata(serverMatch[1]);
-            if (serverName.toLowerCase().includes("tplayer"))
+            if (!WHITELIST.some((w) => serverName.toLowerCase().includes(w.toLowerCase())))
               return null;
             let directUrl = rawUrl;
             if (rawUrl.includes("/download/")) {
@@ -2283,7 +2285,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const meta = yield getCorrectImdbId(tmdbId, mediaType);
       const mediaTitle = meta.title || title;
       const imdbId = meta.imdbId;
-      console.log(`[PelisGo] v8.7.2 Buscando: "${mediaTitle}"`);
+      console.log(`[PelisGo] v8.7.3 Buscando: "${mediaTitle}"`);
       const paths = yield pelisgoSearch(mediaTitle, type);
       let bestPath = null;
       for (const path of paths) {
