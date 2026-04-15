@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T14:55:04.429Z
+ * Generated: 2026-04-15T14:55:49.078Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1106,7 +1106,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.7.2 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.7.4 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
