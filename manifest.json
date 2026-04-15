@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "8.7.8",
+  "version": "8.7.9",
   "scrapers": [
     {
       "id": "embed69",
@@ -288,6 +288,29 @@
       "filename": "providers/tioplus.js",
       "enabled": true,
       "logo": "https://tioplus.app/images/logo2.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "lamovie",
+      "name": "LaMovie",
+      "description": "Películas y series en HD (Latino) - solo paises sin cloudflare",
+      "version": "2.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/lamovie.js",
+      "enabled": true,
+      "logo": "https://play-lh.googleusercontent.com/w6wZPZLiweiDQv3pGZmRhJY9XGdASutnaOvH_3JXgPFFlMAnLI6toc0HalgxMdYsSl3R=w240-h480-rw",
       "contentLanguage": [
         "es"
       ],
