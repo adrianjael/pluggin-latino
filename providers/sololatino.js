@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-15T17:26:32.531Z
+ * Generated: 2026-04-15T17:30:07.096Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1924,8 +1924,6 @@ var { resolveEmbed } = require_resolvers();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var sleep = (ms) => new Promise((resolve7) => setTimeout(resolve7, ms));
-var RESULT_CACHE = /* @__PURE__ */ new Map();
-var CACHE_TTL = 10 * 60 * 1e3;
 function getImdbIdInternal(idOrQuery, mediaType) {
   return __async(this, null, function* () {
     const rawId = idOrQuery.toString().split(":")[0];
@@ -1934,7 +1932,7 @@ function getImdbIdInternal(idOrQuery, mediaType) {
     try {
       const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
       const url = `https://api.themoviedb.org/3/${type}/${rawId}/external_ids?api_key=${TMDB_API_KEY}`;
-      const { data } = yield axios4.get(url, { timeout: 5e3 });
+      const { data } = yield axios4.get(url);
       return data.imdb_id || null;
     } catch (e) {
       return null;
@@ -1953,7 +1951,8 @@ function getDirectStream(id, token, cookie, playerUrl, sessionHeaders) {
         postH["cookie"] = cookie;
       yield axios4.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH, timeout: 5e3 });
       yield sleep(350);
-      const { data } = yield axios4.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH, timeout: 5e3 });
+      const body = `a=1&v=${id}&tok=${token}`;
+      const { data } = yield axios4.post(`${BASE_URL}/s.php`, body, { headers: postH, timeout: 5e3 });
       if (data && data.u) {
         let finalUrl = data.u;
         if (data.sig)
@@ -1975,13 +1974,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const s = parseInt(parts[1] || season || 1);
     const e = parseInt(parts[2] || episode || 1);
     const isMovie = mediaType === "movie" || mediaType === "movies";
-    const cacheKey = isMovie ? realId : `${realId}-${s}-${e}`;
-    const now = Date.now();
-    if (RESULT_CACHE.has(cacheKey)) {
-      const cached = RESULT_CACHE.get(cacheKey);
-      if (now - cached.time < CACHE_TTL)
-        return cached.data;
-    }
     const UA4 = getRandomUA();
     setSessionUA(UA4);
     const SESSION_HEADERS = {
@@ -1992,9 +1984,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       "Referer": "https://sololatino.net/"
     };
     let mediaTitle = title;
-    if (!mediaTitle && tmdbId) {
-      mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
-    }
     const imdbId = yield getImdbIdInternal(realId, mediaType);
     if (!imdbId)
       return [];
@@ -2002,7 +1991,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      console.log(`[SoloLatino] Buscando: ${slug} (v8.3.0)`);
       const { data: html, headers: respHeaders } = yield axios4.get(playerUrl, { headers: SESSION_HEADERS, timeout: 8e3 });
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
       const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
@@ -2024,7 +2012,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           });
         });
       }
-      const serverList = Array.from(uniqueServers.values()).slice(0, 15);
+      const serverList = Array.from(uniqueServers.values()).slice(0, 10);
       const resolved = [];
       for (const ser of serverList) {
         const name = ser[0];
@@ -2035,16 +2023,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           const finalUrl = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
           if (finalUrl) {
             const resolvedResult = yield resolveEmbed(finalUrl);
+            const secondaryServer = (resolvedResult == null ? void 0 : resolvedResult.serverName) && resolvedResult.serverName !== "Direct" ? ` - ${resolvedResult.serverName}` : "";
+            const serverDisplayName = `${name}${secondaryServer}`;
             if (resolvedResult) {
-              const secondaryServer = resolvedResult.serverName && resolvedResult.serverName !== "Direct" ? ` - ${resolvedResult.serverName}` : "";
-              resolved.push(__spreadProps(__spreadValues({}, resolvedResult), {
-                langLabel: "Latino",
-                serverName: `${name}${secondaryServer}`
-              }));
+              resolved.push(__spreadProps(__spreadValues({}, resolvedResult), { langLabel: "Latino", serverName: serverDisplayName }));
             } else {
               resolved.push({
                 langLabel: "Latino",
-                serverName: name,
+                serverName: serverDisplayName,
                 url: finalUrl,
                 quality: "1080p",
                 headers: { "User-Agent": UA4, "Referer": playerUrl, "Origin": BASE_URL }
@@ -2055,10 +2041,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         }
         yield sleep(600);
       }
-      const final = yield finalizeStreams(resolved, "SoloLatino", mediaTitle);
-      if (final.length > 0)
-        RESULT_CACHE.set(cacheKey, { time: now, data: final });
-      return final;
+      return yield finalizeStreams(resolved, "SoloLatino", mediaTitle);
     } catch (e2) {
       console.log(`[SoloLatino] Error: ${e2.message}`);
     }
