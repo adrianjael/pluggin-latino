@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T16:29:25.326Z
+ * Generated: 2026-04-15T16:59:51.281Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -462,6 +462,18 @@ var require_mirrors = __commonJS({
       GOODSTREAM: [
         "goodstream",
         "gs.one"
+      ],
+      LULUSTREAM: [
+        "lulustream",
+        "luluvdo",
+        "luluvids",
+        "pondy",
+        "lulupuv"
+      ],
+      SEEKSTREAMING: [
+        "seekplays",
+        "seekstreaming",
+        "embedseek"
       ]
     };
     function isMirror2(url, groupName) {
