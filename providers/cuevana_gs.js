@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-15T22:31:32.863Z
+ * Generated: 2026-04-15T23:00:48.041Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -587,7 +587,7 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams: finalizeStreams3 };
+    module2.exports = { finalizeStreams: finalizeStreams3, normalizeLanguage };
   }
 });
 

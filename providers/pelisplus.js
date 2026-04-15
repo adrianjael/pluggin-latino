@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T22:31:32.929Z
+ * Generated: 2026-04-15T23:00:48.109Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1909,6 +1909,150 @@ var require_tmdb = __commonJS({
   }
 });
 
+// src/utils/sorting.js
+var sorting_exports = {};
+__export(sorting_exports, {
+  sortStreamsByQuality: () => sortStreamsByQuality
+});
+function sortStreamsByQuality(streams) {
+  if (!Array.isArray(streams))
+    return [];
+  return [...streams].sort((a, b) => {
+    const scoreA = QUALITY_SCORE[a.quality] || 0;
+    const scoreB = QUALITY_SCORE[b.quality] || 0;
+    if (scoreA !== scoreB) {
+      return scoreB - scoreA;
+    }
+    const serverA = (a.serverLabel || "").split(" ")[0];
+    const serverB = (b.serverLabel || "").split(" ")[0];
+    const speedA = SERVER_SCORE[serverA] || 0;
+    const speedB = SERVER_SCORE[serverB] || 0;
+    if (speedA !== speedB) {
+      return speedB - speedA;
+    }
+    if (a.verified && !b.verified)
+      return -1;
+    if (!a.verified && b.verified)
+      return 1;
+    return 0;
+  });
+}
+var QUALITY_SCORE, SERVER_SCORE;
+var init_sorting = __esm({
+  "src/utils/sorting.js"() {
+    QUALITY_SCORE = {
+      "4K": 100,
+      "1440p": 90,
+      "1080p": 80,
+      "720p": 70,
+      "480p": 60,
+      "360p": 50,
+      "240p": 40,
+      "Auto": 30,
+      "Unknown": 0
+    };
+    SERVER_SCORE = {
+      "VOE": 10,
+      "Filemoon": 10,
+      "Tplayer": 10,
+      "Vimeos": 10,
+      "Netu": 5,
+      "GoodStream": 10,
+      "StreamWish": -5,
+      "VidHide": -5
+    };
+  }
+});
+
+// src/utils/engine.js
+var require_engine = __commonJS({
+  "src/utils/engine.js"(exports2, module2) {
+    var { validateStream } = require_m3u8();
+    var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
+    var { isMirror } = require_mirrors();
+    function normalizeLanguage(lang) {
+      const l = (lang || "").toLowerCase();
+      if (l === "latino" || l === "espa\xF1ol")
+        return lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase();
+      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dub") || l.includes("dual")) {
+        return "Latino";
+      }
+      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
+        return "Espa\xF1ol";
+      }
+      if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
+        return "Subtitulado";
+      }
+      return lang || "Latino";
+    }
+    function normalizeServer(server, url = "", resolvedServerName = null) {
+      if (resolvedServerName)
+        return resolvedServerName;
+      const u = (url || "").toLowerCase();
+      const s = (server || "").toLowerCase();
+      if (isMirror(u, "VIDHIDE") || isMirror(s, "VIDHIDE"))
+        return "VidHide";
+      if (isMirror(u, "STREAMWISH") || isMirror(s, "STREAMWISH"))
+        return "StreamWish";
+      if (isMirror(u, "VOE") || isMirror(s, "VOE"))
+        return "VOE";
+      if (isMirror(u, "FILEMOON") || isMirror(s, "FILEMOON"))
+        return "Filemoon";
+      if (url) {
+        try {
+          const domain = new URL(url).hostname.replace("www.", "");
+          return domain.charAt(0).toUpperCase() + domain.slice(1);
+        } catch (e) {
+        }
+      }
+      return server || "Servidor";
+    }
+    function finalizeStreams2(streams, providerName, mediaTitle) {
+      return __async(this, null, function* () {
+        if (!Array.isArray(streams) || streams.length === 0)
+          return [];
+        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.0`);
+        const sorted = sortStreamsByQuality2(streams);
+        const processed = [];
+        const seenTitles = /* @__PURE__ */ new Set();
+        for (const s of sorted) {
+          const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
+          const isLatino = rawLang.toLowerCase().includes("latino");
+          if (!isLatino) {
+            console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
+            continue;
+          }
+          const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
+          const displayQuality = s.quality || "HD";
+          const checkMark = s.verified ? " \u2705" : "";
+          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
+          const streamTitle = `${rawLang} - ${server}`;
+          if (seenTitles.has(streamName + streamTitle + s.url))
+            continue;
+          seenTitles.add(streamName + streamTitle + s.url);
+          processed.push({
+            name: streamName,
+            // Nombre que verá el usuario en la lista
+            title: streamTitle,
+            // Título de la película/serie
+            url: s.url,
+            quality: displayQuality,
+            provider: server,
+            // Mapeado a 'provider' en LocalScraperResult
+            language: rawLang,
+            // Mapeado a 'language' en LocalScraperResult
+            headers: s.headers || {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            }
+          });
+        }
+        return processed;
+      });
+    }
+    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
+  }
+});
+
 // src/pelisplus/extractor.js
 var require_extractor = __commonJS({
   "src/pelisplus/extractor.js"(exports2, module2) {
@@ -2074,39 +2218,44 @@ var require_extractor = __commonJS({
               }
             }
           }
-          console.log(`[PelisPlusHD] Found ${rawResults.length} raw sources.`);
-          const results = [];
+          const { normalizeLanguage } = require_engine();
+          console.log(`[PelisPlusHD] Found ${rawResults.length} raw sources. Resolving...`);
           const streamPromises = rawResults.map((res) => __async(this, null, function* () {
             try {
-              let finalUrl = null;
               const url = res.serverUrl;
-              finalUrl = yield resolveEmbed(url);
-              if (finalUrl) {
-                const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
-                if (directUrl) {
-                  const streamData = {
-                    name: "PelisPlusHD",
-                    url: directUrl,
-                    quality: "HD",
-                    langLabel: res.language,
-                    serverLabel: res.serverName,
-                    headers: typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL }
-                  };
-                  try {
-                    const vStream = yield validateStream(streamData);
-                    if (vStream.verified) {
-                      vStream.quality = `(${vStream.quality} \u2713)`;
-                    }
-                    return vStream;
-                  } catch (e) {
-                    return streamData;
-                  }
+              const rawLang = normalizeLanguage(res.language);
+              if (rawLang === "Espa\xF1ol") {
+                console.log(`[PelisPlusHD] Skipping Castellano: ${res.serverName}`);
+                return null;
+              }
+              const finalUrl = yield resolveEmbed(url);
+              if (!finalUrl)
+                return null;
+              const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
+              if (!directUrl)
+                return null;
+              const streamData = {
+                name: "PelisPlusHD",
+                url: directUrl,
+                quality: "HD",
+                // Fallback
+                langLabel: rawLang,
+                serverLabel: res.serverName,
+                headers: typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL }
+              };
+              try {
+                const vStream = yield validateStream(streamData);
+                if (vStream && vStream.verified) {
+                  return __spreadProps(__spreadValues({}, vStream), { name: "PelisPlusHD", langLabel: rawLang });
                 }
+                return streamData;
+              } catch (e) {
+                return streamData;
               }
             } catch (e) {
               console.error(`[PelisPlusHD] Error resolving ${res.serverUrl}:`, e.message);
+              return null;
             }
-            return null;
           }));
           const allResults = yield Promise.all(streamPromises);
           return allResults.filter((s) => s !== null);
@@ -2117,150 +2266,6 @@ var require_extractor = __commonJS({
       });
     }
     module2.exports = { extractStreams: extractStreams2 };
-  }
-});
-
-// src/utils/sorting.js
-var sorting_exports = {};
-__export(sorting_exports, {
-  sortStreamsByQuality: () => sortStreamsByQuality
-});
-function sortStreamsByQuality(streams) {
-  if (!Array.isArray(streams))
-    return [];
-  return [...streams].sort((a, b) => {
-    const scoreA = QUALITY_SCORE[a.quality] || 0;
-    const scoreB = QUALITY_SCORE[b.quality] || 0;
-    if (scoreA !== scoreB) {
-      return scoreB - scoreA;
-    }
-    const serverA = (a.serverLabel || "").split(" ")[0];
-    const serverB = (b.serverLabel || "").split(" ")[0];
-    const speedA = SERVER_SCORE[serverA] || 0;
-    const speedB = SERVER_SCORE[serverB] || 0;
-    if (speedA !== speedB) {
-      return speedB - speedA;
-    }
-    if (a.verified && !b.verified)
-      return -1;
-    if (!a.verified && b.verified)
-      return 1;
-    return 0;
-  });
-}
-var QUALITY_SCORE, SERVER_SCORE;
-var init_sorting = __esm({
-  "src/utils/sorting.js"() {
-    QUALITY_SCORE = {
-      "4K": 100,
-      "1440p": 90,
-      "1080p": 80,
-      "720p": 70,
-      "480p": 60,
-      "360p": 50,
-      "240p": 40,
-      "Auto": 30,
-      "Unknown": 0
-    };
-    SERVER_SCORE = {
-      "VOE": 10,
-      "Filemoon": 10,
-      "Tplayer": 10,
-      "Vimeos": 10,
-      "Netu": 5,
-      "GoodStream": 10,
-      "StreamWish": -5,
-      "VidHide": -5
-    };
-  }
-});
-
-// src/utils/engine.js
-var require_engine = __commonJS({
-  "src/utils/engine.js"(exports2, module2) {
-    var { validateStream } = require_m3u8();
-    var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
-    var { isMirror } = require_mirrors();
-    function normalizeLanguage(lang) {
-      const l = (lang || "").toLowerCase();
-      if (l === "latino" || l === "espa\xF1ol")
-        return lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase();
-      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dub") || l.includes("dual")) {
-        return "Latino";
-      }
-      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
-        return "Espa\xF1ol";
-      }
-      if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
-        return "Subtitulado";
-      }
-      return lang || "Latino";
-    }
-    function normalizeServer(server, url = "", resolvedServerName = null) {
-      if (resolvedServerName)
-        return resolvedServerName;
-      const u = (url || "").toLowerCase();
-      const s = (server || "").toLowerCase();
-      if (isMirror(u, "VIDHIDE") || isMirror(s, "VIDHIDE"))
-        return "VidHide";
-      if (isMirror(u, "STREAMWISH") || isMirror(s, "STREAMWISH"))
-        return "StreamWish";
-      if (isMirror(u, "VOE") || isMirror(s, "VOE"))
-        return "VOE";
-      if (isMirror(u, "FILEMOON") || isMirror(s, "FILEMOON"))
-        return "Filemoon";
-      if (url) {
-        try {
-          const domain = new URL(url).hostname.replace("www.", "");
-          return domain.charAt(0).toUpperCase() + domain.slice(1);
-        } catch (e) {
-        }
-      }
-      return server || "Servidor";
-    }
-    function finalizeStreams2(streams, providerName, mediaTitle) {
-      return __async(this, null, function* () {
-        if (!Array.isArray(streams) || streams.length === 0)
-          return [];
-        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.0`);
-        const sorted = sortStreamsByQuality2(streams);
-        const processed = [];
-        const seenTitles = /* @__PURE__ */ new Set();
-        for (const s of sorted) {
-          const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
-          const isLatino = rawLang.toLowerCase().includes("latino");
-          if (!isLatino) {
-            console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
-            continue;
-          }
-          const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          const displayQuality = s.quality || "HD";
-          const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
-          const streamTitle = `${rawLang} - ${server}`;
-          if (seenTitles.has(streamName + streamTitle + s.url))
-            continue;
-          seenTitles.add(streamName + streamTitle + s.url);
-          processed.push({
-            name: streamName,
-            // Nombre que verá el usuario en la lista
-            title: streamTitle,
-            // Título de la película/serie
-            url: s.url,
-            quality: displayQuality,
-            provider: server,
-            // Mapeado a 'provider' en LocalScraperResult
-            language: rawLang,
-            // Mapeado a 'language' en LocalScraperResult
-            headers: s.headers || {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-            }
-          });
-        }
-        return processed;
-      });
-    }
-    module2.exports = { finalizeStreams: finalizeStreams2 };
   }
 });
 

@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-15T22:31:32.884Z
+ * Generated: 2026-04-15T23:00:48.063Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -498,7 +498,7 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams: finalizeStreams2 };
+    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
   }
 });
 
