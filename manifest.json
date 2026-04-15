@@ -50,7 +50,7 @@
       "id": "pelisgo",
       "name": "PelisGo",
       "description": "Descargas directas y streaming de alta fidelidad.",
-      "version": "8.8.6",
+      "version": "8.8.8",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",

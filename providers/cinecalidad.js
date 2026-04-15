@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-15T21:44:48.134Z
+ * Generated: 2026-04-15T22:00:17.919Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1255,61 +1255,56 @@ var require_buzzheavier = __commonJS({
           return null;
         try {
           const cleanUrl = embedUrl.split("|")[0].replace(/\/$/, "");
-          const id = cleanUrl.split("/").pop();
-          const targetUrl = cleanUrl;
+          const domain = new URL(cleanUrl).hostname;
           const downloadUrl = `${cleanUrl}/download`;
-          console.log(`[Buzzheavier] Resolviendo v8.8.5: ${id}`);
+          console.log(`[Buzzheavier] Resolviendo v8.8.7 (Python Logic): ${cleanUrl}`);
           const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
-            "Referer": targetUrl,
-            "hx-current-url": targetUrl,
+            "Referer": cleanUrl,
+            "hx-current-url": cleanUrl,
             "hx-request": "true",
             "Accept": "*/*"
           });
-          const predictableUrl = `https://buzzheavier.com/v/${id}/video.mp4`;
           try {
-            const response = yield axios4.get(downloadUrl, {
+            const headResponse = yield axios4.head(downloadUrl, {
               headers,
-              timeout: 6e3,
+              timeout: 8e3,
               maxRedirects: 0,
+              // Importante: no seguir redirecciones para capturar hx-redirect
               validateStatus: (status) => status >= 200 && status < 400
             });
-            let hxDirect = response.headers["hx-redirect"];
-            if (hxDirect) {
-              if (hxDirect.startsWith("/"))
-                hxDirect = `https://buzzheavier.com${hxDirect}`;
-              console.log("[Buzzheavier] \u2713 Enlace obtenido via HTMX.");
+            const hxRedirect = headResponse.headers["hx-redirect"];
+            if (hxRedirect) {
+              let finalUrl = hxRedirect;
+              if (hxRedirect.startsWith("/dl/")) {
+                finalUrl = `https://${domain}${hxRedirect}`;
+              }
+              console.log("[Buzzheavier] \u2713 Enlace REAL obtenido via hx-redirect.");
               return {
-                url: hxDirect,
+                url: finalUrl + "#.mp4",
+                // Anclaje para Nuvio
                 isDirect: true,
                 verified: true,
-                headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
+                headers: {
+                  "User-Agent": headers["User-Agent"],
+                  "Referer": cleanUrl
+                  // Referer LIMPIO (Vital)
+                }
               };
             }
-          } catch (htmxErr) {
-            console.log("[Buzzheavier] \u26A0\uFE0F HTMX fall\xF3 (" + htmxErr.message + "). Intentando Fallback...");
+          } catch (err) {
+            console.log("[Buzzheavier] \u26A0\uFE0F Error en HEAD: " + err.message);
           }
-          try {
-            const vCheck = yield axios4.head(predictableUrl, { headers: { "User-Agent": headers["User-Agent"] }, timeout: 4e3 });
-            if (vCheck.status === 200) {
-              console.log("[Buzzheavier] \u2713 Enlace verificado (Video Directo).");
-              return {
-                url: predictableUrl,
-                isDirect: true,
-                verified: true,
-                headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
-              };
-            }
-          } catch (e) {
-            if (e.response && e.response.status === 404) {
-              console.log("[Buzzheavier] \u274C Archivo no encontrado (404).");
-              return null;
-            }
-          }
+          const id = cleanUrl.split("/").pop();
+          const predictableUrl = `https://buzzheavier.com/v/${id}/video.mp4`;
           return {
-            url: predictableUrl,
+            url: predictableUrl + "#.mp4",
             isDirect: true,
             verified: true,
-            headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
+            headers: {
+              "User-Agent": headers["User-Agent"],
+              "Referer": cleanUrl
+              // Referer LIMPIO
+            }
           };
         } catch (err) {
           console.error("[Buzzheavier] Error cr\xEDtico: " + err.message);
