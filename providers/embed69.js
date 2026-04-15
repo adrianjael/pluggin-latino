@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T16:06:41.992Z
+ * Generated: 2026-04-15T16:11:02.301Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -699,25 +699,6 @@ var require_hlswish = __commonJS({
     var { getSessionUA } = require_http();
     var { validateStream } = require_m3u8();
     var UA = getSessionUA();
-    function unpackEval(payload, radix, symtab) {
-      const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      const unbase = (str) => {
-        let result = 0;
-        for (let i = 0; i < str.length; i++) {
-          const pos = chars.indexOf(str[i]);
-          if (pos === -1)
-            return NaN;
-          result = result * radix + pos;
-        }
-        return result;
-      };
-      return payload.replace(/\b([0-9a-zA-Z]+)\b/g, (match) => {
-        const idx = unbase(match);
-        if (isNaN(idx) || idx >= symtab.length)
-          return match;
-        return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
-      });
-    }
     function resolve(url) {
       return __async(this, null, function* () {
         try {
@@ -733,59 +714,59 @@ var require_hlswish = __commonJS({
             `https://sfastwish.com/e/${rawId}`,
             `https://hanerix.com/e/${rawId}`
           ];
-          console.log(`[StreamWish] Parallel-Resolving: ${rawId} (${mirrors.length} mirrors)`);
-          const resolveResults = yield Promise.all(mirrors.map((mirror) => __async(this, null, function* () {
-            try {
-              const mirrorObj = new URL(mirror);
-              const mirrorOrigin = mirrorObj.origin;
-              const resp = yield fetch(mirror, {
-                headers: { "Referer": mirror, "User-Agent": UA }
-                // Timeout interno de 5s por mirror
-              });
-              if (!resp.ok)
-                return null;
-              const html = yield resp.text();
-              let m3u8Url = null;
-              const hashMatch = html.match(/[0-9a-f]{32}/i);
-              if (hashMatch) {
-                const hash = hashMatch[0];
-                const dlUrl = `${mirrorOrigin}/dl?op=view&file_code=${rawId}&hash=${hash}&embed=1&referer=&adb=1&hls4=1`;
-                const dlResp = yield fetch(dlUrl, {
-                  headers: { "User-Agent": UA, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" }
-                });
-                if (dlResp.ok) {
-                  const dlData = yield dlResp.text();
-                  const match = dlData.match(/https?:\/\/[^"']+\.m3u8[^"']*/);
-                  if (match)
-                    m3u8Url = match[0];
+          console.log(`[StreamWish] Race-Resolving: ${rawId} (${mirrors.length} mirrors)`);
+          const validResult = yield new Promise((resolveRace) => {
+            let resolved = false;
+            let pending = mirrors.length;
+            mirrors.forEach((mirror) => __async(this, null, function* () {
+              try {
+                const mirrorObj = new URL(mirror);
+                const mirrorOrigin = mirrorObj.origin;
+                const resp = yield fetch(mirror, { headers: { "Referer": mirror, "User-Agent": UA } });
+                if (!resp.ok)
+                  throw new Error();
+                const html = yield resp.text();
+                let m3u8Url = null;
+                const hashMatch = html.match(/[0-9a-f]{32}/i);
+                if (hashMatch) {
+                  const hash = hashMatch[0];
+                  const dlUrl = `${mirrorOrigin}/dl?op=view&file_code=${rawId}&hash=${hash}&embed=1&referer=&adb=1&hls4=1`;
+                  const dlResp = yield fetch(dlUrl, {
+                    headers: { "User-Agent": UA, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" }
+                  });
+                  if (dlResp.ok) {
+                    const dlData = yield dlResp.text();
+                    const match = dlData.match(/https?:\/\/[^"']+\.m3u8[^"']*/);
+                    if (match)
+                      m3u8Url = match[0];
+                  }
                 }
-              }
-              if (!m3u8Url) {
-                const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
-                if (fileMatch)
-                  m3u8Url = fileMatch[1];
-              }
-              if (!m3u8Url) {
-                const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-                if (packedMatch) {
-                  const unpacked = unpackEval(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
-                  const match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i) || unpacked.match(/https?:\/\/[^"' \t\n\r]+\.m3u8[^"' \t\n\r]*/i);
-                  if (match)
-                    m3u8Url = match[1] || match[0];
+                if (!m3u8Url) {
+                  const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
+                  if (fileMatch)
+                    m3u8Url = fileMatch[1];
                 }
+                if (m3u8Url && !resolved) {
+                  resolved = true;
+                  m3u8Url = m3u8Url.replace(/\\/g, "");
+                  if (m3u8Url.startsWith("/"))
+                    m3u8Url = mirrorOrigin + m3u8Url;
+                  resolveRace({ url: m3u8Url, mirror });
+                }
+              } catch (e) {
+              } finally {
+                pending--;
+                if (pending === 0 && !resolved)
+                  resolveRace(null);
               }
-              if (m3u8Url) {
-                m3u8Url = m3u8Url.replace(/\\/g, "");
-                if (m3u8Url.startsWith("/"))
-                  m3u8Url = mirrorOrigin + m3u8Url;
-                return { url: m3u8Url, mirror };
+            }));
+            setTimeout(() => {
+              if (!resolved) {
+                resolved = true;
+                resolveRace(null);
               }
-              return null;
-            } catch (e) {
-              return null;
-            }
-          })));
-          const validResult = resolveResults.find((r) => r !== null);
+            }, 6e3);
+          });
           if (!validResult)
             return null;
           const stream = {
@@ -800,6 +781,7 @@ var require_hlswish = __commonJS({
         }
       });
     }
+    module2.exports = { resolve };
     module2.exports = { resolve };
   }
 });
@@ -1130,7 +1112,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.8.8 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.8.9 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
