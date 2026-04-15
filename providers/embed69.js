@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T16:03:10.182Z
+ * Generated: 2026-04-15T16:06:41.992Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -182,12 +182,10 @@ var require_id_mapper = __commonJS({
           const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
           const idUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${apiKey}`;
           const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${apiKey}&language=es-MX`;
-          const [idRes, metaRes] = yield Promise.all([
-            fetchJson(idUrl, { headers: { "User-Agent": ua } }).catch(() => null),
-            fetchJson(metaUrl, { headers: { "User-Agent": ua } }).catch(() => null)
-          ]);
+          const idRes = yield fetchJson(idUrl, { headers: { "User-Agent": ua } }).catch(() => null);
           if (!idRes || !idRes.imdb_id)
             return null;
+          const metaRes = yield fetchJson(metaUrl, { headers: { "User-Agent": ua } }).catch(() => null);
           const title = metaRes ? metaRes.title || metaRes.name : "Contenido";
           const year = metaRes ? (metaRes.release_date || metaRes.first_air_date || "").split("-")[0] : null;
           return {
@@ -741,8 +739,7 @@ var require_hlswish = __commonJS({
               const mirrorObj = new URL(mirror);
               const mirrorOrigin = mirrorObj.origin;
               const resp = yield fetch(mirror, {
-                headers: { "Referer": mirror, "User-Agent": UA },
-                signal: AbortSignal.timeout(5e3)
+                headers: { "Referer": mirror, "User-Agent": UA }
                 // Timeout interno de 5s por mirror
               });
               if (!resp.ok)
@@ -754,8 +751,7 @@ var require_hlswish = __commonJS({
                 const hash = hashMatch[0];
                 const dlUrl = `${mirrorOrigin}/dl?op=view&file_code=${rawId}&hash=${hash}&embed=1&referer=&adb=1&hls4=1`;
                 const dlResp = yield fetch(dlUrl, {
-                  headers: { "User-Agent": UA, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" },
-                  signal: AbortSignal.timeout(4e3)
+                  headers: { "User-Agent": UA, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" }
                 });
                 if (dlResp.ok) {
                   const dlData = yield dlResp.text();
@@ -1134,7 +1130,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.8.7 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.8.8 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
