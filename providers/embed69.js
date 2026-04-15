@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T16:11:02.301Z
+ * Generated: 2026-04-15T16:16:15.164Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -678,7 +678,10 @@ var require_voe = __commonJS({
               quality: "1080p",
               verified: false,
               serverName: "VOE",
-              headers: { "Referer": url }
+              headers: {
+                "Referer": url,
+                "User-Agent": getSessionUA()
+              }
             };
           }
           return null;
@@ -773,7 +776,11 @@ var require_hlswish = __commonJS({
             url: validResult.url,
             quality: "1080p",
             serverName: "StreamWish",
-            headers: { "Referer": validResult.mirror, "Origin": new URL(validResult.mirror).origin }
+            headers: {
+              "Referer": validResult.mirror,
+              "Origin": new URL(validResult.mirror).origin,
+              "User-Agent": UA
+            }
           };
           return yield validateStream(stream);
         } catch (e) {
@@ -915,7 +922,11 @@ var require_filemoon = __commonJS({
                 quality: "1080p",
                 verified: true,
                 serverName: "Filemoon",
-                headers: { "User-Agent": UA_CHROME, "Referer": `https://${hostname}`, "Origin": `https://${hostname}` }
+                headers: {
+                  "User-Agent": UA_CHROME,
+                  "Referer": `https://${hostname}`,
+                  "Origin": `https://${hostname}`
+                }
               };
             }
           }
@@ -1010,7 +1021,8 @@ var require_vidhide = __commonJS({
             headers: __spreadProps(__spreadValues({}, getStealthHeaders()), {
               "Referer": url.split("?")[0],
               "Origin": new URL(url).origin,
-              "X-Requested-With": "XMLHttpRequest"
+              "X-Requested-With": "XMLHttpRequest",
+              "User-Agent": getSessionUA()
             })
           };
           return yield validateStream(stream);
@@ -1041,7 +1053,7 @@ function applyPipingLocal(result) {
   if (!result || !result.url)
     return result;
   let url = result.url;
-  const ua = result.headers && result.headers["User-Agent"] ? result.headers["User-Agent"] : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  const ua = result.headers && result.headers["User-Agent"] ? result.headers["User-Agent"] : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
   const headers = [
     `User-Agent=${ua}`,
     `Referer=${result.headers && result.headers.Referer ? result.headers.Referer : "https://embed69.org/"}`
@@ -1112,7 +1124,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.8.9 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.9.0 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
