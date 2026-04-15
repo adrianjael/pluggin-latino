@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T21:17:36.664Z
+ * Generated: 2026-04-15T21:26:09.133Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -937,6 +937,14 @@ var require_filemoon = __commonJS({
                   const data = decrypted.includes("{") ? JSON.parse(decrypted) : null;
                   const directUrl = ((_b = (_a = data == null ? void 0 : data.sources) == null ? void 0 : _a[0]) == null ? void 0 : _b.url) || (data == null ? void 0 : data.url);
                   if (directUrl) {
+                    try {
+                      const vCheck = yield fetch(directUrl, { method: "HEAD", headers: { "User-Agent": UA_CHROME } });
+                      if (vCheck.status === 404) {
+                        console.log("[Filemoon] \u274C URL de video caducada (404).");
+                        return null;
+                      }
+                    } catch (ve) {
+                    }
                     return {
                       url: directUrl,
                       quality: ((_d = (_c = data == null ? void 0 : data.sources) == null ? void 0 : _c[0]) == null ? void 0 : _d.label) || "1080p",

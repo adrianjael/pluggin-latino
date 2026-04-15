@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-15T21:17:36.754Z
+ * Generated: 2026-04-15T21:26:09.210Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -53,7 +53,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve6, reject) => {
+  return new Promise((resolve5, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -68,7 +68,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve6(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve5(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -519,7 +519,7 @@ var require_voe = __commonJS({
       }
       return output;
     }
-    function resolve6(url) {
+    function resolve5(url) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
@@ -533,7 +533,7 @@ var require_voe = __commonJS({
           if (html.includes("window.location.href") && html.length < 2e3) {
             const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
             if (rm)
-              return resolve6(rm[1]);
+              return resolve5(rm[1]);
           }
           const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
           if (jsonMatch) {
@@ -600,8 +600,8 @@ var require_voe = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -629,7 +629,7 @@ var require_hlswish = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
-    function resolve6(url) {
+    function resolve5(url) {
       return __async(this, null, function* () {
         try {
           const UA5 = getSessionUA();
@@ -726,7 +726,7 @@ var require_hlswish = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -805,7 +805,7 @@ var require_filemoon = __commonJS({
           p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
       return p;
     }
-    function resolve6(url) {
+    function resolve5(url) {
       return __async(this, null, function* () {
         var _a, _b, _c, _d;
         try {
@@ -833,6 +833,14 @@ var require_filemoon = __commonJS({
                   const data = decrypted.includes("{") ? JSON.parse(decrypted) : null;
                   const directUrl = ((_b = (_a = data == null ? void 0 : data.sources) == null ? void 0 : _a[0]) == null ? void 0 : _b.url) || (data == null ? void 0 : data.url);
                   if (directUrl) {
+                    try {
+                      const vCheck = yield fetch(directUrl, { method: "HEAD", headers: { "User-Agent": UA_CHROME } });
+                      if (vCheck.status === 404) {
+                        console.log("[Filemoon] \u274C URL de video caducada (404).");
+                        return null;
+                      }
+                    } catch (ve) {
+                    }
                     return {
                       url: directUrl,
                       quality: ((_d = (_c = data == null ? void 0 : data.sources) == null ? void 0 : _c[0]) == null ? void 0 : _d.label) || "1080p",
@@ -874,8 +882,8 @@ var require_filemoon = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -911,7 +919,7 @@ var require_vidhide = __commonJS({
         return null;
       }
     }
-    function resolve6(url) {
+    function resolve5(url) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
@@ -970,7 +978,7 @@ var require_vidhide = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -1098,7 +1106,7 @@ var require_fastream = __commonJS({
       }
       return p;
     }
-    function resolve6(url) {
+    function resolve5(url) {
       return __async(this, null, function* () {
         try {
           console.log("[Fastream] Resolviendo: " + url);
@@ -1137,7 +1145,7 @@ var require_fastream = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -1242,71 +1250,60 @@ var require_buzzheavier = __commonJS({
   "src/resolvers/buzzheavier.js"(exports2, module2) {
     var axios4 = require("axios");
     var { getStealthHeaders } = require_http();
-    function resolve6(embedUrl) {
+    function resolve5(embedUrl) {
       return __async(this, null, function* () {
         if (!embedUrl)
           return null;
         try {
           const id = embedUrl.split("/").pop().split("|")[0];
           const targetUrl = `https://buzzheavier.com/f/${id}`;
-          console.log(`[Buzzheavier] Resolviendo v8.7.6: ${id}`);
+          const downloadUrl = `https://buzzheavier.com/f/${id}/download`;
+          console.log(`[Buzzheavier] Resolviendo v8.8.0 (Oficial): ${id}`);
           const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
-            "Referer": "https://pelisgo.online/",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+            "Referer": targetUrl,
+            "hx-current-url": targetUrl,
+            "hx-request": "true",
+            "Accept": "*/*"
           });
-          try {
-            const headRes = yield axios4.head(targetUrl, { headers, timeout: 5e3 });
-            if (headRes.status === 404) {
-              console.log("[Buzzheavier] \u274C Archivo eliminado (404). Omitiendo.");
+          const response = yield axios4.get(downloadUrl, {
+            headers,
+            timeout: 8e3,
+            maxRedirects: 0,
+            // No seguir redirecciones automáticas para capturar Hx-Redirect
+            validateStatus: (status) => status >= 200 && status < 400
+          });
+          let directUrl = response.headers["hx-redirect"];
+          if (!directUrl) {
+            console.log("[Buzzheavier] No se encontr\xF3 hx-redirect, buscando fallback...");
+            if (response.data && response.data.includes("This file could not be found")) {
               return null;
             }
-          } catch (e) {
-            if (e.response && e.response.status === 404)
-              return null;
           }
-          const { data: html } = yield axios4.get(targetUrl, { headers, timeout: 8e3 });
-          if (html.includes("This file could not be found") || html.includes("404")) {
-            console.log("[Buzzheavier] \u274C Archivo no encontrado por contenido HTML.");
-            return null;
-          }
-          let directUrl = `https://buzzheavier.com/v/${id}/video.mp4`;
-          try {
-            const videoCheck = yield axios4.head(directUrl, { headers, timeout: 4e3 });
-            if (videoCheck.status >= 200 && videoCheck.status < 400) {
-              console.log("[Buzzheavier] \u2713 URL de Video Directo confirmada.");
-              return {
-                url: directUrl,
-                quality: "1080p",
-                isDirect: true,
-                headers: {
-                  "User-Agent": headers["User-Agent"],
-                  "Referer": targetUrl
-                }
-              };
+          if (directUrl) {
+            if (directUrl.startsWith("/")) {
+              directUrl = `https://buzzheavier.com${directUrl}`;
             }
-          } catch (ee) {
-          }
-          const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i) || html.match(/<video[^>]+src=["']([^"']+)["']/i) || html.match(/hx-get=["']\/v\/([^"']+)["']/i);
-          if (sourceMatch) {
-            let foundPath = sourceMatch[1].startsWith("/v/") ? sourceMatch[1] : sourceMatch[1].includes("/v/") ? sourceMatch[1] : null;
-            if (foundPath) {
-              const finalUrl = `https://buzzheavier.com${foundPath.startsWith("/") ? "" : "/"}${foundPath}`;
-              console.log("[Buzzheavier] \u2713 URL extra\xEDda del HTML.");
-              return {
-                url: finalUrl,
-                quality: "1080p",
-                isDirect: true,
-                headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
-              };
-            }
+            console.log("[Buzzheavier] \u2713 Enlace directo obtenido v\xEDa HTMX Redirect.");
+            return {
+              url: directUrl,
+              quality: "1080p",
+              isDirect: true,
+              headers: {
+                "User-Agent": headers["User-Agent"],
+                "Referer": targetUrl
+              }
+            };
           }
           return null;
         } catch (e) {
+          if (e.response && e.response.status === 404) {
+            console.log("[Buzzheavier] \u274C 404 Not Found.");
+          }
           return null;
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -1367,38 +1364,9 @@ var init_okru = __esm({
 });
 
 // src/resolvers/pixeldrain.js
-var pixeldrain_exports = {};
-__export(pixeldrain_exports, {
-  resolve: () => resolve4
-});
-function resolve4(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      console.log("[Pixeldrain] Resolviendo: " + embedUrl);
-      const idMatch = embedUrl.match(/\/(u|l|api\/file)\/([a-zA-Z0-9]+)/i);
-      if (!idMatch) {
-        console.log("[Pixeldrain] No se pudo encontrar un ID v\xE1lido en la URL.");
-        return null;
-      }
-      const fileId = idMatch[2];
-      const directUrl = `https://pixeldrain.com/api/file/${fileId}?download=1`;
-      console.log("[Pixeldrain] \u2713 URL Directa generada.");
-      return {
-        url: directUrl,
-        quality: "1080p",
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          "Referer": "https://pixeldrain.com/"
-        }
-      };
-    } catch (e) {
-      console.error("[Pixeldrain] Error cr\xEDtico: " + e.message);
-      return null;
-    }
-  });
-}
-var init_pixeldrain = __esm({
+var require_pixeldrain = __commonJS({
   "src/resolvers/pixeldrain.js"() {
+    var axios4 = require("axios");
   }
 });
 
@@ -1406,7 +1374,7 @@ var init_pixeldrain = __esm({
 var require_playmogo = __commonJS({
   "src/resolvers/playmogo.js"(exports2, module2) {
     var { fetchHtml: fetchHtml3, DEFAULT_UA: DEFAULT_UA2 } = require_http();
-    function resolve6(url) {
+    function resolve5(url) {
       return __async(this, null, function* () {
         try {
           console.log("[Playmogo] Resolving: " + url);
@@ -1426,16 +1394,16 @@ var require_playmogo = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
 // src/resolvers/turbovid.js
 var turbovid_exports = {};
 __export(turbovid_exports, {
-  resolve: () => resolve5
+  resolve: () => resolve4
 });
-function resolve5(embedUrl) {
+function resolve4(embedUrl) {
   return __async(this, null, function* () {
     try {
       const { data: html } = yield import_axios3.default.get(embedUrl, {
@@ -1472,7 +1440,7 @@ var require_embedseek = __commonJS({
   "src/resolvers/embedseek.js"(exports2, module2) {
     var CryptoJS2 = require("crypto-js");
     var { getSessionUA } = require_http();
-    function resolve6(url) {
+    function resolve5(url) {
       return __async(this, null, function* () {
         try {
           const UA5 = getSessionUA();
@@ -1569,7 +1537,7 @@ var require_embedseek = __commonJS({
       );
       return decrypted.toString(CryptoJS2.enc.Utf8);
     }
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -1578,7 +1546,7 @@ var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
     var axios4 = require("axios");
     var { getStealthHeaders } = require_http();
-    function resolve6(embedUrl) {
+    function resolve5(embedUrl) {
       return __async(this, null, function* () {
         try {
           console.log("[TPlayer] Resolviendo con sesi\xF3n: " + embedUrl);
@@ -1630,7 +1598,7 @@ var require_tplayer = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -1658,7 +1626,7 @@ var require_lulustream = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
-    function resolve6(url) {
+    function resolve5(url) {
       return __async(this, null, function* () {
         try {
           const UA5 = getSessionUA();
@@ -1715,7 +1683,7 @@ var require_lulustream = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve5 };
   }
 });
 
@@ -1731,7 +1699,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolveVimeos } = (init_vimeos(), __toCommonJS(vimeos_exports));
     var { resolve: resolveBuzzheavier } = require_buzzheavier();
     var { resolve: resolveOkru } = (init_okru(), __toCommonJS(okru_exports));
-    var { resolve: resolvePixeldrain } = (init_pixeldrain(), __toCommonJS(pixeldrain_exports));
+    var { resolve: resolvePixeldrain } = require_pixeldrain();
     var { resolve: resolvePlaymogo } = require_playmogo();
     var { resolve: resolveTurbovid } = (init_turbovid(), __toCommonJS(turbovid_exports));
     var { resolve: resolveEmbedseek } = require_embedseek();
