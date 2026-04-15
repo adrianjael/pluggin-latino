@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T21:32:03.486Z
+ * Generated: 2026-04-15T21:36:57.840Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -694,7 +694,6 @@ var require_filemoon = __commonJS({
             if (m3u8Match) {
               return {
                 url: m3u8Match[1],
-                quality: "1080p",
                 verified: true,
                 serverName: "Filemoon",
                 headers: {
@@ -1110,7 +1109,6 @@ var require_buzzheavier = __commonJS({
               console.log("[Buzzheavier] \u2713 Enlace obtenido via HTMX.");
               return {
                 url: hxDirect,
-                quality: "1080p",
                 isDirect: true,
                 headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
               };
@@ -1124,7 +1122,6 @@ var require_buzzheavier = __commonJS({
               console.log("[Buzzheavier] \u2713 Enlace verificado (Video Directo).");
               return {
                 url: predictableUrl,
-                quality: "1080p",
                 isDirect: true,
                 headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
               };
@@ -1138,7 +1135,6 @@ var require_buzzheavier = __commonJS({
           console.log("[Buzzheavier] \u26A0\uFE0F No se pudo validar definitivamente, devolviendo sospechoso.");
           return {
             url: predictableUrl,
-            quality: "1080p",
             isDirect: true,
             headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
           };
@@ -1248,7 +1244,6 @@ var require_pixeldrain = __commonJS({
           console.log("[Pixeldrain] \u2713 URL Directa generada y confirmada.");
           return {
             url: directUrl,
-            quality: "1080p",
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
               "Referer": "https://pixeldrain.com/"
@@ -1476,7 +1471,6 @@ var require_tplayer = __commonJS({
           console.log("[TPlayer] \u2713 Link de sesi\xF3n generado.");
           return {
             url: streamUrl,
-            quality: "1080p",
             isDirect: true,
             headers: {
               "User-Agent": baseHeaders["User-Agent"],
@@ -2235,7 +2229,7 @@ var require_engine = __commonJS({
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
           const streamName = `${providerName} - ${displayQuality}${checkMark}`;
-          const streamTitle = `${rawLang.toLowerCase()} - ${server}`;
+          const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);

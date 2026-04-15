@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T21:32:03.433Z
+ * Generated: 2026-04-15T21:36:57.785Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -548,7 +548,7 @@ var require_engine = __commonJS({
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
           const streamName = `${providerName} - ${displayQuality}${checkMark}`;
-          const streamTitle = `${rawLang.toLowerCase()} - ${server}`;
+          const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
@@ -968,7 +968,6 @@ var require_filemoon = __commonJS({
             if (m3u8Match) {
               return {
                 url: m3u8Match[1],
-                quality: "1080p",
                 verified: true,
                 serverName: "Filemoon",
                 headers: {
