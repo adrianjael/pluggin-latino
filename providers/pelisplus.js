@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T23:00:48.109Z
+ * Generated: 2026-04-15T23:05:05.024Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2223,9 +2223,12 @@ var require_extractor = __commonJS({
           const streamPromises = rawResults.map((res) => __async(this, null, function* () {
             try {
               const url = res.serverUrl;
+              if (!url || url.includes("'+") || url.includes('"+') || url.includes("url=") || url.length < 10) {
+                return null;
+              }
               const rawLang = normalizeLanguage(res.language);
-              if (rawLang === "Espa\xF1ol") {
-                console.log(`[PelisPlusHD] Skipping Castellano: ${res.serverName}`);
+              if (rawLang !== "Latino") {
+                console.log(`[PelisPlusHD] Skipping non-latino (${rawLang}): ${res.serverName}`);
                 return null;
               }
               const finalUrl = yield resolveEmbed(url);
@@ -2238,7 +2241,6 @@ var require_extractor = __commonJS({
                 name: "PelisPlusHD",
                 url: directUrl,
                 quality: "HD",
-                // Fallback
                 langLabel: rawLang,
                 serverLabel: res.serverName,
                 headers: typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL }
@@ -2253,12 +2255,21 @@ var require_extractor = __commonJS({
                 return streamData;
               }
             } catch (e) {
-              console.error(`[PelisPlusHD] Error resolving ${res.serverUrl}:`, e.message);
               return null;
             }
           }));
-          const allResults = yield Promise.all(streamPromises);
-          return allResults.filter((s) => s !== null);
+          let allResults = yield Promise.all(streamPromises);
+          allResults = allResults.filter((s) => s !== null);
+          allResults.sort((a, b) => {
+            const isVoeA = a.serverLabel && a.serverLabel.toLowerCase().includes("voe");
+            const isVoeB = b.serverLabel && b.serverLabel.toLowerCase().includes("voe");
+            if (isVoeA && !isVoeB)
+              return -1;
+            if (!isVoeA && isVoeB)
+              return 1;
+            return 0;
+          });
+          return allResults;
         } catch (error) {
           console.error("[PelisPlusHD] extractStreams Error:", error.message);
           return [];
