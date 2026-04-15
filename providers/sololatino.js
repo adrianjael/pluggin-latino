@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-15T16:59:51.187Z
+ * Generated: 2026-04-15T17:26:32.531Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -552,8 +552,8 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `Embed69 - ${displayQuality}${checkMark}`;
-          const streamTitle = `${rawLang} - ${server}`;
+          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
+          const streamTitle = `${rawLang} ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
@@ -1944,18 +1944,23 @@ function getImdbIdInternal(idOrQuery, mediaType) {
 function getDirectStream(id, token, cookie, playerUrl, sessionHeaders) {
   return __async(this, null, function* () {
     try {
-      const body = new URLSearchParams({ a: "2", tok: token, v: id }).toString();
-      const config = {
-        timeout: 1e4,
-        headers: __spreadProps(__spreadValues({}, sessionHeaders), {
-          "Referer": playerUrl,
-          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-        })
-      };
+      const postH = __spreadProps(__spreadValues({}, sessionHeaders), {
+        "Referer": playerUrl,
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest"
+      });
       if (cookie)
-        config.headers["cookie"] = cookie;
-      const { data } = yield axios4.post(`${BASE_URL}/s.php`, body, config);
-      return data && data.u ? { url: data.u, sig: data.sig } : null;
+        postH["cookie"] = cookie;
+      yield axios4.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH, timeout: 5e3 });
+      yield sleep(350);
+      const { data } = yield axios4.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH, timeout: 5e3 });
+      if (data && data.u) {
+        let finalUrl = data.u;
+        if (data.sig)
+          finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(data.u)}&sig=${data.sig}`;
+        return finalUrl;
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -1974,10 +1979,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const now = Date.now();
     if (RESULT_CACHE.has(cacheKey)) {
       const cached = RESULT_CACHE.get(cacheKey);
-      if (now - cached.time < CACHE_TTL) {
-        console.log(`[SoloLatino] Servido desde cach\xE9: ${cacheKey}`);
+      if (now - cached.time < CACHE_TTL)
         return cached.data;
-      }
     }
     const UA4 = getRandomUA();
     setSessionUA(UA4);
@@ -1985,7 +1988,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       "User-Agent": UA4,
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
       "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
-      "Cache-Control": "no-cache",
       "X-Requested-With": "XMLHttpRequest",
       "Referer": "https://sololatino.net/"
     };
@@ -2000,72 +2002,63 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      console.log(`[SoloLatino] VELOCITY-STEALTH v8.0.0 - Buscando: ${slug}`);
+      console.log(`[SoloLatino] Buscando: ${slug} (v8.3.0)`);
       const { data: html, headers: respHeaders } = yield axios4.get(playerUrl, { headers: SESSION_HEADERS, timeout: 8e3 });
-      yield sleep(500);
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
       const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
-      if (tokenMatch && tokenMatch[1]) {
-        const token = tokenMatch[1];
-        const postH = __spreadProps(__spreadValues({}, SESSION_HEADERS), {
-          "Referer": playerUrl,
-          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-        });
-        if (cookie)
-          postH["cookie"] = cookie;
-        yield axios4.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
-        yield sleep(300);
-        const { data: scanData } = yield axios4.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
-        const uniqueServers = /* @__PURE__ */ new Map();
-        (scanData && scanData.s || []).forEach((ser) => {
-          if (ser[1])
-            uniqueServers.set(ser[1], ser);
-        });
-        if (scanData && scanData.langs_s) {
-          Object.keys(scanData.langs_s).forEach((k) => {
-            (scanData.langs_s[k] || []).forEach((ser) => {
-              if (ser[1])
-                uniqueServers.set(ser[1], ser);
-            });
+      if (!tokenMatch)
+        return [];
+      const token = tokenMatch[1];
+      const postH = __spreadProps(__spreadValues({}, SESSION_HEADERS), { "Referer": playerUrl, "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" });
+      const { data: scanData } = yield axios4.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
+      const uniqueServers = /* @__PURE__ */ new Map();
+      (scanData && scanData.s || []).forEach((ser) => {
+        if (ser[1])
+          uniqueServers.set(ser[1], ser);
+      });
+      if (scanData && scanData.langs_s) {
+        Object.keys(scanData.langs_s).forEach((k) => {
+          (scanData.langs_s[k] || []).forEach((ser) => {
+            if (ser[1])
+              uniqueServers.set(ser[1], ser);
           });
-        }
-        const serverList = Array.from(uniqueServers.values()).slice(0, 8);
-        const resolved = [];
-        console.log(`[SoloLatino] Iniciando R\xE1faga Escalonada (600ms) para ${serverList.length} servidores...`);
-        for (const ser of serverList) {
-          const [name, id] = Array.isArray(ser) ? ser : [ser[0], ser[1]];
-          try {
-            const directResult = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
-            if (directResult && directResult.url) {
-              let finalUrl = directResult.url;
-              if (directResult.sig)
-                finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(directResult.url)}&sig=${directResult.sig}`;
-              const resolvedResult = yield resolveEmbed(finalUrl);
-              if (resolvedResult) {
-                resolved.push(__spreadProps(__spreadValues({}, resolvedResult), {
-                  langLabel: "Latino",
-                  serverName: `${name} - ${resolvedResult.serverName || "Direct"}`
-                }));
-              } else {
-                resolved.push({
-                  langLabel: "Latino",
-                  serverName: name,
-                  url: finalUrl,
-                  quality: "1080p",
-                  headers: { "User-Agent": UA4, "Referer": playerUrl, "Origin": BASE_URL }
-                });
-              }
-            }
-          } catch (e2) {
-          }
-          yield sleep(600);
-        }
-        const final = yield finalizeStreams(resolved, "SoloLatino", mediaTitle);
-        if (final.length > 0) {
-          RESULT_CACHE.set(cacheKey, { time: now, data: final });
-        }
-        return final;
+        });
       }
+      const serverList = Array.from(uniqueServers.values()).slice(0, 15);
+      const resolved = [];
+      for (const ser of serverList) {
+        const name = ser[0];
+        const id = ser[1];
+        if (["Seek", "Lulu", "Desu"].some((x) => name.includes(x)))
+          continue;
+        try {
+          const finalUrl = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
+          if (finalUrl) {
+            const resolvedResult = yield resolveEmbed(finalUrl);
+            if (resolvedResult) {
+              const secondaryServer = resolvedResult.serverName && resolvedResult.serverName !== "Direct" ? ` - ${resolvedResult.serverName}` : "";
+              resolved.push(__spreadProps(__spreadValues({}, resolvedResult), {
+                langLabel: "Latino",
+                serverName: `${name}${secondaryServer}`
+              }));
+            } else {
+              resolved.push({
+                langLabel: "Latino",
+                serverName: name,
+                url: finalUrl,
+                quality: "1080p",
+                headers: { "User-Agent": UA4, "Referer": playerUrl, "Origin": BASE_URL }
+              });
+            }
+          }
+        } catch (e2) {
+        }
+        yield sleep(600);
+      }
+      const final = yield finalizeStreams(resolved, "SoloLatino", mediaTitle);
+      if (final.length > 0)
+        RESULT_CACHE.set(cacheKey, { time: now, data: final });
+      return final;
     } catch (e2) {
       console.log(`[SoloLatino] Error: ${e2.message}`);
     }

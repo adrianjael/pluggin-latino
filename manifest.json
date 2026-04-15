@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "8.0.1",
+  "version": "8.3.0",
   "scrapers": [
     {
       "id": "embed69",
@@ -27,7 +27,7 @@
       "id": "sololatino",
       "name": "SoloLatino",
       "description": "Servidores universales de alta gama con Player+ (Directo).",
-      "version": "3.0.1",
+      "version": "3.0.5",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -50,7 +50,7 @@
       "id": "pelisgo",
       "name": "PelisGo",
       "description": "Descargas directas y streaming de alta fidelidad.",
-      "version": "6.9.9",
+      "version": "7.0.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
