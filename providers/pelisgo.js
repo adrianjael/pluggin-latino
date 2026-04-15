@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T18:00:48.367Z
+ * Generated: 2026-04-15T20:08:40.167Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1704,42 +1704,56 @@ var require_embedseek = __commonJS({
 // src/resolvers/tplayer.js
 var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
-    var { fetchJson: fetchJson2, getStealthHeaders: getStealthHeaders2 } = require_http();
+    var axios4 = require("axios");
+    var { getStealthHeaders: getStealthHeaders2 } = require_http();
     function resolve7(embedUrl) {
       return __async(this, null, function* () {
         try {
-          console.log("[TPlayer] Resolviendo: " + embedUrl);
+          console.log("[TPlayer] Resolviendo con sesi\xF3n: " + embedUrl);
           const idMatch = embedUrl.match(/\/embed\/([a-zA-Z0-9_-]+)/);
-          if (!idMatch) {
-            console.log("[TPlayer] No se pudo encontrar un ID v\xE1lido en la URL.");
+          if (!idMatch)
             return null;
-          }
           const fileId = idMatch[1];
           const baseUrl = new URL(embedUrl).origin;
           const apiUrl = `${baseUrl}/api/resolve/${fileId}`;
-          const headers = getStealthHeaders2();
-          headers["Referer"] = embedUrl;
-          headers["X-Requested-With"] = "XMLHttpRequest";
-          const data = yield fetchJson2(apiUrl, { headers });
+          const baseHeaders = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
+            "Referer": embedUrl,
+            "Origin": baseUrl,
+            "X-Requested-With": "XMLHttpRequest"
+          });
+          const embedResp = yield axios4.get(embedUrl, {
+            headers: baseHeaders,
+            timeout: 5e3
+          });
+          const cookies = (embedResp.headers["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
+          if (cookies) {
+            baseHeaders["Cookie"] = cookies;
+            console.log("[TPlayer] Sesi\xF3n capturada correctamente.");
+          }
+          const { data } = yield axios4.get(apiUrl, {
+            headers: baseHeaders,
+            timeout: 5e3
+          });
           if (!data || !data.success || !data.streamUrl) {
-            console.log("[TPlayer] La API no devolvi\xF3 un enlace v\xE1lido.");
+            console.log("[TPlayer] La API no autoriz\xF3 el stream.");
             return null;
           }
           const streamUrl = data.streamUrl.startsWith("http") ? data.streamUrl : `${baseUrl}${data.streamUrl}`;
-          console.log("[TPlayer] \u2713 Stream capturado con \xE9xito.");
+          console.log("[TPlayer] \u2713 Link de sesi\xF3n generado.");
           return {
             url: streamUrl,
             quality: "1080p",
             isDirect: true,
-            // Forzar anclaje .mp4 en applyPiping
             headers: {
-              "User-Agent": headers["User-Agent"],
+              "User-Agent": baseHeaders["User-Agent"],
               "Referer": embedUrl,
-              "Origin": baseUrl
+              "Origin": baseUrl,
+              "Cookie": cookies
+              // Vital para que Nuvio pueda descargar el stream
             }
           };
         } catch (e) {
-          console.error("[TPlayer] Error en resoluci\xF3n: " + e.message);
+          console.error("[TPlayer] Error de resoluci\xF3n: " + e.message);
           return null;
         }
       });
