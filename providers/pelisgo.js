@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T20:39:26.612Z
+ * Generated: 2026-04-15T20:43:48.089Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -565,7 +565,7 @@ var require_engine = __commonJS({
     var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     var { isMirror } = require_mirrors();
-    function normalizeLanguage(lang) {
+    function normalizeLanguage2(lang) {
       const l = (lang || "").toLowerCase();
       if (l === "latino" || l === "espa\xF1ol")
         return lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase();
@@ -611,7 +611,7 @@ var require_engine = __commonJS({
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
-          const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
+          const rawLang = normalizeLanguage2(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
           if (!isLatino) {
             console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
@@ -2107,10 +2107,14 @@ function cleanTitle(str) {
     return "";
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim();
 }
-function cleanMetadata(val) {
-  if (!val)
-    return "";
-  return val.replace(/[\\"' ]+/g, "").replace(/\\u[\dA-F]{4}/gi, "").trim();
+function normalizeLanguage(str) {
+  if (!str)
+    return { label: "Latino", engine: "Latino" };
+  const low = str.toLowerCase();
+  if (low.includes("castellano") || low.includes("espa\xF1a")) {
+    return { label: "Latino / ES", engine: "Latino" };
+  }
+  return { label: "Latino", engine: "Latino" };
 }
 function fetchText(_0) {
   return __async(this, arguments, function* (url, referer = BASE) {
@@ -2126,6 +2130,8 @@ function resolvePelisGoDownload(id) {
   return __async(this, null, function* () {
     if (!id)
       return null;
+    if (id.startsWith("http"))
+      return id;
     try {
       const res = yield fetch(`https://pelisgo.online/api/download/${id}`, {
         headers: getPelisGoHeaders()
@@ -2151,103 +2157,81 @@ function getOnlineStreams(rawHtml) {
   return __async(this, null, function* () {
     const seenUrls = /* @__PURE__ */ new Set();
     const resolutionPromises = [];
+    const tableRegex = new RegExp(`<tr[^>]*>.*?<span[^>]*>([^<]+)<\\/span>.*?<td[^>]*>.*?<span[^>]*>([^<]+)<\\/span>.*?<span>([^<]+)<\\/span>.*?href=["']\\/download\\/([^"']+)["']`, "gis");
+    let match;
+    while ((match = tableRegex.exec(rawHtml)) !== null) {
+      const [_, serverName, quality, lang, downloadId] = match;
+      const cleanServer = serverName.trim();
+      if (!WHITELIST.some((w) => cleanServer.toLowerCase().includes(w.toLowerCase())))
+        continue;
+      resolutionPromises.push((() => __async(this, null, function* () {
+        const directUrl = yield resolvePelisGoDownload(downloadId);
+        if (!directUrl || seenUrls.has(directUrl))
+          return null;
+        seenUrls.add(directUrl);
+        if (cleanServer === "Buzzheavier") {
+          if (!(yield validateBuzzLink(directUrl)))
+            return null;
+        }
+        const langMeta = normalizeLanguage(lang);
+        const resolved = yield resolveEmbed(directUrl);
+        return {
+          name: "PelisGo",
+          langLabel: langMeta.label,
+          serverLabel: cleanServer,
+          url: resolved ? resolved.url : directUrl,
+          quality: (resolved ? resolved.quality : quality.trim()) || "1080p",
+          headers: (resolved ? resolved.headers : null) || getPelisGoHeaders(directUrl)
+        };
+      }))());
+    }
+    const playerRegex = /alt=["']([^"']+)["'][^>]*>.*?text-sm font-bold truncate[^>]*>([^<]+)[\s\S]*?text-\[10px\][^>]*>([^<]+)/gi;
+    let pMatch;
+    while ((pMatch = playerRegex.exec(rawHtml)) !== null) {
+      const [_, imgAlt, serverName, quality] = pMatch;
+      const cleanServer = serverName.trim() || imgAlt.trim();
+      if (!WHITELIST.some((w) => cleanServer.toLowerCase().includes(w.toLowerCase())))
+        continue;
+    }
     try {
       const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
       if (videoLinksMatch) {
         const rawLinksJson = videoLinksMatch[1];
         const objects = rawLinksJson.match(/\{[^{}]*?\}/g) || [];
         for (const obj of objects) {
-          const serverMatch = obj.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-          const urlMatch = obj.match(/url[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-          if (!serverMatch || !urlMatch)
+          const sM = obj.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          const uM = obj.match(/url[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          const qM = obj.match(/quality[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
+          const lM = obj.match(/language[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
+          if (!sM || !uM)
             continue;
-          const serverName = cleanMetadata(serverMatch[1]);
-          const cleanUrl = urlMatch[1].replace(/\\/g, "");
+          const serverName = sM[1].replace(/[\\"' ]+/g, "");
+          const cleanUrl = uM[1].replace(/\\/g, "");
+          const quality = qM ? qM[1].replace(/[\\"' ]+/g, "") : "1080p";
+          const lang = lM ? lM[1].replace(/[\\"' ]+/g, "") : "Latino";
           if (!WHITELIST.some((w) => serverName.toLowerCase().includes(w.toLowerCase())))
-            continue;
-          if (cleanUrl.includes("tplayer.pelisgo.online"))
             continue;
           if (seenUrls.has(cleanUrl))
             continue;
           seenUrls.add(cleanUrl);
           resolutionPromises.push((() => __async(this, null, function* () {
             const result = yield resolveEmbed(cleanUrl);
-            if (result && result.url) {
-              return {
-                name: "PelisGo",
-                langLabel: "Latino",
-                serverLabel: result.serverName || serverName,
-                url: result.url,
-                quality: result.quality || "1080p",
-                headers: result.headers || getPelisGoHeaders(cleanUrl)
-              };
-            } else if (cleanUrl.includes("http")) {
-              return {
-                name: "PelisGo",
-                langLabel: "Latino",
-                serverLabel: serverName,
-                url: cleanUrl,
-                quality: "1080p",
-                headers: getPelisGoHeaders()
-              };
-            }
-            return null;
+            const langMeta = normalizeLanguage(lang);
+            return {
+              name: "PelisGo",
+              langLabel: langMeta.label,
+              serverLabel: result ? result.serverName : serverName,
+              url: result ? result.url : cleanUrl,
+              quality: (result ? result.quality : quality) || "1080p",
+              headers: (result ? result.headers : null) || getPelisGoHeaders(cleanUrl)
+            };
           }))());
         }
       }
     } catch (e) {
     }
-    try {
-      const globalRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+([^\\",{} ]+)[^{}]*?url[\\"' ]+:[\\"' ]+([^\\",{} ]+)[^{}]*?\}/gi;
-      let m;
-      while ((m = globalRegex.exec(rawHtml)) !== null) {
-        const objStr = m[0];
-        resolutionPromises.push((() => __async(this, null, function* () {
-          try {
-            const urlMatch = objStr.match(/url[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-            const qualityMatch = objStr.match(/quality[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-            const langMatch = objStr.match(/language[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-            const serverMatch = objStr.match(/server[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-            if (!urlMatch || !serverMatch)
-              return null;
-            const rawUrl = urlMatch[1].replace(/\\/g, "");
-            const quality = cleanMetadata(qualityMatch ? qualityMatch[1] : "1080p");
-            const lang = cleanMetadata(langMatch ? langMatch[1] : "Latino");
-            const serverName = cleanMetadata(serverMatch[1]);
-            if (!WHITELIST.some((w) => serverName.toLowerCase().includes(w.toLowerCase())))
-              return null;
-            let directUrl = rawUrl;
-            if (rawUrl.includes("/download/")) {
-              const id = rawUrl.split("/").pop();
-              directUrl = yield resolvePelisGoDownload(id);
-            }
-            if (directUrl && !seenUrls.has(directUrl)) {
-              seenUrls.add(directUrl);
-              if (serverName === "Buzzheavier") {
-                const isAlive = yield validateBuzzLink(directUrl);
-                if (!isAlive)
-                  return null;
-              }
-              const resolved = yield resolveEmbed(directUrl);
-              const finalLang = lang.toLowerCase().includes("cast") ? "Latino (ES)" : "Latino";
-              return {
-                name: "PelisGo",
-                langLabel: finalLang,
-                serverLabel: serverName,
-                url: resolved ? resolved.url : directUrl,
-                quality: (resolved ? resolved.quality : quality) || "1080p",
-                headers: (resolved ? resolved.headers : null) || getPelisGoHeaders(directUrl)
-              };
-            }
-          } catch (ee) {
-          }
-          return null;
-        }))());
-      }
-    } catch (e) {
-    }
-    const results = yield Promise.all(resolutionPromises);
-    return results.filter((s) => s !== null);
+    const res = yield Promise.all(resolutionPromises);
+    return res.filter((s) => s !== null);
   });
 }
 function pelisgoSearch(query, type) {
@@ -2285,7 +2269,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const meta = yield getCorrectImdbId(tmdbId, mediaType);
       const mediaTitle = meta.title || title;
       const imdbId = meta.imdbId;
-      console.log(`[PelisGo] v8.7.3 Buscando: "${mediaTitle}"`);
+      console.log(`[PelisGo] v8.7.4 Analizando: "${mediaTitle}"`);
       const paths = yield pelisgoSearch(mediaTitle, type);
       let bestPath = null;
       for (const path of paths) {
