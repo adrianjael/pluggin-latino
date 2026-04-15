@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T15:52:17.906Z
+ * Generated: 2026-04-15T15:55:41.030Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -535,7 +535,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${(providerName == null ? void 0 : providerName.toLowerCase()) || "Embed69"} - ${displayQuality}${checkMark}`;
+          const streamName = `Embed69 - ${displayQuality}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
@@ -1134,7 +1134,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.8.3 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.8.4 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
