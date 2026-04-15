@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T23:19:24.490Z
+ * Generated: 2026-04-15T23:21:49.371Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2204,9 +2204,6 @@ var require_extractor = __commonJS({
               const serverName = innerHtml.replace(/<[^>]+>/g, "").trim() || "Server";
               let serverUrl = urlMatch ? urlMatch[1] : null;
               const serverLang = nameMatch ? nameMatch[1] : lang;
-              const style = liContent.replace(/\s/g, "").toLowerCase();
-              if (style.includes("display:none"))
-                continue;
               if (!serverUrl && idMatch) {
                 const id = idMatch[1];
                 const linkRegex = new RegExp(`<span[^>]*lid="${id}"[^>]*url="([^"]+)"`, "i");
