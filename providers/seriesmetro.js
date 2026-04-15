@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-15T20:08:40.218Z
+ * Generated: 2026-04-15T20:27:28.804Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -53,7 +53,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve7, reject) => {
+  return new Promise((resolve6, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -68,7 +68,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve7(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve6(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -117,7 +117,7 @@ var require_http = __commonJS({
         "Upgrade-Insecure-Requests": "1"
       };
     }
-    var DEFAULT_UA3 = getSessionUA();
+    var DEFAULT_UA2 = getSessionUA();
     var MOBILE_UA = getSessionUA();
     function request2(url, options) {
       return __async(this, null, function* () {
@@ -150,7 +150,7 @@ var require_http = __commonJS({
         }
       });
     }
-    function fetchHtml4(url, options) {
+    function fetchHtml3(url, options) {
       return __async(this, null, function* () {
         var res = yield request2(url, options);
         return yield res.text();
@@ -164,12 +164,12 @@ var require_http = __commonJS({
     }
     module2.exports = {
       request: request2,
-      fetchHtml: fetchHtml4,
+      fetchHtml: fetchHtml3,
       fetchJson: fetchJson2,
       getSessionUA,
       setSessionUA,
       getStealthHeaders,
-      DEFAULT_UA: DEFAULT_UA3,
+      DEFAULT_UA: DEFAULT_UA2,
       MOBILE_UA
     };
   }
@@ -519,7 +519,7 @@ var require_voe = __commonJS({
       }
       return output;
     }
-    function resolve7(url) {
+    function resolve6(url) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
@@ -533,7 +533,7 @@ var require_voe = __commonJS({
           if (html.includes("window.location.href") && html.length < 2e3) {
             const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
             if (rm)
-              return resolve7(rm[1]);
+              return resolve6(rm[1]);
           }
           const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
           if (jsonMatch) {
@@ -600,8 +600,8 @@ var require_voe = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve7 };
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
@@ -629,7 +629,7 @@ var require_hlswish = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
-    function resolve7(url) {
+    function resolve6(url) {
       return __async(this, null, function* () {
         try {
           const UA5 = getSessionUA();
@@ -726,7 +726,7 @@ var require_hlswish = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
@@ -805,7 +805,7 @@ var require_filemoon = __commonJS({
           p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
       return p;
     }
-    function resolve7(url) {
+    function resolve6(url) {
       return __async(this, null, function* () {
         var _a, _b, _c, _d;
         try {
@@ -874,8 +874,8 @@ var require_filemoon = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve7 };
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
@@ -911,7 +911,7 @@ var require_vidhide = __commonJS({
         return null;
       }
     }
-    function resolve7(url) {
+    function resolve6(url) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
@@ -970,7 +970,7 @@ var require_vidhide = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
@@ -1081,7 +1081,7 @@ var init_goodstream = __esm({
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml4, getSessionUA } = require_http();
+    var { fetchHtml: fetchHtml3, getSessionUA } = require_http();
     var { detectQuality: detectQuality2 } = require_quality();
     var UA5 = getSessionUA();
     function unpackPacker(data) {
@@ -1098,11 +1098,11 @@ var require_fastream = __commonJS({
       }
       return p;
     }
-    function resolve7(url) {
+    function resolve6(url) {
       return __async(this, null, function* () {
         try {
           console.log("[Fastream] Resolviendo: " + url);
-          var data = yield fetchHtml4(url, {
+          var data = yield fetchHtml3(url, {
             headers: { "User-Agent": UA5, "Referer": "https://www3.seriesmetro.net/" }
           });
           var unpacked = unpackPacker(data);
@@ -1137,7 +1137,7 @@ var require_fastream = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
@@ -1238,66 +1238,74 @@ var init_vimeos = __esm({
 });
 
 // src/resolvers/buzzheavier.js
-var buzzheavier_exports = {};
-__export(buzzheavier_exports, {
-  resolve: () => resolve3
-});
-function resolve3(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      console.log("[Buzzheavier] Resolviendo: " + embedUrl);
-      const html = yield (0, import_http2.fetchHtml)(embedUrl, {
-        headers: {
-          "User-Agent": import_http2.DEFAULT_UA,
-          "Referer": "https://pelisgo.online/",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+var require_buzzheavier = __commonJS({
+  "src/resolvers/buzzheavier.js"(exports2, module2) {
+    var axios4 = require("axios");
+    var { getStealthHeaders } = require_http();
+    function resolve6(embedUrl) {
+      return __async(this, null, function* () {
+        if (!embedUrl)
+          return null;
+        try {
+          console.log("[Buzzheavier] Resolviendo v8.7.0: " + embedUrl);
+          let targetUrl = embedUrl;
+          if (!embedUrl.includes("/f/") && !embedUrl.includes("/v/")) {
+            const id = embedUrl.split("/").pop();
+            targetUrl = `https://buzzheavier.com/f/${id}`;
+          }
+          const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+            "Referer": "https://pelisgo.online/",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+          });
+          const { data: html } = yield axios4.get(targetUrl, { headers, timeout: 8e3 });
+          let directUrl = null;
+          const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i) || html.match(/<video[^>]+src=["']([^"']+)["']/i);
+          if (sourceMatch) {
+            directUrl = sourceMatch[1];
+          }
+          if (!directUrl) {
+            const hxMatch = html.match(/hx-get=["']\/v\/([^"']+)["']/i);
+            if (hxMatch) {
+              directUrl = `https://buzzheavier.com/v/${hxMatch[1]}`;
+            }
+          }
+          if (!directUrl) {
+            const idMatch = targetUrl.match(/\/f\/([a-zA-Z0-9_-]+)/);
+            if (idMatch) {
+              directUrl = `https://buzzheavier.com/v/${idMatch[1]}/video.mp4`;
+            }
+          }
+          if (directUrl) {
+            if (!directUrl.startsWith("http")) {
+              directUrl = `https://buzzheavier.com${directUrl.startsWith("/") ? "" : "/"}${directUrl}`;
+            }
+            console.log("[Buzzheavier] \u2713 Enlace directo obtenido.");
+            return {
+              url: directUrl,
+              quality: "1080p",
+              isDirect: true,
+              headers: {
+                "User-Agent": headers["User-Agent"],
+                "Referer": targetUrl
+              }
+            };
+          }
+          return null;
+        } catch (e) {
+          return null;
         }
       });
-      let directUrl = null;
-      const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i);
-      if (sourceMatch) {
-        directUrl = sourceMatch[1];
-      }
-      if (!directUrl) {
-        const staticMatch = html.match(/window\.fileUrl\s*=\s*["']([^"']+)["']/i);
-        if (staticMatch)
-          directUrl = staticMatch[1];
-      }
-      if (!directUrl && embedUrl.includes("/f/")) {
-        directUrl = embedUrl.replace("/f/", "/v/");
-      }
-      if (directUrl) {
-        console.log("[Buzzheavier] \u2713 Enlace directo identificado.");
-        return {
-          url: directUrl,
-          quality: "1080p",
-          headers: {
-            "User-Agent": import_http2.DEFAULT_UA,
-            "Referer": embedUrl
-          }
-        };
-      }
-      console.log("[Buzzheavier] No se pudo extraer el video directo.");
-      return null;
-    } catch (e) {
-      console.error("[Buzzheavier] Error: " + e.message);
-      return null;
     }
-  });
-}
-var import_http2;
-var init_buzzheavier = __esm({
-  "src/resolvers/buzzheavier.js"() {
-    import_http2 = __toESM(require_http());
+    module2.exports = { resolve: resolve6 };
   }
 });
 
 // src/resolvers/okru.js
 var okru_exports = {};
 __export(okru_exports, {
-  resolve: () => resolve4
+  resolve: () => resolve3
 });
-function resolve4(embedUrl) {
+function resolve3(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log(`[OkRu] Resolviendo: ${embedUrl}`);
@@ -1351,9 +1359,9 @@ var init_okru = __esm({
 // src/resolvers/pixeldrain.js
 var pixeldrain_exports = {};
 __export(pixeldrain_exports, {
-  resolve: () => resolve5
+  resolve: () => resolve4
 });
-function resolve5(embedUrl) {
+function resolve4(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log("[Pixeldrain] Resolviendo: " + embedUrl);
@@ -1387,8 +1395,8 @@ var init_pixeldrain = __esm({
 // src/resolvers/playmogo.js
 var require_playmogo = __commonJS({
   "src/resolvers/playmogo.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml4, DEFAULT_UA: DEFAULT_UA3 } = require_http();
-    function resolve7(url) {
+    var { fetchHtml: fetchHtml3, DEFAULT_UA: DEFAULT_UA2 } = require_http();
+    function resolve6(url) {
       return __async(this, null, function* () {
         try {
           console.log("[Playmogo] Resolving: " + url);
@@ -1397,7 +1405,7 @@ var require_playmogo = __commonJS({
             quality: "720p",
             serverName: "Playmogo",
             headers: {
-              "User-Agent": DEFAULT_UA3,
+              "User-Agent": DEFAULT_UA2,
               "Referer": "https://dsvplay.com/",
               "Origin": "https://dsvplay.com"
             }
@@ -1408,16 +1416,16 @@ var require_playmogo = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
 // src/resolvers/turbovid.js
 var turbovid_exports = {};
 __export(turbovid_exports, {
-  resolve: () => resolve6
+  resolve: () => resolve5
 });
-function resolve6(embedUrl) {
+function resolve5(embedUrl) {
   return __async(this, null, function* () {
     try {
       const { data: html } = yield import_axios3.default.get(embedUrl, {
@@ -1454,7 +1462,7 @@ var require_embedseek = __commonJS({
   "src/resolvers/embedseek.js"(exports2, module2) {
     var CryptoJS2 = require("crypto-js");
     var { getSessionUA } = require_http();
-    function resolve7(url) {
+    function resolve6(url) {
       return __async(this, null, function* () {
         try {
           const UA5 = getSessionUA();
@@ -1551,7 +1559,7 @@ var require_embedseek = __commonJS({
       );
       return decrypted.toString(CryptoJS2.enc.Utf8);
     }
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
@@ -1560,7 +1568,7 @@ var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
     var axios4 = require("axios");
     var { getStealthHeaders } = require_http();
-    function resolve7(embedUrl) {
+    function resolve6(embedUrl) {
       return __async(this, null, function* () {
         try {
           console.log("[TPlayer] Resolviendo con sesi\xF3n: " + embedUrl);
@@ -1612,7 +1620,7 @@ var require_tplayer = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
@@ -1640,7 +1648,7 @@ var require_lulustream = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
-    function resolve7(url) {
+    function resolve6(url) {
       return __async(this, null, function* () {
         try {
           const UA5 = getSessionUA();
@@ -1697,7 +1705,7 @@ var require_lulustream = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve7 };
+    module2.exports = { resolve: resolve6 };
   }
 });
 
@@ -1711,7 +1719,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolveGoodstream } = (init_goodstream(), __toCommonJS(goodstream_exports));
     var { resolve: resolveFastream } = require_fastream();
     var { resolve: resolveVimeos } = (init_vimeos(), __toCommonJS(vimeos_exports));
-    var { resolve: resolveBuzzheavier } = (init_buzzheavier(), __toCommonJS(buzzheavier_exports));
+    var { resolve: resolveBuzzheavier } = require_buzzheavier();
     var { resolve: resolveOkru } = (init_okru(), __toCommonJS(okru_exports));
     var { resolve: resolvePixeldrain } = (init_pixeldrain(), __toCommonJS(pixeldrain_exports));
     var { resolve: resolvePlaymogo } = require_playmogo();
@@ -1929,7 +1937,7 @@ var require_tmdb = __commonJS({
 });
 
 // src/seriesmetro/index.js
-var { fetchHtml: fetchHtml3, request } = require_http();
+var { fetchHtml: fetchHtml2, request } = require_http();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
@@ -1968,7 +1976,7 @@ function findContentUrl(tmdbInfo, mediaType) {
     for (const slug of slugs) {
       const url = `${BASE}/${category}/${slug}/`;
       try {
-        const data = yield fetchHtml3(url, { headers: HEADERS });
+        const data = yield fetchHtml2(url, { headers: HEADERS });
         if (data && (data.includes("trembed=") || data.includes("data-post="))) {
           console.log(`[SeriesMetro] \u2713 Encontrado: /${category}/${slug}/`);
           return { url, html: data };
@@ -2006,7 +2014,7 @@ function extractStreams(pageUrl, referer) {
   return __async(this, null, function* () {
     var _a;
     try {
-      const data = yield fetchHtml3(pageUrl, { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": referer }) });
+      const data = yield fetchHtml2(pageUrl, { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": referer }) });
       const options = [...data.matchAll(/href="#options-(\d+)"[^>]*>[\s\S]*?<span class="server">([\s\S]*?)<\/span>/g)];
       const trids = [...data.matchAll(/\?trembed=(\d+)(?:&#038;|&)trid=(\d+)(?:&#038;|&)trtype=(\d+)/g)];
       if (trids.length === 0 || options.length === 0)
@@ -2026,7 +2034,7 @@ function extractStreams(pageUrl, referer) {
         const langRaw = srvText.split("-").pop().trim().toLowerCase();
         const lang = LANG_MAP[langRaw] || langRaw;
         try {
-          const embedPage = yield fetchHtml3(
+          const embedPage = yield fetchHtml2(
             `${BASE}/?trembed=${idx}&trid=${trid}&trtype=${trtype}`,
             { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": pageUrl }) }
           );
