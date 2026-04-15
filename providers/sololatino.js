@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-15T17:45:21.257Z
+ * Generated: 2026-04-15T17:47:55.121Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -81,18 +81,18 @@ var require_ua = __commonJS({
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
     ];
-    function getRandomUA2() {
+    function getRandomUA() {
       const index = Math.floor(Math.random() * UA_POOL.length);
       return UA_POOL[index];
     }
-    module2.exports = { getRandomUA: getRandomUA2, UA_POOL };
+    module2.exports = { getRandomUA, UA_POOL };
   }
 });
 
 // src/utils/http.js
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
-    var { getRandomUA: getRandomUA2 } = require_ua();
+    var { getRandomUA } = require_ua();
     var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
     var sessionUA = null;
     function setSessionUA2(ua) {
@@ -632,7 +632,7 @@ var require_hlswish = __commonJS({
     function resolve7(url) {
       return __async(this, null, function* () {
         try {
-          const UA4 = getSessionUA();
+          const UA5 = getSessionUA();
           const rawId = url.split("/").pop().replace(/\.html$/, "");
           const urlObj = new URL(url);
           const mirrors = [
@@ -654,7 +654,7 @@ var require_hlswish = __commonJS({
               try {
                 const mirrorObj = new URL(mirror);
                 const mirrorOrigin = mirrorObj.origin;
-                const resp = yield fetch(mirror, { headers: { "Referer": mirror, "User-Agent": UA4 } });
+                const resp = yield fetch(mirror, { headers: { "Referer": mirror, "User-Agent": UA5 } });
                 if (!resp.ok)
                   throw new Error();
                 const html = yield resp.text();
@@ -664,7 +664,7 @@ var require_hlswish = __commonJS({
                   const hash = hashMatch[0];
                   const dlUrl = `${mirrorOrigin}/dl?op=view&file_code=${rawId}&hash=${hash}&embed=1&referer=&adb=1&hls4=1`;
                   const dlResp = yield fetch(dlUrl, {
-                    headers: { "User-Agent": UA4, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" }
+                    headers: { "User-Agent": UA5, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" }
                   });
                   if (dlResp.ok) {
                     const dlData = yield dlResp.text();
@@ -717,7 +717,7 @@ var require_hlswish = __commonJS({
             headers: {
               "Referer": validResult.mirror,
               "Origin": new URL(validResult.mirror).origin,
-              "User-Agent": UA4
+              "User-Agent": UA5
             }
           };
           return yield validateStream(stream);
@@ -978,7 +978,7 @@ var require_vidhide = __commonJS({
 var require_quality = __commonJS({
   "src/resolvers/quality.js"(exports2, module2) {
     var axios5 = require("axios");
-    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+    var UA5 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     function detectQuality2(_0) {
       return __async(this, arguments, function* (url, headers = {}) {
         try {
@@ -987,7 +987,7 @@ var require_quality = __commonJS({
           const { data } = yield axios5.get(url, {
             timeout: 5e3,
             headers: __spreadValues({
-              "User-Agent": UA4
+              "User-Agent": UA5
             }, headers),
             responseType: "text"
           });
@@ -1083,7 +1083,7 @@ var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
     var { fetchHtml: fetchHtml3, getSessionUA } = require_http();
     var { detectQuality: detectQuality2 } = require_quality();
-    var UA4 = getSessionUA();
+    var UA5 = getSessionUA();
     function unpackPacker(data) {
       var match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
       if (!match)
@@ -1103,7 +1103,7 @@ var require_fastream = __commonJS({
         try {
           console.log("[Fastream] Resolviendo: " + url);
           var data = yield fetchHtml3(url, {
-            headers: { "User-Agent": UA4, "Referer": "https://www3.seriesmetro.net/" }
+            headers: { "User-Agent": UA5, "Referer": "https://www3.seriesmetro.net/" }
           });
           var unpacked = unpackPacker(data);
           var m3u8Match;
@@ -1115,7 +1115,7 @@ var require_fastream = __commonJS({
                 url: url1,
                 quality: "1080p",
                 serverName: "Fastream",
-                headers: { "User-Agent": UA4, "Referer": "https://fastream.to/" }
+                headers: { "User-Agent": UA5, "Referer": "https://fastream.to/" }
               };
             }
             return null;
@@ -1129,7 +1129,7 @@ var require_fastream = __commonJS({
             url: m3u8Url,
             quality: quality || "1080p",
             serverName: "Fastream",
-            headers: { "User-Agent": UA4, "Referer": "https://fastream.to/" }
+            headers: { "User-Agent": UA5, "Referer": "https://fastream.to/" }
           };
         } catch (e) {
           console.log("[Fastream] Error: " + e.message);
@@ -1457,7 +1457,7 @@ var require_embedseek = __commonJS({
     function resolve7(url) {
       return __async(this, null, function* () {
         try {
-          const UA4 = getSessionUA();
+          const UA5 = getSessionUA();
           const parsedUrl = new URL(url);
           const hostname = parsedUrl.hostname;
           const hash = parsedUrl.hash;
@@ -1466,7 +1466,7 @@ var require_embedseek = __commonJS({
             return null;
           const apiUrl = `${parsedUrl.origin}/api/v1/info?id=${id}`;
           const headers = {
-            "User-Agent": UA4,
+            "User-Agent": UA5,
             "Referer": url,
             "Origin": parsedUrl.origin
           };
@@ -1491,7 +1491,7 @@ var require_embedseek = __commonJS({
               quality: "1080p",
               serverName: "SeekStreaming",
               headers: {
-                "User-Agent": UA4,
+                "User-Agent": UA5,
                 "Referer": url,
                 "Origin": parsedUrl.origin
               }
@@ -1629,12 +1629,12 @@ var require_lulustream = __commonJS({
     function resolve7(url) {
       return __async(this, null, function* () {
         try {
-          const UA4 = getSessionUA();
+          const UA5 = getSessionUA();
           const urlObj = new URL(url);
           const origin = urlObj.origin;
           const response = yield fetch(url, {
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": UA5,
               "Referer": url
             }
           });
@@ -1671,7 +1671,7 @@ var require_lulustream = __commonJS({
               headers: {
                 "Referer": url,
                 "Origin": origin,
-                "User-Agent": UA4
+                "User-Agent": UA5
               }
             };
             return yield validateStream(stream);
@@ -1707,7 +1707,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolveLulustream } = require_lulustream();
     var { getSessionUA } = require_http();
     var { isMirror } = require_mirrors();
-    var UA4 = getSessionUA();
+    var UA5 = getSessionUA();
     function getDirectCdnHeaders(url) {
       if (!url)
         return null;
@@ -1730,7 +1730,7 @@ var require_resolvers = __commonJS({
         }
         return headers;
       } catch (e) {
-        return { "User-Agent": UA4, "referer": url.split("?")[0] };
+        return { "User-Agent": UA5, "referer": url.split("?")[0] };
       }
     }
     function applyPiping(result) {
@@ -1840,11 +1840,18 @@ var require_resolvers = __commonJS({
 var axios4 = require("axios");
 var { finalizeStreams } = require_engine();
 var { setSessionUA } = require_http();
-var { getRandomUA } = require_ua();
 var { resolveEmbed } = require_resolvers();
 var BASE_URL = "https://player.pelisserieshoy.com";
 var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
 var sleep = (ms) => new Promise((resolve7) => setTimeout(resolve7, ms));
+var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
+var HEADERS = {
+  "User-Agent": UA4,
+  "Accept": "*/*",
+  "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+  "X-Requested-With": "XMLHttpRequest",
+  "Referer": "https://sololatino.net/"
+};
 function getImdbIdInternal(idOrQuery, mediaType) {
   return __async(this, null, function* () {
     const rawId = idOrQuery.toString().split(":")[0];
@@ -1860,6 +1867,32 @@ function getImdbIdInternal(idOrQuery, mediaType) {
     }
   });
 }
+function getDirectStream(id, token, cookie, playerUrl) {
+  return __async(this, null, function* () {
+    try {
+      const body = `a=2&v=${id}&tok=${token}`;
+      const config = {
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Referer": playerUrl,
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        })
+      };
+      if (cookie)
+        config.headers["cookie"] = cookie;
+      const { data } = yield axios4.post(`${BASE_URL}/s.php`, body, config);
+      if (data && data.u) {
+        let finalUrl = data.u;
+        if (data.sig) {
+          finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(data.u)}&sig=${data.sig}`;
+        }
+        return finalUrl;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
@@ -1869,7 +1902,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const s = parseInt(parts[1] || season || 1);
     const e = parseInt(parts[2] || episode || 1);
     const isMovie = mediaType === "movie" || mediaType === "movies";
-    const UA4 = getRandomUA();
     setSessionUA(UA4);
     const imdbId = yield getImdbIdInternal(realId, mediaType);
     if (!imdbId)
@@ -1878,60 +1910,59 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      const { data: html, headers: respHeaders } = yield axios4.get(playerUrl, {
-        headers: { "User-Agent": UA4, "Referer": "https://sololatino.net/" },
-        timeout: 1e4
-      });
-      const tokenMatch = html.match(/(?:tok|token|_t|tok\s*=|token\s*=|_t\s*=)\s*['"]([a-f0-9]{32})['"]/i) || html.match(/['"]([a-f0-9]{32})['"]/);
-      if (!tokenMatch) {
-        console.log("[SoloLatino] No se encontr\xF3 el token en el HTML.");
-        return [];
-      }
-      const token = tokenMatch[1];
+      const { data: html, headers: respHeaders } = yield axios4.get(playerUrl, { headers: HEADERS, timeout: 8e3 });
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
-      const postH = {
-        "User-Agent": UA4,
-        "Referer": playerUrl,
-        "Origin": BASE_URL,
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        "X-Requested-With": "XMLHttpRequest",
-        "Cookie": cookie
-      };
-      const { data: scanData } = yield axios4.post(`${BASE_URL}/s.php`, `a=1&tok=${token}`, { headers: postH, timeout: 6e3 });
-      if (!scanData || !scanData.s && !scanData.langs_s)
+      const tokenMatch = html.match(/(?:let\s+token|const\s+_t|tok|_t|token)\s*.*['"]([a-f0-9]{32})['"]/);
+      if (!tokenMatch)
         return [];
+      const token = tokenMatch[1];
+      const postH = __spreadProps(__spreadValues({}, HEADERS), {
+        "Referer": playerUrl,
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+      });
+      if (cookie)
+        postH["cookie"] = cookie;
+      yield axios4.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
+      yield sleep(1e3);
+      const { data: scanData } = yield axios4.post(`${BASE_URL}/s.php`, `a=1&tok=${token}`, { headers: postH });
+      const uniqueServers = /* @__PURE__ */ new Map();
+      if (scanData && scanData.s) {
+        scanData.s.forEach((ser) => {
+          if (ser[1])
+            uniqueServers.set(ser[1], ser);
+        });
+      }
+      if (scanData && scanData.langs_s) {
+        Object.keys(scanData.langs_s).forEach((k) => {
+          (scanData.langs_s[k] || []).forEach((ser) => {
+            if (ser[1])
+              uniqueServers.set(ser[1], ser);
+          });
+        });
+      }
+      const servers = Array.from(uniqueServers.values()).slice(0, 10);
       const resolved = [];
-      let allServers = scanData.s || [];
-      if (scanData.langs_s && scanData.langs_s.LAT)
-        allServers = allServers.concat(scanData.langs_s.LAT);
-      for (const ser of allServers.slice(0, 6)) {
+      for (const ser of servers) {
         const name = ser[0];
-        const hash = ser[1];
-        if (!hash || ["Seek", "Lulu"].some((x) => name.includes(x)))
+        const id = ser[1];
+        if (["Seek", "Lulu"].some((x) => name.includes(x)))
           continue;
-        try {
-          const { data: streamData } = yield axios4.post(`${BASE_URL}/s.php`, `a=2&v=${hash}&tok=${token}`, { headers: postH, timeout: 6e3 });
-          if (streamData && streamData.u) {
-            let finalUrl = streamData.u;
-            if (streamData.sig)
-              finalUrl += (finalUrl.includes("?") ? "&" : "?") + "sig=" + streamData.sig;
-            const resolvedResult = yield resolveEmbed(finalUrl);
-            const serverDisplayName = (resolvedResult == null ? void 0 : resolvedResult.serverName) ? `${name} - ${resolvedResult.serverName}` : name;
-            resolved.push({
-              url: finalUrl,
-              serverName: serverDisplayName.replace(/ - Direct/g, ""),
-              langLabel: "Latino",
-              quality: "1080p",
-              headers: { "User-Agent": UA4, "Referer": playerUrl }
-            });
-          }
-        } catch (e2) {
+        const finalUrl = yield getDirectStream(id, token, cookie, playerUrl);
+        if (finalUrl) {
+          const resolvedResult = yield resolveEmbed(finalUrl);
+          resolved.push({
+            url: finalUrl,
+            serverName: (resolvedResult == null ? void 0 : resolvedResult.serverName) ? `${name} - ${resolvedResult.serverName}` : name,
+            langLabel: "Latino",
+            quality: "1080p",
+            headers: { "User-Agent": UA4, "Referer": playerUrl, "Origin": BASE_URL }
+          });
         }
-        yield sleep(350);
+        yield sleep(400);
       }
       return yield finalizeStreams(resolved, "SoloLatino", title);
     } catch (e2) {
-      console.log(`[SoloLatino] Error Cr\xEDtico v8.4.2: ${e2.message}`);
+      console.log(`[SoloLatino] Error v8.4.3: ${e2.message}`);
     }
     return [];
   });
