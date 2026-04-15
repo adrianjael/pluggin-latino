@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-15T23:27:38.594Z
+ * Generated: 2026-04-15T23:30:34.630Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -706,11 +706,11 @@ var require_hlswish = __commonJS({
                 resolved = true;
                 resolveRace(null);
               }
-            }, 9e3);
+            }, 3500);
           });
           if (!validResult)
             return null;
-          const stream = {
+          return {
             url: validResult.url,
             quality: "1080p",
             serverName: "StreamWish",
@@ -720,7 +720,6 @@ var require_hlswish = __commonJS({
               "User-Agent": UA5
             }
           };
-          return yield validateStream(stream);
         } catch (e) {
           return null;
         }
@@ -959,7 +958,7 @@ var require_vidhide = __commonJS({
             finalUrl = new URL(url).origin + finalUrl;
           if (!finalUrl.includes("referer="))
             finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
-          const stream = {
+          return {
             url: finalUrl,
             quality,
             serverName: "VidHide",
@@ -970,7 +969,6 @@ var require_vidhide = __commonJS({
               "User-Agent": currentUA
             })
           };
-          return yield validateStream(stream);
         } catch (e) {
           console.error(`[VidHide] Error: ${e.message}`);
           return null;

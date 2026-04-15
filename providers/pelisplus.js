@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T23:27:38.563Z
+ * Generated: 2026-04-15T23:30:34.599Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -536,11 +536,11 @@ var require_hlswish = __commonJS({
                 resolved = true;
                 resolveRace(null);
               }
-            }, 9e3);
+            }, 3500);
           });
           if (!validResult)
             return null;
-          const stream = {
+          return {
             url: validResult.url,
             quality: "1080p",
             serverName: "StreamWish",
@@ -550,7 +550,6 @@ var require_hlswish = __commonJS({
               "User-Agent": UA4
             }
           };
-          return yield validateStream(stream);
         } catch (e) {
           return null;
         }
@@ -789,7 +788,7 @@ var require_vidhide = __commonJS({
             finalUrl = new URL(url).origin + finalUrl;
           if (!finalUrl.includes("referer="))
             finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
-          const stream = {
+          return {
             url: finalUrl,
             quality,
             serverName: "VidHide",
@@ -800,7 +799,6 @@ var require_vidhide = __commonJS({
               "User-Agent": currentUA
             })
           };
-          return yield validateStream(stream);
         } catch (e) {
           console.error(`[VidHide] Error: ${e.message}`);
           return null;
@@ -2221,52 +2219,71 @@ var require_extractor = __commonJS({
               }
             }
           }
+          const { resolveEmbed: resolveEmbed2 } = require_resolvers();
+          const { validateStream: validateStream2 } = require_m3u8();
           const { normalizeLanguage } = require_engine();
-          console.log(`[PelisPlusHD] Found ${rawResults.length} raw sources. Resolving...`);
-          const streamPromises = rawResults.map((res) => __async(this, null, function* () {
+          rawResults.sort((a, b) => {
+            const isVoeA = (a.serverName || "").toLowerCase().includes("voe");
+            const isVoeB = (b.serverName || "").toLowerCase().includes("voe");
+            if (isVoeA && !isVoeB)
+              return -1;
+            if (!isVoeA && isVoeB)
+              return 1;
+            return 0;
+          });
+          console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources with Early Exit Motor (v8.9.8)...`);
+          const allResults = [];
+          const TARGET_COUNT = 3;
+          let isFinished = false;
+          const processStream = (res) => __async(this, null, function* () {
+            if (isFinished)
+              return null;
             try {
               const url = res.serverUrl;
-              if (!url || url.includes("'+") || url.includes('"+') || url.includes("url=") || url.length < 10) {
+              if (!url || url.length < 10)
                 return null;
-              }
               const rawLang = normalizeLanguage(res.language);
-              const sName = (res.serverName || "").toLowerCase();
               const lName = (res.language || "").toLowerCase();
+              const sName = (res.serverName || "").toLowerCase();
               const isExplicitLatino = lName.includes("lat") || rawLang === "Latino";
               const isSubtitled2 = lName.includes("sub") || sName.includes("sub") || sName.includes("vose");
-              if (!isExplicitLatino || isSubtitled2) {
-                console.log(`[PelisPlusHD] Skip non-latino/sub: ${res.serverName} (${res.language})`);
+              if (!isExplicitLatino || isSubtitled2)
                 return null;
-              }
-              const finalUrl = yield resolveEmbed(url);
-              if (!finalUrl)
+              const finalUrl = yield resolveEmbed2(url);
+              if (!finalUrl || isFinished)
                 return null;
               const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
-              if (!directUrl)
-                return null;
+              const headers = typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL };
               const streamData = {
                 name: "PelisPlusHD",
                 url: directUrl,
                 quality: "HD",
                 langLabel: rawLang,
                 serverLabel: res.serverName,
-                headers: typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL }
+                headers
               };
-              try {
-                const vStream = yield validateStream(streamData);
-                if (vStream && vStream.verified) {
-                  return __spreadProps(__spreadValues({}, vStream), { name: "PelisPlusHD", langLabel: rawLang });
+              const vStream = yield validateStream2(streamData);
+              const result = vStream && vStream.verified ? __spreadProps(__spreadValues({}, vStream), { name: "PelisPlusHD", langLabel: rawLang }) : streamData;
+              if (!isFinished) {
+                allResults.push(result);
+                if (allResults.length >= TARGET_COUNT) {
+                  isFinished = true;
+                  console.log(`[PelisPlusHD] Early Exit: Target reached (${TARGET_COUNT} streams).`);
                 }
-                return streamData;
-              } catch (e) {
-                return streamData;
               }
+              return result;
             } catch (e) {
               return null;
             }
-          }));
-          let allResults = yield Promise.all(streamPromises);
-          allResults = allResults.filter((s) => s !== null);
+          });
+          yield Promise.race([
+            Promise.all(rawResults.map((res) => processStream(res))),
+            new Promise((resolve5) => setTimeout(() => {
+              isFinished = true;
+              console.log(`[PelisPlusHD] Global Timeout reached (4.5s). Returning collected streams.`);
+              resolve5();
+            }, 4500))
+          ]);
           allResults.sort((a, b) => {
             const isVoeA = a.serverLabel && a.serverLabel.toLowerCase().includes("voe");
             const isVoeB = b.serverLabel && b.serverLabel.toLowerCase().includes("voe");
