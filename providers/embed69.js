@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T15:49:25.451Z
+ * Generated: 2026-04-15T15:52:17.906Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1057,8 +1057,8 @@ var { resolve: resolveVoe } = require_voe();
 var { resolve: resolveHlswish } = require_hlswish();
 var { resolve: resolveFilemoon } = require_filemoon();
 var { resolve: resolveVidhide } = require_vidhide();
-var INDIVIDUAL_TIMEOUT = 8e3;
-var BATCH_SIZE = 10;
+var INDIVIDUAL_TIMEOUT = 7e3;
+var BATCH_SIZE = 20;
 function applyPipingLocal(result) {
   if (!result || !result.url)
     return result;
@@ -1134,7 +1134,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.8.2 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.8.3 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
