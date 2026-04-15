@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T15:12:12.349Z
+ * Generated: 2026-04-15T15:22:31.519Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -722,6 +722,8 @@ var require_hlswish = __commonJS({
       return __async(this, null, function* () {
         try {
           const rawId = url.split("/").pop().replace(/\.html$/, "");
+          const urlObj = new URL(url);
+          const origin = urlObj.origin;
           const mirrors = [
             url,
             `https://streamwish.to/e/${rawId}`,
@@ -729,19 +731,55 @@ var require_hlswish = __commonJS({
             `https://awish.pro/e/${rawId}`,
             `https://strwish.com/e/${rawId}`,
             `https://wishfast.top/e/${rawId}`,
-            `https://sfastwish.com/e/${rawId}`
+            `https://sfastwish.com/e/${rawId}`,
+            `https://hanerix.com/e/${rawId}`
           ];
-          let html = "";
+          let finalUrl = null;
           let usedUrl = url;
-          console.log(`[StreamWish] TV-Resolving: ${rawId}`);
+          console.log(`[StreamWish] Resolving: ${rawId}`);
           for (const mirror of mirrors) {
             try {
-              console.log(`[StreamWish] Trying mirror: ${mirror}`);
+              const mirrorObj = new URL(mirror);
+              const mirrorOrigin = mirrorObj.origin;
               const resp = yield fetch(mirror, { headers: { "Referer": mirror, "User-Agent": UA } });
-              if (resp.ok) {
-                const text = yield resp.text();
-                if (text && text.includes("file:")) {
-                  html = text;
+              if (!resp.ok)
+                continue;
+              const html = yield resp.text();
+              const hashMatch = html.match(/[0-9a-f]{32}/i);
+              if (hashMatch) {
+                const hash = hashMatch[0];
+                const dlUrl = `${mirrorOrigin}/dl?op=view&file_code=${rawId}&hash=${hash}&embed=1&referer=&adb=1&hls4=1`;
+                const dlResp = yield fetch(dlUrl, {
+                  headers: {
+                    "User-Agent": UA,
+                    "Referer": mirror,
+                    "X-Requested-With": "XMLHttpRequest"
+                  }
+                });
+                if (dlResp.ok) {
+                  const dlData = yield dlResp.text();
+                  const m3u8Match = dlData.match(/https?:\/\/[^"']+\.m3u8[^"']*/);
+                  if (m3u8Match) {
+                    finalUrl = m3u8Match[0];
+                    usedUrl = mirror;
+                    break;
+                  }
+                }
+              }
+              if (html.includes("file:")) {
+                const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
+                if (fileMatch) {
+                  finalUrl = fileMatch[1];
+                  usedUrl = mirror;
+                  break;
+                }
+              }
+              const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+              if (packedMatch) {
+                const unpacked = unpackEval(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
+                const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i) || unpacked.match(/https?:\/\/[^"' \t\n\r]+\.m3u8[^"' \t\n\r]*/i);
+                if (m3u8Match) {
+                  finalUrl = m3u8Match[1] || m3u8Match[0];
                   usedUrl = mirror;
                   break;
                 }
@@ -749,41 +787,23 @@ var require_hlswish = __commonJS({
             } catch (e) {
             }
           }
-          if (!html)
-            return null;
-          const baseOrigin = new URL(usedUrl).origin;
-          let finalUrl = null;
-          const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
-          if (fileMatch)
-            finalUrl = fileMatch[1];
-          if (!finalUrl) {
-            const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
-            if (packedMatch) {
-              const unpacked = unpackEval(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
-              const m3u8Match = unpacked.match(/["']([^"']{30,}\.m3u8[^"']*)['"]/i) || unpacked.match(/https?:\/\/[^"' \t\n\r]+\.m3u8[^"' \t\n\r]*/i);
-              if (m3u8Match)
-                finalUrl = m3u8Match[1] || m3u8Match[0];
-            }
-          }
           if (!finalUrl)
             return null;
-          if (finalUrl.startsWith("/"))
-            finalUrl = baseOrigin + finalUrl;
           finalUrl = finalUrl.replace(/\\/g, "");
+          if (finalUrl.startsWith("/"))
+            finalUrl = new URL(usedUrl).origin + finalUrl;
           const stream = {
             url: finalUrl,
             quality: "1080p",
             serverName: "StreamWish",
-            headers: { "Referer": usedUrl, "Origin": baseOrigin }
+            headers: { "Referer": usedUrl, "Origin": new URL(usedUrl).origin }
           };
           return yield validateStream(stream);
         } catch (e) {
-          console.error(`[StreamWish] Error: ${e.message}`);
           return null;
         }
       });
     }
-    module2.exports = { resolve };
     module2.exports = { resolve };
   }
 });
@@ -1114,7 +1134,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.7.8 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.8.0 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
