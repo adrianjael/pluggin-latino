@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-15T21:36:57.805Z
+ * Generated: 2026-04-15T21:39:59.897Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1171,10 +1171,11 @@ var require_buzzheavier = __commonJS({
         if (!embedUrl)
           return null;
         try {
-          const id = embedUrl.split("/").pop().split("|")[0];
-          const targetUrl = `https://buzzheavier.com/${id}`;
-          const downloadUrl = `https://buzzheavier.com/${id}/download`;
-          console.log(`[Buzzheavier] Resolviendo v8.8.1 (H\xEDbrido): ${id}`);
+          const cleanUrl = embedUrl.split("|")[0].replace(/\/$/, "");
+          const id = cleanUrl.split("/").pop();
+          const targetUrl = cleanUrl;
+          const downloadUrl = `${cleanUrl}/download`;
+          console.log(`[Buzzheavier] Resolviendo v8.8.5: ${id}`);
           const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
             "Referer": targetUrl,
             "hx-current-url": targetUrl,
@@ -1197,11 +1198,12 @@ var require_buzzheavier = __commonJS({
               return {
                 url: hxDirect,
                 isDirect: true,
+                verified: true,
                 headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
               };
             }
           } catch (htmxErr) {
-            console.log("[Buzzheavier] \u26A0\uFE0F HTMX fall\xF3 o requiere sesi\xF3n. Usando fallback...");
+            console.log("[Buzzheavier] \u26A0\uFE0F HTMX fall\xF3 (" + htmxErr.message + "). Intentando Fallback...");
           }
           try {
             const vCheck = yield axios4.head(predictableUrl, { headers: { "User-Agent": headers["User-Agent"] }, timeout: 4e3 });
@@ -1210,6 +1212,7 @@ var require_buzzheavier = __commonJS({
               return {
                 url: predictableUrl,
                 isDirect: true,
+                verified: true,
                 headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
               };
             }
@@ -1219,10 +1222,10 @@ var require_buzzheavier = __commonJS({
               return null;
             }
           }
-          console.log("[Buzzheavier] \u26A0\uFE0F No se pudo validar definitivamente, devolviendo sospechoso.");
           return {
             url: predictableUrl,
             isDirect: true,
+            verified: true,
             headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
           };
         } catch (err) {
@@ -1331,6 +1334,7 @@ var require_pixeldrain = __commonJS({
           console.log("[Pixeldrain] \u2713 URL Directa generada y confirmada.");
           return {
             url: directUrl,
+            verified: true,
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
               "Referer": "https://pixeldrain.com/"
@@ -1559,6 +1563,7 @@ var require_tplayer = __commonJS({
           return {
             url: streamUrl,
             isDirect: true,
+            verified: true,
             headers: {
               "User-Agent": baseHeaders["User-Agent"],
               "Referer": embedUrl,
