@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T14:48:05.370Z
+ * Generated: 2026-04-15T14:55:04.429Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -229,6 +229,11 @@ var require_id_mapper = __commonJS({
         const cacheKey = `${mediaType}_${tmdbId}`;
         if (ID_CACHE.has(cacheKey))
           return ID_CACHE.get(cacheKey);
+        if (tmdbId.startsWith("tt")) {
+          const res = { imdbId: tmdbId, title: "Contenido", offset: 0, fromMapping: false };
+          ID_CACHE.set(cacheKey, res);
+          return res;
+        }
         const apiResult = yield getImdbIdFromApi(tmdbId, mediaType);
         if (apiResult && apiResult.imdbId) {
           ID_CACHE.set(cacheKey, apiResult);
@@ -1119,8 +1124,10 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         return [];
       }
       let urlSuffix = finalImdbId;
-      if (s !== null && e !== null)
-        urlSuffix = `${finalImdbId}-${s}x${e}`;
+      if (s !== null && e !== null) {
+        const epPadded = String(e).padStart(2, "0");
+        urlSuffix = `${finalImdbId}-${s}x${epPadded}`;
+      }
       const url = `https://embed69.org/f/${urlSuffix}`;
       console.log(`[Embed69] Buscando en: ${url}`);
       const response = yield fetch(url, {
