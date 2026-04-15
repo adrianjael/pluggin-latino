@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-15T23:21:49.423Z
+ * Generated: 2026-04-15T23:27:38.617Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1889,6 +1889,11 @@ var require_resolvers = __commonJS({
           return applyPiping(yield resolveEmbedseek(url));
         if (isMirror(s, "LULUSTREAM"))
           return applyPiping(yield resolveLulustream(url));
+        const isKnown = isMirror(s, "VOE") || isMirror(s, "STREAMWISH") || isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE") || isMirror(s, "FASTREAM") || isMirror(s, "OKRU");
+        if (isKnown) {
+          console.log(`[Resolvers] Known server failed resolution (Down): ${url}`);
+          return null;
+        }
         const finalHeaders = getDirectCdnHeaders(url);
         return applyPiping({
           url,
