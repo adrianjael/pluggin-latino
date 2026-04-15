@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T15:06:32.910Z
+ * Generated: 2026-04-15T15:12:12.349Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -535,7 +535,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${(providerName == null ? void 0 : providerName.toLowerCase()) || "embed69"} - ${displayQuality}${checkMark}`;
+          const streamName = `${(providerName == null ? void 0 : providerName.toLowerCase()) || "Embed69"} - ${displayQuality}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
@@ -722,7 +722,15 @@ var require_hlswish = __commonJS({
       return __async(this, null, function* () {
         try {
           const rawId = url.split("/").pop().replace(/\.html$/, "");
-          const mirrors = [url, `https://embedwish.com/e/${rawId}`, `https://awish.pro/e/${rawId}`];
+          const mirrors = [
+            url,
+            `https://streamwish.to/e/${rawId}`,
+            `https://embedwish.com/e/${rawId}`,
+            `https://awish.pro/e/${rawId}`,
+            `https://strwish.com/e/${rawId}`,
+            `https://wishfast.top/e/${rawId}`,
+            `https://sfastwish.com/e/${rawId}`
+          ];
           let html = "";
           let usedUrl = url;
           console.log(`[StreamWish] TV-Resolving: ${rawId}`);
@@ -1029,8 +1037,8 @@ var { resolve: resolveVoe } = require_voe();
 var { resolve: resolveHlswish } = require_hlswish();
 var { resolve: resolveFilemoon } = require_filemoon();
 var { resolve: resolveVidhide } = require_vidhide();
-var INDIVIDUAL_TIMEOUT = 15e3;
-var BATCH_SIZE = 6;
+var INDIVIDUAL_TIMEOUT = 5e3;
+var BATCH_SIZE = 10;
 function applyPipingLocal(result) {
   if (!result || !result.url)
     return result;
@@ -1106,7 +1114,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.7.6 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.7.8 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
