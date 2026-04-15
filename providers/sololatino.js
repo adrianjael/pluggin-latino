@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-15T17:30:07.096Z
+ * Generated: 2026-04-15T17:42:02.958Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1932,14 +1932,14 @@ function getImdbIdInternal(idOrQuery, mediaType) {
     try {
       const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
       const url = `https://api.themoviedb.org/3/${type}/${rawId}/external_ids?api_key=${TMDB_API_KEY}`;
-      const { data } = yield axios4.get(url);
+      const { data } = yield axios4.get(url, { timeout: 4e3 });
       return data.imdb_id || null;
     } catch (e) {
       return null;
     }
   });
 }
-function getDirectStream(id, token, cookie, playerUrl, sessionHeaders) {
+function getDirectStream(hash, token, cookie, playerUrl, sessionHeaders) {
   return __async(this, null, function* () {
     try {
       const postH = __spreadProps(__spreadValues({}, sessionHeaders), {
@@ -1949,14 +1949,16 @@ function getDirectStream(id, token, cookie, playerUrl, sessionHeaders) {
       });
       if (cookie)
         postH["cookie"] = cookie;
-      yield axios4.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH, timeout: 5e3 });
-      yield sleep(350);
-      const body = `a=1&v=${id}&tok=${token}`;
-      const { data } = yield axios4.post(`${BASE_URL}/s.php`, body, { headers: postH, timeout: 5e3 });
+      const body = `a=2&v=${hash}&tok=${token}`;
+      const { data } = yield axios4.post(`${BASE_URL}/s.php`, body, { headers: postH, timeout: 6e3 });
       if (data && data.u) {
         let finalUrl = data.u;
-        if (data.sig)
-          finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(data.u)}&sig=${data.sig}`;
+        if (data.sig) {
+          if (finalUrl.includes("?"))
+            finalUrl += `&sig=${data.sig}`;
+          else
+            finalUrl += `?sig=${data.sig}`;
+        }
         return finalUrl;
       }
       return null;
@@ -1978,10 +1980,9 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     setSessionUA(UA4);
     const SESSION_HEADERS = {
       "User-Agent": UA4,
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+      "Accept": "application/json, text/javascript, */*; q=0.01",
       "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
-      "X-Requested-With": "XMLHttpRequest",
-      "Referer": "https://sololatino.net/"
+      "X-Requested-With": "XMLHttpRequest"
     };
     let mediaTitle = title;
     const imdbId = yield getImdbIdInternal(realId, mediaType);
@@ -1991,45 +1992,52 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     const slug = isMovie ? imdbId : `${imdbId}-${s}x${epStr}`;
     const playerUrl = `${BASE_URL}/f/${slug}`;
     try {
-      const { data: html, headers: respHeaders } = yield axios4.get(playerUrl, { headers: SESSION_HEADERS, timeout: 8e3 });
+      const { data: html, headers: respHeaders } = yield axios4.get(playerUrl, { headers: { "User-Agent": UA4 }, timeout: 8e3 });
       const cookie = (respHeaders["set-cookie"] || []).map((c) => c.split(";")[0]).join("; ");
-      const tokenMatch = html.match(/(?:let\s+token|const\s+_t)\s*=\s*'([^']+)'/);
+      const tokenMatch = html.match(/(?:let|const|var)\s+(?:token|tok|_t)\s*=\s*'([a-f0-9]{32})'/i);
       if (!tokenMatch)
         return [];
       const token = tokenMatch[1];
       const postH = __spreadProps(__spreadValues({}, SESSION_HEADERS), { "Referer": playerUrl, "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" });
-      const { data: scanData } = yield axios4.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
-      const uniqueServers = /* @__PURE__ */ new Map();
-      (scanData && scanData.s || []).forEach((ser) => {
-        if (ser[1])
-          uniqueServers.set(ser[1], ser);
+      if (cookie)
+        postH["cookie"] = cookie;
+      yield axios4.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH, timeout: 5e3 }).catch(() => {
       });
-      if (scanData && scanData.langs_s) {
-        Object.keys(scanData.langs_s).forEach((k) => {
-          (scanData.langs_s[k] || []).forEach((ser) => {
-            if (ser[1])
-              uniqueServers.set(ser[1], ser);
-          });
+      yield sleep(400);
+      const { data: scanData } = yield axios4.post(`${BASE_URL}/s.php`, "a=1&tok=" + token, { headers: postH });
+      const serverMap = /* @__PURE__ */ new Map();
+      const processGroup = (group, langName) => {
+        (group || []).forEach((ser) => {
+          if (ser[1])
+            serverMap.set(ser[1], { name: ser[0], lang: langName });
         });
+      };
+      processGroup(scanData.s, "Latino");
+      if (scanData.langs_s) {
+        if (scanData.langs_s.LAT)
+          processGroup(scanData.langs_s.LAT, "Latino");
+        if (scanData.langs_s.ESP)
+          processGroup(scanData.langs_s.ESP, "Espa\xF1ol");
+        if (scanData.langs_s.SUB)
+          processGroup(scanData.langs_s.SUB, "Subtitulado");
       }
-      const serverList = Array.from(uniqueServers.values()).slice(0, 10);
+      const serverList = Array.from(serverMap.entries()).slice(0, 12);
       const resolved = [];
-      for (const ser of serverList) {
-        const name = ser[0];
-        const id = ser[1];
+      for (const [hash, info] of serverList) {
+        const { name, lang } = info;
         if (["Seek", "Lulu", "Desu"].some((x) => name.includes(x)))
           continue;
         try {
-          const finalUrl = yield getDirectStream(id, token, cookie, playerUrl, SESSION_HEADERS);
+          const finalUrl = yield getDirectStream(hash, token, cookie, playerUrl, SESSION_HEADERS);
           if (finalUrl) {
             const resolvedResult = yield resolveEmbed(finalUrl);
-            const secondaryServer = (resolvedResult == null ? void 0 : resolvedResult.serverName) && resolvedResult.serverName !== "Direct" ? ` - ${resolvedResult.serverName}` : "";
-            const serverDisplayName = `${name}${secondaryServer}`;
+            const secondary = (resolvedResult == null ? void 0 : resolvedResult.serverName) && resolvedResult.serverName !== "Direct" && !name.includes(resolvedResult.serverName) ? ` - ${resolvedResult.serverName}` : "";
+            const serverDisplayName = `${name}${secondary}`;
             if (resolvedResult) {
-              resolved.push(__spreadProps(__spreadValues({}, resolvedResult), { langLabel: "Latino", serverName: serverDisplayName }));
+              resolved.push(__spreadProps(__spreadValues({}, resolvedResult), { langLabel: lang, serverName: serverDisplayName }));
             } else {
               resolved.push({
-                langLabel: "Latino",
+                langLabel: lang,
                 serverName: serverDisplayName,
                 url: finalUrl,
                 quality: "1080p",
@@ -2039,7 +2047,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           }
         } catch (e2) {
         }
-        yield sleep(600);
+        yield sleep(550);
       }
       return yield finalizeStreams(resolved, "SoloLatino", mediaTitle);
     } catch (e2) {
