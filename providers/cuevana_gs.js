@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-15T22:00:17.954Z
+ * Generated: 2026-04-15T22:27:23.666Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1370,13 +1370,19 @@ var require_buzzheavier = __commonJS({
               console.log("[Buzzheavier] \u2713 Enlace REAL obtenido via hx-redirect.");
               return {
                 url: finalUrl + "#.mp4",
-                // Anclaje para Nuvio
                 isDirect: true,
                 verified: true,
                 headers: {
-                  "User-Agent": headers["User-Agent"],
-                  "Referer": cleanUrl
-                  // Referer LIMPIO (Vital)
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+                  "Referer": cleanUrl,
+                  "sec-ch-ua": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+                  "sec-ch-ua-mobile": "?0",
+                  "sec-ch-ua-platform": '"Windows"',
+                  "sec-fetch-dest": "document",
+                  "sec-fetch-mode": "navigate",
+                  "sec-fetch-site": "cross-site",
+                  "upgrade-insecure-requests": "1",
+                  "priority": "u=0, i"
                 }
               };
             }
@@ -1390,9 +1396,11 @@ var require_buzzheavier = __commonJS({
             isDirect: true,
             verified: true,
             headers: {
-              "User-Agent": headers["User-Agent"],
-              "Referer": cleanUrl
-              // Referer LIMPIO
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+              "Referer": cleanUrl,
+              "sec-fetch-dest": "document",
+              "sec-fetch-mode": "navigate",
+              "sec-fetch-site": "cross-site"
             }
           };
         } catch (err) {
