@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T20:27:28.761Z
+ * Generated: 2026-04-15T20:35:23.152Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -221,7 +221,7 @@ var init_string = __esm({
 
 // src/utils/ua.js
 var require_ua = __commonJS({
-  "src/utils/ua.js"(exports, module2) {
+  "src/utils/ua.js"(exports2, module2) {
     var UA_POOL = [
       // Windows - Chrome 146 (Custom modern fingerprint)
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
@@ -237,7 +237,7 @@ var require_ua = __commonJS({
 
 // src/utils/http.js
 var require_http = __commonJS({
-  "src/utils/http.js"(exports, module2) {
+  "src/utils/http.js"(exports2, module2) {
     var { getRandomUA } = require_ua();
     var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
     var sessionUA = null;
@@ -247,7 +247,7 @@ var require_http = __commonJS({
     function getSessionUA() {
       return sessionUA || DEFAULT_CHROME_UA;
     }
-    function getStealthHeaders() {
+    function getStealthHeaders2() {
       return {
         "User-Agent": getSessionUA(),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -314,7 +314,7 @@ var require_http = __commonJS({
       fetchJson: fetchJson2,
       getSessionUA,
       setSessionUA,
-      getStealthHeaders,
+      getStealthHeaders: getStealthHeaders2,
       DEFAULT_UA: DEFAULT_UA2,
       MOBILE_UA
     };
@@ -323,7 +323,7 @@ var require_http = __commonJS({
 
 // src/utils/m3u8.js
 var require_m3u8 = __commonJS({
-  "src/utils/m3u8.js"(exports, module2) {
+  "src/utils/m3u8.js"(exports2, module2) {
     var { getSessionUA } = require_http();
     function getQualityFromHeight(height) {
       if (!height)
@@ -462,7 +462,7 @@ var init_sorting = __esm({
 
 // src/utils/mirrors.js
 var require_mirrors = __commonJS({
-  "src/utils/mirrors.js"(exports, module2) {
+  "src/utils/mirrors.js"(exports2, module2) {
     var MIRRORS = {
       VIDHIDE: [
         "vidhide",
@@ -561,7 +561,7 @@ var require_mirrors = __commonJS({
 
 // src/utils/engine.js
 var require_engine = __commonJS({
-  "src/utils/engine.js"(exports, module2) {
+  "src/utils/engine.js"(exports2, module2) {
     var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     var { isMirror } = require_mirrors();
@@ -602,7 +602,7 @@ var require_engine = __commonJS({
       }
       return server || "Servidor";
     }
-    function finalizeStreams(streams, providerName, mediaTitle) {
+    function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
@@ -644,13 +644,13 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams };
+    module2.exports = { finalizeStreams: finalizeStreams2 };
   }
 });
 
 // src/resolvers/voe.js
 var require_voe = __commonJS({
-  "src/resolvers/voe.js"(exports, module2) {
+  "src/resolvers/voe.js"(exports2, module2) {
     var { getSessionUA } = require_http();
     function localAtob(input) {
       if (!input)
@@ -753,7 +753,7 @@ var require_voe = __commonJS({
 
 // src/resolvers/hlswish.js
 var require_hlswish = __commonJS({
-  "src/resolvers/hlswish.js"(exports, module2) {
+  "src/resolvers/hlswish.js"(exports2, module2) {
     var { getSessionUA } = require_http();
     var { validateStream } = require_m3u8();
     function unpackEval(payload, radix, symtab) {
@@ -878,7 +878,7 @@ var require_hlswish = __commonJS({
 
 // src/utils/aes_gcm.js
 var require_aes_gcm = __commonJS({
-  "src/utils/aes_gcm.js"(exports, module2) {
+  "src/utils/aes_gcm.js"(exports2, module2) {
     var _CryptoJS = typeof CryptoJS !== "undefined" ? CryptoJS : null;
     function parseB64(b64) {
       if (!b64 || !_CryptoJS)
@@ -941,7 +941,7 @@ var require_aes_gcm = __commonJS({
 
 // src/resolvers/filemoon.js
 var require_filemoon = __commonJS({
-  "src/resolvers/filemoon.js"(exports, module2) {
+  "src/resolvers/filemoon.js"(exports2, module2) {
     var { decryptByse } = require_aes_gcm();
     var { getSessionUA } = require_http();
     var UA_CHROME = getSessionUA();
@@ -1027,8 +1027,8 @@ var require_filemoon = __commonJS({
 
 // src/resolvers/vidhide.js
 var require_vidhide = __commonJS({
-  "src/resolvers/vidhide.js"(exports, module2) {
-    var { getSessionUA, getStealthHeaders } = require_http();
+  "src/resolvers/vidhide.js"(exports2, module2) {
+    var { getSessionUA, getStealthHeaders: getStealthHeaders2 } = require_http();
     var { validateStream } = require_m3u8();
     function unpackVidHide(script) {
       try {
@@ -1102,7 +1102,7 @@ var require_vidhide = __commonJS({
             url: finalUrl,
             quality,
             serverName: "VidHide",
-            headers: __spreadProps(__spreadValues({}, getStealthHeaders()), {
+            headers: __spreadProps(__spreadValues({}, getStealthHeaders2()), {
               "Referer": url.split("?")[0],
               "Origin": new URL(url).origin,
               "X-Requested-With": "XMLHttpRequest",
@@ -1122,7 +1122,7 @@ var require_vidhide = __commonJS({
 
 // src/resolvers/quality.js
 var require_quality = __commonJS({
-  "src/resolvers/quality.js"(exports, module2) {
+  "src/resolvers/quality.js"(exports2, module2) {
     var axios4 = require("axios");
     var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     function detectQuality2(_0) {
@@ -1226,7 +1226,7 @@ var init_goodstream = __esm({
 
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
-  "src/resolvers/fastream.js"(exports, module2) {
+  "src/resolvers/fastream.js"(exports2, module2) {
     var { fetchHtml: fetchHtml2, getSessionUA } = require_http();
     var { detectQuality: detectQuality2 } = require_quality();
     var UA4 = getSessionUA();
@@ -1385,9 +1385,9 @@ var init_vimeos = __esm({
 
 // src/resolvers/buzzheavier.js
 var require_buzzheavier = __commonJS({
-  "src/resolvers/buzzheavier.js"(exports, module2) {
+  "src/resolvers/buzzheavier.js"(exports2, module2) {
     var axios4 = require("axios");
-    var { getStealthHeaders } = require_http();
+    var { getStealthHeaders: getStealthHeaders2 } = require_http();
     function resolve6(embedUrl) {
       return __async(this, null, function* () {
         if (!embedUrl)
@@ -1399,7 +1399,7 @@ var require_buzzheavier = __commonJS({
             const id = embedUrl.split("/").pop();
             targetUrl = `https://buzzheavier.com/f/${id}`;
           }
-          const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+          const headers = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
             "Referer": "https://pelisgo.online/",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
           });
@@ -1540,7 +1540,7 @@ var init_pixeldrain = __esm({
 
 // src/resolvers/playmogo.js
 var require_playmogo = __commonJS({
-  "src/resolvers/playmogo.js"(exports, module2) {
+  "src/resolvers/playmogo.js"(exports2, module2) {
     var { fetchHtml: fetchHtml2, DEFAULT_UA: DEFAULT_UA2 } = require_http();
     function resolve6(url) {
       return __async(this, null, function* () {
@@ -1605,7 +1605,7 @@ var init_turbovid = __esm({
 
 // src/resolvers/embedseek.js
 var require_embedseek = __commonJS({
-  "src/resolvers/embedseek.js"(exports, module2) {
+  "src/resolvers/embedseek.js"(exports2, module2) {
     var CryptoJS2 = require("crypto-js");
     var { getSessionUA } = require_http();
     function resolve6(url) {
@@ -1711,9 +1711,9 @@ var require_embedseek = __commonJS({
 
 // src/resolvers/tplayer.js
 var require_tplayer = __commonJS({
-  "src/resolvers/tplayer.js"(exports, module2) {
+  "src/resolvers/tplayer.js"(exports2, module2) {
     var axios4 = require("axios");
-    var { getStealthHeaders } = require_http();
+    var { getStealthHeaders: getStealthHeaders2 } = require_http();
     function resolve6(embedUrl) {
       return __async(this, null, function* () {
         try {
@@ -1724,7 +1724,7 @@ var require_tplayer = __commonJS({
           const fileId = idMatch[1];
           const baseUrl = new URL(embedUrl).origin;
           const apiUrl = `${baseUrl}/api/resolve/${fileId}`;
-          const baseHeaders = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+          const baseHeaders = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
             "Referer": embedUrl,
             "Origin": baseUrl,
             "X-Requested-With": "XMLHttpRequest"
@@ -1772,7 +1772,7 @@ var require_tplayer = __commonJS({
 
 // src/resolvers/lulustream.js
 var require_lulustream = __commonJS({
-  "src/resolvers/lulustream.js"(exports, module2) {
+  "src/resolvers/lulustream.js"(exports2, module2) {
     var { getSessionUA } = require_http();
     var { validateStream } = require_m3u8();
     function unpackEval(payload, radix, symtab) {
@@ -1857,7 +1857,7 @@ var require_lulustream = __commonJS({
 
 // src/utils/resolvers.js
 var require_resolvers = __commonJS({
-  "src/utils/resolvers.js"(exports, module2) {
+  "src/utils/resolvers.js"(exports2, module2) {
     var { resolve: resolveVoe } = require_voe();
     var { resolve: resolveHlswish } = require_hlswish();
     var { resolve: resolveFilemoon } = require_filemoon();
@@ -1879,12 +1879,12 @@ var require_resolvers = __commonJS({
     function getDirectCdnHeaders(url) {
       if (!url)
         return null;
-      const { getStealthHeaders } = require_http();
+      const { getStealthHeaders: getStealthHeaders2 } = require_http();
       const s = url.toLowerCase();
       try {
         const domain = new URL(url).hostname;
         const baseOrigin = `https://${domain}`;
-        const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+        const headers = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
           "Referer": baseOrigin,
           "Origin": baseOrigin
         });
@@ -1926,7 +1926,7 @@ var require_resolvers = __commonJS({
       result.url = url;
       return result;
     }
-    function resolveEmbed(url) {
+    function resolveEmbed2(url) {
       return __async(this, null, function* () {
         if (!url)
           return null;
@@ -2000,13 +2000,13 @@ var require_resolvers = __commonJS({
         });
       });
     }
-    module2.exports = { resolveEmbed };
+    module2.exports = { resolveEmbed: resolveEmbed2 };
   }
 });
 
 // src/utils/id_mapper.js
 var require_id_mapper = __commonJS({
-  "src/utils/id_mapper.js"(exports, module2) {
+  "src/utils/id_mapper.js"(exports2, module2) {
     var { fetchJson: fetchJson2, fetchHtml: fetchHtml2 } = require_http();
     var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var ID_CACHE = /* @__PURE__ */ new Map();
@@ -2061,7 +2061,7 @@ var require_id_mapper = __commonJS({
         }
       });
     }
-    function getCorrectImdbId(tmdbId, mediaType) {
+    function getCorrectImdbId2(tmdbId, mediaType) {
       return __async(this, null, function* () {
         if (!tmdbId)
           return { imdbId: null, title: "" };
@@ -2083,210 +2083,225 @@ var require_id_mapper = __commonJS({
         return scrapeResult;
       });
     }
-    module2.exports = { getCorrectImdbId, SERIES_MAPPINGS };
+    module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
   }
 });
 
 // src/pelisgo/index.js
-var require_pelisgo = __commonJS({
-  "src/pelisgo/index.js"(exports, module2) {
-    var { calculateSimilarity: calculateSimilarity2 } = (init_string(), __toCommonJS(string_exports));
-    var { finalizeStreams } = require_engine();
-    var { resolveEmbed } = require_resolvers();
-    var { getStealthHeaders } = require_http();
-    var { getCorrectImdbId } = require_id_mapper();
-    var BASE = "https://pelisgo.online";
-    function getPelisGoHeaders(referer = BASE) {
-      return __spreadProps(__spreadValues({}, getStealthHeaders()), {
-        "Referer": referer,
-        "Origin": BASE,
-        "X-Requested-With": "XMLHttpRequest"
+var { calculateSimilarity: calculateSimilarity2 } = (init_string(), __toCommonJS(string_exports));
+var { finalizeStreams } = require_engine();
+var { resolveEmbed } = require_resolvers();
+var { getStealthHeaders } = require_http();
+var { getCorrectImdbId } = require_id_mapper();
+var BASE = "https://pelisgo.online";
+function getPelisGoHeaders(referer = BASE) {
+  return __spreadProps(__spreadValues({}, getStealthHeaders()), {
+    "Referer": referer,
+    "Origin": BASE,
+    "X-Requested-With": "XMLHttpRequest"
+  });
+}
+function cleanTitle(str) {
+  if (!str)
+    return "";
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim();
+}
+function fetchText(_0) {
+  return __async(this, arguments, function* (url, referer = BASE) {
+    try {
+      const res = yield fetch(url, { headers: getPelisGoHeaders(referer) });
+      return yield res.text();
+    } catch (e) {
+      return "";
+    }
+  });
+}
+function resolvePelisGoDownload(id) {
+  return __async(this, null, function* () {
+    if (!id)
+      return null;
+    try {
+      const res = yield fetch(`https://pelisgo.online/api/download/${id}`, {
+        headers: getPelisGoHeaders()
       });
+      const data = yield res.json();
+      return data.url || null;
+    } catch (e) {
+      return null;
     }
-    function cleanTitle(str) {
-      if (!str)
-        return "";
-      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim();
+  });
+}
+function validateBuzzLink(url) {
+  return __async(this, null, function* () {
+    try {
+      const res = yield fetch(url, { method: "HEAD", headers: getStealthHeaders(), timeout: 5e3 });
+      return res.status >= 200 && res.status < 400;
+    } catch (e) {
+      return false;
     }
-    function fetchText(_0) {
-      return __async(this, arguments, function* (url, referer = BASE) {
-        try {
-          const res = yield fetch(url, { headers: getPelisGoHeaders(referer) });
-          return yield res.text();
-        } catch (e) {
-          return "";
-        }
-      });
-    }
-    function resolvePelisGoDownload(id) {
-      return __async(this, null, function* () {
-        if (!id)
-          return null;
-        try {
-          const res = yield fetch(`https://pelisgo.online/api/download/${id}`, {
-            headers: getPelisGoHeaders()
-          });
-          const data = yield res.json();
-          return data.url || null;
-        } catch (e) {
-          return null;
-        }
-      });
-    }
-    function validateBuzzLink(url) {
-      return __async(this, null, function* () {
-        try {
-          const res = yield fetch(url, { method: "HEAD", headers: getStealthHeaders(), timeout: 5e3 });
-          return res.status === 200 || res.status === 206 || res.status === 302;
-        } catch (e) {
-          return false;
-        }
-      });
-    }
-    function getOnlineStreams(rawHtml) {
-      return __async(this, null, function* () {
-        const seenUrls = /* @__PURE__ */ new Set();
-        const resolutionPromises = [];
-        try {
-          const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
-          if (videoLinksMatch) {
-            const rawLinksJson = videoLinksMatch[1];
-            const objects = rawLinksJson.match(/\{[^{}]*?\}/g) || [];
-            for (const obj of objects) {
-              const serverMatch = obj.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-              const urlMatch = obj.match(/url[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-              if (!serverMatch || !urlMatch)
-                continue;
-              const serverName = serverMatch[1].replace(/\\/g, "");
-              const cleanUrl = urlMatch[1].replace(/\\/g, "");
-              if (cleanUrl.includes("tplayer.pelisgo.online") || serverName.toLowerCase().includes("tplayer"))
-                continue;
-              if (seenUrls.has(cleanUrl))
-                continue;
-              seenUrls.add(cleanUrl);
-              const lowerServer = serverName.toLowerCase();
-              const lowerUrl = cleanUrl.toLowerCase();
-              if (["hqq", "netu", "prueba", "embedseek", "desu"].some((s) => lowerServer.includes(s) || lowerUrl.includes(s)))
-                continue;
-              resolutionPromises.push((() => __async(this, null, function* () {
-                const result = yield resolveEmbed(cleanUrl);
-                if (result && result.url) {
-                  return {
-                    name: "PelisGo",
-                    langLabel: "Latino",
-                    serverLabel: result.serverName || serverName,
-                    url: result.url,
-                    quality: result.quality || "1080p",
-                    headers: result.headers || getPelisGoHeaders(cleanUrl)
-                  };
-                } else if (cleanUrl.includes("http")) {
-                  return {
-                    name: "PelisGo",
-                    langLabel: "Latino",
-                    serverLabel: serverName,
-                    url: cleanUrl,
-                    quality: "1080p",
-                    headers: getPelisGoHeaders()
-                  };
-                }
-                return null;
-              }))());
+  });
+}
+function cleanMetadata(val) {
+  if (!val)
+    return "";
+  return val.replace(/[\\"' ]+/g, "").trim();
+}
+function getOnlineStreams(rawHtml) {
+  return __async(this, null, function* () {
+    const seenUrls = /* @__PURE__ */ new Set();
+    const resolutionPromises = [];
+    try {
+      const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
+      if (videoLinksMatch) {
+        const rawLinksJson = videoLinksMatch[1];
+        const objects = rawLinksJson.match(/\{[^{}]*?\}/g) || [];
+        for (const obj of objects) {
+          const serverMatch = obj.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          const urlMatch = obj.match(/url[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          if (!serverMatch || !urlMatch)
+            continue;
+          const serverName = cleanMetadata(serverMatch[1]);
+          const cleanUrl = urlMatch[1].replace(/\\/g, "");
+          if (cleanUrl.includes("tplayer.pelisgo.online") || serverName.toLowerCase().includes("tplayer"))
+            continue;
+          if (seenUrls.has(cleanUrl))
+            continue;
+          seenUrls.add(cleanUrl);
+          resolutionPromises.push((() => __async(this, null, function* () {
+            const result = yield resolveEmbed(cleanUrl);
+            if (result && result.url) {
+              return {
+                name: "PelisGo",
+                langLabel: "Latino",
+                serverLabel: result.serverName || serverName,
+                url: result.url,
+                quality: result.quality || "1080p",
+                headers: result.headers || getPelisGoHeaders(cleanUrl)
+              };
+            } else if (cleanUrl.includes("http")) {
+              return {
+                name: "PelisGo",
+                langLabel: "Latino",
+                serverLabel: serverName,
+                url: cleanUrl,
+                quality: "1080p",
+                headers: getPelisGoHeaders()
+              };
             }
-          }
-        } catch (e) {
+            return null;
+          }))());
         }
-        try {
-          const globalRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+(Buzzheavier|Pixeldrain)[^{}]*?\}/gi;
-          let m;
-          while ((m = globalRegex.exec(rawHtml)) !== null) {
-            const objStr = m[0].replace(/\\"/g, '"');
-            resolutionPromises.push((() => __async(this, null, function* () {
-              try {
-                const urlMatch = objStr.match(/url[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-                const qualityMatch = objStr.match(/quality[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-                const langMatch = objStr.match(/language[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-                const serverMatch = objStr.match(/server[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-                if (!urlMatch || !serverMatch)
-                  return null;
-                let maybeUrl = urlMatch[1];
-                const quality = qualityMatch ? qualityMatch[1] : "1080p";
-                const lang = langMatch ? langMatch[1] : "Latino";
-                const serverName = serverMatch[1];
-                let directUrl = null;
-                if (maybeUrl.includes("/download/")) {
-                  const downloadId = maybeUrl.split("/").pop().replace(/[^\w]/g, "");
-                  directUrl = yield resolvePelisGoDownload(downloadId);
-                } else {
-                  directUrl = maybeUrl;
-                }
-                if (directUrl && !seenUrls.has(directUrl)) {
-                  seenUrls.add(directUrl);
-                  if (serverName === "Buzzheavier") {
-                    const isAlive = yield validateBuzzLink(directUrl);
-                    if (!isAlive) {
-                      console.log(`[PelisGo] Omitido Buzzheavier ca\xEDdo: ${directUrl}`);
-                      return null;
-                    }
-                  }
-                  const resolved = yield resolveEmbed(directUrl);
-                  if (resolved && resolved.url) {
-                    return {
-                      name: "PelisGo",
-                      langLabel: lang,
-                      serverLabel: serverName,
-                      url: resolved.url,
-                      quality,
-                      headers: resolved.headers || getPelisGoHeaders(directUrl)
-                    };
-                  } else {
-                    return {
-                      name: "PelisGo",
-                      langLabel: lang,
-                      serverLabel: serverName,
-                      url: directUrl,
-                      quality,
-                      headers: getPelisGoHeaders(directUrl)
-                    };
-                  }
-                }
-              } catch (ee) {
-              }
+      }
+    } catch (e) {
+    }
+    try {
+      const globalRegex = /\{[^{}]*?server[\\"' ]+:[\\"' ]+(Buzzheavier|Pixeldrain)[^{}]*?\}/gi;
+      let m;
+      while ((m = globalRegex.exec(rawHtml)) !== null) {
+        const objStr = m[0];
+        resolutionPromises.push((() => __async(this, null, function* () {
+          try {
+            const urlMatch = objStr.match(/url[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
+            const qualityMatch = objStr.match(/quality[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
+            const langMatch = objStr.match(/language[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
+            const serverMatch = objStr.match(/server[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
+            if (!urlMatch || !serverMatch)
               return null;
-            }))());
+            const rawUrl = urlMatch[1].replace(/\\/g, "");
+            const quality = cleanMetadata(qualityMatch ? qualityMatch[1] : "1080p");
+            const lang = cleanMetadata(langMatch ? langMatch[1] : "Latino");
+            const serverName = cleanMetadata(serverMatch[1]);
+            let directUrl = rawUrl;
+            if (rawUrl.includes("/download/")) {
+              const id = rawUrl.split("/").pop();
+              directUrl = yield resolvePelisGoDownload(id);
+            }
+            if (directUrl && !seenUrls.has(directUrl)) {
+              seenUrls.add(directUrl);
+              if (serverName === "Buzzheavier") {
+                const isAlive = yield validateBuzzLink(directUrl);
+                if (!isAlive)
+                  return null;
+              }
+              const resolved = yield resolveEmbed(directUrl);
+              return {
+                name: "PelisGo",
+                langLabel: lang || "Latino",
+                serverLabel: serverName,
+                url: resolved ? resolved.url : directUrl,
+                quality: (resolved ? resolved.quality : quality) || "1080p",
+                headers: (resolved ? resolved.headers : null) || getPelisGoHeaders(directUrl)
+              };
+            }
+          } catch (ee) {
           }
-        } catch (e) {
-        }
-        const results = yield Promise.all(resolutionPromises);
-        return results.filter((s) => s !== null);
-      });
+          return null;
+        }))());
+      }
+    } catch (e) {
     }
-    function getStreams(tmdbId, mediaType, season, episode, title) {
-      return __async(this, null, function* () {
-        try {
-          const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-          const meta = yield getCorrectImdbId(tmdbId, mediaType);
-          const mediaTitle = meta.title || title;
-          const imdbId = meta.imdbId;
-          console.log(`[PelisGo] v8.7.0 Buscando: "${mediaTitle}"`);
-          const slug = cleanTitle(mediaTitle).replace(/\s+/g, "-");
-          const paths = yield require_pelisgo().pelisgoSearch(mediaTitle, type);
-          let bestPath = null;
-          if (paths.length > 0) {
-            bestPath = paths[0];
-          }
-          const currentSlug = bestPath ? bestPath.split("/").pop() : slug;
-          const pageUrl = type === "movie" ? `${BASE}/movies/${currentSlug}` : `${BASE}/series/${currentSlug}/temporada/${season || 1}/episodio/${episode || 1}`;
-          const html = yield fetchText(pageUrl);
-          if (!html)
-            return [];
-          const onlineStreams = yield getOnlineStreams(html);
-          return yield finalizeStreams(onlineStreams, "PelisGo", mediaTitle);
-        } catch (e) {
-          return [];
+    const results = yield Promise.all(resolutionPromises);
+    return results.filter((s) => s !== null);
+  });
+}
+function pelisgoSearch(query, type) {
+  return __async(this, null, function* () {
+    const searchStr = cleanTitle(query);
+    if (!searchStr)
+      return [];
+    const url = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
+    const html = yield fetchText(url);
+    if (!html)
+      return [];
+    const re = /href=["\\]+([\/\w\d\-\/]+(movies|series)\/([\w\d\-]+))["\\]+/gi;
+    const results = [];
+    const seen = /* @__PURE__ */ new Set();
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      const fullPath = m[1].replace(/\\/g, "");
+      const slug = m[3];
+      if (fullPath.includes("/temporada/") || fullPath.includes("/episodio/"))
+        continue;
+      if (type === "movie" && fullPath.includes("/movies/") || type === "tv" && fullPath.includes("/series/")) {
+        if (!seen.has(slug)) {
+          seen.add(slug);
+          results.push(fullPath);
         }
-      });
+      }
     }
-    module2.exports = { getStreams, pelisgoSearch: (q, t) => require_pelisgo().pelisgoSearch(q, t) };
-  }
-});
-module.exports = require_pelisgo();
+    return results;
+  });
+}
+function getStreams(tmdbId, mediaType, season, episode, title) {
+  return __async(this, null, function* () {
+    try {
+      const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
+      const meta = yield getCorrectImdbId(tmdbId, mediaType);
+      const mediaTitle = meta.title || title;
+      const imdbId = meta.imdbId;
+      console.log(`[PelisGo] v8.7.1 Buscando: "${mediaTitle}"`);
+      const paths = yield pelisgoSearch(mediaTitle, type);
+      let bestPath = null;
+      for (const path of paths) {
+        const tempHtml = yield fetchText(`${BASE}${path}`);
+        if (imdbId && tempHtml.includes(imdbId)) {
+          bestPath = path;
+          break;
+        }
+        if (calculateSimilarity2(mediaTitle, path.split("/").pop().replace(/-/g, " ")) > 0.6) {
+          bestPath = path;
+          break;
+        }
+      }
+      const finalUrl = bestPath ? type === "movie" ? `${BASE}${bestPath}` : `${BASE}${bestPath}/temporada/${season || 1}/episodio/${episode || 1}` : null;
+      if (!finalUrl)
+        return [];
+      const html = yield fetchText(finalUrl);
+      const onlineStreams = yield getOnlineStreams(html);
+      return yield finalizeStreams(onlineStreams, "PelisGo", mediaTitle);
+    } catch (e) {
+      return [];
+    }
+  });
+}
+module.exports = { getStreams };
