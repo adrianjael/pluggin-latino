@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T23:10:34.661Z
+ * Generated: 2026-04-15T23:17:54.589Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2193,34 +2193,29 @@ var require_extractor = __commonJS({
                 rawResults.push({ serverUrl: url, serverName: "Active Player", language: lang });
               }
             }
-            const liUrlRegex = /<li([^>]*data-url="([^"]+)"[^>]*data-name="([^"]+)"[^>]*?)>([\s\S]*?)<\/li>/gi;
+            const liAllRegex = /<li([^>]*?)>([\s\S]*?)<\/li>/gi;
             let m;
-            while ((m = liUrlRegex.exec(block)) !== null) {
-              const liStart = m[1];
-              const url = m[2];
-              const resLang = m[3] || lang;
-              const serverName = m[4].replace(/<[^>]+>/g, "").trim() || "Server";
-              if (liStart.includes("display: none"))
+            while ((m = liAllRegex.exec(block)) !== null) {
+              const liContent = m[1];
+              const innerHtml = m[2];
+              const urlMatch = liContent.match(/data-url="([^"]+)"/i);
+              const idMatch = liContent.match(/data-id="(\d+)"/i);
+              const nameMatch = liContent.match(/data-name="([^"]+)"/i);
+              const serverName = innerHtml.replace(/<[^>]+>/g, "").trim() || "Server";
+              let serverUrl = urlMatch ? urlMatch[1] : null;
+              const serverLang = nameMatch ? nameMatch[1] : lang;
+              const style = liContent.replace(/\s/g, "").toLowerCase();
+              if (style.includes("display:none"))
                 continue;
-              if (url && !rawResults.some((r) => r.serverUrl === url)) {
-                rawResults.push({ serverUrl: url, serverName, language: resLang });
+              if (!serverUrl && idMatch) {
+                const id = idMatch[1];
+                const linkRegex = new RegExp(`<span[^>]*lid="${id}"[^>]*url="([^"]+)"`, "i");
+                const linkMatch = pageHtml.match(linkRegex);
+                if (linkMatch)
+                  serverUrl = linkMatch[1];
               }
-            }
-            const liIdRegex = /<li([^>]*data-id="(\d+)"[^>]*?)>([\s\S]*?)<\/li>/gi;
-            let mId;
-            while ((mId = liIdRegex.exec(block)) !== null) {
-              const liStart = mId[1];
-              const id = mId[2];
-              const serverName = mId[3].replace(/<[^>]+>/g, "").trim() || "Server";
-              if (liStart.includes("display: none"))
-                continue;
-              const linkRegex = new RegExp(`<span[^>]*lid="${id}"[^>]*url="([^"]+)"`, "i");
-              const linkMatch = pageHtml.match(linkRegex);
-              if (linkMatch) {
-                const url = linkMatch[1];
-                if (!rawResults.some((r) => r.serverUrl === url)) {
-                  rawResults.push({ serverUrl: url, serverName, language: lang });
-                }
+              if (serverUrl && !rawResults.some((r) => r.serverUrl === serverUrl)) {
+                rawResults.push({ serverUrl, serverName, language: serverLang });
               }
             }
           }
@@ -2234,8 +2229,11 @@ var require_extractor = __commonJS({
               }
               const rawLang = normalizeLanguage(res.language);
               const sName = (res.serverName || "").toLowerCase();
-              if (rawLang !== "Latino" || sName.includes("sub") || sName.includes("vose")) {
-                console.log(`[PelisPlusHD] Explicit skip: ${res.serverName} (${rawLang})`);
+              const lName = (res.language || "").toLowerCase();
+              const isExplicitLatino = lName.includes("lat") || rawLang === "Latino";
+              const isSubtitled2 = lName.includes("sub") || sName.includes("sub") || sName.includes("vose");
+              if (!isExplicitLatino || isSubtitled2) {
+                console.log(`[PelisPlusHD] Skip non-latino/sub: ${res.serverName} (${res.language})`);
                 return null;
               }
               const finalUrl = yield resolveEmbed(url);
