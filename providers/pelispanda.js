@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-15T23:34:49.366Z
+ * Generated: 2026-04-15T23:41:47.922Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -298,11 +298,12 @@ var require_http2 = __commonJS({
         }, opt.headers);
         try {
           var fetchOptions = Object.assign({
-            redirect: opt.redirect || "follow",
-            signal: opt.signal || null
+            redirect: opt.redirect || "follow"
           }, opt, {
             headers
           });
+          if (opt.signal)
+            fetchOptions.signal = opt.signal;
           var response = yield fetch(url, fetchOptions);
           if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
             const redirectUrl = response.headers.get("location");
@@ -504,14 +505,16 @@ var require_m3u8 = __commonJS({
         if (VALIDATION_CACHE.has(url))
           return __spreadValues(__spreadValues({}, stream), VALIDATION_CACHE.get(url));
         try {
-          const response = yield fetch(url, {
+          const fetchOptions = {
             method: "GET",
-            signal,
             headers: __spreadValues({
               "User-Agent": getSessionUA(),
               "Range": "bytes=0-1024"
             }, headers || {})
-          });
+          };
+          if (signal)
+            fetchOptions.signal = signal;
+          const response = yield fetch(url, fetchOptions);
           if (!response.ok)
             return __spreadProps(__spreadValues({}, stream), { verified: false });
           const text = yield response.text();

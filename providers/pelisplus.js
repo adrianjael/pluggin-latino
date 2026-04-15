@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T23:34:49.377Z
+ * Generated: 2026-04-15T23:41:47.932Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -203,11 +203,12 @@ var require_http2 = __commonJS({
         }, opt.headers);
         try {
           var fetchOptions = Object.assign({
-            redirect: opt.redirect || "follow",
-            signal: opt.signal || null
+            redirect: opt.redirect || "follow"
           }, opt, {
             headers
           });
+          if (opt.signal)
+            fetchOptions.signal = opt.signal;
           var response = yield fetch(url, fetchOptions);
           if (opt.redirect === "manual" && (response.status === 301 || response.status === 302)) {
             const redirectUrl = response.headers.get("location");
@@ -409,14 +410,16 @@ var require_m3u8 = __commonJS({
         if (VALIDATION_CACHE.has(url))
           return __spreadValues(__spreadValues({}, stream), VALIDATION_CACHE.get(url));
         try {
-          const response = yield fetch(url, {
+          const fetchOptions = {
             method: "GET",
-            signal,
             headers: __spreadValues({
               "User-Agent": getSessionUA(),
               "Range": "bytes=0-1024"
             }, headers || {})
-          });
+          };
+          if (signal)
+            fetchOptions.signal = signal;
+          const response = yield fetch(url, fetchOptions);
           if (!response.ok)
             return __spreadProps(__spreadValues({}, stream), { verified: false });
           const text = yield response.text();
@@ -2241,11 +2244,12 @@ var require_extractor = __commonJS({
             return 0;
           });
           console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources with Force Abort Motor (v8.9.9)...`);
+          console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources (v9.0.1 Motor)...`);
           const allResults = [];
           const TARGET_COUNT = 3;
-          const controller = new AbortController();
-          const signal = controller.signal;
           let isFinished = false;
+          const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+          const signal = controller ? controller.signal : null;
           const processStream = (res) => __async(this, null, function* () {
             if (isFinished)
               return null;
@@ -2275,12 +2279,15 @@ var require_extractor = __commonJS({
               };
               const vStream = yield validateStream2(streamData, signal);
               const result = vStream && vStream.verified ? __spreadProps(__spreadValues({}, vStream), { name: "PelisPlusHD", langLabel: rawLang }) : streamData;
-              if (!isFinished) {
+              if (!isFinished && result) {
                 allResults.push(result);
                 if (allResults.length >= TARGET_COUNT) {
                   isFinished = true;
-                  controller.abort();
-                  console.log(`[PelisPlusHD] Early Exit: Target reached. Aborting pending requests.`);
+                  if (controller)
+                    try {
+                      controller.abort();
+                    } catch (e) {
+                    }
                 }
               }
               return result;
@@ -2288,16 +2295,28 @@ var require_extractor = __commonJS({
               return null;
             }
           });
-          yield Promise.race([
-            Promise.all(rawResults.map((res) => processStream(res))),
-            new Promise((resolve5) => setTimeout(() => {
+          let timeoutId;
+          const timeoutPromise = new Promise((resolve5) => {
+            timeoutId = setTimeout(() => {
               isFinished = true;
-              controller.abort();
-              console.log(`[PelisPlusHD] FORCED ABORT: 4.0s Limit reached. Returning current streams.`);
+              if (controller)
+                try {
+                  controller.abort();
+                } catch (e) {
+                }
+              console.log(`[PelisPlusHD] Timeout reached (6.0s).`);
               resolve5();
-            }, 4e3))
-          ]).catch(() => {
+            }, 6e3);
           });
+          try {
+            yield Promise.race([
+              Promise.all(rawResults.map((res) => processStream(res))),
+              timeoutPromise
+            ]);
+          } finally {
+            if (timeoutId)
+              clearTimeout(timeoutId);
+          }
           allResults.sort((a, b) => {
             const isVoeA = a.serverLabel && a.serverLabel.toLowerCase().includes("voe");
             const isVoeB = b.serverLabel && b.serverLabel.toLowerCase().includes("voe");
