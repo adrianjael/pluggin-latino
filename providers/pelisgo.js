@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T21:05:53.842Z
+ * Generated: 2026-04-15T21:15:17.524Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -565,7 +565,7 @@ var require_engine = __commonJS({
     var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     var { isMirror } = require_mirrors();
-    function normalizeLanguage2(lang) {
+    function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
       if (l === "latino" || l === "espa\xF1ol")
         return lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase();
@@ -611,7 +611,7 @@ var require_engine = __commonJS({
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of sorted) {
-          const rawLang = normalizeLanguage2(s.Audio || s.langLabel || s.language || s.audio || "Latino");
+          const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
           if (!isLatino) {
             console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
@@ -620,8 +620,8 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${providerName} [${server}] - ${displayQuality}${checkMark}`;
-          const streamTitle = `${rawLang} ${mediaTitle}`;
+          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
+          const streamTitle = `${rawLang.toLowerCase()} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
@@ -2104,7 +2104,7 @@ var { resolveEmbed } = require_resolvers();
 var { getStealthHeaders } = require_http();
 var { getCorrectImdbId } = require_id_mapper();
 var BASE = "https://pelisgo.online";
-var WHITELIST = ["Buzzheavier", "Magi", "Filemoon", "Pixeldrain"];
+var WHITELIST = ["Magi", "Filemoon", "Pixeldrain"];
 function getPelisGoHeaders(referer = BASE) {
   return __spreadProps(__spreadValues({}, getStealthHeaders()), {
     "Referer": referer,
@@ -2131,14 +2131,14 @@ function cleanTitle(str) {
     return "";
   return str.replace(/[\\"' ]+/g, "").replace(/\\u[\dA-F]{4}/gi, "").trim();
 }
-function normalizeLanguage(str) {
+function normalizeLanguageStrict(str) {
   if (!str)
-    return { label: "Latino", engine: "Latino" };
+    return "Latino";
   const low = str.toLowerCase();
-  if (low.includes("castellano") || low.includes("espa\xF1a")) {
-    return { label: "Latino / ES", engine: "Latino" };
+  if (low.includes("castellano") || low.includes("espa\xF1a") || low.includes("esp")) {
+    return null;
   }
-  return { label: "Latino", engine: "Latino" };
+  return "Latino";
 }
 function getOnlineStreams(rawHtml) {
   return __async(this, null, function* () {
@@ -2160,6 +2160,11 @@ function getOnlineStreams(rawHtml) {
           const lang = lM ? cleanTitle(lM[1]) : "Latino";
           if (!WHITELIST.some((w) => serverName.toLowerCase().includes(w.toLowerCase())))
             return null;
+          const finalLang = normalizeLanguageStrict(lang);
+          if (!finalLang) {
+            console.log(`[PelisGo] Omitiendo enlace Castellano de ${serverName}`);
+            return null;
+          }
           let directUrl = rawUrl;
           if (rawUrl.includes("/download/")) {
             const id = rawUrl.split("/").pop();
@@ -2171,15 +2176,10 @@ function getOnlineStreams(rawHtml) {
             return null;
           seenUrls.add(directUrl);
           const resEmbed = yield resolveEmbed(directUrl);
-          if (!resEmbed && serverName.toLowerCase().includes("buzzheavier")) {
-            return null;
-          }
-          const langMeta = normalizeLanguage(lang);
           return {
             name: "PelisGo",
-            langLabel: langMeta.label,
+            langLabel: finalLang,
             serverLabel: serverName,
-            // metadata para engine.js
             url: resEmbed ? resEmbed.url : directUrl,
             quality: (resEmbed ? resEmbed.quality : quality) || "1080p",
             headers: (resEmbed ? resEmbed.headers : null) || getPelisGoHeaders(directUrl)
@@ -2199,28 +2199,26 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
       const meta = yield getCorrectImdbId(tmdbId, mediaType);
       const mediaTitle = meta.title || title;
-      const imdbId = meta.imdbId;
-      console.log(`[PelisGo] v8.7.6 Procesando: "${mediaTitle}"`);
-      const searchPath = `${BASE}/search?q=${encodeURIComponent(mediaTitle.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())}`;
-      const searchRes = yield fetchWithTimeout(searchPath);
-      const searchHtml = yield searchRes.text();
-      let targetPath = null;
-      const re = new RegExp(`href=["\\\\"]+([^"\\\\"]+(movies|series)\\/([\\w\\d\\-]+))["\\\\"]+`, "gi");
-      let m;
-      while ((m = re.exec(searchHtml)) !== null) {
-        const slug = m[3];
-        if (calculateSimilarity2(mediaTitle, slug.replace(/-/g, " ")) > 0.7) {
-          targetPath = m[1].replace(/\\/g, "");
-          break;
-        }
-      }
-      if (!targetPath) {
-        const directSlug = mediaTitle.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim().replace(/\s+/g, "-");
-        targetPath = type === "movie" ? `/movies/${directSlug}` : `/series/${directSlug}`;
-      }
+      const slugPath = mediaTitle.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim().replace(/\s+/g, "-");
+      const targetPath = type === "movie" ? `/movies/${slugPath}` : `/series/${slugPath}`;
       const finalUrl = type === "movie" ? `${BASE}${targetPath}` : `${BASE}${targetPath}/temporada/${season || 1}/episodio/${episode || 1}`;
       const resPage = yield fetchWithTimeout(finalUrl);
       const html = yield resPage.text();
+      if (!html || html.includes("404")) {
+        console.log(`[PelisGo] Slug fallido, reintentando con b\xFAsqueda...`);
+        const searchRes = yield fetchWithTimeout(`${BASE}/search?q=${encodeURIComponent(mediaTitle)}`);
+        const searchHtml = yield searchRes.text();
+        const re = new RegExp(`href=["\\\\"]+([^"\\\\"]+(movies|series)\\/([\\w\\d\\-]+))["\\\\"]+`, "gi");
+        let m;
+        while ((m = re.exec(searchHtml)) !== null) {
+          if (calculateSimilarity2(mediaTitle, m[3].replace(/-/g, " ")) > 0.7) {
+            const resRetry = yield fetchWithTimeout(`${BASE}${m[1].replace(/\\/g, "")}`);
+            const htmlRetry = yield resRetry.text();
+            const streams2 = yield getOnlineStreams(htmlRetry);
+            return yield finalizeStreams(streams2, "PelisGo", mediaTitle);
+          }
+        }
+      }
       const streams = yield getOnlineStreams(html);
       return yield finalizeStreams(streams, "PelisGo", mediaTitle);
     } catch (e) {

@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-15T21:05:53.854Z
+ * Generated: 2026-04-15T21:15:17.535Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2157,8 +2157,8 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${providerName} [${server}] - ${displayQuality}${checkMark}`;
-          const streamTitle = `${rawLang} ${mediaTitle}`;
+          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
+          const streamTitle = `${rawLang.toLowerCase()} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
