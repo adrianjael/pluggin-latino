@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T20:43:48.089Z
+ * Generated: 2026-04-15T20:54:40.004Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2102,6 +2102,20 @@ function getPelisGoHeaders(referer = BASE) {
     "X-Requested-With": "XMLHttpRequest"
   });
 }
+function fetchWithTimeout(_0) {
+  return __async(this, arguments, function* (url, options = {}, timeout = 6e3) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = yield fetch(url, __spreadProps(__spreadValues({}, options), { signal: controller.signal }));
+      clearTimeout(id);
+      return response;
+    } catch (e) {
+      clearTimeout(id);
+      return { text: () => "", json: () => ({}), status: 404 };
+    }
+  });
+}
 function cleanTitle(str) {
   if (!str)
     return "";
@@ -2116,16 +2130,6 @@ function normalizeLanguage(str) {
   }
   return { label: "Latino", engine: "Latino" };
 }
-function fetchText(_0) {
-  return __async(this, arguments, function* (url, referer = BASE) {
-    try {
-      const res = yield fetch(url, { headers: getPelisGoHeaders(referer) });
-      return yield res.text();
-    } catch (e) {
-      return "";
-    }
-  });
-}
 function resolvePelisGoDownload(id) {
   return __async(this, null, function* () {
     if (!id)
@@ -2133,7 +2137,7 @@ function resolvePelisGoDownload(id) {
     if (id.startsWith("http"))
       return id;
     try {
-      const res = yield fetch(`https://pelisgo.online/api/download/${id}`, {
+      const res = yield fetchWithTimeout(`https://pelisgo.online/api/download/${id}`, {
         headers: getPelisGoHeaders()
       });
       const data = yield res.json();
@@ -2146,7 +2150,7 @@ function resolvePelisGoDownload(id) {
 function validateBuzzLink(url) {
   return __async(this, null, function* () {
     try {
-      const res = yield fetch(url, { method: "HEAD", headers: getStealthHeaders(), timeout: 4e3 });
+      const res = yield fetchWithTimeout(url, { method: "HEAD", headers: getStealthHeaders() }, 4e3);
       return res.status >= 200 && res.status < 400;
     } catch (e) {
       return true;
@@ -2157,81 +2161,53 @@ function getOnlineStreams(rawHtml) {
   return __async(this, null, function* () {
     const seenUrls = /* @__PURE__ */ new Set();
     const resolutionPromises = [];
-    const tableRegex = new RegExp(`<tr[^>]*>.*?<span[^>]*>([^<]+)<\\/span>.*?<td[^>]*>.*?<span[^>]*>([^<]+)<\\/span>.*?<span>([^<]+)<\\/span>.*?href=["']\\/download\\/([^"']+)["']`, "gis");
-    let match;
-    while ((match = tableRegex.exec(rawHtml)) !== null) {
-      const [_, serverName, quality, lang, downloadId] = match;
-      const cleanServer = serverName.trim();
-      if (!WHITELIST.some((w) => cleanServer.toLowerCase().includes(w.toLowerCase())))
-        continue;
+    const safeObjectsMatch = rawHtml.match(new RegExp(`\\{[^{}]*?server[\\\\"' ]+:[^{}]*?url[^{}]*?\\}`, "gis")) || [];
+    const downloadMatches = rawHtml.match(new RegExp(`\\{[^{}]*?server[\\\\"' ]+:[^{}]*?\\/download\\/[^{}]*?\\}`, "gis")) || [];
+    const allCandidateObjects = [...safeObjectsMatch, ...downloadMatches];
+    for (const objStr of allCandidateObjects) {
       resolutionPromises.push((() => __async(this, null, function* () {
-        const directUrl = yield resolvePelisGoDownload(downloadId);
-        if (!directUrl || seenUrls.has(directUrl))
-          return null;
-        seenUrls.add(directUrl);
-        if (cleanServer === "Buzzheavier") {
-          if (!(yield validateBuzzLink(directUrl)))
-            return null;
-        }
-        const langMeta = normalizeLanguage(lang);
-        const resolved = yield resolveEmbed(directUrl);
-        return {
-          name: "PelisGo",
-          langLabel: langMeta.label,
-          serverLabel: cleanServer,
-          url: resolved ? resolved.url : directUrl,
-          quality: (resolved ? resolved.quality : quality.trim()) || "1080p",
-          headers: (resolved ? resolved.headers : null) || getPelisGoHeaders(directUrl)
-        };
-      }))());
-    }
-    const playerRegex = /alt=["']([^"']+)["'][^>]*>.*?text-sm font-bold truncate[^>]*>([^<]+)[\s\S]*?text-\[10px\][^>]*>([^<]+)/gi;
-    let pMatch;
-    while ((pMatch = playerRegex.exec(rawHtml)) !== null) {
-      const [_, imgAlt, serverName, quality] = pMatch;
-      const cleanServer = serverName.trim() || imgAlt.trim();
-      if (!WHITELIST.some((w) => cleanServer.toLowerCase().includes(w.toLowerCase())))
-        continue;
-    }
-    try {
-      const videoLinksMatch = rawHtml.match(/videoLinks[\\"' ]+:\[(.*?)\]/);
-      if (videoLinksMatch) {
-        const rawLinksJson = videoLinksMatch[1];
-        const objects = rawLinksJson.match(/\{[^{}]*?\}/g) || [];
-        for (const obj of objects) {
-          const sM = obj.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-          const uM = obj.match(/url[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-          const qM = obj.match(/quality[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
-          const lM = obj.match(/language[\\"' ]+:[\\"' ]+([^"'\s,]+)/);
+        try {
+          const sM = objStr.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          const uM = objStr.match(/(url|download)[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          const qM = objStr.match(/quality[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
+          const lM = objStr.match(/language[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
           if (!sM || !uM)
-            continue;
+            return null;
           const serverName = sM[1].replace(/[\\"' ]+/g, "");
-          const cleanUrl = uM[1].replace(/\\/g, "");
+          let rawUrl = uM[2].replace(/\\/g, "").replace(/[\\"' ]+/g, "");
           const quality = qM ? qM[1].replace(/[\\"' ]+/g, "") : "1080p";
           const lang = lM ? lM[1].replace(/[\\"' ]+/g, "") : "Latino";
           if (!WHITELIST.some((w) => serverName.toLowerCase().includes(w.toLowerCase())))
-            continue;
-          if (seenUrls.has(cleanUrl))
-            continue;
-          seenUrls.add(cleanUrl);
-          resolutionPromises.push((() => __async(this, null, function* () {
-            const result = yield resolveEmbed(cleanUrl);
-            const langMeta = normalizeLanguage(lang);
-            return {
-              name: "PelisGo",
-              langLabel: langMeta.label,
-              serverLabel: result ? result.serverName : serverName,
-              url: result ? result.url : cleanUrl,
-              quality: (result ? result.quality : quality) || "1080p",
-              headers: (result ? result.headers : null) || getPelisGoHeaders(cleanUrl)
-            };
-          }))());
+            return null;
+          let directUrl = rawUrl;
+          if (rawUrl.includes("/download/")) {
+            const id = rawUrl.split("/").pop();
+            directUrl = yield resolvePelisGoDownload(id);
+          }
+          if (!directUrl || seenUrls.has(directUrl))
+            return null;
+          seenUrls.add(directUrl);
+          if (serverName.toLowerCase().includes("buzzheavier")) {
+            if (!(yield validateBuzzLink(directUrl)))
+              return null;
+          }
+          const resEmbed = yield resolveEmbed(directUrl);
+          const langMeta = normalizeLanguage(lang);
+          return {
+            name: "PelisGo",
+            langLabel: langMeta.label,
+            serverLabel: serverName,
+            url: resEmbed ? resEmbed.url : directUrl,
+            quality: (resEmbed ? resEmbed.quality : quality) || "1080p",
+            headers: (resEmbed ? resEmbed.headers : null) || getPelisGoHeaders(directUrl)
+          };
+        } catch (e) {
+          return null;
         }
-      }
-    } catch (e) {
+      }))());
     }
-    const res = yield Promise.all(resolutionPromises);
-    return res.filter((s) => s !== null);
+    const results = yield Promise.allSettled(resolutionPromises);
+    return results.filter((r) => r.status === "fulfilled" && r.value !== null).map((r) => r.value);
   });
 }
 function pelisgoSearch(query, type) {
@@ -2240,7 +2216,8 @@ function pelisgoSearch(query, type) {
     if (!searchStr)
       return [];
     const url = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
-    const html = yield fetchText(url);
+    const res = yield fetchWithTimeout(url);
+    const html = yield res.text();
     if (!html)
       return [];
     const re = /href=["\\]+([\/\w\d\-\/]+(movies|series)\/([\w\d\-]+))["\\]+/gi;
@@ -2269,16 +2246,18 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const meta = yield getCorrectImdbId(tmdbId, mediaType);
       const mediaTitle = meta.title || title;
       const imdbId = meta.imdbId;
-      console.log(`[PelisGo] v8.7.4 Analizando: "${mediaTitle}"`);
+      console.log(`[PelisGo] v8.7.5 Buscando: "${mediaTitle}"`);
       const paths = yield pelisgoSearch(mediaTitle, type);
       let bestPath = null;
       for (const path of paths) {
         const currentSlug = path.split("/").pop();
-        if (cleanTitle(mediaTitle).replace(/\s+/g, "-") === currentSlug) {
+        const cleanMTitle = cleanTitle(mediaTitle).replace(/\s+/g, "-");
+        if (cleanMTitle === currentSlug) {
           bestPath = path;
           break;
         }
-        const tempHtml = yield fetchText(`${BASE}${path}`);
+        const resTemp = yield fetchWithTimeout(`${BASE}${path}`, {}, 3e3);
+        const tempHtml = yield resTemp.text();
         if (imdbId && tempHtml.includes(imdbId)) {
           bestPath = path;
           break;
@@ -2295,11 +2274,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const finalUrl = bestPath ? type === "movie" ? `${BASE}${bestPath}` : `${BASE}${bestPath}/temporada/${season || 1}/episodio/${episode || 1}` : null;
       if (!finalUrl)
         return [];
-      const html = yield fetchText(finalUrl);
+      const resFinal = yield fetchWithTimeout(finalUrl, {}, 5e3);
+      const html = yield resFinal.text();
       if (!html || html.includes("404"))
         return [];
-      const onlineStreams = yield getOnlineStreams(html);
-      return yield finalizeStreams(onlineStreams, "PelisGo", mediaTitle);
+      return yield getOnlineStreams(html);
     } catch (e) {
       return [];
     }

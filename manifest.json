@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "8.7.4",
+  "version": "8.7.5",
   "scrapers": [
     {
       "id": "embed69",
@@ -301,7 +301,7 @@
     {
       "id": "lamovie",
       "name": "LaMovie",
-      "description": "Películas y series en HD (Latino)",
+      "description": "Películas y series en HD (Latino) - solo paises sin cloudflare",
       "version": "2.0.0",
       "author": "AdrianJael",
       "supportedTypes": [
