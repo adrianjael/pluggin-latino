@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "7.9.4",
+  "version": "8.0.0",
   "scrapers": [
     {
       "id": "embed69",
@@ -27,7 +27,7 @@
       "id": "sololatino",
       "name": "SoloLatino",
       "description": "Servidores universales de alta gama con Player+ (Directo).",
-      "version": "2.0.0",
+      "version": "3.0.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
