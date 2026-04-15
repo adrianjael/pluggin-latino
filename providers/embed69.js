@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T16:16:15.164Z
+ * Generated: 2026-04-15T16:18:45.868Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -614,9 +614,10 @@ var require_voe = __commonJS({
     function resolve(url) {
       return __async(this, null, function* () {
         try {
+          const currentUA = getSessionUA();
           console.log(`[VOE] TV-Resolving: ${url}`);
           const response = yield fetch(url, {
-            headers: { "User-Agent": getSessionUA() }
+            headers: { "User-Agent": currentUA }
           });
           if (!response.ok)
             return null;
@@ -662,7 +663,7 @@ var require_voe = __commonJS({
                   verified: true,
                   serverName: "VOE",
                   headers: {
-                    "User-Agent": getSessionUA(),
+                    "User-Agent": currentUA,
                     "Referer": url
                   }
                 };
@@ -680,7 +681,7 @@ var require_voe = __commonJS({
               serverName: "VOE",
               headers: {
                 "Referer": url,
-                "User-Agent": getSessionUA()
+                "User-Agent": currentUA
               }
             };
           }
@@ -701,10 +702,10 @@ var require_hlswish = __commonJS({
   "src/resolvers/hlswish.js"(exports2, module2) {
     var { getSessionUA } = require_http();
     var { validateStream } = require_m3u8();
-    var UA = getSessionUA();
     function resolve(url) {
       return __async(this, null, function* () {
         try {
+          const UA = getSessionUA();
           const rawId = url.split("/").pop().replace(/\.html$/, "");
           const urlObj = new URL(url);
           const mirrors = [
@@ -788,7 +789,6 @@ var require_hlswish = __commonJS({
         }
       });
     }
-    module2.exports = { resolve };
     module2.exports = { resolve };
   }
 });
@@ -977,12 +977,13 @@ var require_vidhide = __commonJS({
     function resolve(url) {
       return __async(this, null, function* () {
         try {
+          const currentUA = getSessionUA();
           console.log(`[VidHide] TV-Resolving: ${url}`);
           const urlObj = new URL(url);
           const domain = urlObj.hostname;
           const response = yield fetch(url, {
             headers: {
-              "User-Agent": getSessionUA(),
+              "User-Agent": currentUA,
               "Referer": `https://${domain}/`
             }
           });
@@ -1022,7 +1023,7 @@ var require_vidhide = __commonJS({
               "Referer": url.split("?")[0],
               "Origin": new URL(url).origin,
               "X-Requested-With": "XMLHttpRequest",
-              "User-Agent": getSessionUA()
+              "User-Agent": currentUA
             })
           };
           return yield validateStream(stream);
@@ -1124,7 +1125,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.9.0 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.9.1 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
