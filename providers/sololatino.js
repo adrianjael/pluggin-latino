@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-15T17:47:55.121Z
+ * Generated: 2026-04-15T17:51:58.805Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1922,7 +1922,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       });
       if (cookie)
         postH["cookie"] = cookie;
-      yield axios4.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH });
+      yield axios4.post(`${BASE_URL}/s.php`, "a=click&tok=" + token, { headers: postH }).catch(() => {
+      });
       yield sleep(1e3);
       const { data: scanData } = yield axios4.post(`${BASE_URL}/s.php`, `a=1&tok=${token}`, { headers: postH });
       const uniqueServers = /* @__PURE__ */ new Map();
@@ -1932,37 +1933,35 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             uniqueServers.set(ser[1], ser);
         });
       }
-      if (scanData && scanData.langs_s) {
-        Object.keys(scanData.langs_s).forEach((k) => {
-          (scanData.langs_s[k] || []).forEach((ser) => {
-            if (ser[1])
-              uniqueServers.set(ser[1], ser);
-          });
+      if (scanData && scanData.langs_s && scanData.langs_s.LAT) {
+        scanData.langs_s.LAT.forEach((ser) => {
+          if (ser[1])
+            uniqueServers.set(ser[1], ser);
         });
       }
-      const servers = Array.from(uniqueServers.values()).slice(0, 10);
-      const resolved = [];
-      for (const ser of servers) {
+      const servers = Array.from(uniqueServers.values()).filter((ser) => {
         const name = ser[0];
-        const id = ser[1];
-        if (["Seek", "Lulu"].some((x) => name.includes(x)))
-          continue;
+        return !["Seek", "Lulu"].some((x) => name.includes(x));
+      }).slice(0, 5);
+      const resultsRaw = yield Promise.all(servers.map((ser) => __async(this, null, function* () {
+        const [name, id] = ser;
         const finalUrl = yield getDirectStream(id, token, cookie, playerUrl);
         if (finalUrl) {
           const resolvedResult = yield resolveEmbed(finalUrl);
-          resolved.push({
+          return {
             url: finalUrl,
-            serverName: (resolvedResult == null ? void 0 : resolvedResult.serverName) ? `${name} - ${resolvedResult.serverName}` : name,
+            serverName: ((resolvedResult == null ? void 0 : resolvedResult.serverName) ? `${name} - ${resolvedResult.serverName}` : name).replace(/ - Direct/g, ""),
             langLabel: "Latino",
             quality: "1080p",
             headers: { "User-Agent": UA4, "Referer": playerUrl, "Origin": BASE_URL }
-          });
+          };
         }
-        yield sleep(400);
-      }
+        return null;
+      })));
+      const resolved = resultsRaw.filter((r) => r !== null);
       return yield finalizeStreams(resolved, "SoloLatino", title);
     } catch (e2) {
-      console.log(`[SoloLatino] Error v8.4.3: ${e2.message}`);
+      console.log(`[SoloLatino] Error v8.5.0: ${e2.message}`);
     }
     return [];
   });

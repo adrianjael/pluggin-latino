@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-15T17:47:55.046Z
+ * Generated: 2026-04-15T17:51:58.729Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
