@@ -1,6 +1,6 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-15T20:54:40.036Z
+ * Generated: 2026-04-15T21:05:53.876Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -474,8 +474,8 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
-          const streamTitle = `${rawLang} ${server}`;
+          const streamName = `${providerName} [${server}] - ${displayQuality}${checkMark}`;
+          const streamTitle = `${rawLang} ${mediaTitle}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
@@ -1247,48 +1247,58 @@ var require_buzzheavier = __commonJS({
         if (!embedUrl)
           return null;
         try {
-          console.log("[Buzzheavier] Resolviendo v8.7.0: " + embedUrl);
-          let targetUrl = embedUrl;
-          if (!embedUrl.includes("/f/") && !embedUrl.includes("/v/")) {
-            const id = embedUrl.split("/").pop();
-            targetUrl = `https://buzzheavier.com/f/${id}`;
-          }
+          const id = embedUrl.split("/").pop().split("|")[0];
+          const targetUrl = `https://buzzheavier.com/f/${id}`;
+          console.log(`[Buzzheavier] Resolviendo v8.7.6: ${id}`);
           const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
             "Referer": "https://pelisgo.online/",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
           });
+          try {
+            const headRes = yield axios4.head(targetUrl, { headers, timeout: 5e3 });
+            if (headRes.status === 404) {
+              console.log("[Buzzheavier] \u274C Archivo eliminado (404). Omitiendo.");
+              return null;
+            }
+          } catch (e) {
+            if (e.response && e.response.status === 404)
+              return null;
+          }
           const { data: html } = yield axios4.get(targetUrl, { headers, timeout: 8e3 });
-          let directUrl = null;
-          const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i) || html.match(/<video[^>]+src=["']([^"']+)["']/i);
+          if (html.includes("This file could not be found") || html.includes("404")) {
+            console.log("[Buzzheavier] \u274C Archivo no encontrado por contenido HTML.");
+            return null;
+          }
+          let directUrl = `https://buzzheavier.com/v/${id}/video.mp4`;
+          try {
+            const videoCheck = yield axios4.head(directUrl, { headers, timeout: 4e3 });
+            if (videoCheck.status >= 200 && videoCheck.status < 400) {
+              console.log("[Buzzheavier] \u2713 URL de Video Directo confirmada.");
+              return {
+                url: directUrl,
+                quality: "1080p",
+                isDirect: true,
+                headers: {
+                  "User-Agent": headers["User-Agent"],
+                  "Referer": targetUrl
+                }
+              };
+            }
+          } catch (ee) {
+          }
+          const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i) || html.match(/<video[^>]+src=["']([^"']+)["']/i) || html.match(/hx-get=["']\/v\/([^"']+)["']/i);
           if (sourceMatch) {
-            directUrl = sourceMatch[1];
-          }
-          if (!directUrl) {
-            const hxMatch = html.match(/hx-get=["']\/v\/([^"']+)["']/i);
-            if (hxMatch) {
-              directUrl = `https://buzzheavier.com/v/${hxMatch[1]}`;
+            let foundPath = sourceMatch[1].startsWith("/v/") ? sourceMatch[1] : sourceMatch[1].includes("/v/") ? sourceMatch[1] : null;
+            if (foundPath) {
+              const finalUrl = `https://buzzheavier.com${foundPath.startsWith("/") ? "" : "/"}${foundPath}`;
+              console.log("[Buzzheavier] \u2713 URL extra\xEDda del HTML.");
+              return {
+                url: finalUrl,
+                quality: "1080p",
+                isDirect: true,
+                headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
+              };
             }
-          }
-          if (!directUrl) {
-            const idMatch = targetUrl.match(/\/f\/([a-zA-Z0-9_-]+)/);
-            if (idMatch) {
-              directUrl = `https://buzzheavier.com/v/${idMatch[1]}/video.mp4`;
-            }
-          }
-          if (directUrl) {
-            if (!directUrl.startsWith("http")) {
-              directUrl = `https://buzzheavier.com${directUrl.startsWith("/") ? "" : "/"}${directUrl}`;
-            }
-            console.log("[Buzzheavier] \u2713 Enlace directo obtenido.");
-            return {
-              url: directUrl,
-              quality: "1080p",
-              isDirect: true,
-              headers: {
-                "User-Agent": headers["User-Agent"],
-                "Referer": targetUrl
-              }
-            };
           }
           return null;
         } catch (e) {

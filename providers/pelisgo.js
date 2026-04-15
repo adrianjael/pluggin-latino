@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-15T20:54:40.004Z
+ * Generated: 2026-04-15T21:05:53.842Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -620,8 +620,8 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
-          const streamTitle = `${rawLang} ${server}`;
+          const streamName = `${providerName} [${server}] - ${displayQuality}${checkMark}`;
+          const streamTitle = `${rawLang} ${mediaTitle}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
@@ -1393,48 +1393,58 @@ var require_buzzheavier = __commonJS({
         if (!embedUrl)
           return null;
         try {
-          console.log("[Buzzheavier] Resolviendo v8.7.0: " + embedUrl);
-          let targetUrl = embedUrl;
-          if (!embedUrl.includes("/f/") && !embedUrl.includes("/v/")) {
-            const id = embedUrl.split("/").pop();
-            targetUrl = `https://buzzheavier.com/f/${id}`;
-          }
+          const id = embedUrl.split("/").pop().split("|")[0];
+          const targetUrl = `https://buzzheavier.com/f/${id}`;
+          console.log(`[Buzzheavier] Resolviendo v8.7.6: ${id}`);
           const headers = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
             "Referer": "https://pelisgo.online/",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
           });
+          try {
+            const headRes = yield axios4.head(targetUrl, { headers, timeout: 5e3 });
+            if (headRes.status === 404) {
+              console.log("[Buzzheavier] \u274C Archivo eliminado (404). Omitiendo.");
+              return null;
+            }
+          } catch (e) {
+            if (e.response && e.response.status === 404)
+              return null;
+          }
           const { data: html } = yield axios4.get(targetUrl, { headers, timeout: 8e3 });
-          let directUrl = null;
-          const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i) || html.match(/<video[^>]+src=["']([^"']+)["']/i);
+          if (html.includes("This file could not be found") || html.includes("404")) {
+            console.log("[Buzzheavier] \u274C Archivo no encontrado por contenido HTML.");
+            return null;
+          }
+          let directUrl = `https://buzzheavier.com/v/${id}/video.mp4`;
+          try {
+            const videoCheck = yield axios4.head(directUrl, { headers, timeout: 4e3 });
+            if (videoCheck.status >= 200 && videoCheck.status < 400) {
+              console.log("[Buzzheavier] \u2713 URL de Video Directo confirmada.");
+              return {
+                url: directUrl,
+                quality: "1080p",
+                isDirect: true,
+                headers: {
+                  "User-Agent": headers["User-Agent"],
+                  "Referer": targetUrl
+                }
+              };
+            }
+          } catch (ee) {
+          }
+          const sourceMatch = html.match(/<source[^>]+src=["']([^"']+)["']/i) || html.match(/<video[^>]+src=["']([^"']+)["']/i) || html.match(/hx-get=["']\/v\/([^"']+)["']/i);
           if (sourceMatch) {
-            directUrl = sourceMatch[1];
-          }
-          if (!directUrl) {
-            const hxMatch = html.match(/hx-get=["']\/v\/([^"']+)["']/i);
-            if (hxMatch) {
-              directUrl = `https://buzzheavier.com/v/${hxMatch[1]}`;
+            let foundPath = sourceMatch[1].startsWith("/v/") ? sourceMatch[1] : sourceMatch[1].includes("/v/") ? sourceMatch[1] : null;
+            if (foundPath) {
+              const finalUrl = `https://buzzheavier.com${foundPath.startsWith("/") ? "" : "/"}${foundPath}`;
+              console.log("[Buzzheavier] \u2713 URL extra\xEDda del HTML.");
+              return {
+                url: finalUrl,
+                quality: "1080p",
+                isDirect: true,
+                headers: { "User-Agent": headers["User-Agent"], "Referer": targetUrl }
+              };
             }
-          }
-          if (!directUrl) {
-            const idMatch = targetUrl.match(/\/f\/([a-zA-Z0-9_-]+)/);
-            if (idMatch) {
-              directUrl = `https://buzzheavier.com/v/${idMatch[1]}/video.mp4`;
-            }
-          }
-          if (directUrl) {
-            if (!directUrl.startsWith("http")) {
-              directUrl = `https://buzzheavier.com${directUrl.startsWith("/") ? "" : "/"}${directUrl}`;
-            }
-            console.log("[Buzzheavier] \u2713 Enlace directo obtenido.");
-            return {
-              url: directUrl,
-              quality: "1080p",
-              isDirect: true,
-              headers: {
-                "User-Agent": headers["User-Agent"],
-                "Referer": targetUrl
-              }
-            };
           }
           return null;
         } catch (e) {
@@ -2119,7 +2129,7 @@ function fetchWithTimeout(_0) {
 function cleanTitle(str) {
   if (!str)
     return "";
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim();
+  return str.replace(/[\\"' ]+/g, "").replace(/\\u[\dA-F]{4}/gi, "").trim();
 }
 function normalizeLanguage(str) {
   if (!str)
@@ -2130,41 +2140,12 @@ function normalizeLanguage(str) {
   }
   return { label: "Latino", engine: "Latino" };
 }
-function resolvePelisGoDownload(id) {
-  return __async(this, null, function* () {
-    if (!id)
-      return null;
-    if (id.startsWith("http"))
-      return id;
-    try {
-      const res = yield fetchWithTimeout(`https://pelisgo.online/api/download/${id}`, {
-        headers: getPelisGoHeaders()
-      });
-      const data = yield res.json();
-      return data.url || null;
-    } catch (e) {
-      return null;
-    }
-  });
-}
-function validateBuzzLink(url) {
-  return __async(this, null, function* () {
-    try {
-      const res = yield fetchWithTimeout(url, { method: "HEAD", headers: getStealthHeaders() }, 4e3);
-      return res.status >= 200 && res.status < 400;
-    } catch (e) {
-      return true;
-    }
-  });
-}
 function getOnlineStreams(rawHtml) {
   return __async(this, null, function* () {
     const seenUrls = /* @__PURE__ */ new Set();
     const resolutionPromises = [];
-    const safeObjectsMatch = rawHtml.match(new RegExp(`\\{[^{}]*?server[\\\\"' ]+:[^{}]*?url[^{}]*?\\}`, "gis")) || [];
-    const downloadMatches = rawHtml.match(new RegExp(`\\{[^{}]*?server[\\\\"' ]+:[^{}]*?\\/download\\/[^{}]*?\\}`, "gis")) || [];
-    const allCandidateObjects = [...safeObjectsMatch, ...downloadMatches];
-    for (const objStr of allCandidateObjects) {
+    const objects = rawHtml.match(new RegExp(`\\{[^{}]*?server[\\\\"' ]+:[^{}]*?\\}`, "gis")) || [];
+    for (const objStr of objects) {
       resolutionPromises.push((() => __async(this, null, function* () {
         try {
           const sM = objStr.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
@@ -2173,30 +2154,32 @@ function getOnlineStreams(rawHtml) {
           const lM = objStr.match(/language[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
           if (!sM || !uM)
             return null;
-          const serverName = sM[1].replace(/[\\"' ]+/g, "");
+          const serverName = cleanTitle(sM[1]);
           let rawUrl = uM[2].replace(/\\/g, "").replace(/[\\"' ]+/g, "");
-          const quality = qM ? qM[1].replace(/[\\"' ]+/g, "") : "1080p";
-          const lang = lM ? lM[1].replace(/[\\"' ]+/g, "") : "Latino";
+          const quality = qM ? cleanTitle(qM[1]) : "1080p";
+          const lang = lM ? cleanTitle(lM[1]) : "Latino";
           if (!WHITELIST.some((w) => serverName.toLowerCase().includes(w.toLowerCase())))
             return null;
           let directUrl = rawUrl;
           if (rawUrl.includes("/download/")) {
             const id = rawUrl.split("/").pop();
-            directUrl = yield resolvePelisGoDownload(id);
+            const downloadRes = yield fetchWithTimeout(`${BASE}/api/download/${id}`, { headers: getPelisGoHeaders() });
+            const downloadData = yield downloadRes.json();
+            directUrl = downloadData.url || null;
           }
           if (!directUrl || seenUrls.has(directUrl))
             return null;
           seenUrls.add(directUrl);
-          if (serverName.toLowerCase().includes("buzzheavier")) {
-            if (!(yield validateBuzzLink(directUrl)))
-              return null;
-          }
           const resEmbed = yield resolveEmbed(directUrl);
+          if (!resEmbed && serverName.toLowerCase().includes("buzzheavier")) {
+            return null;
+          }
           const langMeta = normalizeLanguage(lang);
           return {
             name: "PelisGo",
             langLabel: langMeta.label,
             serverLabel: serverName,
+            // metadata para engine.js
             url: resEmbed ? resEmbed.url : directUrl,
             quality: (resEmbed ? resEmbed.quality : quality) || "1080p",
             headers: (resEmbed ? resEmbed.headers : null) || getPelisGoHeaders(directUrl)
@@ -2210,35 +2193,6 @@ function getOnlineStreams(rawHtml) {
     return results.filter((r) => r.status === "fulfilled" && r.value !== null).map((r) => r.value);
   });
 }
-function pelisgoSearch(query, type) {
-  return __async(this, null, function* () {
-    const searchStr = cleanTitle(query);
-    if (!searchStr)
-      return [];
-    const url = `${BASE}/search?q=${encodeURIComponent(searchStr)}`;
-    const res = yield fetchWithTimeout(url);
-    const html = yield res.text();
-    if (!html)
-      return [];
-    const re = /href=["\\]+([\/\w\d\-\/]+(movies|series)\/([\w\d\-]+))["\\]+/gi;
-    const results = [];
-    const seen = /* @__PURE__ */ new Set();
-    let m;
-    while ((m = re.exec(html)) !== null) {
-      const fullPath = m[1].replace(/\\/g, "");
-      const slug = m[3];
-      if (fullPath.includes("/temporada/") || fullPath.includes("/episodio/"))
-        continue;
-      if (type === "movie" && fullPath.includes("/movies/") || type === "tv" && fullPath.includes("/series/")) {
-        if (!seen.has(slug)) {
-          seen.add(slug);
-          results.push(fullPath);
-        }
-      }
-    }
-    return results;
-  });
-}
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
@@ -2246,39 +2200,29 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const meta = yield getCorrectImdbId(tmdbId, mediaType);
       const mediaTitle = meta.title || title;
       const imdbId = meta.imdbId;
-      console.log(`[PelisGo] v8.7.5 Buscando: "${mediaTitle}"`);
-      const paths = yield pelisgoSearch(mediaTitle, type);
-      let bestPath = null;
-      for (const path of paths) {
-        const currentSlug = path.split("/").pop();
-        const cleanMTitle = cleanTitle(mediaTitle).replace(/\s+/g, "-");
-        if (cleanMTitle === currentSlug) {
-          bestPath = path;
-          break;
-        }
-        const resTemp = yield fetchWithTimeout(`${BASE}${path}`, {}, 3e3);
-        const tempHtml = yield resTemp.text();
-        if (imdbId && tempHtml.includes(imdbId)) {
-          bestPath = path;
-          break;
-        }
-        if (calculateSimilarity2(mediaTitle, currentSlug.replace(/-/g, " ")) > 0.7) {
-          bestPath = path;
+      console.log(`[PelisGo] v8.7.6 Procesando: "${mediaTitle}"`);
+      const searchPath = `${BASE}/search?q=${encodeURIComponent(mediaTitle.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())}`;
+      const searchRes = yield fetchWithTimeout(searchPath);
+      const searchHtml = yield searchRes.text();
+      let targetPath = null;
+      const re = new RegExp(`href=["\\\\"]+([^"\\\\"]+(movies|series)\\/([\\w\\d\\-]+))["\\\\"]+`, "gi");
+      let m;
+      while ((m = re.exec(searchHtml)) !== null) {
+        const slug = m[3];
+        if (calculateSimilarity2(mediaTitle, slug.replace(/-/g, " ")) > 0.7) {
+          targetPath = m[1].replace(/\\/g, "");
           break;
         }
       }
-      if (!bestPath && mediaTitle) {
-        const directSlug = cleanTitle(mediaTitle).replace(/\s+/g, "-");
-        bestPath = type === "movie" ? `/movies/${directSlug}` : `/series/${directSlug}`;
+      if (!targetPath) {
+        const directSlug = mediaTitle.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim().replace(/\s+/g, "-");
+        targetPath = type === "movie" ? `/movies/${directSlug}` : `/series/${directSlug}`;
       }
-      const finalUrl = bestPath ? type === "movie" ? `${BASE}${bestPath}` : `${BASE}${bestPath}/temporada/${season || 1}/episodio/${episode || 1}` : null;
-      if (!finalUrl)
-        return [];
-      const resFinal = yield fetchWithTimeout(finalUrl, {}, 5e3);
-      const html = yield resFinal.text();
-      if (!html || html.includes("404"))
-        return [];
-      return yield getOnlineStreams(html);
+      const finalUrl = type === "movie" ? `${BASE}${targetPath}` : `${BASE}${targetPath}/temporada/${season || 1}/episodio/${episode || 1}`;
+      const resPage = yield fetchWithTimeout(finalUrl);
+      const html = yield resPage.text();
+      const streams = yield getOnlineStreams(html);
+      return yield finalizeStreams(streams, "PelisGo", mediaTitle);
     } catch (e) {
       return [];
     }
