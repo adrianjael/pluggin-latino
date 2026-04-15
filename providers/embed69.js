@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T23:30:34.544Z
+ * Generated: 2026-04-15T23:34:49.323Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -120,7 +120,8 @@ var require_http = __commonJS({
         }, opt.headers);
         try {
           var fetchOptions = Object.assign({
-            redirect: opt.redirect || "follow"
+            redirect: opt.redirect || "follow",
+            signal: opt.signal || null
           }, opt, {
             headers
           });
@@ -296,7 +297,7 @@ var require_m3u8 = __commonJS({
       return "1080p";
     }
     var VALIDATION_CACHE = /* @__PURE__ */ new Map();
-    function validateStream(stream) {
+    function validateStream(stream, signal = null) {
       return __async(this, null, function* () {
         if (!stream || !stream.url)
           return stream;
@@ -306,6 +307,7 @@ var require_m3u8 = __commonJS({
         try {
           const response = yield fetch(url, {
             method: "GET",
+            signal,
             headers: __spreadValues({
               "User-Agent": getSessionUA(),
               "Range": "bytes=0-1024"
@@ -623,13 +625,14 @@ var require_voe = __commonJS({
       }
       return output;
     }
-    function resolve(url) {
+    function resolve(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
           console.log(`[VOE] TV-Resolving: ${url}`);
           const response = yield fetch(url, {
-            headers: { "User-Agent": currentUA }
+            headers: { "User-Agent": currentUA },
+            signal
           });
           if (!response.ok)
             return null;
@@ -733,7 +736,7 @@ var require_hlswish = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
-    function resolve(url) {
+    function resolve(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const UA = getSessionUA();
@@ -758,7 +761,10 @@ var require_hlswish = __commonJS({
               try {
                 const mirrorObj = new URL(mirror);
                 const mirrorOrigin = mirrorObj.origin;
-                const resp = yield fetch(mirror, { headers: { "Referer": mirror, "User-Agent": UA } });
+                const resp = yield fetch(mirror, {
+                  headers: { "Referer": mirror, "User-Agent": UA },
+                  signal
+                });
                 if (!resp.ok)
                   throw new Error();
                 const html = yield resp.text();
@@ -768,7 +774,8 @@ var require_hlswish = __commonJS({
                   const hash = hashMatch[0];
                   const dlUrl = `${mirrorOrigin}/dl?op=view&file_code=${rawId}&hash=${hash}&embed=1&referer=&adb=1&hls4=1`;
                   const dlResp = yield fetch(dlUrl, {
-                    headers: { "User-Agent": UA, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" }
+                    headers: { "User-Agent": UA, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" },
+                    signal
                   });
                   if (dlResp.ok) {
                     const dlData = yield dlResp.text();
@@ -908,7 +915,7 @@ var require_filemoon = __commonJS({
           p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
       return p;
     }
-    function resolve(url) {
+    function resolve(url, signal = null) {
       return __async(this, null, function* () {
         var _a, _b, _c, _d;
         try {
@@ -921,6 +928,7 @@ var require_filemoon = __commonJS({
           try {
             const playbackUrl = `https://${hostname}/api/videos/${videoId}/embed/playback`;
             const response = yield fetch(playbackUrl, {
+              signal,
               headers: {
                 "User-Agent": UA_CHROME,
                 "Referer": url,
@@ -1021,7 +1029,7 @@ var require_vidhide = __commonJS({
         return null;
       }
     }
-    function resolve(url) {
+    function resolve(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
@@ -1029,6 +1037,7 @@ var require_vidhide = __commonJS({
           const urlObj = new URL(url);
           const domain = urlObj.hostname;
           const response = yield fetch(url, {
+            signal,
             headers: {
               "User-Agent": currentUA,
               "Referer": `https://${domain}/`

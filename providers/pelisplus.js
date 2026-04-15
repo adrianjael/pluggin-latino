@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T23:30:34.599Z
+ * Generated: 2026-04-15T23:34:49.377Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -203,7 +203,8 @@ var require_http2 = __commonJS({
         }, opt.headers);
         try {
           var fetchOptions = Object.assign({
-            redirect: opt.redirect || "follow"
+            redirect: opt.redirect || "follow",
+            signal: opt.signal || null
           }, opt, {
             headers
           });
@@ -265,13 +266,14 @@ var require_voe = __commonJS({
       }
       return output;
     }
-    function resolve5(url) {
+    function resolve5(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
           console.log(`[VOE] TV-Resolving: ${url}`);
           const response = yield fetch(url, {
-            headers: { "User-Agent": currentUA }
+            headers: { "User-Agent": currentUA },
+            signal
           });
           if (!response.ok)
             return null;
@@ -399,7 +401,7 @@ var require_m3u8 = __commonJS({
       return "1080p";
     }
     var VALIDATION_CACHE = /* @__PURE__ */ new Map();
-    function validateStream(stream) {
+    function validateStream(stream, signal = null) {
       return __async(this, null, function* () {
         if (!stream || !stream.url)
           return stream;
@@ -409,6 +411,7 @@ var require_m3u8 = __commonJS({
         try {
           const response = yield fetch(url, {
             method: "GET",
+            signal,
             headers: __spreadValues({
               "User-Agent": getSessionUA(),
               "Range": "bytes=0-1024"
@@ -459,7 +462,7 @@ var require_hlswish = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
-    function resolve5(url) {
+    function resolve5(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const UA4 = getSessionUA();
@@ -484,7 +487,10 @@ var require_hlswish = __commonJS({
               try {
                 const mirrorObj = new URL(mirror);
                 const mirrorOrigin = mirrorObj.origin;
-                const resp = yield fetch(mirror, { headers: { "Referer": mirror, "User-Agent": UA4 } });
+                const resp = yield fetch(mirror, {
+                  headers: { "Referer": mirror, "User-Agent": UA4 },
+                  signal
+                });
                 if (!resp.ok)
                   throw new Error();
                 const html = yield resp.text();
@@ -494,7 +500,8 @@ var require_hlswish = __commonJS({
                   const hash = hashMatch[0];
                   const dlUrl = `${mirrorOrigin}/dl?op=view&file_code=${rawId}&hash=${hash}&embed=1&referer=&adb=1&hls4=1`;
                   const dlResp = yield fetch(dlUrl, {
-                    headers: { "User-Agent": UA4, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" }
+                    headers: { "User-Agent": UA4, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" },
+                    signal
                   });
                   if (dlResp.ok) {
                     const dlData = yield dlResp.text();
@@ -634,7 +641,7 @@ var require_filemoon = __commonJS({
           p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
       return p;
     }
-    function resolve5(url) {
+    function resolve5(url, signal = null) {
       return __async(this, null, function* () {
         var _a, _b, _c, _d;
         try {
@@ -647,6 +654,7 @@ var require_filemoon = __commonJS({
           try {
             const playbackUrl = `https://${hostname}/api/videos/${videoId}/embed/playback`;
             const response = yield fetch(playbackUrl, {
+              signal,
               headers: {
                 "User-Agent": UA_CHROME,
                 "Referer": url,
@@ -747,7 +755,7 @@ var require_vidhide = __commonJS({
         return null;
       }
     }
-    function resolve5(url) {
+    function resolve5(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
@@ -755,6 +763,7 @@ var require_vidhide = __commonJS({
           const urlObj = new URL(url);
           const domain = urlObj.hostname;
           const response = yield fetch(url, {
+            signal,
             headers: {
               "User-Agent": currentUA,
               "Referer": `https://${domain}/`
@@ -1751,7 +1760,7 @@ var require_resolvers = __commonJS({
       result.url = url;
       return result;
     }
-    function resolveEmbed(url) {
+    function resolveEmbed(url, signal = null) {
       return __async(this, null, function* () {
         if (!url)
           return null;
@@ -1760,22 +1769,22 @@ var require_resolvers = __commonJS({
           return null;
         }
         if (isMirror(s, "VOE")) {
-          const res = yield resolveVoe(url);
+          const res = yield resolveVoe(url, signal);
           if (res)
             return applyPiping(res);
         }
         if (isMirror(s, "STREAMWISH") || s.includes("filelions")) {
-          const res = yield resolveHlswish(url);
+          const res = yield resolveHlswish(url, signal);
           if (res)
             return applyPiping(res);
         }
         if (isMirror(s, "FILEMOON")) {
-          const res = yield resolveFilemoon(url);
+          const res = yield resolveFilemoon(url, signal);
           if (res)
             return applyPiping(res);
         }
         if (isMirror(s, "VIDHIDE") || s.includes("mdfury") || s.includes("dintezuvio")) {
-          const res = yield resolveVidhide(url);
+          const res = yield resolveVidhide(url, signal);
           if (res)
             return applyPiping(res);
         }
@@ -2231,9 +2240,11 @@ var require_extractor = __commonJS({
               return 1;
             return 0;
           });
-          console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources with Early Exit Motor (v8.9.8)...`);
+          console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources with Force Abort Motor (v8.9.9)...`);
           const allResults = [];
           const TARGET_COUNT = 3;
+          const controller = new AbortController();
+          const signal = controller.signal;
           let isFinished = false;
           const processStream = (res) => __async(this, null, function* () {
             if (isFinished)
@@ -2249,7 +2260,7 @@ var require_extractor = __commonJS({
               const isSubtitled2 = lName.includes("sub") || sName.includes("sub") || sName.includes("vose");
               if (!isExplicitLatino || isSubtitled2)
                 return null;
-              const finalUrl = yield resolveEmbed2(url);
+              const finalUrl = yield resolveEmbed2(url, signal);
               if (!finalUrl || isFinished)
                 return null;
               const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
@@ -2262,13 +2273,14 @@ var require_extractor = __commonJS({
                 serverLabel: res.serverName,
                 headers
               };
-              const vStream = yield validateStream2(streamData);
+              const vStream = yield validateStream2(streamData, signal);
               const result = vStream && vStream.verified ? __spreadProps(__spreadValues({}, vStream), { name: "PelisPlusHD", langLabel: rawLang }) : streamData;
               if (!isFinished) {
                 allResults.push(result);
                 if (allResults.length >= TARGET_COUNT) {
                   isFinished = true;
-                  console.log(`[PelisPlusHD] Early Exit: Target reached (${TARGET_COUNT} streams).`);
+                  controller.abort();
+                  console.log(`[PelisPlusHD] Early Exit: Target reached. Aborting pending requests.`);
                 }
               }
               return result;
@@ -2280,10 +2292,12 @@ var require_extractor = __commonJS({
             Promise.all(rawResults.map((res) => processStream(res))),
             new Promise((resolve5) => setTimeout(() => {
               isFinished = true;
-              console.log(`[PelisPlusHD] Global Timeout reached (4.5s). Returning collected streams.`);
+              controller.abort();
+              console.log(`[PelisPlusHD] FORCED ABORT: 4.0s Limit reached. Returning current streams.`);
               resolve5();
-            }, 4500))
-          ]);
+            }, 4e3))
+          ]).catch(() => {
+          });
           allResults.sort((a, b) => {
             const isVoeA = a.serverLabel && a.serverLabel.toLowerCase().includes("voe");
             const isVoeB = b.serverLabel && b.serverLabel.toLowerCase().includes("voe");
