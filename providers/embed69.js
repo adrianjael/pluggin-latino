@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T16:25:22.229Z
+ * Generated: 2026-04-15T16:29:25.326Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -728,16 +728,17 @@ var require_hlswish = __commonJS({
           const rawId = url.split("/").pop().replace(/\.html$/, "");
           const urlObj = new URL(url);
           const mirrors = [
+            `https://hanerix.com/e/${rawId}`,
+            `https://embedwish.com/e/${rawId}`,
+            `https://hglink.to/e/${rawId}`,
             url,
             `https://streamwish.to/e/${rawId}`,
-            `https://embedwish.com/e/${rawId}`,
             `https://awish.pro/e/${rawId}`,
             `https://strwish.com/e/${rawId}`,
             `https://wishfast.top/e/${rawId}`,
-            `https://sfastwish.com/e/${rawId}`,
-            `https://hanerix.com/e/${rawId}`
+            `https://sfastwish.com/e/${rawId}`
           ];
-          console.log(`[StreamWish] Race-Resolving: ${rawId} (${mirrors.length} mirrors)`);
+          console.log(`[StreamWish] Race-Resolving v7.9.4: ${rawId} (${mirrors.length} mirrors)`);
           const validResult = yield new Promise((resolveRace) => {
             let resolved = false;
             let pending = mirrors.length;
@@ -797,7 +798,7 @@ var require_hlswish = __commonJS({
                 resolved = true;
                 resolveRace(null);
               }
-            }, 7e3);
+            }, 9e3);
           });
           if (!validResult)
             return null;
@@ -1076,7 +1077,7 @@ var { resolve: resolveVoe } = require_voe();
 var { resolve: resolveHlswish } = require_hlswish();
 var { resolve: resolveFilemoon } = require_filemoon();
 var { resolve: resolveVidhide } = require_vidhide();
-var INDIVIDUAL_TIMEOUT = 7e3;
+var INDIVIDUAL_TIMEOUT = 1e4;
 var BATCH_SIZE = 20;
 function applyPipingLocal(result) {
   if (!result || !result.url)
