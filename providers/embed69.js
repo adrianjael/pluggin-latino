@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T15:59:45.954Z
+ * Generated: 2026-04-15T16:03:10.182Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -180,6 +180,8 @@ var require_id_mapper = __commonJS({
           const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
           const apiKey = TMDB_API_KEY;
           const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+          const idUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${apiKey}`;
+          const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${apiKey}&language=es-MX`;
           const [idRes, metaRes] = yield Promise.all([
             fetchJson(idUrl, { headers: { "User-Agent": ua } }).catch(() => null),
             fetchJson(metaUrl, { headers: { "User-Agent": ua } }).catch(() => null)
@@ -1132,7 +1134,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.8.6 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.8.7 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
