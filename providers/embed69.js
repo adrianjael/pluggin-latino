@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T16:18:45.868Z
+ * Generated: 2026-04-15T16:25:22.229Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -702,6 +702,25 @@ var require_hlswish = __commonJS({
   "src/resolvers/hlswish.js"(exports2, module2) {
     var { getSessionUA } = require_http();
     var { validateStream } = require_m3u8();
+    function unpackEval(payload, radix, symtab) {
+      const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const unbase = (str) => {
+        let result = 0;
+        for (let i = 0; i < str.length; i++) {
+          const pos = chars.indexOf(str[i]);
+          if (pos === -1)
+            return NaN;
+          result = result * radix + pos;
+        }
+        return result;
+      };
+      return payload.replace(/\b([0-9a-zA-Z]+)\b/g, (match) => {
+        const idx = unbase(match);
+        if (isNaN(idx) || idx >= symtab.length)
+          return match;
+        return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+      });
+    }
     function resolve(url) {
       return __async(this, null, function* () {
         try {
@@ -746,6 +765,15 @@ var require_hlswish = __commonJS({
                   }
                 }
                 if (!m3u8Url) {
+                  const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
+                  if (packedMatch) {
+                    const unpacked = unpackEval(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
+                    const match = unpacked.match(/https?:\/\/[^"'\s]+\.m3u8[^"'\s]*/);
+                    if (match)
+                      m3u8Url = match[0];
+                  }
+                }
+                if (!m3u8Url) {
                   const fileMatch = html.match(/file\s*:\s*["']([^"']+)["']/i);
                   if (fileMatch)
                     m3u8Url = fileMatch[1];
@@ -769,7 +797,7 @@ var require_hlswish = __commonJS({
                 resolved = true;
                 resolveRace(null);
               }
-            }, 6e3);
+            }, 7e3);
           });
           if (!validResult)
             return null;
@@ -1125,7 +1153,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.9.1 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.9.3 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
