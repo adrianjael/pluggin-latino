@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T14:55:49.078Z
+ * Generated: 2026-04-15T15:06:32.910Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -535,8 +535,8 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const displayQuality = s.quality || "HD";
           const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `[${rawLang}] ${providerName || "LATINO"} - ${server} (${displayQuality}${checkMark})`;
-          const streamTitle = `${mediaTitle || "Contenido"}`;
+          const streamName = `${(providerName == null ? void 0 : providerName.toLowerCase()) || "embed69"} - ${displayQuality}${checkMark}`;
+          const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
@@ -1029,7 +1029,7 @@ var { resolve: resolveVoe } = require_voe();
 var { resolve: resolveHlswish } = require_hlswish();
 var { resolve: resolveFilemoon } = require_filemoon();
 var { resolve: resolveVidhide } = require_vidhide();
-var INDIVIDUAL_TIMEOUT = 6e3;
+var INDIVIDUAL_TIMEOUT = 15e3;
 var BATCH_SIZE = 6;
 function applyPipingLocal(result) {
   if (!result || !result.url)
@@ -1106,7 +1106,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.7.4 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v7.7.6 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
