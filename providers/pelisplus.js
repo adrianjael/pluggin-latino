@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-16T15:08:02.950Z
+ * Generated: 2026-04-16T15:11:01.940Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2068,7 +2068,7 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
           const isVerified = s.verified === true;
-          const checkMark = isVerified ? " (\u2713)" : "";
+          const checkMark = isVerified ? " \u2705" : "";
           const streamName = `${providerName} - ${quality}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))

@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "10.6.0",
+  "version": "10.6.1",
   "scrapers": [
     {
       "id": "embed69",
@@ -73,7 +73,7 @@
       "id": "pelisplus",
       "name": "PelisPlusHD",
       "description": "Películas y series en espanol latino desde PelisPlusHD.la",
-      "version": "10.6.0",
+      "version": "10.6.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
