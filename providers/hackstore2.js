@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-16T19:37:15.437Z
+ * Generated: 2026-04-16T19:41:08.139Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -891,6 +891,7 @@ var require_goodstream = __commonJS({
           return {
             url: videoUrl,
             quality: quality || "1080p",
+            verified: !!quality,
             serverName: "GoodStream",
             headers: refererHeaders
           };
@@ -2159,9 +2160,9 @@ var require_extractor = __commonJS({
               return {
                 url: resolved.url,
                 quality: resolved.quality || "HD",
-                lang: "Latino",
-                provider: "HackStore",
-                server: p.server || "Unknown",
+                verified: resolved.verified || false,
+                langLabel: "Latino",
+                serverName: resolved.serverName || p.server || "Online",
                 headers: resolved.headers || {}
               };
             } catch (e) {
@@ -2169,7 +2170,7 @@ var require_extractor = __commonJS({
             }
           }));
           const candidates = (yield Promise.all(streamPromises)).filter((s) => s !== null);
-          return engine.finalizeStreams(candidates, mediaType);
+          return engine.finalizeStreams(candidates, "HackStore", mediaType);
         } catch (error) {
           console.error(`[HackStore] Fatal Error:`, error.message);
           return [];

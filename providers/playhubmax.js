@@ -1,6 +1,6 @@
 /**
  * playhubmax - Built from src/playhubmax/
- * Generated: 2026-04-16T19:37:15.514Z
+ * Generated: 2026-04-16T19:41:08.223Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1079,6 +1079,7 @@ var require_goodstream = __commonJS({
           return {
             url: videoUrl,
             quality: quality || "1080p",
+            verified: !!quality,
             serverName: "GoodStream",
             headers: refererHeaders
           };
