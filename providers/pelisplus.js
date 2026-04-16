@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-16T15:46:23.631Z
+ * Generated: 2026-04-16T15:58:34.000Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2050,7 +2050,7 @@ var require_engine = __commonJS({
       }
       return server || "Servidor";
     }
-    function finalizeStreams2(streams, providerName, mediaTitle) {
+    function finalizeStreams(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
@@ -2091,7 +2091,7 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
+    module2.exports = { finalizeStreams, normalizeLanguage };
   }
 });
 
@@ -2102,7 +2102,8 @@ var require_extractor = __commonJS({
     var { fetchText, BASE_URL } = require_http();
     var { resolveEmbed } = require_resolvers();
     var { validateStream } = require_m3u8();
-    var { getTmdbTitle: getTmdbTitle2 } = require_tmdb();
+    var { getTmdbTitle: getTmdbTitle2, getTmdbAliases } = require_tmdb();
+    var engine = require_engine();
     function normalizeTitle(t) {
       if (!t)
         return "";
@@ -2123,17 +2124,20 @@ var require_extractor = __commonJS({
       const ratio = matchCount / qWords.length;
       return ratio >= 0.8;
     }
-    function extractStreams2(_0) {
-      return __async(this, arguments, function* ({ query, tmdbId, mediaType, season, episode }) {
+    function normalizeTitle(t) {
+      if (!t)
+        return "";
+      return t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+    }
+    function getStreams2(tmdbId, mediaType, season, episode, query) {
+      return __async(this, null, function* () {
         try {
-          console.log(`[PelisPlusHD] Extracting: ${query} (TMDB: ${tmdbId}, Type: ${mediaType})`);
-          const { getTmdbAliases } = require_tmdb();
+          console.log(`[PelisPlusHD] Extracting: ${query || tmdbId} (TMDB: ${tmdbId})`);
           let titlesToTry = [query];
           if (tmdbId && tmdbId.toString().match(/^\d+/) && !tmdbId.toString().startsWith("tt")) {
-            const { getTmdbAliases: getTmdbAliases2, getTmdbTitle: getTmdbTitle3 } = require_tmdb();
             const [aliases, spanishTitle] = yield Promise.all([
-              getTmdbAliases2(tmdbId, mediaType),
-              getTmdbTitle3(tmdbId, mediaType, "es-MX")
+              getTmdbAliases(tmdbId, mediaType),
+              getTmdbTitle2(tmdbId, mediaType, "es-MX")
             ]);
             const allAliases = [query];
             if (spanishTitle)
@@ -2277,7 +2281,7 @@ var require_extractor = __commonJS({
           }
           const { resolveEmbed: resolveEmbed2 } = require_resolvers();
           const { validateStream: validateStream2 } = require_m3u8();
-          const { finalizeStreams: finalizeStreams2 } = require_engine();
+          const { finalizeStreams } = require_engine();
           console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources (v9.3.0 Optimized)...`);
           const candidates = [];
           const controller = new AbortController();
@@ -2344,20 +2348,25 @@ var require_extractor = __commonJS({
             if (timeoutId)
               clearTimeout(timeoutId);
           }
-          return yield finalizeStreams2(candidates, "PelisPlusHD", query);
+          const anchoredStreams = candidates.map((s) => {
+            if (s.serverUrl && !s.serverUrl.includes(".m3u8") && !s.serverUrl.includes(".mp4")) {
+              s.serverUrl = s.serverUrl + "#.m3u8";
+            }
+            return s;
+          });
+          return yield engine.finalizeStreams(anchoredStreams, "PelisPlusHD", query);
         } catch (error) {
-          console.error("[PelisPlusHD] extractStreams Error:", error.message);
+          console.error("[PelisPlusHD] getStreams Error:", error.message);
           return [];
         }
       });
     }
-    module2.exports = { extract: extractStreams2 };
+    module2.exports = { extract: getStreams2, getStreams: getStreams2 };
   }
 });
 
 // src/pelisplus/index.js
-var { extractStreams } = require_extractor();
-var { finalizeStreams } = require_engine();
+var extractor = require_extractor();
 var { getTmdbTitle } = require_tmdb();
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
@@ -2372,12 +2381,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         return [];
       }
       console.log(`[PelisPlusHD] Target Title: "${mediaTitle}"`);
-      const streams = yield extractStreams(mediaTitle, tmdbId, mediaType, season, episode);
-      if (streams.length === 0) {
+      const streams = yield extractor.extract(tmdbId, mediaType, season, episode, mediaTitle);
+      if (!streams || streams.length === 0) {
         console.log(`[PelisPlusHD] No streams found for ${tmdbId}`);
         return [];
       }
-      return yield finalizeStreams(streams, "PelisPlusHD", mediaTitle);
+      return streams;
     } catch (error) {
       console.error(`[PelisPlusHD] Fatal Error: ${error.message}`);
       return [];
