@@ -142,7 +142,7 @@
       "id": "cuevana_gs",
       "name": "Cuevana3.to",
       "description": "Nueva versión estable migrada a Cuevana3.to (Sin Cloudflare)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
