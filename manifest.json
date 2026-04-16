@@ -119,7 +119,7 @@
       "id": "pelispanda",
       "name": "PelisPanda",
       "description": "Películas y series directo desde pelispanda.org",
-      "version": "2.0.0",
+      "version": "12.9.2",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
