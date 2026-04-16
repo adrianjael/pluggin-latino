@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-16T17:24:45.218Z
+ * Generated: 2026-04-16T17:29:44.633Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1809,7 +1809,7 @@ var require_resolvers = __commonJS({
           return applyPiping(yield resolveEmbedseek(url));
         if (isMirror(s, "LULUSTREAM"))
           return applyPiping(yield resolveLulustream(url));
-        const isKnown = isMirror(s, "VOE") || isMirror(s, "STREAMWISH") || isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE") || isMirror(s, "FASTREAM") || isMirror(s, "OKRU") || isMirror(s, "GOODSTREAM") || s.includes("vimeos") || s.includes("vms.sh");
+        const isKnown = isMirror(s, "VOE") || isMirror(s, "STREAMWISH") || isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE") || isMirror(s, "FASTREAM") || isMirror(s, "OKRU") || isMirror(s, "GOODSTREAM") || s.includes("vimeos") || s.includes("vms.sh") || s.includes("la.movie");
         if (isKnown) {
           console.log(`[Resolvers] Known server failed resolution (Down): ${url}`);
           return null;
@@ -2150,8 +2150,8 @@ var require_extractor = __commonJS({
           }
           const apiUrl = `${BASE_URL}/wp-api/v1/player?postId=${targetId}`;
           const playerResponse = yield fetchJson2(apiUrl);
-          if (!playerResponse || playerResponse.error || !playerResponse.data || !playerResponse.data.embeds) {
-            console.log("[HackStore] No player embeds found.");
+          if (!playerResponse || playerResponse.error || !playerResponse.data || playerResponse.data.error === true || !playerResponse.data.embeds) {
+            console.log("[HackStore] No player embeds found or Invalid ID returned by API.");
             return [];
           }
           const playerData = playerResponse.data.embeds;
@@ -2161,7 +2161,7 @@ var require_extractor = __commonJS({
               return null;
             }
             const rawUrl = p.url;
-            if (!rawUrl)
+            if (!rawUrl || rawUrl.includes("la.movie"))
               return null;
             try {
               const resolved = yield resolveEmbed(rawUrl);
