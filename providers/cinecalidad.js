@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-16T20:37:06.220Z
+ * Generated: 2026-04-16T21:40:41.966Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -119,7 +119,7 @@ var require_http = __commonJS({
     }
     var DEFAULT_UA = getSessionUA();
     var MOBILE_UA = getSessionUA();
-    function request(url, options) {
+    function request2(url, options) {
       return __async(this, null, function* () {
         var opt = options || {};
         var currentUA = opt.headers && opt.headers["User-Agent"] ? opt.headers["User-Agent"] : getSessionUA();
@@ -155,18 +155,18 @@ var require_http = __commonJS({
     }
     function fetchHtml2(url, options) {
       return __async(this, null, function* () {
-        var res = yield request(url, options);
+        var res = yield request2(url, options);
         return yield res.text();
       });
     }
     function fetchJson(url, options) {
       return __async(this, null, function* () {
-        var res = yield request(url, options);
+        var res = yield request2(url, options);
         return yield res.json();
       });
     }
     module2.exports = {
-      request,
+      request: request2,
       fetchHtml: fetchHtml2,
       fetchJson,
       getSessionUA,
@@ -2015,7 +2015,7 @@ var require_tmdb = __commonJS({
 });
 
 // src/cinecalidad/index.js
-var { fetchHtml } = require_http();
+var { request, fetchHtml } = require_http();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
@@ -2060,19 +2060,44 @@ function getMovieUrl(slug, expectedYear) {
     for (const s of slugsToTry) {
       const url = `${HOST}/pelicula/${s}/`;
       try {
-        const html = yield fetchHtml(url, {
-          headers: HEADERS
-        });
+        const res = yield request(url, { headers: HEADERS });
+        if (!res || !res.ok)
+          continue;
+        const html = yield res.text();
+        if (html.includes("404 Not Found") || !html.includes('id="btn_enlace"'))
+          continue;
         const yearMatch = html.match(/<h1[^>]*>[^<]*\((\d{4})\)[^<]*<\/h1>/);
         const year = yearMatch ? yearMatch[1] : null;
         if (!year || !expectedYear || year === expectedYear) {
-          console.log(`[CineCalidad] \u2713 Slug directo: /pelicula/${s}/ (${year || "?"})`);
+          console.log(`[CineCalidad] \u2713 Encontrado v\xEDa slug: /pelicula/${s}/ (${year || "?"})`);
           return url;
         }
       } catch (e) {
       }
     }
     return null;
+  });
+}
+function searchResults(title) {
+  return __async(this, null, function* () {
+    try {
+      const searchUrl = `${HOST}/?s=${encodeURIComponent(title)}`;
+      const res = yield request(searchUrl, { headers: HEADERS });
+      if (!res || !res.ok)
+        return [];
+      const html = yield res.text();
+      const results = [];
+      const regex = /<article[^>]*>[\s\S]*?<a[^>]+href="([^"]+pelicula\/[^"]+)"/g;
+      let match;
+      while ((match = regex.exec(html)) !== null) {
+        if (!results.includes(match[1]))
+          results.push(match[1]);
+      }
+      return results;
+    } catch (e) {
+      console.log(`[CineCalidad] Error en b\xFAsqueda: ${e.message}`);
+      return [];
+    }
   });
 }
 function isKnownEmbed(url) {
@@ -2158,8 +2183,18 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         return [];
       const slug = buildSlug(mediaTitle);
       let selectedUrl = yield getMovieUrl(slug, null);
-      if (!selectedUrl)
+      if (!selectedUrl) {
+        console.log(`[CineCalidad] Slug directo fall\xF3, intentando b\xFAsqueda interna para: ${mediaTitle}`);
+        const foundResults = yield searchResults(mediaTitle);
+        if (foundResults.length > 0) {
+          selectedUrl = foundResults[0];
+          console.log(`[CineCalidad] \u2713 Encontrado v\xEDa b\xFAsqueda: ${selectedUrl}`);
+        }
+      }
+      if (!selectedUrl) {
+        console.log(`[CineCalidad] No se encontr\xF3 la pel\xEDcula: ${mediaTitle}`);
         return [];
+      }
       const embedUrls = yield getEmbedUrls(selectedUrl);
       if (embedUrls.length === 0)
         return [];
