@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-16T21:40:41.966Z
+ * Generated: 2026-04-16T21:50:53.639Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1980,7 +1980,7 @@ var require_tmdb = __commonJS({
         }
       });
     }
-    function getTmdbAliases(tmdbId, mediaType) {
+    function getTmdbAliases2(tmdbId, mediaType) {
       return __async(this, null, function* () {
         if (!tmdbId)
           return [];
@@ -2010,7 +2010,7 @@ var require_tmdb = __commonJS({
         }
       });
     }
-    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo, getTmdbAliases };
+    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo, getTmdbAliases: getTmdbAliases2 };
   }
 });
 
@@ -2018,7 +2018,7 @@ var require_tmdb = __commonJS({
 var { request, fetchHtml } = require_http();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var { getTmdbTitle } = require_tmdb();
+var { getTmdbTitle, getTmdbAliases } = require_tmdb();
 var HOST = "https://www.cinecalidad.vg";
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var HEADERS = {
@@ -2191,8 +2191,26 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           console.log(`[CineCalidad] \u2713 Encontrado v\xEDa b\xFAsqueda: ${selectedUrl}`);
         }
       }
+      if (!selectedUrl && tmdbId) {
+        console.log(`[CineCalidad] No se encontr\xF3 por t\xEDtulo original. Iniciando rescate por Alias...`);
+        const aliases = yield getTmdbAliases(tmdbId, mediaType);
+        const uniqueAliases = [...new Set(aliases.filter((a) => a !== mediaTitle))];
+        for (const alias of uniqueAliases) {
+          console.log(`[CineCalidad] Probando alias: ${alias}`);
+          const aliasSlug = buildSlug(alias);
+          selectedUrl = yield getMovieUrl(aliasSlug, null);
+          if (selectedUrl)
+            break;
+          const aliasResults = yield searchResults(alias);
+          if (aliasResults.length > 0) {
+            selectedUrl = aliasResults[0];
+            console.log(`[CineCalidad] \u2713 Encontrado v\xEDa alias [${alias}]: ${selectedUrl}`);
+            break;
+          }
+        }
+      }
       if (!selectedUrl) {
-        console.log(`[CineCalidad] No se encontr\xF3 la pel\xEDcula: ${mediaTitle}`);
+        console.log(`[CineCalidad] No se encontr\xF3 la pel\xEDcula tras agotar alias para: ${mediaTitle}`);
         return [];
       }
       const embedUrls = yield getEmbedUrls(selectedUrl);
