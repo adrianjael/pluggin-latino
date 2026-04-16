@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-16T20:08:21.870Z
+ * Generated: 2026-04-16T20:13:12.255Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1764,155 +1764,57 @@ var require_resolvers = __commonJS({
   }
 });
 
-// src/utils/tmdb.js
-var require_tmdb = __commonJS({
-  "src/utils/tmdb.js"(exports2, module2) {
-    var axios3 = require("axios");
-    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-    var titleCache = /* @__PURE__ */ new Map();
-    function getTmdbTitle(tmdbId, mediaType, language = "en-US", retries = 2) {
-      return __async(this, null, function* () {
-        if (!tmdbId)
-          return null;
-        const cleanId = tmdbId.toString().split(":")[0];
-        const cacheKey = `${cleanId}_${mediaType}_${language}`;
-        if (titleCache.has(cacheKey))
-          return titleCache.get(cacheKey);
-        try {
-          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          let url;
-          if (cleanId.startsWith("tt")) {
-            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=${language}`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
-            const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-            const title = result ? result.name || result.title : null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
-          } else {
-            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}&language=${language}`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
-            const title = data.name || data.title || null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
-          }
-        } catch (e) {
-          if (retries > 0) {
-            console.log(`[TMDB-Rescue] Retrying ${tmdbId} (${retries} left)...`);
-            yield new Promise((r) => setTimeout(r, 1e3));
-            return getTmdbTitle(tmdbId, mediaType, retries - 1);
-          }
-          console.log(`[TMDB-Rescue] Failed to fetch title for ${tmdbId}: ${e.message}`);
-          return null;
-        }
-      });
-    }
-    function getTmdbInfo(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        if (!tmdbId)
-          return null;
-        const cleanId = tmdbId.toString().split(":")[0];
-        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-        try {
-          let url;
-          let result;
-          if (cleanId.startsWith("tt")) {
-            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
-            result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-          } else {
-            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
-            result = data;
-          }
-          if (result) {
-            const title = result.name || result.title;
-            const date = result.release_date || result.first_air_date || "";
-            const year = date.split("-")[0];
-            return { title, year };
-          }
-          return null;
-        } catch (e) {
-          return null;
-        }
-      });
-    }
-    function getTmdbAliases(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        if (!tmdbId)
-          return [];
-        const cleanId = tmdbId.toString().split(":")[0];
-        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-        const titles = /* @__PURE__ */ new Set();
-        try {
-          const [enTitle, esTitle] = yield Promise.all([
-            getTmdbTitle(cleanId, type, "en-US"),
-            getTmdbTitle(cleanId, type, "es-MX")
-          ]);
-          if (enTitle)
-            titles.add(enTitle);
-          if (esTitle)
-            titles.add(esTitle);
-          const altUrl = `https://api.themoviedb.org/3/${type}/${cleanId}/alternative_titles?api_key=${TMDB_API_KEY}`;
-          const { data } = yield axios3.get(altUrl, { timeout: 5e3 });
-          const altResults = data.titles || data.results || [];
-          altResults.forEach((item) => {
-            if (item.title)
-              titles.add(item.title);
-          });
-          return Array.from(titles);
-        } catch (e) {
-          console.warn(`[TMDB-Aliases] Failed for ${tmdbId}: ${e.message}`);
-          return Array.from(titles);
-        }
-      });
-    }
-    module2.exports = { getTmdbTitle, getTmdbInfo, getTmdbAliases };
-  }
-});
-
 // src/pelispanda/extractor.js
 var require_extractor = __commonJS({
   "src/pelispanda/extractor.js"(exports2, module2) {
-    var cheerio = require("cheerio-without-node-native");
     var { resolveEmbed } = require_resolvers();
     var { validateStream } = require_m3u8();
     var { fetchJson: fetchJson2, getSessionUA } = require_http();
-    var { getTmdbInfo } = require_tmdb();
+    function getFallbackTitle(tmdbId, mediaType) {
+      return __async(this, null, function* () {
+        try {
+          const type = mediaType === "movie" ? "movie" : "tv";
+          const apiKey = "439c478a771f35c05022f9feabcca01c";
+          const url = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${apiKey}&language=es-MX`;
+          const data = yield fetchJson2(url);
+          return data.name || data.title || null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
     function extractStreams2(tmdbId, mediaType, season, episode, providedTitle) {
       return __async(this, null, function* () {
         console.log(`[PelisPanda] Sync-Extracci\xF3n para TMDB: ${tmdbId} (${mediaType})`);
         try {
           let searchTitle = providedTitle;
+          if (!searchTitle || searchTitle === tmdbId) {
+            searchTitle = yield getFallbackTitle(tmdbId, mediaType);
+          }
           if (!searchTitle) {
-            const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-            if (tmdbInfo) {
-              searchTitle = tmdbInfo.title;
-            }
-          }
-          if (!searchTitle)
-            return [];
-          console.log(`[PelisPanda] Consultando API (Stealth): ${searchTitle}`);
-          const searchUrl = `https://pelispanda.org/wp-json/wpreact/v1/search?query=${encodeURIComponent(searchTitle)}`;
-          const searchData = yield fetchJson2(searchUrl);
-          if (!searchData || !searchData.results) {
-            console.log("[PelisPanda] API no devolvi\xF3 resultados v\xE1lidos.");
+            console.log("[PelisPanda] Fall\xF3 obtenci\xF3n de t\xEDtulo.");
             return [];
           }
+          const cleanTitle = searchTitle.split(" ").slice(0, 3).join(" ");
+          console.log(`[PelisPanda] Consultando API: ${cleanTitle}`);
+          const searchUrl = `https://pelispanda.org/wp-json/wpreact/v1/search?query=${encodeURIComponent(cleanTitle)}`;
+          const searchData = yield fetchJson2(searchUrl, {
+            headers: { "Referer": "https://pelispanda.org/" }
+          });
+          if (!searchData || !searchData.results)
+            return [];
           const targetType = mediaType === "movie" ? "pelicula" : "serie";
           let movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId && r.type === targetType);
-          if (!movieMatch) {
+          if (!movieMatch)
             movieMatch = searchData.results.find((r) => r.type === targetType);
-          }
-          if (!movieMatch || !movieMatch.slug) {
-            console.log("[PelisPanda] Coincidencia no encontrada en la respuesta de la API.");
+          if (!movieMatch || !movieMatch.slug)
             return [];
-          }
           console.log(`[PelisPanda] Seleccionado: ${movieMatch.title} (Slug: ${movieMatch.slug})`);
           const endpointType = mediaType === "movie" ? "movie" : "serie";
           const playersUrl = `https://pelispanda.org/wp-json/wpreact/v1/${endpointType}/${movieMatch.slug}/related`;
-          const playersData = yield fetchJson2(playersUrl);
+          const playersData = yield fetchJson2(playersUrl, {
+            headers: { "Referer": "https://pelispanda.org/" }
+          });
           let embeds = [];
           if (mediaType === "movie") {
             if (playersData && playersData.embeds)
@@ -1922,10 +1824,8 @@ var require_extractor = __commonJS({
               embeds = playersData.embeds.filter((e) => e.season == season && e.episode == episode);
             }
           }
-          if (!embeds || embeds.length === 0) {
-            console.log("[PelisPanda] Sin reproductores para este contenido.");
+          if (!embeds || embeds.length === 0)
             return [];
-          }
           const streamPromises = embeds.map((player) => __async(this, null, function* () {
             const lang = (player.lang || "Latino").toLowerCase();
             if (lang.includes("sub") || lang.includes("vose") || lang.includes("espana"))
@@ -1957,11 +1857,9 @@ var require_extractor = __commonJS({
               return null;
             }
           }));
-          const results = (yield Promise.all(streamPromises)).filter(Boolean);
-          console.log(`[PelisPanda] Extracci\xF3n finalizada con ${results.length} resultados.`);
-          return results;
+          return (yield Promise.all(streamPromises)).filter(Boolean);
         } catch (error) {
-          console.error(`[PelisPanda] Error en extractor: ${error.message}`);
+          console.error(`[PelisPanda] Error: ${error.message}`);
           return [];
         }
       });

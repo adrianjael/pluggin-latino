@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.9.4",
+  "version": "12.9.5",
   "scrapers": [
     {
       "id": "embed69",
@@ -119,7 +119,7 @@
       "id": "pelispanda",
       "name": "PelisPanda",
       "description": "Películas y series directo desde pelispanda.org",
-      "version": "12.9.4",
+      "version": "12.9.5",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
