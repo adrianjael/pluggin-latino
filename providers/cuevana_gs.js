@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-16T20:57:22.473Z
+ * Generated: 2026-04-16T21:04:19.117Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2062,12 +2062,13 @@ var require_extractor = __commonJS({
     var cheerio = require("cheerio-without-node-native");
     var BASE_URL = "https://ww9.cuevana3.to";
     var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    var { fetchJson } = require_http();
     function getTmdbTitle(tmdbId, mediaType) {
       return __async(this, null, function* () {
         try {
-          const url = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
-          const res = yield fetch(url);
-          const json = yield res.json();
+          const type = mediaType === "movie" ? "movie" : "tv";
+          const url = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-MX`;
+          const json = yield fetchJson(url);
           return json.title || json.name || json.original_title || json.original_name || "";
         } catch (e) {
           return "";
