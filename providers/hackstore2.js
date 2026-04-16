@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-16T19:41:08.139Z
+ * Generated: 2026-04-16T19:43:57.713Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2103,53 +2103,52 @@ var require_extractor = __commonJS({
               slugsToTry.push(`${sl}-${year}`);
             slugsToTry.push(sl);
           }
-          const uniqueSlugs = [...new Set(slugsToTry)].slice(0, 8);
-          console.log(`[HackStore] Evaluando Slugs:`, uniqueSlugs);
+          const uniqueSlugs = [...new Set(slugsToTry)].slice(0, 6);
+          console.log(`[HackStore] R\xE1faga de Slugs (Paralelo):`, uniqueSlugs);
           let targetId = null;
           const postType = mediaType === "movie" || mediaType === "movies" ? "movies" : "tvshows";
-          for (const slug of uniqueSlugs) {
+          const idResults = yield Promise.all(uniqueSlugs.map((slug) => __async(this, null, function* () {
             const endpoint = `${BASE_URL}/wp-api/v1/single/${postType}?slug=${slug}&postType=${postType}`;
-            const res = yield fetchJson2(endpoint);
-            if (res && res.data && res.data._id) {
-              targetId = res.data._id;
-              console.log(`[HackStore] \xA1Match API! Slug: ${slug} -> ID: ${targetId}`);
-              break;
+            try {
+              const res = yield fetchJson2(endpoint, { timeout: 4e3 });
+              if (res && res.data && res.data._id)
+                return { slug, id: res.data._id };
+            } catch (e) {
             }
+            return null;
+          })));
+          const match = idResults.find((r) => r !== null);
+          if (match) {
+            targetId = match.id;
+            console.log(`[HackStore] \xA1Match R\xE1pido! Slug: ${match.slug} -> ID: ${targetId}`);
           }
           if (!targetId) {
-            console.log("[HackStore] ID Principal no encontrado en la API.");
+            console.log("[HackStore] ID Principal no encontrado tras r\xE1faga.");
             return [];
           }
           if (postType === "tvshows") {
             console.log(`[HackStore] Buscando Episodio S${season}E${episode}...`);
             const epListUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${targetId}&season=${season}&page=1&postsPerPage=200`;
-            const epRes = yield fetchJson2(epListUrl);
+            const epRes = yield fetchJson2(epListUrl, { timeout: 4e3 });
             if (epRes && epRes.data && epRes.data.posts) {
               const epObj = epRes.data.posts.find((p) => p.season_number == season && p.episode_number == episode);
               if (epObj && epObj._id) {
                 targetId = epObj._id;
-                console.log(`[HackStore] ID Episodio encontrado: ${targetId}`);
               } else {
-                console.log("[HackStore] Episodio no encontrado en la lista.");
                 return [];
               }
             } else {
-              console.log("[HackStore] No se pudo obtener la lista de episodios.");
               return [];
             }
           }
-          const apiUrl = `${BASE_URL}/wp-api/v1/player?postId=${targetId}`;
-          const playerResponse = yield fetchJson2(apiUrl);
-          if (!playerResponse || playerResponse.error || !playerResponse.data || playerResponse.data.error === true || !playerResponse.data.embeds) {
-            console.log("[HackStore] No player embeds found or Invalid ID returned by API.");
+          const playerResponse = yield fetchJson2(`${BASE_URL}/wp-api/v1/player?postId=${targetId}`, { timeout: 4e3 });
+          if (!playerResponse || !playerResponse.data || !playerResponse.data.embeds)
             return [];
-          }
-          const playerData = playerResponse.data.embeds;
+          const playerData = playerResponse.data.embeds.slice(0, 15);
           const streamPromises = playerData.map((p) => __async(this, null, function* () {
             const lang = (p.lang || "Latino").toLowerCase();
-            if (lang.includes("sub") || lang.includes("vose") || lang.includes("ing") || lang.includes("espana") || lang.includes("cast")) {
+            if (lang.includes("sub") || lang.includes("vose") || lang.includes("eng") || lang.includes("espana"))
               return null;
-            }
             const rawUrl = p.url;
             if (!rawUrl || rawUrl.includes("la.movie"))
               return null;
@@ -2169,7 +2168,7 @@ var require_extractor = __commonJS({
               return null;
             }
           }));
-          const candidates = (yield Promise.all(streamPromises)).filter((s) => s !== null);
+          const candidates = (yield Promise.all(streamPromises)).filter(Boolean);
           return engine.finalizeStreams(candidates, "HackStore", mediaType);
         } catch (error) {
           console.error(`[HackStore] Fatal Error:`, error.message);
