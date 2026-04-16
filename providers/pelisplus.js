@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-16T15:16:17.162Z
+ * Generated: 2026-04-16T15:46:23.631Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2098,6 +2098,7 @@ var require_engine = __commonJS({
 // src/pelisplus/extractor.js
 var require_extractor = __commonJS({
   "src/pelisplus/extractor.js"(exports2, module2) {
+    var cheerio = require("cheerio");
     var { fetchText, BASE_URL } = require_http();
     var { resolveEmbed } = require_resolvers();
     var { validateStream } = require_m3u8();
@@ -2122,71 +2123,80 @@ var require_extractor = __commonJS({
       const ratio = matchCount / qWords.length;
       return ratio >= 0.8;
     }
-    function isSubtitled(lang) {
-      if (!lang)
-        return false;
-      const l = lang.toLowerCase();
-      return l.includes("sub") || l.includes("vose") || l.includes("ing") || l.includes("eng") || l.includes("cast") || l.includes("orig");
-    }
-    function extractStreams2(query, tmdbId, mediaType, season, episode) {
-      return __async(this, null, function* () {
+    function extractStreams2(_0) {
+      return __async(this, arguments, function* ({ query, tmdbId, mediaType, season, episode }) {
         try {
           console.log(`[PelisPlusHD] Extracting: ${query} (TMDB: ${tmdbId}, Type: ${mediaType})`);
           const { getTmdbAliases } = require_tmdb();
           let titlesToTry = [query];
           if (tmdbId && tmdbId.toString().match(/^\d+/) && !tmdbId.toString().startsWith("tt")) {
-            const aliases = yield getTmdbAliases(tmdbId, mediaType);
-            if (aliases.length > 0) {
-              console.log(`[PelisPlusHD] Alias Radar found ${aliases.length} titles to try.`);
-              titlesToTry = Array.from(/* @__PURE__ */ new Set([query, ...aliases]));
+            const { getTmdbAliases: getTmdbAliases2, getTmdbTitle: getTmdbTitle3 } = require_tmdb();
+            const [aliases, spanishTitle] = yield Promise.all([
+              getTmdbAliases2(tmdbId, mediaType),
+              getTmdbTitle3(tmdbId, mediaType, "es-MX")
+            ]);
+            const allAliases = [query];
+            if (spanishTitle)
+              allAliases.push(spanishTitle);
+            if (aliases)
+              aliases.forEach((a) => allAliases.push(a));
+            const mainKeyword = query.split(/\s+/).filter((w) => w.length > 4)[0];
+            if (mainKeyword && !allAliases.includes(mainKeyword))
+              allAliases.push(mainKeyword);
+            titlesToTry = Array.from(new Set(allAliases.filter(Boolean)));
+            console.log(`[PelisPlusHD] Alias Radar v12.0.0: Trying ${titlesToTry.length} terms.`);
+          }
+          const searchPromises = titlesToTry.slice(0, 5).map((t) => __async(this, null, function* () {
+            try {
+              const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(t)}`;
+              const html = yield fetchText(searchUrl);
+              const matches = [];
+              const aRegex = /<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+              let m;
+              while ((m = aRegex.exec(html)) !== null) {
+                const href = m[1];
+                const content = m[2];
+                if (mediaType === "movie" && !href.includes("/pelicula/"))
+                  continue;
+                if (mediaType === "tv" && !href.includes("/serie/"))
+                  continue;
+                let resultTitle = "";
+                const pMatch = content.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+                if (pMatch) {
+                  resultTitle = pMatch[1].replace(/<[^>]+>/g, "").trim();
+                } else {
+                  const dtMatch = m[0].match(/data-title="([^"]+)"/i);
+                  resultTitle = dtMatch ? dtMatch[1].trim() : content.replace(/<[^>]+>/g, "").trim();
+                }
+                resultTitle = resultTitle.replace(/^VER\s+/i, "").replace(/\s+Online\s+Gratis\s+HD$/i, "").replace(/\s+Online\s+Latino\s+HD$/i, "").replace(/\(\d{4}\)$/, "").trim();
+                const tWords = t.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+                const rWords = resultTitle.toLowerCase().split(/\s+/);
+                const isWordMatch = tWords.some((w) => rWords.includes(w));
+                const isUrlMatch = href.toLowerCase().includes(t.toLowerCase().replace(/\s+/g, "-")) || tWords.length > 0 && tWords.every((w) => href.toLowerCase().includes(w));
+                if (titleMatch(t, resultTitle) || titleMatch(query, resultTitle) || isWordMatch || isUrlMatch) {
+                  console.log(`[PelisPlusHD] Match Found: ${resultTitle} (${href})`);
+                  matches.push({ href: BASE_URL + (href.startsWith("/") ? href : "/" + href), title: resultTitle });
+                }
+              }
+              return matches;
+            } catch (e) {
+              return [];
+            }
+          }));
+          const allSearchHits = yield Promise.all(searchPromises);
+          let movieUrl = null;
+          let bestMatch = null;
+          let highestScore = -1;
+          for (const hits of allSearchHits) {
+            for (const hit of hits) {
+              if (!bestMatch) {
+                bestMatch = hit;
+                console.log(`[PelisPlusHD] Selected Match: ${hit.title} (${hit.href})`);
+              }
             }
           }
-          let movieUrl = null;
-          for (const q of titlesToTry) {
-            if (!q)
-              continue;
-            const searchUrl = `${BASE_URL}/search?s=${encodeURIComponent(q)}`;
-            console.log(`[PelisPlusHD] Searching: ${searchUrl}`);
-            const searchHtml = yield fetchText(searchUrl);
-            const aRegex = /<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-            let m;
-            const matches = [];
-            while ((m = aRegex.exec(searchHtml)) !== null) {
-              const href = m[1];
-              const inner = m[2];
-              if (mediaType === "movie" && !href.includes("/pelicula/"))
-                continue;
-              if (mediaType === "tv" && !href.includes("/serie/"))
-                continue;
-              let resultTitle = "";
-              const pMatch = inner.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
-              if (pMatch)
-                resultTitle = pMatch[1].trim();
-              else {
-                const tMatch = m[0].match(/data-title="([^"]+)"/i);
-                if (tMatch)
-                  resultTitle = tMatch[1].trim();
-              }
-              resultTitle = resultTitle.replace(/^VER\s+/i, "").replace(/\s+Online\s+Gratis\s+HD$/i, "").replace(/\s+Online\s+Latino\s+HD$/i, "").replace(/\(\d{4}\)$/, "").trim();
-              const normalizedQ = normalizeTitle(q);
-              const normalizedT = normalizeTitle(resultTitle);
-              const isMovieLink = href.includes("/pelicula/");
-              const isTvLink = href.includes("/serie") || href.includes("/anime") || href.includes("/dorama");
-              if (mediaType === "movie" && !isMovieLink)
-                continue;
-              if (mediaType === "tv" && !isTvLink)
-                continue;
-              if (titleMatch(q, resultTitle)) {
-                const score = Math.abs(normalizedQ.length - normalizedT.length);
-                matches.push({ href: BASE_URL + href, title: resultTitle, score });
-              }
-            }
-            if (matches.length > 0) {
-              matches.sort((a, b) => a.score - b.score);
-              movieUrl = matches[0].href;
-              console.log(`[PelisPlusHD] Best Match: ${matches[0].title} (${movieUrl})`);
-              break;
-            }
+          if (bestMatch) {
+            movieUrl = bestMatch.href;
           }
           if (!movieUrl) {
             console.log(`[PelisPlusHD] No matches found for ${tmdbId}`);
@@ -2200,78 +2210,68 @@ var require_extractor = __commonJS({
           }
           const pageHtml = yield fetchText(movieUrl);
           const rawResults = [];
-          const optionsRegex = /var\s+options\s*=\s*({[\s\S]*?});/i;
-          const optionsMatch = pageHtml.match(optionsRegex);
-          if (optionsMatch) {
-            console.log("[PelisPlusHD] Found 'var options' JSON.");
-            try {
-              let jsonStr = optionsMatch[1].replace(/,\s*}/g, "}").replace(/,\s*]/g, "]").replace(/\/\/.*/g, "").replace(/'/g, '"');
-              const options = JSON.parse(jsonStr);
-              for (const key in options) {
-                if (isSubtitled(key)) {
-                  console.log(`[PelisPlusHD] Skipping subtitled category: ${key}`);
-                  continue;
-                }
-                const list = options[key];
-                if (Array.isArray(list)) {
-                  list.forEach((item) => {
-                    if (item.url)
-                      rawResults.push({ serverUrl: item.url, serverName: item.name || key, language: key });
-                  });
-                }
-              }
-            } catch (e) {
-              console.warn("[PelisPlusHD] JSON parse failed, trying regex on options.");
-              const linkRegex = /"url":\s*"([^"]+)"[^{}]*"name":\s*"([^"]+)"/g;
-              let linkM;
-              while ((linkM = linkRegex.exec(optionsMatch[1])) !== null) {
-                const url = linkM[1];
-                const label = linkM[2] || "Latino";
-                if (!isSubtitled(label)) {
-                  rawResults.push({ serverUrl: url, serverName: label, language: label });
-                }
+          const seenUrls = /* @__PURE__ */ new Set();
+          const $movie = cheerio.load(pageHtml);
+          $movie("li[data-url], li.playurl").each((i, el) => {
+            const lang = $movie(el).attr("data-name") || "";
+            const directUrl = $movie(el).attr("data-url");
+            const serverId = $movie(el).attr("data-id");
+            const serverType = $movie(el).attr("data-tipo");
+            const serverName = $movie(el).text().trim();
+            if (lang.toLowerCase().includes("latino")) {
+              const urlToUse = directUrl || serverId;
+              if (urlToUse && !seenUrls.has(urlToUse)) {
+                seenUrls.add(urlToUse);
+                rawResults.push({
+                  serverName,
+                  serverUrl: directUrl || serverId,
+                  language: "Latino"
+                });
               }
             }
+          });
+          if (rawResults.length === 0) {
+            console.log(`[PelisPlusHD] No Latino servers in playurl. Trying Universal Scan...`);
+            $movie("li[data-url]").each((i, el) => {
+              var _a;
+              const sUrl = $movie(el).attr("data-url");
+              let sName = $movie(el).attr("data-name") || $movie(el).text() || "";
+              if (sUrl && (sName.toLowerCase().includes("latino") || ((_a = $movie(el).attr("title")) == null ? void 0 : _a.toLowerCase().includes("latino")))) {
+                rawResults.push({ serverUrl: sUrl, serverName: sName, language: "Latino" });
+              }
+            });
           }
-          const linkMap = {};
-          const spanRegex = /<span[^>]*lid=["']?(\d+)["']?[^>]*url=["']?([^"'\s>]+)["']?/gi;
-          let sMatch;
-          while ((sMatch = spanRegex.exec(pageHtml)) !== null) {
-            linkMap[sMatch[1]] = sMatch[2];
+          if (rawResults.length === 0) {
+            console.log(`[PelisPlusHD] No links in Universal Scan. Trying Span Data (#link_url)...`);
+            const isLatinoPage = pageHtml.includes("Espa\xF1ol Latino");
+            if (isLatinoPage) {
+              $movie("#link_url span").each((i, el) => {
+                const sUrl = $movie(el).attr("url");
+                const lid = $movie(el).attr("lid");
+                if (sUrl) {
+                  const sName = $movie(`li[data-id="${lid}"] a`).text().trim() || "Servidor";
+                  rawResults.push({ serverUrl: sUrl, serverName: sName, language: "Latino" });
+                }
+              });
+            }
           }
-          console.log("[PelisPlusHD] Analyzing player blocks...");
-          const playerBlocks = pageHtml.split('<div class="player">');
-          playerBlocks.shift();
-          for (const block of playerBlocks) {
-            const blockLangs = [];
-            const dMatches = block.match(/<a[^>]*class="divseason"[^>]*>([\s\S]*?)<\/a>/gi);
-            if (dMatches)
-              dMatches.forEach((m2) => blockLangs.push(m2.replace(/<[^>]+>/g, "").trim()));
-            const liAllRegex = /<li([^>]*?)>([\s\S]*?)<\/li>/gi;
-            let m;
-            while ((m = liAllRegex.exec(block)) !== null) {
-              const liAttr = m[1];
-              const liLabel = m[2].replace(/<[^>]+>/g, "").trim() || "Server";
-              const urlMatch = liAttr.match(/data-url=["']?([^"'\s>]+)["']?/i);
-              const nameMatch = liAttr.match(/data-name=["']?([^"'\s>]+)["']?/i);
-              const idMatch = liAttr.match(/data-id=["']?(\d+)["']?/i);
-              let itemLang = "Latino";
-              if (nameMatch) {
-                itemLang = nameMatch[1];
-              } else if (blockLangs.length === 1) {
-                itemLang = blockLangs[0];
-              } else {
-                continue;
-              }
-              if (isSubtitled(itemLang) || isSubtitled(liLabel) || liLabel.includes(".com")) {
-                continue;
-              }
-              let serverUrl = urlMatch ? urlMatch[1] : null;
-              if (!serverUrl && idMatch && linkMap[idMatch[1]]) {
-                serverUrl = linkMap[idMatch[1]];
-              }
-              if (serverUrl && !rawResults.some((r) => r.serverUrl === serverUrl)) {
-                rawResults.push({ serverUrl, serverName: liLabel, language: itemLang });
+          if (rawResults.length === 0) {
+            console.log(`[PelisPlusHD] Span Data failed. Trying legacy var options...`);
+            const optionsMatch = pageHtml.match(/var\s+options\s*=\s*({[\s\S]*?});/i);
+            if (optionsMatch) {
+              try {
+                const options = JSON.parse(optionsMatch[1].replace(/'/g, '"').replace(/,\s*}/g, "}"));
+                for (const key in options) {
+                  if (key.toLowerCase().includes("latino")) {
+                    options[key].forEach((item) => {
+                      if (item.url && !seenUrls.has(item.url)) {
+                        seenUrls.add(item.url);
+                        rawResults.push({ serverUrl: item.url, serverName: item.name || key, language: key });
+                      }
+                    });
+                  }
+                }
+              } catch (e) {
               }
             }
           }
@@ -2280,26 +2280,22 @@ var require_extractor = __commonJS({
           const { finalizeStreams: finalizeStreams2 } = require_engine();
           console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources (v9.3.0 Optimized)...`);
           const candidates = [];
-          const TARGET_COUNT = 4;
+          const controller = new AbortController();
+          const signal = controller.signal;
           let isFinished = false;
-          const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-          const signal = controller ? controller.signal : null;
+          const TARGET_COUNT = 15;
           const processStream = (res) => __async(this, null, function* () {
             if (isFinished)
               return null;
             try {
               let embedUrl = res.serverUrl;
-              if (res.serverId && res.serverType) {
+              if (!embedUrl && res.serverId) {
                 const embedRes = yield axios.get(`${BASE_URL}/ajax/embed?id=${res.serverId}&tipo=${res.serverType}`, { timeout: 4e3 });
                 embedUrl = embedRes.data.url || embedRes.data;
               }
               if (!embedUrl || isFinished)
                 return null;
               const finalUrl = yield resolveEmbed2(embedUrl, signal);
-              if (!finalUrl || isFinished)
-                return null;
-              const lName = (res.language || "").toLowerCase();
-              const sName = (res.serverName || "").toLowerCase();
               if (!finalUrl || isFinished)
                 return null;
               const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
@@ -2317,11 +2313,10 @@ var require_extractor = __commonJS({
                 candidates.push(result);
                 if (candidates.length >= TARGET_COUNT) {
                   isFinished = true;
-                  if (controller)
-                    try {
-                      controller.abort();
-                    } catch (e) {
-                    }
+                  try {
+                    controller.abort();
+                  } catch (e) {
+                  }
                 }
               }
               return result;
@@ -2333,13 +2328,12 @@ var require_extractor = __commonJS({
           const timeoutPromise = new Promise((resolve5) => {
             timeoutId = setTimeout(() => {
               isFinished = true;
-              if (controller)
-                try {
-                  controller.abort();
-                } catch (e) {
-                }
+              try {
+                controller.abort();
+              } catch (e) {
+              }
               resolve5();
-            }, 5500);
+            }, 7e3);
           });
           try {
             yield Promise.race([
@@ -2357,7 +2351,7 @@ var require_extractor = __commonJS({
         }
       });
     }
-    module2.exports = { extractStreams: extractStreams2 };
+    module2.exports = { extract: extractStreams2 };
   }
 });
 
