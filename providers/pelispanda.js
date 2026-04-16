@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-16T20:21:26.257Z
+ * Generated: 2026-04-16T20:24:40.246Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1842,16 +1842,16 @@ var require_extractor = __commonJS({
                   "Referer": rawUrl
                 }
               };
-              try {
-                return yield validateStream(streamData);
-              } catch (e) {
-                return streamData;
-              }
+              return yield Promise.race([
+                validateStream(streamData).catch(() => streamData),
+                new Promise((resolve3) => setTimeout(() => resolve3(streamData), 4500))
+              ]);
             } catch (e) {
               return null;
             }
           }));
-          return (yield Promise.all(streamPromises)).filter(Boolean);
+          const results = yield Promise.all(streamPromises);
+          return results.filter(Boolean);
         } catch (error) {
           console.error(`[PelisPanda] Error: ${error.message}`);
           return [];
