@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-16T17:50:27.038Z
+ * Generated: 2026-04-16T18:00:18.486Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1726,21 +1726,9 @@ var require_resolvers = __commonJS({
       let url = result.url;
       const s = url.toLowerCase();
       const isDirectFile = s.includes("pixeldrain") || s.includes("buzzheavier") || s.includes("tplayer") || result.isDirect;
-      const anchor = isDirectFile ? "#.mp4" : "#.m3u8";
-      if (!url.toLowerCase().endsWith(".m3u8") && !url.toLowerCase().endsWith(".mp4")) {
+      const anchor = isDirectFile ? "#.mp4" : "";
+      if (anchor && !url.includes(".m3u8") && !url.includes(".mp4")) {
         url = `${url}${anchor}`;
-      }
-      if (result.headers) {
-        let entries = Object.entries(result.headers);
-        const refIdx = entries.findIndex(([k]) => k.toLowerCase() === "referer");
-        if (refIdx !== -1) {
-          const refEntry = entries.splice(refIdx, 1)[0];
-          entries.push(refEntry);
-        }
-        const parts = entries.map(([k, v]) => `${k}=${v}`);
-        if (parts.length > 0) {
-          url = `${url}|${parts.join("|")}`;
-        }
       }
       result.url = url;
       return result;
