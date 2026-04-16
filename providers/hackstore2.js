@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-16T19:46:56.441Z
+ * Generated: 2026-04-16T19:51:40.417Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2084,13 +2084,15 @@ var require_extractor = __commonJS({
       return __async(this, null, function* () {
         console.log(`[HackStore] API Fast-Track: ${query} (TMDB: ${tmdbId})`);
         try {
-          const info = yield getTmdbInfo(tmdbId, mediaType);
-          const aliases = yield getTmdbAliases(tmdbId, mediaType);
-          const year = info ? info.year : "";
+          const [info, aliases] = yield Promise.all([
+            getTmdbInfo(tmdbId, mediaType),
+            getTmdbAliases(tmdbId, mediaType)
+          ]);
+          const year = (info == null ? void 0 : info.year) || "";
           const baseTitles = /* @__PURE__ */ new Set();
           if (query)
             baseTitles.add(query);
-          if (info && info.title)
+          if (info == null ? void 0 : info.title)
             baseTitles.add(info.title);
           if (aliases)
             aliases.forEach((a) => baseTitles.add(a));
