@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-16T20:04:52.986Z
+ * Generated: 2026-04-16T20:08:21.870Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -130,7 +130,8 @@ var require_http = __commonJS({
         }, opt.headers);
         try {
           var fetchOptions = Object.assign({
-            redirect: opt.redirect || "follow"
+            redirect: opt.redirect || "follow",
+            skipSizeCheck: true
           }, opt, {
             headers
           });

@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-16T19:51:40.493Z
+ * Generated: 2026-04-16T20:08:21.924Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -130,7 +130,8 @@ var require_http = __commonJS({
         }, opt.headers);
         try {
           var fetchOptions = Object.assign({
-            redirect: opt.redirect || "follow"
+            redirect: opt.redirect || "follow",
+            skipSizeCheck: true
           }, opt, {
             headers
           });

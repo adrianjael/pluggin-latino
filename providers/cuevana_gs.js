@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-16T19:51:40.383Z
+ * Generated: 2026-04-16T20:08:21.817Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -219,7 +219,8 @@ var require_http = __commonJS({
         }, opt.headers);
         try {
           var fetchOptions = Object.assign({
-            redirect: opt.redirect || "follow"
+            redirect: opt.redirect || "follow",
+            skipSizeCheck: true
           }, opt, {
             headers
           });
