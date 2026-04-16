@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-16T19:43:57.713Z
+ * Generated: 2026-04-16T19:46:56.441Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2110,7 +2110,7 @@ var require_extractor = __commonJS({
           const idResults = yield Promise.all(uniqueSlugs.map((slug) => __async(this, null, function* () {
             const endpoint = `${BASE_URL}/wp-api/v1/single/${postType}?slug=${slug}&postType=${postType}`;
             try {
-              const res = yield fetchJson2(endpoint, { timeout: 4e3 });
+              const res = yield fetchJson2(endpoint);
               if (res && res.data && res.data._id)
                 return { slug, id: res.data._id };
             } catch (e) {
@@ -2129,7 +2129,7 @@ var require_extractor = __commonJS({
           if (postType === "tvshows") {
             console.log(`[HackStore] Buscando Episodio S${season}E${episode}...`);
             const epListUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${targetId}&season=${season}&page=1&postsPerPage=200`;
-            const epRes = yield fetchJson2(epListUrl, { timeout: 4e3 });
+            const epRes = yield fetchJson2(epListUrl);
             if (epRes && epRes.data && epRes.data.posts) {
               const epObj = epRes.data.posts.find((p) => p.season_number == season && p.episode_number == episode);
               if (epObj && epObj._id) {
@@ -2141,7 +2141,7 @@ var require_extractor = __commonJS({
               return [];
             }
           }
-          const playerResponse = yield fetchJson2(`${BASE_URL}/wp-api/v1/player?postId=${targetId}`, { timeout: 4e3 });
+          const playerResponse = yield fetchJson2(`${BASE_URL}/wp-api/v1/player?postId=${targetId}`);
           if (!playerResponse || !playerResponse.data || !playerResponse.data.embeds)
             return [];
           const playerData = playerResponse.data.embeds.slice(0, 15);

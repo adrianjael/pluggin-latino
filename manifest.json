@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.8.2",
+  "version": "12.9.0",
   "scrapers": [
     {
       "id": "embed69",
@@ -96,7 +96,7 @@
       "id": "hackstore",
       "name": "HackStore",
       "description": "API Nativa de Películas en HD",
-      "version": "12.8.2",
+      "version": "12.9.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
