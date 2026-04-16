@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-16T17:15:17.144Z
+ * Generated: 2026-04-16T17:24:45.218Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1779,6 +1779,7 @@ var require_resolvers = __commonJS({
           const res = yield resolveVimeos(url);
           if (res)
             return applyPiping(res);
+          return null;
         }
         if (isMirror(s, "OKRU")) {
           const res = yield resolveOkru(url);
@@ -1794,6 +1795,7 @@ var require_resolvers = __commonJS({
           const res = yield resolveGoodstream(url);
           if (res)
             return applyPiping(res);
+          return null;
         }
         if (s.includes("playmogo"))
           return applyPiping(yield resolvePlaymogo(url));
@@ -1807,7 +1809,7 @@ var require_resolvers = __commonJS({
           return applyPiping(yield resolveEmbedseek(url));
         if (isMirror(s, "LULUSTREAM"))
           return applyPiping(yield resolveLulustream(url));
-        const isKnown = isMirror(s, "VOE") || isMirror(s, "STREAMWISH") || isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE") || isMirror(s, "FASTREAM") || isMirror(s, "OKRU");
+        const isKnown = isMirror(s, "VOE") || isMirror(s, "STREAMWISH") || isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE") || isMirror(s, "FASTREAM") || isMirror(s, "OKRU") || isMirror(s, "GOODSTREAM") || s.includes("vimeos") || s.includes("vms.sh");
         if (isKnown) {
           console.log(`[Resolvers] Known server failed resolution (Down): ${url}`);
           return null;
@@ -2165,7 +2167,7 @@ var require_extractor = __commonJS({
               const resolved = yield resolveEmbed(rawUrl);
               if (!resolved || !resolved.url)
                 return null;
-              const anchorUrl = resolved.url.includes("#") ? resolved.url : `${resolved.url}#.m3u8`;
+              const anchorUrl = resolved.url;
               return {
                 url: anchorUrl,
                 quality: resolved.quality || "HD",
