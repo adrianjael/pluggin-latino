@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-16T15:11:01.940Z
+ * Generated: 2026-04-16T15:16:17.162Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -822,14 +822,14 @@ var require_vidhide = __commonJS({
 // src/resolvers/quality.js
 var require_quality = __commonJS({
   "src/resolvers/quality.js"(exports2, module2) {
-    var axios4 = require("axios");
+    var axios5 = require("axios");
     var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     function detectQuality2(_0) {
       return __async(this, arguments, function* (url, headers = {}) {
         try {
           if (!url || !url.includes(".m3u8"))
             return "1080p";
-          const { data } = yield axios4.get(url, {
+          const { data } = yield axios5.get(url, {
             timeout: 5e3,
             headers: __spreadValues({
               "User-Agent": UA4
@@ -1085,7 +1085,7 @@ var init_vimeos = __esm({
 // src/resolvers/buzzheavier.js
 var require_buzzheavier = __commonJS({
   "src/resolvers/buzzheavier.js"(exports2, module2) {
-    var axios4 = require("axios");
+    var axios5 = require("axios");
     var { getStealthHeaders } = require_http2();
     function resolve5(embedUrl) {
       return __async(this, null, function* () {
@@ -1103,7 +1103,7 @@ var require_buzzheavier = __commonJS({
             "Accept": "*/*"
           });
           try {
-            const headResponse = yield axios4.head(downloadUrl, {
+            const headResponse = yield axios5.head(downloadUrl, {
               headers,
               timeout: 8e3,
               maxRedirects: 0,
@@ -1221,7 +1221,7 @@ var init_okru = __esm({
 // src/resolvers/pixeldrain.js
 var require_pixeldrain = __commonJS({
   "src/resolvers/pixeldrain.js"(exports2, module2) {
-    var axios4 = require("axios");
+    var axios5 = require("axios");
     function resolve5(embedUrl) {
       return __async(this, null, function* () {
         try {
@@ -1234,7 +1234,7 @@ var require_pixeldrain = __commonJS({
           const fileId = idMatch[2];
           const directUrl = `https://pixeldrain.com/api/file/${fileId}?download=1`;
           try {
-            const check = yield axios4.get(directUrl, {
+            const check = yield axios5.get(directUrl, {
               headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Range": "bytes=0-0"
@@ -1448,7 +1448,7 @@ var require_embedseek = __commonJS({
 // src/resolvers/tplayer.js
 var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
-    var axios4 = require("axios");
+    var axios5 = require("axios");
     var { getStealthHeaders } = require_http2();
     function resolve5(embedUrl) {
       return __async(this, null, function* () {
@@ -1465,7 +1465,7 @@ var require_tplayer = __commonJS({
             "Origin": baseUrl,
             "X-Requested-With": "XMLHttpRequest"
           });
-          const embedResp = yield axios4.get(embedUrl, {
+          const embedResp = yield axios5.get(embedUrl, {
             headers: baseHeaders,
             timeout: 5e3
           });
@@ -1474,7 +1474,7 @@ var require_tplayer = __commonJS({
             baseHeaders["Cookie"] = cookies;
             console.log("[TPlayer] Sesi\xF3n capturada correctamente.");
           }
-          const { data } = yield axios4.get(apiUrl, {
+          const { data } = yield axios5.get(apiUrl, {
             headers: baseHeaders,
             timeout: 5e3
           });
@@ -1847,7 +1847,7 @@ var require_resolvers = __commonJS({
 // src/utils/tmdb.js
 var require_tmdb = __commonJS({
   "src/utils/tmdb.js"(exports2, module2) {
-    var axios4 = require("axios");
+    var axios5 = require("axios");
     var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var titleCache = /* @__PURE__ */ new Map();
     function getTmdbTitle2(tmdbId, mediaType, language = "en-US", retries = 2) {
@@ -1863,7 +1863,7 @@ var require_tmdb = __commonJS({
           let url;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=${language}`;
-            const { data } = yield axios4.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
             const title = result ? result.name || result.title : null;
             if (title)
@@ -1871,7 +1871,7 @@ var require_tmdb = __commonJS({
             return title;
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}&language=${language}`;
-            const { data } = yield axios4.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             const title = data.name || data.title || null;
             if (title)
               titleCache.set(cacheKey, title);
@@ -1899,11 +1899,11 @@ var require_tmdb = __commonJS({
           let result;
           if (cleanId.startsWith("tt")) {
             url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios4.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
           } else {
             url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios4.get(url, { timeout: 6e3 });
+            const { data } = yield axios5.get(url, { timeout: 6e3 });
             result = data;
           }
           if (result) {
@@ -1935,7 +1935,7 @@ var require_tmdb = __commonJS({
           if (esTitle)
             titles.add(esTitle);
           const altUrl = `https://api.themoviedb.org/3/${type}/${cleanId}/alternative_titles?api_key=${TMDB_API_KEY}`;
-          const { data } = yield axios4.get(altUrl, { timeout: 5e3 });
+          const { data } = yield axios5.get(altUrl, { timeout: 5e3 });
           const altResults = data.titles || data.results || [];
           altResults.forEach((item) => {
             if (item.title)
@@ -2288,16 +2288,18 @@ var require_extractor = __commonJS({
             if (isFinished)
               return null;
             try {
-              const url = res.serverUrl;
-              if (!url || url.length < 10)
+              let embedUrl = res.serverUrl;
+              if (res.serverId && res.serverType) {
+                const embedRes = yield axios.get(`${BASE_URL}/ajax/embed?id=${res.serverId}&tipo=${res.serverType}`, { timeout: 4e3 });
+                embedUrl = embedRes.data.url || embedRes.data;
+              }
+              if (!embedUrl || isFinished)
+                return null;
+              const finalUrl = yield resolveEmbed2(embedUrl, signal);
+              if (!finalUrl || isFinished)
                 return null;
               const lName = (res.language || "").toLowerCase();
               const sName = (res.serverName || "").toLowerCase();
-              const isLatino = lName.includes("lat") || lName.includes("espa\xF1ol");
-              const isForbid = lName.includes("sub") || lName.includes("ing") || lName.includes("eng") || sName.includes("sub") || sName.includes("ing") || sName.includes("vose") || sName.includes(".com") || sName.includes("original");
-              if (!isLatino || isForbid)
-                return null;
-              const finalUrl = yield resolveEmbed2(url, signal);
               if (!finalUrl || isFinished)
                 return null;
               const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
@@ -2337,7 +2339,7 @@ var require_extractor = __commonJS({
                 } catch (e) {
                 }
               resolve5();
-            }, 8e3);
+            }, 5500);
           });
           try {
             yield Promise.race([
