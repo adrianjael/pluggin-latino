@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-16T19:59:20.546Z
+ * Generated: 2026-04-16T20:04:52.986Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1877,11 +1877,11 @@ var require_extractor = __commonJS({
     var cheerio = require("cheerio-without-node-native");
     var { resolveEmbed } = require_resolvers();
     var { validateStream } = require_m3u8();
-    var { getSessionUA } = require_http();
+    var { fetchJson: fetchJson2, getSessionUA } = require_http();
     var { getTmdbInfo } = require_tmdb();
     function extractStreams2(tmdbId, mediaType, season, episode, providedTitle) {
       return __async(this, null, function* () {
-        console.log(`[PelisPanda] Iniciando extracci\xF3n para TMDB: ${tmdbId} (${mediaType})`);
+        console.log(`[PelisPanda] Sync-Extracci\xF3n para TMDB: ${tmdbId} (${mediaType})`);
         try {
           let searchTitle = providedTitle;
           if (!searchTitle) {
@@ -1892,26 +1892,26 @@ var require_extractor = __commonJS({
           }
           if (!searchTitle)
             return [];
-          console.log(`[PelisPanda] Consultando API: ${searchTitle}`);
+          console.log(`[PelisPanda] Consultando API (Stealth): ${searchTitle}`);
           const searchUrl = `https://pelispanda.org/wp-json/wpreact/v1/search?query=${encodeURIComponent(searchTitle)}`;
-          const searchRes = yield fetch(searchUrl, {
-            headers: { "User-Agent": getSessionUA() }
-          });
-          const searchData = yield searchRes.json();
-          if (!searchData || !searchData.results)
+          const searchData = yield fetchJson2(searchUrl);
+          if (!searchData || !searchData.results) {
+            console.log("[PelisPanda] API no devolvi\xF3 resultados v\xE1lidos.");
             return [];
+          }
           const targetType = mediaType === "movie" ? "pelicula" : "serie";
           let movieMatch = searchData.results.find((r) => r.tmdb_id == tmdbId && r.type === targetType);
-          if (!movieMatch)
+          if (!movieMatch) {
             movieMatch = searchData.results.find((r) => r.type === targetType);
-          if (!movieMatch || !movieMatch.slug)
+          }
+          if (!movieMatch || !movieMatch.slug) {
+            console.log("[PelisPanda] Coincidencia no encontrada en la respuesta de la API.");
             return [];
+          }
+          console.log(`[PelisPanda] Seleccionado: ${movieMatch.title} (Slug: ${movieMatch.slug})`);
           const endpointType = mediaType === "movie" ? "movie" : "serie";
           const playersUrl = `https://pelispanda.org/wp-json/wpreact/v1/${endpointType}/${movieMatch.slug}/related`;
-          const playersRes = yield fetch(playersUrl, {
-            headers: { "User-Agent": getSessionUA() }
-          });
-          const playersData = yield playersRes.json();
+          const playersData = yield fetchJson2(playersUrl);
           let embeds = [];
           if (mediaType === "movie") {
             if (playersData && playersData.embeds)
@@ -1921,8 +1921,10 @@ var require_extractor = __commonJS({
               embeds = playersData.embeds.filter((e) => e.season == season && e.episode == episode);
             }
           }
-          if (!embeds || embeds.length === 0)
+          if (!embeds || embeds.length === 0) {
+            console.log("[PelisPanda] Sin reproductores para este contenido.");
             return [];
+          }
           const streamPromises = embeds.map((player) => __async(this, null, function* () {
             const lang = (player.lang || "Latino").toLowerCase();
             if (lang.includes("sub") || lang.includes("vose") || lang.includes("espana"))
@@ -1954,9 +1956,11 @@ var require_extractor = __commonJS({
               return null;
             }
           }));
-          return (yield Promise.all(streamPromises)).filter(Boolean);
+          const results = (yield Promise.all(streamPromises)).filter(Boolean);
+          console.log(`[PelisPanda] Extracci\xF3n finalizada con ${results.length} resultados.`);
+          return results;
         } catch (error) {
-          console.error(`[PelisPanda] Error: ${error.message}`);
+          console.error(`[PelisPanda] Error en extractor: ${error.message}`);
           return [];
         }
       });
