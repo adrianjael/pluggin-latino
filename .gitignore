@@ -5,6 +5,7 @@
 !manifest.json
 !providers/
 !providers/*.js
+!src/
 !README.md
 !.gitignore
 !.gitattributes
