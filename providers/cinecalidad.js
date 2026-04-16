@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-04-16T21:50:53.639Z
+ * Generated: 2026-04-16T21:54:35.123Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2192,20 +2192,26 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         }
       }
       if (!selectedUrl && tmdbId) {
-        console.log(`[CineCalidad] No se encontr\xF3 por t\xEDtulo original. Iniciando rescate por Alias...`);
+        console.log(`[CineCalidad] Iniciando rescate por Alias en paralelo...`);
         const aliases = yield getTmdbAliases(tmdbId, mediaType);
-        const uniqueAliases = [...new Set(aliases.filter((a) => a !== mediaTitle))];
-        for (const alias of uniqueAliases) {
-          console.log(`[CineCalidad] Probando alias: ${alias}`);
-          const aliasSlug = buildSlug(alias);
-          selectedUrl = yield getMovieUrl(aliasSlug, null);
-          if (selectedUrl)
-            break;
-          const aliasResults = yield searchResults(alias);
-          if (aliasResults.length > 0) {
-            selectedUrl = aliasResults[0];
-            console.log(`[CineCalidad] \u2713 Encontrado v\xEDa alias [${alias}]: ${selectedUrl}`);
-            break;
+        const filteredAliases = [...new Set(aliases.filter((alias) => {
+          if (!alias || alias === mediaTitle)
+            return false;
+          return /^[a-zA-Z0-9\s\-\:\.\,¡!¿?áéíóúÁÉÍÓÚñÑ]+$/.test(alias);
+        }))].slice(0, 5);
+        if (filteredAliases.length > 0) {
+          const aliasPromises = filteredAliases.map((alias) => __async(this, null, function* () {
+            const aliasSlug = buildSlug(alias);
+            const urlBySlug = yield getMovieUrl(aliasSlug, null);
+            if (urlBySlug)
+              return urlBySlug;
+            const aliasResults = yield searchResults(alias);
+            return aliasResults.length > 0 ? aliasResults[0] : null;
+          }));
+          const parallelResults = yield Promise.all(aliasPromises);
+          selectedUrl = parallelResults.find((url) => url !== null);
+          if (selectedUrl) {
+            console.log(`[CineCalidad] \u2713 Encontrado v\xEDa rescate paralelo: ${selectedUrl}`);
           }
         }
       }
