@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-16T20:37:06.256Z
+ * Generated: 2026-04-16T20:50:41.912Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -611,7 +611,7 @@ var require_engine = __commonJS({
       }
       return server || "Servidor";
     }
-    function finalizeStreams2(streams, providerName, mediaTitle) {
+    function finalizeStreams(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
@@ -652,7 +652,7 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
+    module2.exports = { finalizeStreams, normalizeLanguage };
   }
 });
 
@@ -2140,7 +2140,7 @@ var require_extractor = __commonJS({
   "src/cuevana_gs/extractor.js"(exports2, module2) {
     var { calculateSimilarity: calculateSimilarity2 } = (init_string(), __toCommonJS(string_exports));
     var { fetchHtml } = require_http();
-    var { finalizeStreams: finalizeStreams2 } = require_engine();
+    var { finalizeStreams } = require_engine();
     var { resolveEmbed } = require_resolvers();
     var cheerio = require("cheerio-without-node-native");
     var { getCorrectImdbId } = require_id_mapper();
@@ -2304,7 +2304,7 @@ var require_extractor = __commonJS({
             }
           }));
           const rawResults = (yield Promise.all(resolutionPromises)).filter(Boolean);
-          return yield finalizeStreams2(rawResults, "Cuevana3.to");
+          return yield finalizeStreams(rawResults, "Cuevana3.to");
         } catch (err) {
           console.error("[Cuevana3.to] Global Error: " + err.message);
           return [];
@@ -2315,129 +2315,14 @@ var require_extractor = __commonJS({
   }
 });
 
-// src/utils/tmdb.js
-var require_tmdb = __commonJS({
-  "src/utils/tmdb.js"(exports2, module2) {
-    var axios3 = require("axios");
-    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-    var titleCache = /* @__PURE__ */ new Map();
-    function getTmdbTitle2(tmdbId, mediaType, language = "en-US", retries = 2) {
-      return __async(this, null, function* () {
-        if (!tmdbId)
-          return null;
-        const cleanId = tmdbId.toString().split(":")[0];
-        const cacheKey = `${cleanId}_${mediaType}_${language}`;
-        if (titleCache.has(cacheKey))
-          return titleCache.get(cacheKey);
-        try {
-          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          let url;
-          if (cleanId.startsWith("tt")) {
-            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=${language}`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
-            const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-            const title = result ? result.name || result.title : null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
-          } else {
-            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}&language=${language}`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
-            const title = data.name || data.title || null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
-          }
-        } catch (e) {
-          if (retries > 0) {
-            console.log(`[TMDB-Rescue] Retrying ${tmdbId} (${retries} left)...`);
-            yield new Promise((r) => setTimeout(r, 1e3));
-            return getTmdbTitle2(tmdbId, mediaType, retries - 1);
-          }
-          console.log(`[TMDB-Rescue] Failed to fetch title for ${tmdbId}: ${e.message}`);
-          return null;
-        }
-      });
-    }
-    function getTmdbInfo(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        if (!tmdbId)
-          return null;
-        const cleanId = tmdbId.toString().split(":")[0];
-        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-        try {
-          let url;
-          let result;
-          if (cleanId.startsWith("tt")) {
-            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
-            result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-          } else {
-            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios3.get(url, { timeout: 6e3 });
-            result = data;
-          }
-          if (result) {
-            const title = result.name || result.title;
-            const date = result.release_date || result.first_air_date || "";
-            const year = date.split("-")[0];
-            return { title, year };
-          }
-          return null;
-        } catch (e) {
-          return null;
-        }
-      });
-    }
-    function getTmdbAliases(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        if (!tmdbId)
-          return [];
-        const cleanId = tmdbId.toString().split(":")[0];
-        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-        const titles = /* @__PURE__ */ new Set();
-        try {
-          const [enTitle, esTitle] = yield Promise.all([
-            getTmdbTitle2(cleanId, type, "en-US"),
-            getTmdbTitle2(cleanId, type, "es-MX")
-          ]);
-          if (enTitle)
-            titles.add(enTitle);
-          if (esTitle)
-            titles.add(esTitle);
-          const altUrl = `https://api.themoviedb.org/3/${type}/${cleanId}/alternative_titles?api_key=${TMDB_API_KEY}`;
-          const { data } = yield axios3.get(altUrl, { timeout: 5e3 });
-          const altResults = data.titles || data.results || [];
-          altResults.forEach((item) => {
-            if (item.title)
-              titles.add(item.title);
-          });
-          return Array.from(titles);
-        } catch (e) {
-          console.warn(`[TMDB-Aliases] Failed for ${tmdbId}: ${e.message}`);
-          return Array.from(titles);
-        }
-      });
-    }
-    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo, getTmdbAliases };
-  }
-});
-
 // src/cuevana_gs/index.js
 var { extractStreams } = require_extractor();
-var { finalizeStreams } = require_engine();
-var { getTmdbTitle } = require_tmdb();
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
-      let mediaTitle = title;
-      if (!mediaTitle && tmdbId) {
-        mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
-      }
-      const streams = yield extractStreams(tmdbId, mediaType, season, episode, mediaTitle);
-      return yield finalizeStreams(streams, "Cuevana.gs", mediaTitle);
+      return yield extractStreams(tmdbId, mediaType, season, episode, title);
     } catch (e) {
-      console.error(`[Cuevana.gs] Index error: ${e.message}`);
+      console.error(`[Cuevana3] Critical Error in index: ${e.message}`);
       return [];
     }
   });
