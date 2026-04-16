@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-16T14:16:57.869Z
+ * Generated: 2026-04-16T14:36:43.637Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2097,7 +2097,7 @@ var require_extractor = __commonJS({
       if (!lang)
         return false;
       const l = lang.toLowerCase();
-      return l.includes("sub") || l.includes("vose") || l.includes("ing") || l.includes("eng") || l.includes("cast");
+      return l.includes("sub") || l.includes("vose") || l.includes("ing") || l.includes("eng") || l.includes("cast") || l.includes("orig");
     }
     function extractStreams2(query, tmdbId, mediaType, season, episode) {
       return __async(this, null, function* () {
@@ -2220,7 +2220,14 @@ var require_extractor = __commonJS({
               const urlMatch = liAttr.match(/data-url=["']?([^"'\s>]+)["']?/i);
               const nameMatch = liAttr.match(/data-name=["']?([^"'\s>]+)["']?/i);
               const idMatch = liAttr.match(/data-id=["']?(\d+)["']?/i);
-              const itemLang = nameMatch ? nameMatch[1] : blockLangs[0] || "Latino";
+              let itemLang = "Latino";
+              if (nameMatch) {
+                itemLang = nameMatch[1];
+              } else if (blockLangs.length === 1) {
+                itemLang = blockLangs[0];
+              } else {
+                continue;
+              }
               if (isSubtitled(itemLang) || isSubtitled(liLabel) || liLabel.includes(".com")) {
                 continue;
               }
