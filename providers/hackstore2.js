@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-16T17:29:44.633Z
+ * Generated: 2026-04-16T17:38:46.035Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -865,7 +865,8 @@ function resolve(embedUrl) {
         headers: {
           "User-Agent": UA,
           "Referer": "https://goodstream.one",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7"
         },
         timeout: 15e3,
         maxRedirects: 5
@@ -879,7 +880,8 @@ function resolve(embedUrl) {
       const refererHeaders = {
         "Referer": embedUrl,
         "Origin": "https://goodstream.one",
-        "User-Agent": UA
+        "User-Agent": UA,
+        "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7"
       };
       const quality = yield (0, import_quality.detectQuality)(videoUrl, refererHeaders);
       console.log(`[GoodStream] URL encontrada (${quality}): ${videoUrl.substring(0, 80)}...`);
@@ -980,7 +982,8 @@ function resolve2(embedUrl) {
         headers: {
           "User-Agent": import_http.DEFAULT_UA,
           "Referer": "https://vimeos.net/",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7"
         }
       });
       var vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i);
@@ -1002,7 +1005,7 @@ function resolve2(embedUrl) {
             return {
               url: hlsUrl,
               quality: "1080p",
-              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
+              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7" }
             };
           }
           var progressive = config && config.request && config.request.files ? config.request.files.progressive : null;
@@ -1014,7 +1017,7 @@ function resolve2(embedUrl) {
             return {
               url: best.url,
               quality: best.quality ? best.quality + "p" : "1080p",
-              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://player.vimeo.com/" }
+              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7" }
             };
           }
         } catch (apiErr) {
@@ -1044,7 +1047,7 @@ function resolve2(embedUrl) {
           return {
             url,
             quality: "1080p",
-            headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://vimeos.net/" }
+            headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://vimeos.net/", "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7" }
           };
         }
       }
