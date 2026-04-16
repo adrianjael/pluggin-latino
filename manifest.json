@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.9.13",
+  "version": "12.9.14",
   "scrapers": [
     {
       "id": "embed69",
@@ -128,29 +128,6 @@
       "filename": "providers/pelispanda.js",
       "enabled": true,
       "logo": "https://pelispanda.org/wp-content/themes/wpreact/public/image/logo.png",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    },
-    {
-      "id": "cuevana_gs",
-      "name": "Cuevana3.to",
-      "description": "Nueva versión estable migrada a Cuevana3.to (Sin Cloudflare)",
-      "version": "2.1.4",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/cuevana_gs.js",
-      "enabled": true,
-      "logo": "https://s3-eu-west-1.amazonaws.com/tpd/logos/66c3f232d88824e9254695de/0x0.png",
       "contentLanguage": [
         "es"
       ],
