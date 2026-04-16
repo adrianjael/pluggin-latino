@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-15T23:41:47.932Z
+ * Generated: 2026-04-16T13:45:29.174Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2097,7 +2097,7 @@ var require_extractor = __commonJS({
       if (!lang)
         return false;
       const l = lang.toLowerCase();
-      return l.includes("sub") || l.includes("vose");
+      return l.includes("sub") || l.includes("vose") || l.includes("ing") || l.includes("eng");
     }
     function extractStreams2(query, tmdbId, mediaType, season, episode) {
       return __async(this, null, function* () {
@@ -2195,30 +2195,24 @@ var require_extractor = __commonJS({
           const playerBlocks = pageHtml.split('<div class="player">');
           playerBlocks.shift();
           for (const block of playerBlocks) {
-            const langMatch = block.match(/<a[^>]*class="divseason"[^>]*>([\s\S]*?)<\/a>/i);
-            const lang = langMatch ? langMatch[1].replace(/<[^>]+>/g, "").trim() : "Latino";
-            if (isSubtitled(lang)) {
-              console.log(`[PelisPlusHD] Skipping subtitled block: ${lang}`);
-              continue;
-            }
-            const iframeMatch = block.match(/<iframe[^>]*src="([^"]+)"/i);
-            if (iframeMatch) {
-              const url = iframeMatch[1];
-              if (!rawResults.some((r) => r.serverUrl === url)) {
-                rawResults.push({ serverUrl: url, serverName: "Active Player", language: lang });
-              }
-            }
+            const blockLangs = [];
+            const dMatches = block.match(/<a[^>]*class="divseason"[^>]*>([\s\S]*?)<\/a>/gi);
+            if (dMatches)
+              dMatches.forEach((m2) => blockLangs.push(m2.replace(/<[^>]+>/g, "").trim()));
             const liAllRegex = /<li([^>]*?)>([\s\S]*?)<\/li>/gi;
             let m;
             while ((m = liAllRegex.exec(block)) !== null) {
-              const liContent = m[1];
-              const innerHtml = m[2];
-              const urlMatch = liContent.match(/data-url="([^"]+)"/i);
-              const idMatch = liContent.match(/data-id="(\d+)"/i);
-              const nameMatch = liContent.match(/data-name="([^"]+)"/i);
-              const serverName = innerHtml.replace(/<[^>]+>/g, "").trim() || "Server";
+              const liAttr = m[1];
+              const liLabel = m[2].replace(/<[^>]+>/g, "").trim() || "Server";
+              const urlMatch = liAttr.match(/data-url="([^"]+)"/i);
+              const nameMatch = liAttr.match(/data-name="([^"]+)"/i);
+              const idMatch = liAttr.match(/data-id="(\d+)"/i);
+              const itemLang = nameMatch ? nameMatch[1] : blockLangs[0] || "Latino";
+              if (isSubtitled(itemLang)) {
+                console.log(`[PelisPlusHD] Skipping: ${liLabel} (${itemLang})`);
+                continue;
+              }
               let serverUrl = urlMatch ? urlMatch[1] : null;
-              const serverLang = nameMatch ? nameMatch[1] : lang;
               if (!serverUrl && idMatch) {
                 const id = idMatch[1];
                 const linkRegex = new RegExp(`<span[^>]*lid="${id}"[^>]*url="([^"]+)"`, "i");
@@ -2227,26 +2221,16 @@ var require_extractor = __commonJS({
                   serverUrl = linkMatch[1];
               }
               if (serverUrl && !rawResults.some((r) => r.serverUrl === serverUrl)) {
-                rawResults.push({ serverUrl, serverName, language: serverLang });
+                rawResults.push({ serverUrl, serverName: liLabel, language: itemLang });
               }
             }
           }
           const { resolveEmbed: resolveEmbed2 } = require_resolvers();
           const { validateStream: validateStream2 } = require_m3u8();
-          const { normalizeLanguage } = require_engine();
-          rawResults.sort((a, b) => {
-            const isVoeA = (a.serverName || "").toLowerCase().includes("voe");
-            const isVoeB = (b.serverName || "").toLowerCase().includes("voe");
-            if (isVoeA && !isVoeB)
-              return -1;
-            if (!isVoeA && isVoeB)
-              return 1;
-            return 0;
-          });
-          console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources with Force Abort Motor (v8.9.9)...`);
-          console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources (v9.0.1 Motor)...`);
-          const allResults = [];
-          const TARGET_COUNT = 3;
+          const { finalizeStreams: finalizeStreams2 } = require_engine();
+          console.log(`[PelisPlusHD] Resolving ${rawResults.length} sources (v9.3.0 Optimized)...`);
+          const candidates = [];
+          const TARGET_COUNT = 4;
           let isFinished = false;
           const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
           const signal = controller ? controller.signal : null;
@@ -2257,12 +2241,11 @@ var require_extractor = __commonJS({
               const url = res.serverUrl;
               if (!url || url.length < 10)
                 return null;
-              const rawLang = normalizeLanguage(res.language);
               const lName = (res.language || "").toLowerCase();
               const sName = (res.serverName || "").toLowerCase();
-              const isExplicitLatino = lName.includes("lat") || rawLang === "Latino";
-              const isSubtitled2 = lName.includes("sub") || sName.includes("sub") || sName.includes("vose");
-              if (!isExplicitLatino || isSubtitled2)
+              const hasLat = lName.includes("lat");
+              const hasSub = lName.includes("sub") || lName.includes("ing") || lName.includes("eng") || sName.includes("sub") || sName.includes("ing") || sName.includes("vose");
+              if (!hasLat || hasSub)
                 return null;
               const finalUrl = yield resolveEmbed2(url, signal);
               if (!finalUrl || isFinished)
@@ -2270,18 +2253,17 @@ var require_extractor = __commonJS({
               const directUrl = typeof finalUrl === "string" ? finalUrl : finalUrl.url;
               const headers = typeof finalUrl === "object" && finalUrl.headers ? finalUrl.headers : { "Referer": BASE_URL };
               const streamData = {
-                name: "PelisPlusHD",
                 url: directUrl,
                 quality: "HD",
-                langLabel: rawLang,
+                language: "Latino",
                 serverLabel: res.serverName,
                 headers
               };
               const vStream = yield validateStream2(streamData, signal);
-              const result = vStream && vStream.verified ? __spreadProps(__spreadValues({}, vStream), { name: "PelisPlusHD", langLabel: rawLang }) : streamData;
+              const result = vStream && vStream.verified ? vStream : streamData;
               if (!isFinished && result) {
-                allResults.push(result);
-                if (allResults.length >= TARGET_COUNT) {
+                candidates.push(result);
+                if (candidates.length >= TARGET_COUNT) {
                   isFinished = true;
                   if (controller)
                     try {
@@ -2304,9 +2286,8 @@ var require_extractor = __commonJS({
                   controller.abort();
                 } catch (e) {
                 }
-              console.log(`[PelisPlusHD] Timeout reached (6.0s).`);
               resolve5();
-            }, 6e3);
+            }, 8e3);
           });
           try {
             yield Promise.race([
@@ -2317,16 +2298,7 @@ var require_extractor = __commonJS({
             if (timeoutId)
               clearTimeout(timeoutId);
           }
-          allResults.sort((a, b) => {
-            const isVoeA = a.serverLabel && a.serverLabel.toLowerCase().includes("voe");
-            const isVoeB = b.serverLabel && b.serverLabel.toLowerCase().includes("voe");
-            if (isVoeA && !isVoeB)
-              return -1;
-            if (!isVoeA && isVoeB)
-              return 1;
-            return 0;
-          });
-          return allResults;
+          return yield finalizeStreams2(candidates, "PelisPlusHD", query);
         } catch (error) {
           console.error("[PelisPlusHD] extractStreams Error:", error.message);
           return [];
