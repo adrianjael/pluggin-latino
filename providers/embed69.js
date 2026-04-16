@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-15T23:41:47.877Z
+ * Generated: 2026-04-16T19:37:15.406Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -83,7 +83,7 @@ var require_ua = __commonJS({
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
     var { getRandomUA: getRandomUA2 } = require_ua();
-    var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
+    var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var sessionUA = null;
     function setSessionUA2(ua) {
       sessionUA = ua;
@@ -289,9 +289,9 @@ var require_m3u8 = __commonJS({
         if (bestHeight > 0)
           return getQualityFromHeight(bestHeight);
       }
-      const qMatch = url.match(/[_-](\d{3,4})[pP]?/);
+      const qMatch = url.match(/([_-]|\/)(\d{3,4})([pP]|(\.m3u8))?/);
       if (qMatch) {
-        const h = parseInt(qMatch[1]);
+        const h = parseInt(qMatch[2]);
         if (h >= 360 && h <= 4320)
           return getQualityFromHeight(h);
       }
@@ -309,8 +309,7 @@ var require_m3u8 = __commonJS({
           const fetchOptions = {
             method: "GET",
             headers: __spreadValues({
-              "User-Agent": getSessionUA(),
-              "Range": "bytes=0-1024"
+              "User-Agent": getSessionUA()
             }, headers || {})
           };
           if (signal)
@@ -332,7 +331,6 @@ var require_m3u8 = __commonJS({
         }
       });
     }
-    module2.exports = { validateStream, getQualityFromHeight };
     module2.exports = { validateStream, getQualityFromHeight };
   }
 });
@@ -550,26 +548,25 @@ var require_engine = __commonJS({
             continue;
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          const displayQuality = s.quality || "HD";
-          const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
+          const quality = s.quality || "HD";
+          const isVerified = s.verified === true;
+          const checkMark = isVerified ? " \u2705" : "";
+          const streamName = `${providerName} - ${quality}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
           processed.push({
             name: streamName,
-            // Nombre que verá el usuario en la lista
             title: streamTitle,
-            // Título de la película/serie
             url: s.url,
-            quality: displayQuality,
+            quality,
+            verified: isVerified,
+            // Propiedad crítica para el 'check' de la UI de Nuvio
             provider: server,
-            // Mapeado a 'provider' en LocalScraperResult
             language: rawLang,
-            // Mapeado a 'language' en LocalScraperResult
             headers: s.headers || {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
           });
         }
