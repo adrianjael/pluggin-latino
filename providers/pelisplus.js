@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-16T14:06:06.435Z
+ * Generated: 2026-04-16T14:16:57.869Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2132,9 +2132,16 @@ var require_extractor = __commonJS({
                 if (tMatch)
                   resultTitle = tMatch[1].trim();
               }
+              resultTitle = resultTitle.replace(/^VER\s+/i, "").replace(/\s+Online\s+Gratis\s+HD$/i, "").replace(/\s+Online\s+Latino\s+HD$/i, "").replace(/\(\d{4}\)$/, "").trim();
+              const normalizedQ = normalizeTitle(q);
+              const normalizedT = normalizeTitle(resultTitle);
+              const isMovieLink = href.includes("/pelicula/");
+              const isTvLink = href.includes("/serie") || href.includes("/anime") || href.includes("/dorama");
+              if (mediaType === "movie" && !isMovieLink)
+                continue;
+              if (mediaType === "tv" && !isTvLink)
+                continue;
               if (titleMatch(q, resultTitle)) {
-                const normalizedQ = normalizeTitle(q);
-                const normalizedT = normalizeTitle(resultTitle);
                 const score = Math.abs(normalizedQ.length - normalizedT.length);
                 matches.push({ href: BASE_URL + href, title: resultTitle, score });
               }
@@ -2191,6 +2198,12 @@ var require_extractor = __commonJS({
               }
             }
           }
+          const linkMap = {};
+          const spanRegex = /<span[^>]*lid=["']?(\d+)["']?[^>]*url=["']?([^"'\s>]+)["']?/gi;
+          let sMatch;
+          while ((sMatch = spanRegex.exec(pageHtml)) !== null) {
+            linkMap[sMatch[1]] = sMatch[2];
+          }
           console.log("[PelisPlusHD] Analyzing player blocks...");
           const playerBlocks = pageHtml.split('<div class="player">');
           playerBlocks.shift();
@@ -2209,16 +2222,11 @@ var require_extractor = __commonJS({
               const idMatch = liAttr.match(/data-id=["']?(\d+)["']?/i);
               const itemLang = nameMatch ? nameMatch[1] : blockLangs[0] || "Latino";
               if (isSubtitled(itemLang) || isSubtitled(liLabel) || liLabel.includes(".com")) {
-                console.log(`[PelisPlusHD] Skipping: ${liLabel} (${itemLang})`);
                 continue;
               }
               let serverUrl = urlMatch ? urlMatch[1] : null;
-              if (!serverUrl && idMatch) {
-                const id = idMatch[1];
-                const linkRegex = new RegExp(`<span[^>]*lid=["']?${id}["']?[^>]*url=["']?([^"'s>]+)["']?`, "i");
-                const linkMatch = pageHtml.match(linkRegex);
-                if (linkMatch)
-                  serverUrl = linkMatch[1];
+              if (!serverUrl && idMatch && linkMap[idMatch[1]]) {
+                serverUrl = linkMap[idMatch[1]];
               }
               if (serverUrl && !rawResults.some((r) => r.serverUrl === serverUrl)) {
                 rawResults.push({ serverUrl, serverName: liLabel, language: itemLang });
