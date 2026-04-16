@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-16T20:08:21.859Z
+ * Generated: 2026-04-16T20:21:26.245Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -53,7 +53,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve4, reject) => {
+  return new Promise((resolve3, reject) => {
     var fulfilled = (value) => {
       try {
         step(generator.next(value));
@@ -68,7 +68,7 @@ var __async = (__this, __arguments, generator) => {
         reject(e);
       }
     };
-    var step = (x) => x.done ? resolve4(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    var step = (x) => x.done ? resolve3(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
@@ -263,7 +263,7 @@ var require_http = __commonJS({
         "Upgrade-Insecure-Requests": "1"
       };
     }
-    var DEFAULT_UA2 = getSessionUA();
+    var DEFAULT_UA = getSessionUA();
     var MOBILE_UA = getSessionUA();
     function request(url, options) {
       return __async(this, null, function* () {
@@ -299,13 +299,13 @@ var require_http = __commonJS({
         }
       });
     }
-    function fetchHtml2(url, options) {
+    function fetchHtml(url, options) {
       return __async(this, null, function* () {
         var res = yield request(url, options);
         return yield res.text();
       });
     }
-    function fetchJson2(url, options) {
+    function fetchJson(url, options) {
       return __async(this, null, function* () {
         var res = yield request(url, options);
         return yield res.json();
@@ -313,12 +313,12 @@ var require_http = __commonJS({
     }
     module2.exports = {
       request,
-      fetchHtml: fetchHtml2,
-      fetchJson: fetchJson2,
+      fetchHtml,
+      fetchJson,
       getSessionUA,
       setSessionUA,
       getStealthHeaders: getStealthHeaders2,
-      DEFAULT_UA: DEFAULT_UA2,
+      DEFAULT_UA,
       MOBILE_UA
     };
   }
@@ -589,6 +589,10 @@ var require_engine = __commonJS({
         return resolvedServerName;
       const u = (url || "").toLowerCase();
       const s = (server || "").toLowerCase();
+      if (u.includes("goodstream") || s.includes("goodstream"))
+        return "GoodStream";
+      if (u.includes("vimeos") || u.includes("vms.sh") || s.includes("vimeos"))
+        return "Vimeos";
       if (isMirror(u, "VIDHIDE") || isMirror(s, "VIDHIDE"))
         return "VidHide";
       if (isMirror(u, "STREAMWISH") || isMirror(s, "STREAMWISH"))
@@ -599,8 +603,9 @@ var require_engine = __commonJS({
         return "Filemoon";
       if (url) {
         try {
-          const domain = new URL(url).hostname.replace("www.", "");
-          return domain.charAt(0).toUpperCase() + domain.slice(1);
+          const domainParts = new URL(url).hostname.replace("www.", "").split(".");
+          const mainName = domainParts.length > 1 ? domainParts[domainParts.length - 2] : domainParts[0];
+          return mainName.charAt(0).toUpperCase() + mainName.slice(1);
         } catch (e) {
         }
       }
@@ -668,7 +673,7 @@ var require_voe = __commonJS({
       }
       return output;
     }
-    function resolve4(url, signal = null) {
+    function resolve3(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
@@ -683,7 +688,7 @@ var require_voe = __commonJS({
           if (html.includes("window.location.href") && html.length < 2e3) {
             const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
             if (rm)
-              return resolve4(rm[1]);
+              return resolve3(rm[1]);
           }
           const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
           if (jsonMatch) {
@@ -750,8 +755,8 @@ var require_voe = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -779,7 +784,7 @@ var require_hlswish = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
-    function resolve4(url, signal = null) {
+    function resolve3(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const UA3 = getSessionUA();
@@ -879,7 +884,7 @@ var require_hlswish = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -958,7 +963,7 @@ var require_filemoon = __commonJS({
           p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
       return p;
     }
-    function resolve4(url, signal = null) {
+    function resolve3(url, signal = null) {
       return __async(this, null, function* () {
         var _a, _b, _c, _d;
         try {
@@ -1035,8 +1040,8 @@ var require_filemoon = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -1072,7 +1077,7 @@ var require_vidhide = __commonJS({
         return null;
       }
     }
-    function resolve4(url, signal = null) {
+    function resolve3(url, signal = null) {
       return __async(this, null, function* () {
         try {
           const currentUA = getSessionUA();
@@ -1131,7 +1136,7 @@ var require_vidhide = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -1193,7 +1198,7 @@ var require_goodstream = __commonJS({
     var axios3 = require("axios");
     var { detectQuality } = require_quality();
     var { getSessionUA } = require_http();
-    function resolve4(embedUrl) {
+    function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
           const UA3 = getSessionUA();
@@ -1236,14 +1241,14 @@ var require_goodstream = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml2, getSessionUA } = require_http();
+    var { fetchHtml, getSessionUA } = require_http();
     var { detectQuality } = require_quality();
     var UA3 = getSessionUA();
     function unpackPacker(data) {
@@ -1260,11 +1265,11 @@ var require_fastream = __commonJS({
       }
       return p;
     }
-    function resolve4(url) {
+    function resolve3(url) {
       return __async(this, null, function* () {
         try {
           console.log("[Fastream] Resolviendo: " + url);
-          var data = yield fetchHtml2(url, {
+          var data = yield fetchHtml(url, {
             headers: { "User-Agent": UA3, "Referer": "https://www3.seriesmetro.net/" }
           });
           var unpacked = unpackPacker(data);
@@ -1299,104 +1304,98 @@ var require_fastream = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
 // src/resolvers/vimeos.js
-var vimeos_exports = {};
-__export(vimeos_exports, {
-  resolve: () => resolve
-});
-function resolve(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      console.log("[Vimeos] Resolviendo Universal (v2.0): " + embedUrl);
-      var html = yield (0, import_http.fetchHtml)(embedUrl, {
-        headers: {
-          "User-Agent": import_http.DEFAULT_UA,
-          "Referer": "https://vimeos.net/",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7"
+var require_vimeos = __commonJS({
+  "src/resolvers/vimeos.js"(exports2, module2) {
+    var { fetchHtml, fetchJson, getSessionUA } = require_http();
+    function resolve3(embedUrl) {
+      return __async(this, null, function* () {
+        const UA3 = getSessionUA();
+        try {
+          console.log("[Vimeos] Resolviendo: " + embedUrl);
+          var html = yield fetchHtml(embedUrl, {
+            headers: {
+              "User-Agent": UA3,
+              "Referer": "https://vimeos.net/",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Accept-Language": "es-MX,es;q=0.9,en-US;q=0.8"
+            }
+          });
+          var vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i);
+          if (!vimeoIdMatch)
+            vimeoIdMatch = embedUrl.match(/\/(\d{7,10})/);
+          if (vimeoIdMatch) {
+            var vimeoId = vimeoIdMatch[1];
+            try {
+              var config = yield fetchJson("https://player.vimeo.com/video/" + vimeoId + "/config", {
+                headers: { "User-Agent": UA3, "Referer": embedUrl }
+              });
+              var hlsUrl = null;
+              if (config && config.request && config.request.files && config.request.files.hls && config.request.files.hls.cdns && config.request.files.hls.cdns.default) {
+                hlsUrl = config.request.files.hls.cdns.default.url;
+              }
+              if (hlsUrl) {
+                return {
+                  url: hlsUrl,
+                  quality: "1080p",
+                  serverName: "Vimeos",
+                  headers: { "User-Agent": UA3, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-MX,es;q=0.9" }
+                };
+              }
+              var progressive = config && config.request && config.request.files ? config.request.files.progressive : null;
+              if (progressive && progressive.length > 0) {
+                var best = progressive.sort(function(a, b) {
+                  return (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0);
+                })[0];
+                return {
+                  url: best.url,
+                  quality: best.quality ? best.quality + "p" : "1080p",
+                  serverName: "Vimeos",
+                  headers: { "User-Agent": UA3, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-MX,es;q=0.9" }
+                };
+              }
+            } catch (e) {
+            }
+          }
+          var packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
+          if (packMatch) {
+            console.log("[Vimeos] Usando Unpacker...");
+            var payload = packMatch[1];
+            var radix = parseInt(packMatch[2]);
+            var symtab = packMatch[4].split("|");
+            var chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            var unbase = function(str) {
+              var result = 0;
+              for (var i = 0; i < str.length; i++)
+                result = result * radix + chars.indexOf(str[i]);
+              return result;
+            };
+            var unpacked = payload.replace(/\b(\w+)\b/g, function(match) {
+              var idx = unbase(match);
+              return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
+            });
+            var m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
+            if (m3u8Match) {
+              return {
+                url: m3u8Match[1],
+                quality: "1080p",
+                serverName: "Vimeos",
+                headers: { "User-Agent": UA3, "Referer": "https://vimeos.net/", "Accept-Language": "es-MX,es;q=0.9" }
+              };
+            }
+          }
+          return null;
+        } catch (err) {
+          console.log("[Vimeos] Error: " + err.message);
+          return null;
         }
       });
-      var vimeoIdMatch = html.match(/vimeo\.com\/video\/(\d+)/i);
-      if (!vimeoIdMatch)
-        vimeoIdMatch = embedUrl.match(/\/(\d{7,10})/);
-      if (vimeoIdMatch) {
-        var vimeoId = vimeoIdMatch[1];
-        console.log("[Vimeos] ID Vimeo detectado: " + vimeoId + ". Consultado API Config...");
-        try {
-          var config = yield (0, import_http.fetchJson)("https://player.vimeo.com/video/" + vimeoId + "/config", {
-            headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": embedUrl }
-          });
-          var hlsUrl = null;
-          if (config && config.request && config.request.files && config.request.files.hls && config.request.files.hls.cdns && config.request.files.hls.cdns.default) {
-            hlsUrl = config.request.files.hls.cdns.default.url;
-          }
-          if (hlsUrl) {
-            console.log("[Vimeos] \u2713 HLS Directo encontrado.");
-            return {
-              url: hlsUrl,
-              quality: "1080p",
-              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7" }
-            };
-          }
-          var progressive = config && config.request && config.request.files ? config.request.files.progressive : null;
-          if (progressive && progressive.length > 0) {
-            var best = progressive.sort(function(a, b) {
-              return (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0);
-            })[0];
-            console.log("[Vimeos] \u2713 MP4 Directo encontrado (" + best.quality + ").");
-            return {
-              url: best.url,
-              quality: best.quality ? best.quality + "p" : "1080p",
-              headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7" }
-            };
-          }
-        } catch (apiErr) {
-          console.log("[Vimeos] API Config Fall\xF3: " + apiErr.message);
-        }
-      }
-      var packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',(\d+),(\d+),'([\s\S]+?)'\.split\('\|'\)/);
-      if (packMatch) {
-        console.log("[Vimeos] Usando Fallback Unpacker...");
-        var payload = packMatch[1];
-        var radix = parseInt(packMatch[2]);
-        var symtab = packMatch[4].split("|");
-        var chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        var unbase = function(str) {
-          var result = 0;
-          for (var i = 0; i < str.length; i++)
-            result = result * radix + chars.indexOf(str[i]);
-          return result;
-        };
-        var unpacked = payload.replace(/\b(\w+)\b/g, function(match) {
-          var idx = unbase(match);
-          return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
-        });
-        var m3u8Match = unpacked.match(/["']([^"']+\.m3u8[^"']*)['"]/i);
-        if (m3u8Match) {
-          var url = m3u8Match[1];
-          return {
-            url,
-            quality: "1080p",
-            headers: { "User-Agent": import_http.DEFAULT_UA, "Referer": "https://vimeos.net/", "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7" }
-          };
-        }
-      }
-      console.log("[Vimeos] No se encontr\xF3 video directo.");
-      return null;
-    } catch (err) {
-      console.log("[Vimeos] Error cr\xEDtico: " + err.message);
-      return null;
     }
-  });
-}
-var import_http;
-var init_vimeos = __esm({
-  "src/resolvers/vimeos.js"() {
-    import_http = __toESM(require_http());
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -1405,7 +1404,7 @@ var require_buzzheavier = __commonJS({
   "src/resolvers/buzzheavier.js"(exports2, module2) {
     var axios3 = require("axios");
     var { getStealthHeaders: getStealthHeaders2 } = require_http();
-    function resolve4(embedUrl) {
+    function resolve3(embedUrl) {
       return __async(this, null, function* () {
         if (!embedUrl)
           return null;
@@ -1476,16 +1475,16 @@ var require_buzzheavier = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
 // src/resolvers/okru.js
 var okru_exports = {};
 __export(okru_exports, {
-  resolve: () => resolve2
+  resolve: () => resolve
 });
-function resolve2(embedUrl) {
+function resolve(embedUrl) {
   return __async(this, null, function* () {
     try {
       console.log(`[OkRu] Resolviendo: ${embedUrl}`);
@@ -1540,7 +1539,7 @@ var init_okru = __esm({
 var require_pixeldrain = __commonJS({
   "src/resolvers/pixeldrain.js"(exports2, module2) {
     var axios3 = require("axios");
-    function resolve4(embedUrl) {
+    function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
           console.log("[Pixeldrain] Resolviendo: " + embedUrl);
@@ -1588,15 +1587,15 @@ var require_pixeldrain = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
 // src/resolvers/playmogo.js
 var require_playmogo = __commonJS({
   "src/resolvers/playmogo.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml2, DEFAULT_UA: DEFAULT_UA2 } = require_http();
-    function resolve4(url) {
+    var { fetchHtml, DEFAULT_UA } = require_http();
+    function resolve3(url) {
       return __async(this, null, function* () {
         try {
           console.log("[Playmogo] Resolving: " + url);
@@ -1605,7 +1604,7 @@ var require_playmogo = __commonJS({
             quality: "720p",
             serverName: "Playmogo",
             headers: {
-              "User-Agent": DEFAULT_UA2,
+              "User-Agent": DEFAULT_UA,
               "Referer": "https://dsvplay.com/",
               "Origin": "https://dsvplay.com"
             }
@@ -1616,16 +1615,16 @@ var require_playmogo = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
 // src/resolvers/turbovid.js
 var turbovid_exports = {};
 __export(turbovid_exports, {
-  resolve: () => resolve3
+  resolve: () => resolve2
 });
-function resolve3(embedUrl) {
+function resolve2(embedUrl) {
   return __async(this, null, function* () {
     try {
       const { data: html } = yield import_axios2.default.get(embedUrl, {
@@ -1662,7 +1661,7 @@ var require_embedseek = __commonJS({
   "src/resolvers/embedseek.js"(exports2, module2) {
     var CryptoJS2 = require("crypto-js");
     var { getSessionUA } = require_http();
-    function resolve4(url) {
+    function resolve3(url) {
       return __async(this, null, function* () {
         try {
           const UA3 = getSessionUA();
@@ -1759,7 +1758,7 @@ var require_embedseek = __commonJS({
       );
       return decrypted.toString(CryptoJS2.enc.Utf8);
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -1768,7 +1767,7 @@ var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
     var axios3 = require("axios");
     var { getStealthHeaders: getStealthHeaders2 } = require_http();
-    function resolve4(embedUrl) {
+    function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
           console.log("[TPlayer] Resolviendo con sesi\xF3n: " + embedUrl);
@@ -1820,7 +1819,7 @@ var require_tplayer = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -1848,7 +1847,7 @@ var require_lulustream = __commonJS({
         return symtab[idx] && symtab[idx] !== "" ? symtab[idx] : match;
       });
     }
-    function resolve4(url) {
+    function resolve3(url) {
       return __async(this, null, function* () {
         try {
           const UA3 = getSessionUA();
@@ -1905,7 +1904,7 @@ var require_lulustream = __commonJS({
         }
       });
     }
-    module2.exports = { resolve: resolve4 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -1918,7 +1917,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolveVidhide } = require_vidhide();
     var { resolve: resolveGoodstream } = require_goodstream();
     var { resolve: resolveFastream } = require_fastream();
-    var { resolve: resolveVimeos } = (init_vimeos(), __toCommonJS(vimeos_exports));
+    var { resolve: resolveVimeos } = require_vimeos();
     var { resolve: resolveBuzzheavier } = require_buzzheavier();
     var { resolve: resolveOkru } = (init_okru(), __toCommonJS(okru_exports));
     var { resolve: resolvePixeldrain } = require_pixeldrain();
@@ -2056,7 +2055,7 @@ var require_resolvers = __commonJS({
 // src/utils/id_mapper.js
 var require_id_mapper = __commonJS({
   "src/utils/id_mapper.js"(exports2, module2) {
-    var { fetchJson: fetchJson2, fetchHtml: fetchHtml2 } = require_http();
+    var { fetchJson, fetchHtml } = require_http();
     var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var ID_CACHE = /* @__PURE__ */ new Map();
     var SERIES_MAPPINGS = {
@@ -2070,10 +2069,10 @@ var require_id_mapper = __commonJS({
           const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
           const idUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${apiKey}`;
           const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${apiKey}&language=es-MX`;
-          const idRes = yield fetchJson2(idUrl, { headers: { "User-Agent": ua } }).catch(() => null);
+          const idRes = yield fetchJson(idUrl, { headers: { "User-Agent": ua } }).catch(() => null);
           if (!idRes || !idRes.imdb_id)
             return null;
-          const metaRes = yield fetchJson2(metaUrl, { headers: { "User-Agent": ua } }).catch(() => null);
+          const metaRes = yield fetchJson(metaUrl, { headers: { "User-Agent": ua } }).catch(() => null);
           const title = metaRes ? metaRes.title || metaRes.name : "Contenido";
           const year = metaRes ? (metaRes.release_date || metaRes.first_air_date || "").split("-")[0] : null;
           return {
@@ -2093,7 +2092,7 @@ var require_id_mapper = __commonJS({
       return __async(this, null, function* () {
         try {
           const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-          const html = yield fetchHtml2(url, { timeout: 1e4 }).catch(() => null);
+          const html = yield fetchHtml(url, { timeout: 1e4 }).catch(() => null);
           if (!html)
             return { imdbId: null, title: "Contenido" };
           const imdbMatch = html.match(/href="https:\/\/www\.imdb\.com\/title\/(tt\d+)"/i);

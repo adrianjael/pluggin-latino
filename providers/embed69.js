@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-16T20:08:21.830Z
+ * Generated: 2026-04-16T20:21:26.215Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -516,6 +516,10 @@ var require_engine = __commonJS({
         return resolvedServerName;
       const u = (url || "").toLowerCase();
       const s = (server || "").toLowerCase();
+      if (u.includes("goodstream") || s.includes("goodstream"))
+        return "GoodStream";
+      if (u.includes("vimeos") || u.includes("vms.sh") || s.includes("vimeos"))
+        return "Vimeos";
       if (isMirror2(u, "VIDHIDE") || isMirror2(s, "VIDHIDE"))
         return "VidHide";
       if (isMirror2(u, "STREAMWISH") || isMirror2(s, "STREAMWISH"))
@@ -526,8 +530,9 @@ var require_engine = __commonJS({
         return "Filemoon";
       if (url) {
         try {
-          const domain = new URL(url).hostname.replace("www.", "");
-          return domain.charAt(0).toUpperCase() + domain.slice(1);
+          const domainParts = new URL(url).hostname.replace("www.", "").split(".");
+          const mainName = domainParts.length > 1 ? domainParts[domainParts.length - 2] : domainParts[0];
+          return mainName.charAt(0).toUpperCase() + mainName.slice(1);
         } catch (e) {
         }
       }
