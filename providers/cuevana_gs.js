@@ -1,6 +1,6 @@
 /**
  * cuevana_gs - Built from src/cuevana_gs/
- * Generated: 2026-04-16T20:21:26.203Z
+ * Generated: 2026-04-16T20:37:06.256Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -74,6 +74,16 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/utils/string.js
+var string_exports = {};
+__export(string_exports, {
+  base64Decode: () => base64Decode,
+  calculateSimilarity: () => calculateSimilarity,
+  getHostname: () => getHostname,
+  getOrigin: () => getOrigin,
+  isGoodMatch: () => isGoodMatch,
+  normalizeTitle: () => normalizeTitle,
+  utf8Decode: () => utf8Decode
+});
 function normalizeTitle(t) {
   if (!t)
     return "";
@@ -136,6 +146,53 @@ function calculateSimilarity(title1, title2) {
     return score * 0.5;
   }
   return score;
+}
+function isGoodMatch(query, result, minScore) {
+  var ms = minScore || 0.45;
+  return calculateSimilarity(query, result) >= ms;
+}
+function base64Decode(input) {
+  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  var str = String(input).replace(/=+$/, "");
+  var output = "";
+  if (str.length % 4 === 1)
+    throw new Error("Base64 invalido");
+  var bc = 0, bs, buffer, idx = 0;
+  while (buffer = str.charAt(idx++)) {
+    buffer = chars.indexOf(buffer);
+    if (~buffer) {
+      bs = bc % 4 ? bs * 64 + buffer : buffer;
+      if (bc++ % 4) {
+        output += String.fromCharCode(255 & bs >> (-2 * bc & 6));
+      }
+    }
+  }
+  return output;
+}
+function utf8Decode(bytes) {
+  var out = "", i = 0;
+  while (i < bytes.length) {
+    var c = bytes[i++];
+    if (c < 128)
+      out += String.fromCharCode(c);
+    else if (c > 191 && c < 224)
+      out += String.fromCharCode((c & 31) << 6 | bytes[i++] & 63);
+    else
+      out += String.fromCharCode((c & 15) << 12 | (bytes[i++] & 63) << 6 | bytes[i++] & 63);
+  }
+  return out;
+}
+function getOrigin(url) {
+  if (!url)
+    return "";
+  var match = url.match(/^(https?:\/\/[^\/]+)/);
+  return match ? match[1] : "";
+}
+function getHostname(url) {
+  if (!url)
+    return "";
+  var match = url.match(/^https?:\/\/([^\/]+)/);
+  return match ? match[1] : "";
 }
 var NOISE_WORDS;
 var init_string = __esm({
@@ -206,7 +263,7 @@ var require_http = __commonJS({
         "Upgrade-Insecure-Requests": "1"
       };
     }
-    var DEFAULT_UA2 = getSessionUA();
+    var DEFAULT_UA = getSessionUA();
     var MOBILE_UA = getSessionUA();
     function request(url, options) {
       return __async(this, null, function* () {
@@ -242,7 +299,7 @@ var require_http = __commonJS({
         }
       });
     }
-    function fetchHtml2(url, options) {
+    function fetchHtml(url, options) {
       return __async(this, null, function* () {
         var res = yield request(url, options);
         return yield res.text();
@@ -256,12 +313,12 @@ var require_http = __commonJS({
     }
     module2.exports = {
       request,
-      fetchHtml: fetchHtml2,
+      fetchHtml,
       fetchJson,
       getSessionUA,
       setSessionUA,
       getStealthHeaders,
-      DEFAULT_UA: DEFAULT_UA2,
+      DEFAULT_UA,
       MOBILE_UA
     };
   }
@@ -554,7 +611,7 @@ var require_engine = __commonJS({
       }
       return server || "Servidor";
     }
-    function finalizeStreams3(streams, providerName, mediaTitle) {
+    function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
@@ -595,7 +652,7 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams: finalizeStreams3, normalizeLanguage };
+    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
   }
 });
 
@@ -1191,7 +1248,7 @@ var require_goodstream = __commonJS({
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml2, getSessionUA } = require_http();
+    var { fetchHtml, getSessionUA } = require_http();
     var { detectQuality } = require_quality();
     var UA3 = getSessionUA();
     function unpackPacker(data) {
@@ -1212,7 +1269,7 @@ var require_fastream = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log("[Fastream] Resolviendo: " + url);
-          var data = yield fetchHtml2(url, {
+          var data = yield fetchHtml(url, {
             headers: { "User-Agent": UA3, "Referer": "https://www3.seriesmetro.net/" }
           });
           var unpacked = unpackPacker(data);
@@ -1254,13 +1311,13 @@ var require_fastream = __commonJS({
 // src/resolvers/vimeos.js
 var require_vimeos = __commonJS({
   "src/resolvers/vimeos.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml2, fetchJson, getSessionUA } = require_http();
+    var { fetchHtml, fetchJson, getSessionUA } = require_http();
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         const UA3 = getSessionUA();
         try {
           console.log("[Vimeos] Resolviendo: " + embedUrl);
-          var html = yield fetchHtml2(embedUrl, {
+          var html = yield fetchHtml(embedUrl, {
             headers: {
               "User-Agent": UA3,
               "Referer": "https://vimeos.net/",
@@ -1537,7 +1594,7 @@ var require_pixeldrain = __commonJS({
 // src/resolvers/playmogo.js
 var require_playmogo = __commonJS({
   "src/resolvers/playmogo.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml2, DEFAULT_UA: DEFAULT_UA2 } = require_http();
+    var { fetchHtml, DEFAULT_UA } = require_http();
     function resolve3(url) {
       return __async(this, null, function* () {
         try {
@@ -1547,7 +1604,7 @@ var require_playmogo = __commonJS({
             quality: "720p",
             serverName: "Playmogo",
             headers: {
-              "User-Agent": DEFAULT_UA2,
+              "User-Agent": DEFAULT_UA,
               "Referer": "https://dsvplay.com/",
               "Origin": "https://dsvplay.com"
             }
@@ -1910,7 +1967,7 @@ var require_resolvers = __commonJS({
       result.url = url;
       return result;
     }
-    function resolveEmbed2(url, signal = null) {
+    function resolveEmbed(url, signal = null) {
       return __async(this, null, function* () {
         if (!url)
           return null;
@@ -1991,15 +2048,15 @@ var require_resolvers = __commonJS({
         });
       });
     }
-    module2.exports = { resolveEmbed: resolveEmbed2 };
+    module2.exports = { resolveEmbed };
   }
 });
 
 // src/utils/id_mapper.js
 var require_id_mapper = __commonJS({
   "src/utils/id_mapper.js"(exports2, module2) {
-    var { fetchJson, fetchHtml: fetchHtml2 } = require_http();
-    var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
+    var { fetchJson, fetchHtml } = require_http();
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var ID_CACHE = /* @__PURE__ */ new Map();
     var SERIES_MAPPINGS = {
       // Ejemplo: 'tmdb_id': 'imdb_id'
@@ -2008,7 +2065,7 @@ var require_id_mapper = __commonJS({
       return __async(this, null, function* () {
         try {
           const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          const apiKey = TMDB_API_KEY2;
+          const apiKey = TMDB_API_KEY;
           const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
           const idUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${apiKey}`;
           const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${apiKey}&language=es-MX`;
@@ -2035,7 +2092,7 @@ var require_id_mapper = __commonJS({
       return __async(this, null, function* () {
         try {
           const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-          const html = yield fetchHtml2(url, { timeout: 1e4 }).catch(() => null);
+          const html = yield fetchHtml(url, { timeout: 1e4 }).catch(() => null);
           if (!html)
             return { imdbId: null, title: "Contenido" };
           const imdbMatch = html.match(/href="https:\/\/www\.imdb\.com\/title\/(tt\d+)"/i);
@@ -2052,7 +2109,7 @@ var require_id_mapper = __commonJS({
         }
       });
     }
-    function getCorrectImdbId2(tmdbId, mediaType) {
+    function getCorrectImdbId(tmdbId, mediaType) {
       return __async(this, null, function* () {
         if (!tmdbId)
           return { imdbId: null, title: "" };
@@ -2074,245 +2131,187 @@ var require_id_mapper = __commonJS({
         return scrapeResult;
       });
     }
-    module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
+    module2.exports = { getCorrectImdbId, SERIES_MAPPINGS };
   }
 });
 
 // src/cuevana_gs/extractor.js
-var extractor_exports = {};
-__export(extractor_exports, {
-  extractStreams: () => extractStreams
-});
-function getTmdbInfo(tmdbId, mediaType) {
-  return __async(this, null, function* () {
-    try {
-      var url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?api_key=" + TMDB_API_KEY + "&language=es-MX";
-      const res = yield fetch(url);
-      const json = yield res.json();
-      if (json && json.id) {
-        var title = json.title || json.name || "";
-        var originalTitle = json.original_title || json.original_name || "";
-        var year = "";
-        var date = json.release_date || json.first_air_date || "";
-        if (date)
-          year = date.split("-")[0];
-        return { title, originalTitle, year };
-      }
-    } catch (e) {
-    }
-    return { title: null, year: "" };
-  });
-}
-function extractStreams(tmdbId, mediaType, season, episode, providedTitle) {
-  return __async(this, null, function* () {
-    var isSeries = mediaType === "tv";
-    console.log("[Cuevana3.nu] Extracting: " + (providedTitle || tmdbId) + " (" + mediaType + ")");
-    try {
-      const mapperResult = yield (0, import_id_mapper.getCorrectImdbId)(tmdbId, mediaType);
-      var tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-      var searchTitle = mapperResult.title || providedTitle || tmdbInfo.title;
-      var originalTitle = tmdbInfo.originalTitle || "";
-      var year = tmdbInfo.year;
-      if (!searchTitle) {
-        console.error("[Cuevana3.nu] No search title found.");
-        return [];
-      }
-      var performSearch = function(query) {
-        return __async(this, null, function* () {
-          console.log('[Cuevana3.nu] Searching API: "' + query + '"...');
-          var searchUrl = BASE_URL + "/wp-json/cuevana/v1/search?q=" + encodeURIComponent(query);
-          try {
-            var responseText = yield (0, import_http.fetchHtml)(searchUrl);
-            var json = JSON.parse(responseText);
-            var results = [];
-            if (json && json.data && Array.isArray(json.data)) {
-              results = json.data.map((item) => {
-                const info = item.info || {};
-                const isMovie = info.type === "movie" || !item.link.includes("/series-online/");
-                return {
-                  title: item.title.trim(),
-                  originalTitle: info.original_title || "",
-                  type: isMovie ? "movies" : "tvshows",
-                  slug: item.link,
-                  year: info.release ? info.release.split("-")[0] : "",
-                  id: info._id || ""
-                };
-              });
-            }
-            console.log("[Cuevana3.nu] API returned " + results.length + " candidates.");
-            var filtered = results.filter((r) => {
-              const typeMatch = isSeries ? r.type === "tvshows" : r.type === "movies";
-              const simSpanish = calculateSimilarity(searchTitle, r.title);
-              const simOriginal = calculateSimilarity(originalTitle, r.originalTitle);
-              const maxSim = Math.max(simSpanish, simOriginal);
-              console.log(`[Cuevana3.nu] Checking candidate: "${r.title}" | Sim: ${maxSim.toFixed(2)} | Type: ${r.type} | Year: ${r.year}`);
-              const titleMatch = maxSim > 0.4;
-              var yearMatch = true;
-              if (year && r.year && maxSim < 0.9) {
-                yearMatch = Math.abs(parseInt(year) - parseInt(r.year)) <= 2;
-                if (!yearMatch)
-                  console.log(`   [Cuevana3.nu] Year mismatch: ${year} vs ${r.year}`);
-              }
-              return typeMatch && titleMatch && yearMatch;
-            });
-            filtered.sort((a, b) => {
-              const simA = Math.max(calculateSimilarity(searchTitle, a.title), calculateSimilarity(searchTitle, a.originalTitle));
-              const simB = Math.max(calculateSimilarity(searchTitle, b.title), calculateSimilarity(searchTitle, b.originalTitle));
-              return simB - simA;
-            });
-            return filtered;
-          } catch (err) {
-            console.error("[Cuevana3.nu] Search API error: " + err.message);
-            return [];
-          }
-        });
-      };
-      var searchResults = [];
-      var queriesToTry = [
-        mapperResult.imdbId,
-        // PRIORIDAD 1: Búsqueda exacta por ID
-        searchTitle,
-        originalTitle,
-        // Intentar con el título original (importante para traducciones)
-        providedTitle,
-        (searchTitle || "").split(":")[0],
-        (searchTitle || "").split(" ").sort((a, b) => b.length - a.length)[0]
-        // Palabra más larga
-      ].filter((v, i, a) => v && a.indexOf(v) === i);
-      for (var q of queriesToTry) {
-        if (searchResults.length > 0)
-          break;
-        console.log('[Cuevana3.nu] Trying search query: "' + q + '"');
-        searchResults = yield performSearch(q);
-      }
-      if (searchResults.length === 0) {
-        console.warn("[Cuevana3.nu] No accurate match found after multiple attempts for: " + searchTitle);
-        return [];
-      }
-      searchResults.sort((a, b) => {
-        const simA = Math.max(
-          calculateSimilarity(searchTitle, a.title),
-          calculateSimilarity(searchTitle, a.originalTitle),
-          calculateSimilarity(originalTitle, a.originalTitle)
-        );
-        const simB = Math.max(
-          calculateSimilarity(searchTitle, b.title),
-          calculateSimilarity(searchTitle, b.originalTitle),
-          calculateSimilarity(originalTitle, b.originalTitle)
-        );
-        if (Math.abs(simA - simB) > 0.1)
-          return simB - simA;
-        if (year) {
-          const distA = Math.abs(parseInt(year) - (parseInt(a.year) || 0));
-          const distB = Math.abs(parseInt(year) - (parseInt(b.year) || 0));
-          return distA - distB;
-        }
-        return 0;
-      });
-      var match = searchResults[0];
-      const finalSim = Math.max(
-        calculateSimilarity(searchTitle, match.title),
-        calculateSimilarity(originalTitle, match.originalTitle)
-      );
-      const isPremiere = year && parseInt(year) >= 2025;
-      const yearPerfectMatch = year && match.year && parseInt(year) === parseInt(match.year);
-      if (finalSim < 0.2 && !(isPremiere && yearPerfectMatch)) {
-        console.warn("[Cuevana3.nu] Top match has very low similarity: " + finalSim);
-        return [];
-      }
-      var mediaInfo = {
-        title: match.title,
-        slug: match.slug,
-        type: match.type,
-        _id: match.id
-      };
-      console.log("[Cuevana3.nu] Match found: " + match.title + " (ID: " + match.id + ") [" + match.type + "]");
-      var getOnlineStreams = function(url) {
-        return __async(this, null, function* () {
-          console.log("[Cuevana3.nu] API Extraction for: " + url);
-          try {
-            var id = mediaInfo._id;
-            if (!id) {
-              var matchId = url.match(/\/(\d+)\//);
-              id = matchId ? matchId[1] : null;
-            }
-            if (!id) {
-              console.error("[Cuevana3.nu] Could not determine ID for API call");
-              return { error: true };
-            }
-            var apiUrl = "";
-            if (isSeries) {
-              var s = season || 1;
-              var e = episode || 1;
-              apiUrl = BASE_URL + "/wp-json/cuevana/v1/episode/" + id + "/" + s + "/" + e;
-            } else {
-              apiUrl = BASE_URL + "/wp-json/cuevana/v1/player/" + id;
-            }
-            console.log("[Cuevana3.nu] Calling API: " + apiUrl);
-            var response = yield (0, import_http.fetchHtml)(apiUrl);
-            var json = JSON.parse(response);
-            if (!json || !json.data || !json.data.embeds) {
-              console.error("[Cuevana3.nu] API returned no embeds");
-              return { data: [] };
-            }
-            var streams2 = [];
-            for (const embed of json.data.embeds) {
-              if (embed.url) {
-                streams2.push({
-                  url: embed.url,
-                  serverLabel: embed.server || embed.service_name || "Server",
-                  langLabel: embed.audio || "Latino"
-                });
-              }
-            }
-            console.log("[Cuevana3.nu] API successfully returned " + streams2.length + " streams");
-            return { data: streams2 };
-          } catch (err) {
-            console.error("[Cuevana3.nu] API Extraction Error: " + err.message);
-            return { error: true };
-          }
-        });
-      };
-      var streamResult = yield getOnlineStreams(BASE_URL + (isSeries ? mediaInfo.episodeSlug : mediaInfo.slug));
-      if (streamResult.error)
-        return [];
-      var streams = streamResult.data;
-      console.log("[Cuevana3.nu] Processing " + streams.length + " streams for resolution...");
-      var rawResults = [];
-      for (const stream of streams) {
+var require_extractor = __commonJS({
+  "src/cuevana_gs/extractor.js"(exports2, module2) {
+    var { calculateSimilarity: calculateSimilarity2 } = (init_string(), __toCommonJS(string_exports));
+    var { fetchHtml } = require_http();
+    var { finalizeStreams: finalizeStreams2 } = require_engine();
+    var { resolveEmbed } = require_resolvers();
+    var cheerio = require("cheerio-without-node-native");
+    var { getCorrectImdbId } = require_id_mapper();
+    var BASE_URL = "https://ww9.cuevana3.to";
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    function getTmdbInfo(tmdbId, mediaType) {
+      return __async(this, null, function* () {
         try {
-          const resolved = yield (0, import_resolvers.resolveEmbed)(stream.url);
-          if (resolved && resolved.url) {
-            rawResults.push({
-              url: resolved.url,
-              quality: resolved.quality,
-              serverLabel: stream.serverLabel,
-              langLabel: stream.langLabel,
-              headers: resolved.headers || {}
-            });
+          const url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?api_key=" + TMDB_API_KEY + "&language=es-MX";
+          const res = yield fetch(url);
+          const json = yield res.json();
+          if (json && json.id) {
+            const title = json.title || json.name || "";
+            const originalTitle = json.original_title || json.original_name || "";
+            let year = "";
+            const date = json.release_date || json.first_air_date || "";
+            if (date)
+              year = date.split("-")[0];
+            return { title, originalTitle, year };
           }
         } catch (e) {
-          console.error("[Cuevana3.nu] Resolution Error for " + stream.label + ": " + e.message);
         }
-      }
-      return yield (0, import_engine.finalizeStreams)(rawResults, "Cuevana3.to");
-    } catch (err) {
-      console.error("[Cuevana3.nu] Global Error: " + err.message);
-      return [];
+        return { title: null, year: "" };
+      });
     }
-  });
-}
-var import_http, import_engine, import_resolvers, import_cheerio_without_node_native, import_id_mapper, BASE_URL, TMDB_API_KEY;
-var init_extractor = __esm({
-  "src/cuevana_gs/extractor.js"() {
-    init_string();
-    import_http = __toESM(require_http());
-    import_engine = __toESM(require_engine());
-    import_resolvers = __toESM(require_resolvers());
-    import_cheerio_without_node_native = __toESM(require("cheerio-without-node-native"));
-    import_id_mapper = __toESM(require_id_mapper());
-    BASE_URL = "https://cue.cuevana3.nu";
-    TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    function extractStreams2(tmdbId, mediaType, season, episode, providedTitle) {
+      return __async(this, null, function* () {
+        const isSeries = mediaType === "tv";
+        console.log("[Cuevana3.to] Extracting: " + (providedTitle || tmdbId) + " (" + mediaType + ")");
+        try {
+          const mapperResult = yield getCorrectImdbId(tmdbId, mediaType);
+          const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
+          const searchTitle = mapperResult.title || providedTitle || tmdbInfo.title;
+          const originalTitle = tmdbInfo.originalTitle || "";
+          const year = tmdbInfo.year;
+          if (!searchTitle) {
+            console.error("[Cuevana3.to] No search title found.");
+            return [];
+          }
+          const performSearch = (query) => __async(this, null, function* () {
+            console.log('[Cuevana3.to] Searching HTML: "' + query + '"...');
+            const searchUrl = BASE_URL + "/?s=" + encodeURIComponent(query);
+            try {
+              const html = yield fetchHtml(searchUrl);
+              const $ = cheerio.load(html);
+              const results = [];
+              $(".TPost.C").each((i, el) => {
+                const title = $(el).find(".Title").first().text().trim();
+                const link = $(el).find("a").attr("href");
+                const itemYear = $(el).find(".Year").text().trim();
+                if (link) {
+                  results.push({
+                    title,
+                    slug: link.startsWith("http") ? link : BASE_URL + link,
+                    year: itemYear,
+                    type: link.includes("/serie/") ? "tv" : "movie"
+                  });
+                }
+              });
+              console.log("[Cuevana3.to] Scraper found " + results.length + " candidates.");
+              return results.filter((r) => {
+                const typeMatch = isSeries ? r.type === "tv" : r.type === "movie";
+                const simSpanish = calculateSimilarity2(searchTitle, r.title);
+                const simOriginal = calculateSimilarity2(originalTitle, r.title);
+                const maxSim = Math.max(simSpanish, simOriginal);
+                const titleMatch = maxSim > 0.45;
+                let yearMatch = true;
+                if (year && r.year && maxSim < 0.9) {
+                  yearMatch = Math.abs(parseInt(year) - parseInt(r.year)) <= 1;
+                }
+                return typeMatch && titleMatch && yearMatch;
+              });
+            } catch (err) {
+              console.error("[Cuevana3.to] Search error: " + err.message);
+              return [];
+            }
+          });
+          let searchResults = [];
+          const queriesToTry = [searchTitle, originalTitle].filter(Boolean);
+          for (const q of queriesToTry) {
+            if (searchResults.length > 0)
+              break;
+            searchResults = yield performSearch(q);
+          }
+          if (searchResults.length === 0)
+            return [];
+          searchResults.sort((a, b) => {
+            const simA = calculateSimilarity2(searchTitle, a.title);
+            const simB = calculateSimilarity2(searchTitle, b.title);
+            return simB - simA;
+          });
+          const match = searchResults[0];
+          console.log("[Cuevana3.to] Match found: " + match.title + " -> " + match.slug);
+          let targetUrl = match.slug;
+          if (isSeries) {
+            const slugPart = match.slug.split("/").filter(Boolean).pop();
+            targetUrl = BASE_URL + "/episodio/" + slugPart + "-" + season + "-" + episode;
+            console.log("[Cuevana3.to] Adjusted Series URL: " + targetUrl);
+          }
+          const contentHtml = yield fetchHtml(targetUrl);
+          const $content = cheerio.load(contentHtml);
+          const streams = [];
+          const languages = [];
+          $content(".tab_language_movie > li").each((i, el) => {
+            const img = $content(el).find("img").attr("src") || "";
+            let lang = "Latino";
+            if (img.includes("english"))
+              lang = "Subtitulado";
+            if (img.includes("espana"))
+              lang = "Espa\xF1ol";
+            $content(el).find(".sub-tab-lang li").each((j, subEl) => {
+              var _a;
+              const optId = $content(subEl).attr("data-tplayernv");
+              if (optId) {
+                const iframe = $content("#" + optId + " iframe");
+                const videoUrl = iframe.attr("data-src") || iframe.attr("src");
+                const serverText = $content(subEl).find(".cdtr span").text().trim();
+                if (videoUrl && videoUrl.includes("://")) {
+                  streams.push({
+                    url: videoUrl,
+                    serverLabel: ((_a = serverText.split("-")[1]) == null ? void 0 : _a.trim()) || "Server",
+                    langLabel: lang
+                  });
+                }
+              }
+            });
+          });
+          console.log("[Cuevana3.to] Found " + streams.length + " raw streams.");
+          const resolutionPromises = streams.map((stream) => __async(this, null, function* () {
+            try {
+              const timeoutPromise = new Promise(
+                (_, reject) => setTimeout(() => reject(new Error("Timeout")), 4500)
+              );
+              const resolvePromise = (() => __async(this, null, function* () {
+                const resolved = yield resolveEmbed(stream.url);
+                if (resolved && resolved.url) {
+                  return {
+                    url: resolved.url,
+                    quality: resolved.quality || "HD",
+                    serverLabel: stream.serverLabel,
+                    langLabel: stream.langLabel,
+                    headers: resolved.headers || {}
+                  };
+                }
+                throw new Error("Unresolved");
+              }))();
+              return yield Promise.race([resolvePromise, timeoutPromise]);
+            } catch (e) {
+              if (e.message === "Timeout" || e.message === "Unresolved") {
+                if (stream.url.includes(".m3u8") || stream.url.includes(".mp4")) {
+                  return {
+                    url: stream.url,
+                    quality: "Unverified",
+                    serverLabel: stream.serverLabel,
+                    langLabel: stream.langLabel,
+                    headers: {}
+                  };
+                }
+              }
+              return null;
+            }
+          }));
+          const rawResults = (yield Promise.all(resolutionPromises)).filter(Boolean);
+          return yield finalizeStreams2(rawResults, "Cuevana3.to");
+        } catch (err) {
+          console.error("[Cuevana3.to] Global Error: " + err.message);
+          return [];
+        }
+      });
+    }
+    module2.exports = { extractStreams: extractStreams2 };
   }
 });
 
@@ -2320,7 +2319,7 @@ var init_extractor = __esm({
 var require_tmdb = __commonJS({
   "src/utils/tmdb.js"(exports2, module2) {
     var axios3 = require("axios");
-    var TMDB_API_KEY2 = "439c478a771f35c05022f9feabcca01c";
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
     var titleCache = /* @__PURE__ */ new Map();
     function getTmdbTitle2(tmdbId, mediaType, language = "en-US", retries = 2) {
       return __async(this, null, function* () {
@@ -2334,7 +2333,7 @@ var require_tmdb = __commonJS({
           const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
           let url;
           if (cleanId.startsWith("tt")) {
-            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id&language=${language}`;
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=${language}`;
             const { data } = yield axios3.get(url, { timeout: 6e3 });
             const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
             const title = result ? result.name || result.title : null;
@@ -2342,7 +2341,7 @@ var require_tmdb = __commonJS({
               titleCache.set(cacheKey, title);
             return title;
           } else {
-            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}&language=${language}`;
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}&language=${language}`;
             const { data } = yield axios3.get(url, { timeout: 6e3 });
             const title = data.name || data.title || null;
             if (title)
@@ -2360,7 +2359,7 @@ var require_tmdb = __commonJS({
         }
       });
     }
-    function getTmdbInfo2(tmdbId, mediaType) {
+    function getTmdbInfo(tmdbId, mediaType) {
       return __async(this, null, function* () {
         if (!tmdbId)
           return null;
@@ -2370,11 +2369,11 @@ var require_tmdb = __commonJS({
           let url;
           let result;
           if (cleanId.startsWith("tt")) {
-            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY2}&external_source=imdb_id`;
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
             const { data } = yield axios3.get(url, { timeout: 6e3 });
             result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
           } else {
-            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY2}`;
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
             const { data } = yield axios3.get(url, { timeout: 6e3 });
             result = data;
           }
@@ -2406,7 +2405,7 @@ var require_tmdb = __commonJS({
             titles.add(enTitle);
           if (esTitle)
             titles.add(esTitle);
-          const altUrl = `https://api.themoviedb.org/3/${type}/${cleanId}/alternative_titles?api_key=${TMDB_API_KEY2}`;
+          const altUrl = `https://api.themoviedb.org/3/${type}/${cleanId}/alternative_titles?api_key=${TMDB_API_KEY}`;
           const { data } = yield axios3.get(altUrl, { timeout: 5e3 });
           const altResults = data.titles || data.results || [];
           altResults.forEach((item) => {
@@ -2420,13 +2419,13 @@ var require_tmdb = __commonJS({
         }
       });
     }
-    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo: getTmdbInfo2, getTmdbAliases };
+    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo, getTmdbAliases };
   }
 });
 
 // src/cuevana_gs/index.js
-var { extractStreams: extractStreams2 } = (init_extractor(), __toCommonJS(extractor_exports));
-var { finalizeStreams: finalizeStreams2 } = require_engine();
+var { extractStreams } = require_extractor();
+var { finalizeStreams } = require_engine();
 var { getTmdbTitle } = require_tmdb();
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
@@ -2435,8 +2434,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       if (!mediaTitle && tmdbId) {
         mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
       }
-      const streams = yield extractStreams2(tmdbId, mediaType, season, episode, mediaTitle);
-      return yield finalizeStreams2(streams, "Cuevana.gs", mediaTitle);
+      const streams = yield extractStreams(tmdbId, mediaType, season, episode, mediaTitle);
+      return yield finalizeStreams(streams, "Cuevana.gs", mediaTitle);
     } catch (e) {
       console.error(`[Cuevana.gs] Index error: ${e.message}`);
       return [];
