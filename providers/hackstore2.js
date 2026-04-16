@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-15T23:41:47.898Z
+ * Generated: 2026-04-16T17:15:17.144Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -74,58 +74,15 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/hackstore2/http.js
-function fetchText(_0) {
-  return __async(this, arguments, function* (url, options = {}) {
-    try {
-      const response = yield fetch(url, __spreadValues({
-        headers: __spreadValues(__spreadValues({}, COMMON_HEADERS), options.headers)
-      }, options));
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status} for ${url}`);
-      }
-      return yield response.text();
-    } catch (error) {
-      console.error(`[PelisPlusHD] Fetch error: ${error.message}`);
-      throw error;
-    }
-  });
-}
-function fetchJson(_0) {
-  return __async(this, arguments, function* (url, options = {}) {
-    const raw = yield fetchText(url, options);
-    return JSON.parse(raw);
-  });
-}
-function fetchHtml(url, referer) {
-  return __async(this, null, function* () {
-    try {
-      const headers = __spreadValues({}, COMMON_HEADERS);
-      if (referer) {
-        headers["Referer"] = referer;
-        headers["Sec-Fetch-Site"] = "same-origin";
-      }
-      const response = yield fetch(url, {
-        headers
-      });
-      if (!response.ok)
-        throw new Error(`HTTP Error: ${response.status}`);
-      return yield response.text();
-    } catch (error) {
-      console.error(`[PelisPlusHD] fetchHtml error: ${error.message}`);
-      return "";
-    }
-  });
-}
-var DEFAULT_UA, COMMON_HEADERS;
-var init_http = __esm({
-  "src/hackstore2/http.js"() {
-    DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-    COMMON_HEADERS = {
-      "User-Agent": DEFAULT_UA,
+var require_http = __commonJS({
+  "src/hackstore2/http.js"(exports2, module2) {
+    var BASE_URL = "https://hackstore.mx";
+    var DEFAULT_UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    var COMMON_HEADERS = {
+      "User-Agent": DEFAULT_UA2,
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
       "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
       "Cache-Control": "no-cache",
-      "Pragma": "no-cache",
       "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
       "Sec-Ch-Ua-Mobile": "?0",
       "Sec-Ch-Ua-Platform": '"Windows"',
@@ -135,101 +92,38 @@ var init_http = __esm({
       "Sec-Fetch-User": "?1",
       "Upgrade-Insecure-Requests": "1"
     };
-  }
-});
-
-// src/utils/string.js
-function normalizeTitle(t) {
-  if (!t)
-    return "";
-  var normalized = t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-  var words = normalized.split(" ");
-  var filtered = [];
-  for (var i = 0; i < words.length; i++) {
-    var word = words[i];
-    var isNoise = false;
-    for (var j = 0; j < NOISE_WORDS.length; j++) {
-      if (NOISE_WORDS[j] === word) {
-        isNoise = true;
-        break;
-      }
+    function fetchText(_0) {
+      return __async(this, arguments, function* (url, options = {}) {
+        try {
+          const response = yield fetch(url, __spreadValues({
+            headers: __spreadValues(__spreadValues({}, COMMON_HEADERS), options.headers)
+          }, options));
+          if (!response.ok) {
+            throw new Error(`HTTP error ${response.status} for ${url}`);
+          }
+          return yield response.text();
+        } catch (error) {
+          console.error(`[HackStore-HTTP] Error: ${error.message}`);
+          throw error;
+        }
+      });
     }
-    if (!isNoise)
-      filtered.push(word);
-  }
-  return filtered.length > 0 ? filtered.join(" ") : normalized;
-}
-function calculateSimilarity(title1, title2) {
-  var norm1 = normalizeTitle(title1);
-  var norm2 = normalizeTitle(title2);
-  if (norm1 === norm2)
-    return 1;
-  if (norm1.length > 6 && norm2.length > 6 && (norm2.indexOf(norm1) !== -1 || norm1.indexOf(norm2) !== -1)) {
-    return 0.95;
-  }
-  var w1 = norm1.split(/\s+/);
-  var w2 = norm2.split(/\s+/);
-  var words1Map = {};
-  var words2Map = {};
-  var allUniqueWords = {};
-  for (var i = 0; i < w1.length; i++) {
-    if (w1[i].length > 1) {
-      words1Map[w1[i]] = true;
-      allUniqueWords[w1[i]] = true;
+    function fetchJson2(_0) {
+      return __async(this, arguments, function* (url, options = {}) {
+        const raw = yield fetchText(url, options);
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      });
     }
-  }
-  for (var j = 0; j < w2.length; j++) {
-    if (w2[j].length > 1) {
-      words2Map[w2[j]] = true;
-      allUniqueWords[w2[j]] = true;
-    }
-  }
-  var intersection = 0;
-  var union = 0;
-  for (var word in allUniqueWords) {
-    union++;
-    if (words1Map[word] && words2Map[word]) {
-      intersection++;
-    }
-  }
-  if (union === 0)
-    return 0;
-  var score = intersection / union;
-  var yearMatch1 = title1.match(/\b(19|20)\d{2}\b/);
-  var yearMatch2 = title2.match(/\b(19|20)\d{2}\b/);
-  if (yearMatch1 && yearMatch2 && yearMatch1[0] !== yearMatch2[0]) {
-    return score * 0.5;
-  }
-  return score;
-}
-var NOISE_WORDS;
-var init_string = __esm({
-  "src/utils/string.js"() {
-    NOISE_WORDS = [
-      "latino",
-      "espanol",
-      "hispano",
-      "dual",
-      "subs",
-      "subtitulado",
-      "hd",
-      "1080p",
-      "720p",
-      "4k",
-      "uhd",
-      "completa",
-      "pelicula",
-      "serie",
-      "episodio",
-      "capitulo",
-      "temporada"
-    ];
-  }
-});
-
-// src/utils/crypto.js
-var init_crypto = __esm({
-  "src/utils/crypto.js"() {
+    module2.exports = {
+      BASE_URL,
+      fetchText,
+      fetchJson: fetchJson2,
+      COMMON_HEADERS
+    };
   }
 });
 
@@ -250,7 +144,7 @@ var require_ua = __commonJS({
 });
 
 // src/utils/http.js
-var require_http = __commonJS({
+var require_http2 = __commonJS({
   "src/utils/http.js"(exports2, module2) {
     var { getRandomUA } = require_ua();
     var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
@@ -277,7 +171,7 @@ var require_http = __commonJS({
         "Upgrade-Insecure-Requests": "1"
       };
     }
-    var DEFAULT_UA3 = getSessionUA();
+    var DEFAULT_UA2 = getSessionUA();
     var MOBILE_UA = getSessionUA();
     function request(url, options) {
       return __async(this, null, function* () {
@@ -312,13 +206,13 @@ var require_http = __commonJS({
         }
       });
     }
-    function fetchHtml3(url, options) {
+    function fetchHtml2(url, options) {
       return __async(this, null, function* () {
         var res = yield request(url, options);
         return yield res.text();
       });
     }
-    function fetchJson3(url, options) {
+    function fetchJson2(url, options) {
       return __async(this, null, function* () {
         var res = yield request(url, options);
         return yield res.json();
@@ -326,12 +220,12 @@ var require_http = __commonJS({
     }
     module2.exports = {
       request,
-      fetchHtml: fetchHtml3,
-      fetchJson: fetchJson3,
+      fetchHtml: fetchHtml2,
+      fetchJson: fetchJson2,
       getSessionUA,
       setSessionUA,
       getStealthHeaders,
-      DEFAULT_UA: DEFAULT_UA3,
+      DEFAULT_UA: DEFAULT_UA2,
       MOBILE_UA
     };
   }
@@ -340,7 +234,7 @@ var require_http = __commonJS({
 // src/resolvers/voe.js
 var require_voe = __commonJS({
   "src/resolvers/voe.js"(exports2, module2) {
-    var { getSessionUA } = require_http();
+    var { getSessionUA } = require_http2();
     function localAtob(input) {
       if (!input)
         return "";
@@ -444,7 +338,7 @@ var require_voe = __commonJS({
 // src/utils/m3u8.js
 var require_m3u8 = __commonJS({
   "src/utils/m3u8.js"(exports2, module2) {
-    var { getSessionUA } = require_http();
+    var { getSessionUA } = require_http2();
     function getQualityFromHeight(height) {
       if (!height)
         return "1080p";
@@ -480,16 +374,16 @@ var require_m3u8 = __commonJS({
         if (bestHeight > 0)
           return getQualityFromHeight(bestHeight);
       }
-      const qMatch = url.match(/[_-](\d{3,4})[pP]?/);
+      const qMatch = url.match(/([_-]|\/)(\d{3,4})([pP]|(\.m3u8))?/);
       if (qMatch) {
-        const h = parseInt(qMatch[1]);
+        const h = parseInt(qMatch[2]);
         if (h >= 360 && h <= 4320)
           return getQualityFromHeight(h);
       }
       return "1080p";
     }
     var VALIDATION_CACHE = /* @__PURE__ */ new Map();
-    function validateStream2(stream, signal = null) {
+    function validateStream(stream, signal = null) {
       return __async(this, null, function* () {
         if (!stream || !stream.url)
           return stream;
@@ -500,8 +394,7 @@ var require_m3u8 = __commonJS({
           const fetchOptions = {
             method: "GET",
             headers: __spreadValues({
-              "User-Agent": getSessionUA(),
-              "Range": "bytes=0-1024"
+              "User-Agent": getSessionUA()
             }, headers || {})
           };
           if (signal)
@@ -523,17 +416,16 @@ var require_m3u8 = __commonJS({
         }
       });
     }
-    module2.exports = { validateStream: validateStream2, getQualityFromHeight };
-    module2.exports = { validateStream: validateStream2, getQualityFromHeight };
+    module2.exports = { validateStream, getQualityFromHeight };
   }
 });
 
 // src/resolvers/hlswish.js
 var require_hlswish = __commonJS({
   "src/resolvers/hlswish.js"(exports2, module2) {
-    var { getSessionUA } = require_http();
-    var { validateStream: validateStream2 } = require_m3u8();
-    function unpackEval2(payload, radix, symtab) {
+    var { getSessionUA } = require_http2();
+    var { validateStream } = require_m3u8();
+    function unpackEval(payload, radix, symtab) {
       const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const unbase = (str) => {
         let result = 0;
@@ -603,7 +495,7 @@ var require_hlswish = __commonJS({
                 if (!m3u8Url) {
                   const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
                   if (packedMatch) {
-                    const unpacked = unpackEval2(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
+                    const unpacked = unpackEval(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
                     const match = unpacked.match(/https?:\/\/[^"'\s]+\.m3u8[^"'\s]*/);
                     if (match)
                       m3u8Url = match[0];
@@ -723,7 +615,7 @@ var require_aes_gcm = __commonJS({
 var require_filemoon = __commonJS({
   "src/resolvers/filemoon.js"(exports2, module2) {
     var { decryptByse } = require_aes_gcm();
-    var { getSessionUA } = require_http();
+    var { getSessionUA } = require_http2();
     var UA_CHROME = getSessionUA();
     function unpack(p, a, c, k, e, d) {
       while (c--)
@@ -816,8 +708,8 @@ var require_filemoon = __commonJS({
 // src/resolvers/vidhide.js
 var require_vidhide = __commonJS({
   "src/resolvers/vidhide.js"(exports2, module2) {
-    var { getSessionUA, getStealthHeaders } = require_http();
-    var { validateStream: validateStream2 } = require_m3u8();
+    var { getSessionUA, getStealthHeaders } = require_http2();
+    var { validateStream } = require_m3u8();
     function unpackVidHide(script) {
       try {
         const match = script.match(/eval\(function\(p,a,c,k,e,[rd]\)\{.*?\}\s*\('([\s\S]*?)',\s*(\d+),\s*(\d+),\s*'([\s\S]*?)'\.split\('\|'\)/);
@@ -1015,7 +907,7 @@ var init_goodstream = __esm({
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3, getSessionUA } = require_http();
+    var { fetchHtml: fetchHtml2, getSessionUA } = require_http2();
     var { detectQuality: detectQuality2 } = require_quality();
     var UA4 = getSessionUA();
     function unpackPacker(data) {
@@ -1036,7 +928,7 @@ var require_fastream = __commonJS({
       return __async(this, null, function* () {
         try {
           console.log("[Fastream] Resolviendo: " + url);
-          var data = yield fetchHtml3(url, {
+          var data = yield fetchHtml2(url, {
             headers: { "User-Agent": UA4, "Referer": "https://www3.seriesmetro.net/" }
           });
           var unpacked = unpackPacker(data);
@@ -1167,7 +1059,7 @@ function resolve2(embedUrl) {
 var import_http;
 var init_vimeos = __esm({
   "src/resolvers/vimeos.js"() {
-    import_http = __toESM(require_http());
+    import_http = __toESM(require_http2());
   }
 });
 
@@ -1175,7 +1067,7 @@ var init_vimeos = __esm({
 var require_buzzheavier = __commonJS({
   "src/resolvers/buzzheavier.js"(exports2, module2) {
     var axios4 = require("axios");
-    var { getStealthHeaders } = require_http();
+    var { getStealthHeaders } = require_http2();
     function resolve5(embedUrl) {
       return __async(this, null, function* () {
         if (!embedUrl)
@@ -1366,7 +1258,7 @@ var require_pixeldrain = __commonJS({
 // src/resolvers/playmogo.js
 var require_playmogo = __commonJS({
   "src/resolvers/playmogo.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml3, DEFAULT_UA: DEFAULT_UA3 } = require_http();
+    var { fetchHtml: fetchHtml2, DEFAULT_UA: DEFAULT_UA2 } = require_http2();
     function resolve5(url) {
       return __async(this, null, function* () {
         try {
@@ -1376,7 +1268,7 @@ var require_playmogo = __commonJS({
             quality: "720p",
             serverName: "Playmogo",
             headers: {
-              "User-Agent": DEFAULT_UA3,
+              "User-Agent": DEFAULT_UA2,
               "Referer": "https://dsvplay.com/",
               "Origin": "https://dsvplay.com"
             }
@@ -1432,7 +1324,7 @@ var init_turbovid = __esm({
 var require_embedseek = __commonJS({
   "src/resolvers/embedseek.js"(exports2, module2) {
     var CryptoJS2 = require("crypto-js");
-    var { getSessionUA } = require_http();
+    var { getSessionUA } = require_http2();
     function resolve5(url) {
       return __async(this, null, function* () {
         try {
@@ -1538,7 +1430,7 @@ var require_embedseek = __commonJS({
 var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
     var axios4 = require("axios");
-    var { getStealthHeaders } = require_http();
+    var { getStealthHeaders } = require_http2();
     function resolve5(embedUrl) {
       return __async(this, null, function* () {
         try {
@@ -1598,9 +1490,9 @@ var require_tplayer = __commonJS({
 // src/resolvers/lulustream.js
 var require_lulustream = __commonJS({
   "src/resolvers/lulustream.js"(exports2, module2) {
-    var { getSessionUA } = require_http();
-    var { validateStream: validateStream2 } = require_m3u8();
-    function unpackEval2(payload, radix, symtab) {
+    var { getSessionUA } = require_http2();
+    var { validateStream } = require_m3u8();
+    function unpackEval(payload, radix, symtab) {
       const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const unbase = (str) => {
         let result = 0;
@@ -1642,7 +1534,7 @@ var require_lulustream = __commonJS({
           if (!m3u8Url) {
             const packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
             if (packedMatch) {
-              const unpacked = unpackEval2(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
+              const unpacked = unpackEval(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split("|"));
               const match = unpacked.match(/https?:\/\/[^"'\s]+\.m3u8[^"'\s]*/);
               if (match)
                 m3u8Url = match[0];
@@ -1667,7 +1559,7 @@ var require_lulustream = __commonJS({
                 "User-Agent": UA4
               }
             };
-            return yield validateStream2(stream);
+            return yield validateStream(stream);
           }
           return null;
         } catch (e) {
@@ -1788,7 +1680,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolveVidhide } = require_vidhide();
     var { resolve: resolveGoodstream } = (init_goodstream(), __toCommonJS(goodstream_exports));
     var { resolve: resolveFastream } = require_fastream();
-    var { resolve: resolveVimeos2 } = (init_vimeos(), __toCommonJS(vimeos_exports));
+    var { resolve: resolveVimeos } = (init_vimeos(), __toCommonJS(vimeos_exports));
     var { resolve: resolveBuzzheavier } = require_buzzheavier();
     var { resolve: resolveOkru } = (init_okru(), __toCommonJS(okru_exports));
     var { resolve: resolvePixeldrain } = require_pixeldrain();
@@ -1797,13 +1689,13 @@ var require_resolvers = __commonJS({
     var { resolve: resolveEmbedseek } = require_embedseek();
     var { resolve: resolveTplayer } = require_tplayer();
     var { resolve: resolveLulustream } = require_lulustream();
-    var { getSessionUA } = require_http();
+    var { getSessionUA } = require_http2();
     var { isMirror } = require_mirrors();
     var UA4 = getSessionUA();
     function getDirectCdnHeaders(url) {
       if (!url)
         return null;
-      const { getStealthHeaders } = require_http();
+      const { getStealthHeaders } = require_http2();
       const s = url.toLowerCase();
       try {
         const domain = new URL(url).hostname;
@@ -1850,7 +1742,7 @@ var require_resolvers = __commonJS({
       result.url = url;
       return result;
     }
-    function resolveEmbed2(url, signal = null) {
+    function resolveEmbed(url, signal = null) {
       return __async(this, null, function* () {
         if (!url)
           return null;
@@ -1884,7 +1776,7 @@ var require_resolvers = __commonJS({
             return applyPiping(res);
         }
         if (s.includes("vimeos") || s.includes("vms.sh")) {
-          const res = yield resolveVimeos2(url);
+          const res = yield resolveVimeos(url);
           if (res)
             return applyPiping(res);
         }
@@ -1929,172 +1821,115 @@ var require_resolvers = __commonJS({
         });
       });
     }
-    module2.exports = { resolveEmbed: resolveEmbed2 };
+    module2.exports = { resolveEmbed };
   }
 });
 
-// src/hackstore2/extractor.js
-var extractor_exports = {};
-__export(extractor_exports, {
-  extractStreams: () => extractStreams
-});
-function getTmdbInfo(tmdbId, mediaType) {
-  return __async(this, null, function* () {
-    try {
-      const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-      const html = yield fetchHtml(url, url);
-      const $ = cheerio.load(html);
-      const title = $(".title h2 a").text().trim();
-      const originalTitle = $(".original_title").text().replace("T\xEDtulo original:", "").trim();
-      const releaseYear = $(".release_date").text().match(/\d{4}/);
-      return {
-        title: title || "",
-        originalTitle: originalTitle || title || "",
-        year: releaseYear ? releaseYear[0] : null
-      };
-    } catch (error) {
-      return null;
-    }
-  });
-}
-function extractStreams(tmdbId, mediaType, season, episode, providedTitle, providedYear) {
-  return __async(this, null, function* () {
-    console.log(`[HackStore2] Requesting streams for TMDB ID: ${tmdbId} (Title: ${providedTitle || "N/A"})`);
-    try {
-      let searchTitle = providedTitle;
-      let searchYear = providedYear;
-      if (!searchTitle) {
-        const tmdbInfo = yield getTmdbInfo(tmdbId, mediaType);
-        if (tmdbInfo) {
-          searchTitle = tmdbInfo.title;
-          searchYear = tmdbInfo.year;
-        }
-      }
-      if (!searchTitle) {
-        console.log("[HackStore2] Pelicula no encontrada (TMDB Scrape fall\xF3 y no hay t\xEDtulo).");
-        return [];
-      }
-      const postType = mediaType === "movie" ? "movies" : "tvshows";
-      const queriesToTry = [
-        searchTitle,
-        searchTitle.replace(/[:\-–]/g, " "),
-        searchTitle.split(" ").slice(0, 2).join(" ")
-      ].filter((v, i, a) => a.indexOf(v) === i && v.length > 2);
-      let matchedPost = null;
-      const cleanYear = (s) => s.replace(/\(\d{4}\)/g, "").trim();
-      const checkSequel = (query, target) => {
-        const clean = (s) => s.replace(/\(\d{4}\)/g, "").trim();
-        const getNum = (s) => (clean(s).match(/\b(\d+|I|II|III|IV|V)\b$/i) || [null, ""])[1];
-        const qNum = getNum(query);
-        const tNum = getNum(target);
-        return qNum === tNum;
-      };
-      for (const query of queriesToTry) {
-        console.log(`[HackStore2] Searching API for: ${query}`);
-        const searchUrl = `https://hackstore2.com/api/rest/search?post_type=${postType}&query=${encodeURIComponent(query)}`;
+// src/utils/tmdb.js
+var require_tmdb = __commonJS({
+  "src/utils/tmdb.js"(exports2, module2) {
+    var axios4 = require("axios");
+    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+    var titleCache = /* @__PURE__ */ new Map();
+    function getTmdbTitle(tmdbId, mediaType, language = "en-US", retries = 2) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return null;
+        const cleanId = tmdbId.toString().split(":")[0];
+        const cacheKey = `${cleanId}_${mediaType}_${language}`;
+        if (titleCache.has(cacheKey))
+          return titleCache.get(cacheKey);
         try {
-          const searchData = yield fetchJson(searchUrl);
-          if (!searchData || searchData.error || !searchData.data || !searchData.data.posts)
-            continue;
-          matchedPost = searchData.data.posts.find((p) => {
-            const similarity = calculateSimilarity(searchTitle, cleanYear(p.title));
-            const sequelMatch = checkSequel(searchTitle, p.title);
-            return similarity > 0.7 && sequelMatch;
-          });
-          if (!matchedPost && searchYear) {
-            matchedPost = searchData.data.posts.find((p) => {
-              const similarity = calculateSimilarity(searchTitle, cleanYear(p.title));
-              return similarity > 0.4 && p.years && p.years.toString().includes(searchYear);
-            });
-          }
-          if (matchedPost) {
-            console.log(`[HackStore2] Best Match found with query "${query}": ${matchedPost.title}`);
-            break;
+          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+          let url;
+          if (cleanId.startsWith("tt")) {
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id&language=${language}`;
+            const { data } = yield axios4.get(url, { timeout: 6e3 });
+            const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
+            const title = result ? result.name || result.title : null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
+          } else {
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}&language=${language}`;
+            const { data } = yield axios4.get(url, { timeout: 6e3 });
+            const title = data.name || data.title || null;
+            if (title)
+              titleCache.set(cacheKey, title);
+            return title;
           }
         } catch (e) {
-          console.warn(`[HackStore2] Search fail for query "${query}":`, e.message);
-        }
-      }
-      if (!matchedPost) {
-        console.log(`[HackStore2] No strict match found for "${searchTitle}" (${searchYear || "Any Year"}). Skipping...`);
-        return [];
-      }
-      console.log(`[HackStore2] Match found: ${matchedPost.title} (ID: ${matchedPost._id})`);
-      let finalPostId = matchedPost._id;
-      if (mediaType === "tv") {
-        console.log(`[HackStore2] Fetching episodes for series ID: ${finalPostId}`);
-        const episodesUrl = `https://hackstore2.com/api/rest/episodes?post_id=${finalPostId}`;
-        const episodesData = yield fetchJson(episodesUrl);
-        if (!episodesData || !episodesData.data || !Array.isArray(episodesData.data)) {
-          console.log("[HackStore2] No episodes found for this series.");
-          return [];
-        }
-        const episodeMatch = episodesData.data.find(
-          (e) => e.season_number.toString() === season.toString() && e.episode_number.toString() === episode.toString()
-        );
-        if (!episodeMatch) {
-          console.log(`[HackStore2] Episode S${season}E${episode} not found in this series.`);
-          return [];
-        }
-        console.log(`[HackStore2] Found episode: ${episodeMatch.title} (ID: ${episodeMatch._id})`);
-        finalPostId = episodeMatch._id;
-      }
-      const playerUrl = `https://hackstore2.com/api/rest/player?post_id=${finalPostId}`;
-      const playerData = yield fetchJson(playerUrl);
-      if (!playerData || playerData.error || !playerData.data || !Array.isArray(playerData.data)) {
-        console.log("[HackStore2] No players found.");
-        return [];
-      }
-      const streamPromises = playerData.data.map((player) => __async(this, null, function* () {
-        const lang = player.lang || "Latino";
-        if (lang.toLowerCase().includes("sub") || lang.toLowerCase().includes("vose")) {
-          return null;
-        }
-        let serverName = "Desconocido";
-        let rawUrl = player.url || "";
-        let finalUrl = rawUrl;
-        if (rawUrl.includes("hlswish") || rawUrl.includes("streamwish") || rawUrl.includes("hglamioz") || rawUrl.includes("embedwish"))
-          serverName = "streamwish";
-        else if (rawUrl.includes("vidhide") || rawUrl.includes("dintezuvio"))
-          serverName = "vidhide";
-        else if (rawUrl.includes("filemoon"))
-          serverName = "filemoon";
-        else if (rawUrl.includes("voe") || rawUrl.includes("jessicaclearout"))
-          serverName = "voe";
-        else if (rawUrl.includes("vimeos"))
-          serverName = "vimeos";
-        resolvedData = yield (0, import_resolvers.resolveEmbed)(finalUrl);
-        if (!resolvedData || !resolvedData.url)
-          return null;
-        return {
-          url: resolvedData.url,
-          quality: resolvedData.quality,
-          siteQuality: player.quality || null,
-          langLabel: player.lang || "Latino",
-          serverLabel: serverName,
-          headers: resolvedData.headers || {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            "Referer": rawUrl
+          if (retries > 0) {
+            console.log(`[TMDB-Rescue] Retrying ${tmdbId} (${retries} left)...`);
+            yield new Promise((r) => setTimeout(r, 1e3));
+            return getTmdbTitle(tmdbId, mediaType, retries - 1);
           }
-        };
-      }));
-      const playerResults = yield Promise.all(streamPromises);
-      return playerResults.filter((s) => s !== null);
-    } catch (error) {
-      console.error(`[HackStore2] Error: ${error.message}`);
-      return [];
+          console.log(`[TMDB-Rescue] Failed to fetch title for ${tmdbId}: ${e.message}`);
+          return null;
+        }
+      });
     }
-  });
-}
-var import_resolvers, import_m3u8, cheerio;
-var init_extractor = __esm({
-  "src/hackstore2/extractor.js"() {
-    init_http();
-    init_string();
-    init_crypto();
-    import_resolvers = __toESM(require_resolvers());
-    import_m3u8 = __toESM(require_m3u8());
-    cheerio = require("cheerio-without-node-native");
+    function getTmdbInfo(tmdbId, mediaType) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return null;
+        const cleanId = tmdbId.toString().split(":")[0];
+        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+        try {
+          let url;
+          let result;
+          if (cleanId.startsWith("tt")) {
+            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+            const { data } = yield axios4.get(url, { timeout: 6e3 });
+            result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
+          } else {
+            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
+            const { data } = yield axios4.get(url, { timeout: 6e3 });
+            result = data;
+          }
+          if (result) {
+            const title = result.name || result.title;
+            const date = result.release_date || result.first_air_date || "";
+            const year = date.split("-")[0];
+            return { title, year };
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    function getTmdbAliases(tmdbId, mediaType) {
+      return __async(this, null, function* () {
+        if (!tmdbId)
+          return [];
+        const cleanId = tmdbId.toString().split(":")[0];
+        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
+        const titles = /* @__PURE__ */ new Set();
+        try {
+          const [enTitle, esTitle] = yield Promise.all([
+            getTmdbTitle(cleanId, type, "en-US"),
+            getTmdbTitle(cleanId, type, "es-MX")
+          ]);
+          if (enTitle)
+            titles.add(enTitle);
+          if (esTitle)
+            titles.add(esTitle);
+          const altUrl = `https://api.themoviedb.org/3/${type}/${cleanId}/alternative_titles?api_key=${TMDB_API_KEY}`;
+          const { data } = yield axios4.get(altUrl, { timeout: 5e3 });
+          const altResults = data.titles || data.results || [];
+          altResults.forEach((item) => {
+            if (item.title)
+              titles.add(item.title);
+          });
+          return Array.from(titles);
+        } catch (e) {
+          console.warn(`[TMDB-Aliases] Failed for ${tmdbId}: ${e.message}`);
+          return Array.from(titles);
+        }
+      });
+    }
+    module2.exports = { getTmdbTitle, getTmdbInfo, getTmdbAliases };
   }
 });
 
@@ -2156,7 +1991,7 @@ var init_sorting = __esm({
 // src/utils/engine.js
 var require_engine = __commonJS({
   "src/utils/engine.js"(exports2, module2) {
-    var { validateStream: validateStream2 } = require_m3u8();
+    var { validateStream } = require_m3u8();
     var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
     var { isMirror } = require_mirrors();
     function normalizeLanguage(lang) {
@@ -2196,7 +2031,7 @@ var require_engine = __commonJS({
       }
       return server || "Servidor";
     }
-    function finalizeStreams2(streams, providerName, mediaTitle) {
+    function finalizeStreams(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
@@ -2212,24 +2047,23 @@ var require_engine = __commonJS({
             continue;
           }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          const displayQuality = s.quality || "HD";
-          const checkMark = s.verified ? " \u2705" : "";
-          const streamName = `${providerName} - ${displayQuality}${checkMark}`;
+          const quality = s.quality || "HD";
+          const isVerified = s.verified === true;
+          const checkMark = isVerified ? " \u2705" : "";
+          const streamName = `${providerName} - ${quality}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
           seenTitles.add(streamName + streamTitle + s.url);
           processed.push({
             name: streamName,
-            // Nombre que verá el usuario en la lista
             title: streamTitle,
-            // Título de la película/serie
             url: s.url,
-            quality: displayQuality,
+            quality,
+            verified: isVerified,
+            // Propiedad crítica para el 'check' de la UI de Nuvio
             provider: server,
-            // Mapeado a 'provider' en LocalScraperResult
             language: rawLang,
-            // Mapeado a 'language' en LocalScraperResult
             headers: s.headers || {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             }
@@ -2238,106 +2072,141 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
+    module2.exports = { finalizeStreams, normalizeLanguage };
   }
 });
 
-// src/utils/tmdb.js
-var require_tmdb = __commonJS({
-  "src/utils/tmdb.js"(exports2, module2) {
-    var axios4 = require("axios");
-    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-    var titleCache = /* @__PURE__ */ new Map();
-    function getTmdbTitle2(tmdbId, mediaType, retries = 2) {
+// src/hackstore2/extractor.js
+var require_extractor = __commonJS({
+  "src/hackstore2/extractor.js"(exports2, module2) {
+    var { fetchJson: fetchJson2, BASE_URL } = require_http();
+    var { resolveEmbed } = require_resolvers();
+    var { getTmdbTitle, getTmdbAliases, getTmdbInfo } = require_tmdb();
+    var engine = require_engine();
+    function normalizeSlug(title) {
+      if (!title)
+        return "";
+      return title.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    }
+    function getStreams(tmdbId, mediaType, season, episode, query) {
       return __async(this, null, function* () {
-        if (!tmdbId)
-          return null;
-        const cleanId = tmdbId.toString().split(":")[0];
-        const cacheKey = `${cleanId}_${mediaType}`;
-        if (titleCache.has(cacheKey))
-          return titleCache.get(cacheKey);
+        console.log(`[HackStore] API Fast-Track: ${query} (TMDB: ${tmdbId})`);
         try {
-          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          let url;
-          if (cleanId.startsWith("tt")) {
-            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios4.get(url, { timeout: 6e3 });
-            const result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-            const title = result ? result.name || result.title : null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
-          } else {
-            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios4.get(url, { timeout: 6e3 });
-            const title = data.name || data.title || null;
-            if (title)
-              titleCache.set(cacheKey, title);
-            return title;
+          const info = yield getTmdbInfo(tmdbId, mediaType);
+          const aliases = yield getTmdbAliases(tmdbId, mediaType);
+          const year = info ? info.year : "";
+          const baseTitles = /* @__PURE__ */ new Set();
+          if (query)
+            baseTitles.add(query);
+          if (info && info.title)
+            baseTitles.add(info.title);
+          if (aliases)
+            aliases.forEach((a) => baseTitles.add(a));
+          const slugsToTry = [];
+          for (const t of baseTitles) {
+            const sl = normalizeSlug(t);
+            if (!sl)
+              continue;
+            if (year)
+              slugsToTry.push(`${sl}-${year}`);
+            slugsToTry.push(sl);
           }
-        } catch (e) {
-          if (retries > 0) {
-            console.log(`[TMDB-Rescue] Retrying ${tmdbId} (${retries} left)...`);
-            yield new Promise((r) => setTimeout(r, 1e3));
-            return getTmdbTitle2(tmdbId, mediaType, retries - 1);
+          const uniqueSlugs = [...new Set(slugsToTry)].slice(0, 8);
+          console.log(`[HackStore] Evaluando Slugs:`, uniqueSlugs);
+          let targetId = null;
+          const postType = mediaType === "movie" || mediaType === "movies" ? "movies" : "tvshows";
+          for (const slug of uniqueSlugs) {
+            const endpoint = `${BASE_URL}/wp-api/v1/single/${postType}?slug=${slug}&postType=${postType}`;
+            const res = yield fetchJson2(endpoint);
+            if (res && res.data && res.data._id) {
+              targetId = res.data._id;
+              console.log(`[HackStore] \xA1Match API! Slug: ${slug} -> ID: ${targetId}`);
+              break;
+            }
           }
-          console.log(`[TMDB-Rescue] Failed to fetch title for ${tmdbId}: ${e.message}`);
-          return null;
+          if (!targetId) {
+            console.log("[HackStore] ID Principal no encontrado en la API.");
+            return [];
+          }
+          if (postType === "tvshows") {
+            console.log(`[HackStore] Buscando Episodio S${season}E${episode}...`);
+            const epListUrl = `${BASE_URL}/wp-api/v1/single/episodes/list?_id=${targetId}&season=${season}&page=1&postsPerPage=200`;
+            const epRes = yield fetchJson2(epListUrl);
+            if (epRes && epRes.data && epRes.data.posts) {
+              const epObj = epRes.data.posts.find((p) => p.season_number == season && p.episode_number == episode);
+              if (epObj && epObj._id) {
+                targetId = epObj._id;
+                console.log(`[HackStore] ID Episodio encontrado: ${targetId}`);
+              } else {
+                console.log("[HackStore] Episodio no encontrado en la lista.");
+                return [];
+              }
+            } else {
+              console.log("[HackStore] No se pudo obtener la lista de episodios.");
+              return [];
+            }
+          }
+          const apiUrl = `${BASE_URL}/wp-api/v1/player?postId=${targetId}`;
+          const playerResponse = yield fetchJson2(apiUrl);
+          if (!playerResponse || playerResponse.error || !playerResponse.data || !playerResponse.data.embeds) {
+            console.log("[HackStore] No player embeds found.");
+            return [];
+          }
+          const playerData = playerResponse.data.embeds;
+          const streamPromises = playerData.map((p) => __async(this, null, function* () {
+            const lang = (p.lang || "Latino").toLowerCase();
+            if (lang.includes("sub") || lang.includes("vose") || lang.includes("ing") || lang.includes("espana") || lang.includes("cast")) {
+              return null;
+            }
+            const rawUrl = p.url;
+            if (!rawUrl)
+              return null;
+            try {
+              const resolved = yield resolveEmbed(rawUrl);
+              if (!resolved || !resolved.url)
+                return null;
+              const anchorUrl = resolved.url.includes("#") ? resolved.url : `${resolved.url}#.m3u8`;
+              return {
+                url: anchorUrl,
+                quality: resolved.quality || "HD",
+                lang: "Latino",
+                provider: "HackStore",
+                server: p.server || "Unknown"
+              };
+            } catch (e) {
+              return null;
+            }
+          }));
+          const candidates = (yield Promise.all(streamPromises)).filter((s) => s !== null);
+          return engine.finalizeStreams(candidates, mediaType);
+        } catch (error) {
+          console.error(`[HackStore] Fatal Error:`, error.message);
+          return [];
         }
       });
     }
-    function getTmdbInfo2(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        if (!tmdbId)
-          return null;
-        const cleanId = tmdbId.toString().split(":")[0];
-        const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-        try {
-          let url;
-          let result;
-          if (cleanId.startsWith("tt")) {
-            url = `https://api.themoviedb.org/3/find/${cleanId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
-            const { data } = yield axios4.get(url, { timeout: 6e3 });
-            result = type === "movie" ? data.movie_results && data.movie_results[0] : data.tv_results && data.tv_results[0] || data.movie_results && data.movie_results[0];
-          } else {
-            url = `https://api.themoviedb.org/3/${type}/${cleanId}?api_key=${TMDB_API_KEY}`;
-            const { data } = yield axios4.get(url, { timeout: 6e3 });
-            result = data;
-          }
-          if (result) {
-            const title = result.name || result.title;
-            const date = result.release_date || result.first_air_date || "";
-            const year = date.split("-")[0];
-            return { title, year };
-          }
-          return null;
-        } catch (e) {
-          return null;
-        }
-      });
-    }
-    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo: getTmdbInfo2 };
+    module2.exports = {
+      getStreams,
+      extract: getStreams
+    };
   }
 });
 
 // src/hackstore2/index.js
-var { extractStreams: extractStreams2 } = (init_extractor(), __toCommonJS(extractor_exports));
-var { finalizeStreams } = require_engine();
-var { getTmdbTitle } = require_tmdb();
-function getStreams(tmdbId, mediaType, season, episode, title, year) {
+var extractor = require_extractor();
+function extract(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     try {
-      let mediaTitle = title;
-      if (!mediaTitle && tmdbId) {
-        mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
-      }
-      console.log(`[HackStore2] Request: ${mediaType} ${tmdbId} (Title: ${mediaTitle || "N/A"})`);
-      const streams = yield extractStreams2(tmdbId, mediaType, season, episode, mediaTitle, year);
-      return yield finalizeStreams(streams, "HackStore2", mediaTitle);
+      console.log(`[HackStore-Index] Starting extraction for TMDB:${tmdbId} (${mediaType})`);
+      return yield extractor.getStreams(tmdbId, mediaType, season, episode, title);
     } catch (error) {
-      console.error(`[HackStore2] Fatal Error in index: ${error.message}`);
+      console.error(`[HackStore-Index] Fatal Error:`, error.message);
       return [];
     }
   });
 }
-module.exports = { getStreams };
+module.exports = {
+  extract,
+  getStreams: extract
+  // Alias para compatibilidad total
+};

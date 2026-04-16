@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.6.0",
+  "version": "12.7.0",
   "scrapers": [
     {
       "id": "embed69",
@@ -93,10 +93,10 @@
       "supportsExternalPlayer": true
     },
     {
-      "id": "hackstore2",
-      "name": "HackStore2",
+      "id": "hackstore",
+      "name": "HackStore",
       "description": "API Nativa de Películas en HD",
-      "version": "2.0.0",
+      "version": "12.7.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -104,7 +104,7 @@
       ],
       "filename": "providers/hackstore2.js",
       "enabled": true,
-      "logo": "https://www.appcreator24.com/srv/imgs/gen/972192_ico.png?v=5",
+      "logo": "https://hackstore.mx/wp-content/uploads/2025/07/cropped-fire-1-180x180.png",
       "contentLanguage": [
         "es"
       ],
