@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-17T14:31:01.718Z
+ * Generated: 2026-04-17T14:38:56.152Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2046,38 +2046,49 @@ function findContentUrl(tmdbInfo, mediaType) {
   return __async(this, null, function* () {
     const { title, originalTitle, aliases = [] } = tmdbInfo;
     const category = mediaType === "movie" ? "pelicula" : "serie";
-    const searchTerms = [
-      title,
-      originalTitle,
-      ...aliases
-    ].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
-    console.log(`[SeriesMetro] Buscando "${title}" con ${searchTerms.length} t\xE9rminos...`);
+    const topTitles = [title, originalTitle].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+    const guestUrls = topTitles.map((t) => ({ url: `${BASE}/${category}/${buildSlug(t)}/`, term: t }));
+    console.log(`[SeriesMetro] Probando slugs directos para: ${topTitles.join(", ")}`);
+    const guestResults = yield Promise.allSettled(guestUrls.map((g) => fetchHtml(g.url, { headers: HEADERS })));
+    for (let i = 0; i < guestResults.length; i++) {
+      const res = guestResults[i];
+      if (res.status === "fulfilled" && res.value && (res.value.includes("trembed=") || res.value.includes("data-post="))) {
+        console.log(`[SeriesMetro] \u2713 Encontrado v\xEDa slug paralelo: ${guestUrls[i].url}`);
+        return { url: guestUrls[i].url, html: res.value };
+      }
+    }
+    const searchTerms = topTitles;
     for (const term of searchTerms) {
       try {
+        console.log(`[SeriesMetro] Buscando activamente: "${term}"`);
         const searchUrl = `${BASE}/?s=${encodeURIComponent(term)}`;
         const searchHtml = yield fetchHtml(searchUrl, { headers: HEADERS });
         if (searchHtml) {
           const matches = [...searchHtml.matchAll(/<article[^>]*class="[^"]*post[^"]*"[^>]*>[\s\S]*?<a[^>]*href="([^"]+\/(?:serie|pelicula)\/([^/]+)\/)"[^>]*class="lnk-blk"/g)];
-          for (const [, url, slug2] of matches) {
-            const isCorrectType = url.includes(`/${category}/`);
-            if (!isCorrectType)
+          for (const [, url, slug] of matches) {
+            if (!url.includes(`/${category}/`))
               continue;
-            const slugFound = slug2.toLowerCase();
+            const slugFound = slug.toLowerCase();
             const slugSearch = buildSlug(term);
             if (slugFound.includes(slugSearch) || slugSearch.includes(slugFound)) {
-              const data2 = yield fetchHtml(url, { headers: HEADERS });
-              if (data2 && (data2.includes("trembed=") || data2.includes("data-post="))) {
+              const data = yield fetchHtml(url, { headers: HEADERS });
+              if (data && (data.includes("trembed=") || data.includes("data-post="))) {
                 console.log(`[SeriesMetro] \u2713 Encontrado v\xEDa b\xFAsqueda: ${url}`);
-                return { url, html: data2 };
+                return { url, html: data };
               }
             }
           }
         }
-        const slug = buildSlug(term);
-        const guestUrl = `${BASE}/${category}/${slug}/`;
+      } catch (e) {
+      }
+    }
+    const secondaryTerms = aliases.filter((a) => !topTitles.includes(a)).slice(0, 2);
+    for (const term of secondaryTerms) {
+      const slug = buildSlug(term);
+      const guestUrl = `${BASE}/${category}/${slug}/`;
+      try {
         const data = yield fetchHtml(guestUrl, { headers: HEADERS });
         if (data && (data.includes("trembed=") || data.includes("data-post="))) {
-          console.log(`[SeriesMetro] \u2713 Encontrado v\xEDa slug directo: ${guestUrl}`);
           return { url: guestUrl, html: data };
         }
       } catch (e) {
@@ -2166,9 +2177,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
       let tmdbInfo = { title, originalTitle: title, aliases: [] };
       if (tmdbId) {
-        const titleEs = yield getTmdbTitle(tmdbId, mediaType, "es-MX");
-        const titleEn = yield getTmdbTitle(tmdbId, mediaType, "en-US");
-        const aliases = yield getTmdbAliases(tmdbId, mediaType);
+        const [titleEs, titleEn, aliases] = yield Promise.all([
+          getTmdbTitle(tmdbId, mediaType, "es-MX"),
+          getTmdbTitle(tmdbId, mediaType, "en-US"),
+          getTmdbAliases(tmdbId, mediaType)
+        ]);
         tmdbInfo = {
           title: titleEs || titleEn || title,
           originalTitle: titleEn || titleEs || title,
