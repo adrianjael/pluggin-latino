@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-17T14:49:15.274Z
+ * Generated: 2026-04-17T16:22:06.338Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -997,8 +997,7 @@ var require_vidhide = __commonJS({
 // src/resolvers/quality.js
 var require_quality = __commonJS({
   "src/resolvers/quality.js"(exports2, module2) {
-    var { request: request2 } = require_http();
-    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+    var { request: request2, getSessionUA } = require_http();
     function detectQuality(_0) {
       return __async(this, arguments, function* (url, headers = {}) {
         try {
@@ -1007,7 +1006,7 @@ var require_quality = __commonJS({
           const res = yield request2(url, {
             timeout: 5e3,
             headers: __spreadValues({
-              "User-Agent": UA4
+              "User-Agent": getSessionUA()
             }, headers)
           });
           const data = yield res.text();
@@ -1138,9 +1137,7 @@ var require_fastream = __commonJS({
                 serverName: "Fastream",
                 headers: {
                   "User-Agent": UA4,
-                  "Referer": "https://fastream.to/",
-                  "Origin": "https://fastream.to",
-                  "Accept": "*/*"
+                  "Referer": "https://fastream.to/"
                 }
               };
             }
@@ -1151,9 +1148,7 @@ var require_fastream = __commonJS({
             return null;
           var m3u8Url = m3u8Match[1];
           var quality = yield detectQuality(m3u8Url, {
-            "Referer": "https://fastream.to/",
-            "Origin": "https://fastream.to",
-            "Accept": "*/*"
+            "Referer": "https://fastream.to/"
           });
           return {
             url: m3u8Url,
@@ -1161,9 +1156,7 @@ var require_fastream = __commonJS({
             serverName: "Fastream",
             headers: {
               "User-Agent": UA4,
-              "Referer": "https://fastream.to/",
-              "Origin": "https://fastream.to",
-              "Accept": "*/*"
+              "Referer": "https://fastream.to/"
             }
           };
         } catch (e) {
@@ -2178,8 +2171,19 @@ function extractStreams(pageUrl, referer) {
         }
         return null;
       });
-      const results = yield Promise.all(sorted.slice(0, 6).map(([, idx, srvRaw]) => resolveTask(idx, srvRaw)));
-      return results.filter(Boolean);
+      const streams = [];
+      const promises = sorted.slice(0, 6).map(([, idx, srvRaw]) => resolveTask(idx, srvRaw));
+      for (const p of promises) {
+        const stream = yield p;
+        if (stream) {
+          streams.push(stream);
+          if (stream.langLabel === "Latino") {
+            console.log("[SeriesMetro] \u2713 Latino encontrado r\xE1pido, retornando enlace prioritario");
+            return [stream];
+          }
+        }
+      }
+      return streams;
     } catch (e) {
       return [];
     }
