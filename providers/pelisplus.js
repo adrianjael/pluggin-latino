@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-16T21:54:35.221Z
+ * Generated: 2026-04-17T18:17:36.343Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -823,20 +823,19 @@ var require_vidhide = __commonJS({
 // src/resolvers/quality.js
 var require_quality = __commonJS({
   "src/resolvers/quality.js"(exports2, module2) {
-    var axios4 = require("axios");
-    var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+    var { request, getSessionUA } = require_http2();
     function detectQuality(_0) {
       return __async(this, arguments, function* (url, headers = {}) {
         try {
           if (!url || !url.includes(".m3u8"))
             return "1080p";
-          const { data } = yield axios4.get(url, {
+          const res = yield request(url, {
             timeout: 5e3,
             headers: __spreadValues({
-              "User-Agent": UA3
-            }, headers),
-            responseType: "text"
+              "User-Agent": getSessionUA()
+            }, headers)
           });
+          const data = yield res.text();
           if (!data.includes("#EXT-X-STREAM-INF")) {
             const match = url.match(/[_-](\d{3,4})p/i);
             return match ? `${match[1]}p` : "1080p";
@@ -846,9 +845,9 @@ var require_quality = __commonJS({
           for (const line of lines) {
             const match = line.match(/RESOLUTION=\d+x(\d+)/i);
             if (match) {
-              const res = parseInt(match[1]);
-              if (res > maxRes)
-                maxRes = res;
+              const res2 = parseInt(match[1]);
+              if (res2 > maxRes)
+                maxRes = res2;
             }
           }
           if (maxRes > 0) {
@@ -928,58 +927,83 @@ var require_goodstream = __commonJS({
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var { fetchHtml, getSessionUA } = require_http2();
-    var { detectQuality } = require_quality();
-    var UA3 = getSessionUA();
+    var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     function unpackPacker(data) {
-      var match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
+      const match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
       if (!match)
         return null;
-      var p = match[1];
-      var a = parseInt(match[2]);
-      var c = parseInt(match[3]);
-      var k = match[4].split("|");
+      let [, p, a, c, k] = match;
+      a = parseInt(a);
+      c = parseInt(c);
+      k = k.split("|");
       while (c--) {
         if (k[c])
           p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
       }
       return p;
     }
+    function detectQuality(_0) {
+      return __async(this, arguments, function* (m3u8Url, headers = {}) {
+        try {
+          const res = yield fetch(m3u8Url, {
+            headers: __spreadValues({ "User-Agent": UA3 }, headers),
+            redirect: "follow"
+          });
+          const data = yield res.text();
+          if (!data.includes("#EXT-X-STREAM-INF")) {
+            const match = m3u8Url.match(/[_-](\d{3,4})p/);
+            return match ? `${match[1]}p` : "1080p";
+          }
+          let bestHeight = 0;
+          const lines = data.split("\n");
+          for (const line of lines) {
+            const m = line.match(/RESOLUTION=\d+x(\d+)/);
+            if (m) {
+              const h = parseInt(m[1]);
+              if (h > bestHeight)
+                bestHeight = h;
+            }
+          }
+          if (bestHeight >= 2160)
+            return "4K";
+          if (bestHeight >= 1080)
+            return "1080p";
+          if (bestHeight >= 720)
+            return "720p";
+          if (bestHeight >= 480)
+            return "480p";
+          return bestHeight > 0 ? `${bestHeight}p` : "1080p";
+        } catch (e) {
+          return "1080p";
+        }
+      });
+    }
     function resolve3(url) {
       return __async(this, null, function* () {
+        var _a;
         try {
-          console.log("[Fastream] Resolviendo: " + url);
-          var data = yield fetchHtml(url, {
-            headers: { "User-Agent": UA3, "Referer": "https://www3.seriesmetro.net/" }
+          const res = yield fetch(url, {
+            headers: {
+              "User-Agent": UA3,
+              "Referer": "https://www3.seriesmetro.net/"
+            },
+            redirect: "follow"
           });
-          var unpacked = unpackPacker(data);
-          var m3u8Match;
-          if (!unpacked) {
-            m3u8Match = data.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
-            if (m3u8Match && m3u8Match[1]) {
-              var url1 = m3u8Match[1];
-              return {
-                url: url1,
-                quality: "1080p",
-                serverName: "Fastream",
-                headers: { "User-Agent": UA3, "Referer": "https://fastream.to/" }
-              };
-            }
+          const data = yield res.text();
+          const unpacked = unpackPacker(data);
+          if (!unpacked)
             return null;
-          }
-          m3u8Match = unpacked.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
-          if (!m3u8Match || !m3u8Match[1])
+          const m3u8 = (_a = unpacked.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/)) == null ? void 0 : _a[1];
+          if (!m3u8)
             return null;
-          var m3u8Url = m3u8Match[1];
-          var quality = yield detectQuality(m3u8Url, { "Referer": "https://fastream.to/" });
+          const quality = yield detectQuality(m3u8, { "Referer": "https://fastream.to/" });
           return {
-            url: m3u8Url,
-            quality: quality || "1080p",
-            serverName: "Fastream",
+            url: m3u8,
+            quality,
             headers: { "User-Agent": UA3, "Referer": "https://fastream.to/" }
           };
         } catch (e) {
-          console.log("[Fastream] Error: " + e.message);
+          console.error("[Fastream] Error:", e.message);
           return null;
         }
       });
