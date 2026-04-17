@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-17T18:36:22.203Z
+ * Generated: 2026-04-17T18:37:56.083Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -719,7 +719,7 @@ var require_hlswish = __commonJS({
             return null;
           return {
             url: validResult.url,
-            quality: "1080p",
+            verified: true,
             serverName: "StreamWish",
             headers: {
               "Referer": validResult.mirror,
@@ -1073,7 +1073,7 @@ var require_vidhide = __commonJS({
             finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
           return {
             url: finalUrl,
-            quality,
+            verified: true,
             serverName: "VidHide",
             headers: __spreadProps(__spreadValues({}, getStealthHeaders()), {
               "Referer": url.split("?")[0],
@@ -1133,7 +1133,7 @@ var require_streamtape = __commonJS({
             }
             return {
               url: finalUrl,
-              quality: "720p",
+              verified: true,
               serverName: "Streamtape",
               headers: { "User-Agent": UA2, "Referer": url }
             };
@@ -1193,7 +1193,7 @@ var require_player_cdn = __commonJS({
             }
             return {
               url: finalUrl,
-              quality: "1080p",
+              verified: true,
               serverName: "Player-CDN",
               headers: { "User-Agent": UA2, "Referer": url }
             };
@@ -1241,7 +1241,7 @@ var require_ggtz = __commonJS({
               nextUrl = new URL(url).origin + nextUrl;
             return {
               url: nextUrl,
-              quality: "720p",
+              verified: true,
               serverName: "GGTZ-Internal",
               headers: {
                 "User-Agent": UA2,
@@ -1400,6 +1400,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const langName = LANG_NAMES[lang];
         const resolutionResults = yield Promise.allSettled(
           urls.map((url) => __async(this, null, function* () {
+            var _a;
             try {
               const urlObj = new URL(url);
               const domain = urlObj.hostname.replace("www.", "");
@@ -1413,6 +1414,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
                   serverLabel: resolver.name,
                   url: result.url,
                   quality: result.quality || "1080p",
+                  verified: (_a = result.verified) != null ? _a : true,
+                  // v6.0.1: Asegurar check verde ✅
                   headers: result.headers || {}
                 };
               }

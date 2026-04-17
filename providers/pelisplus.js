@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-17T18:36:22.152Z
+ * Generated: 2026-04-17T18:37:56.029Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -551,7 +551,7 @@ var require_hlswish = __commonJS({
             return null;
           return {
             url: validResult.url,
-            quality: "1080p",
+            verified: true,
             serverName: "StreamWish",
             headers: {
               "Referer": validResult.mirror,
@@ -801,7 +801,7 @@ var require_vidhide = __commonJS({
             finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
           return {
             url: finalUrl,
-            quality,
+            verified: true,
             serverName: "VidHide",
             headers: __spreadProps(__spreadValues({}, getStealthHeaders()), {
               "Referer": url.split("?")[0],
@@ -1045,7 +1045,7 @@ var require_vimeos = __commonJS({
               if (hlsUrl) {
                 return {
                   url: hlsUrl,
-                  quality: "1080p",
+                  verified: true,
                   serverName: "Vimeos",
                   headers: { "User-Agent": UA3, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-MX,es;q=0.9" }
                 };
@@ -1222,7 +1222,7 @@ function resolve(embedUrl) {
       const QUALITY_MAP = { full: "1080p", hd: "720p", sd: "480p", low: "360p", lowest: "240p" };
       return {
         url: best.url,
-        quality: QUALITY_MAP[best.type] || best.type,
+        verified: true,
         headers: { "User-Agent": UA, "Referer": "https://ok.ru/" }
       };
     } catch (e) {
@@ -1305,7 +1305,7 @@ var require_playmogo = __commonJS({
           console.log("[Playmogo] Resolving: " + url);
           return {
             url,
-            quality: "720p",
+            verified: true,
             serverName: "Playmogo",
             headers: {
               "User-Agent": DEFAULT_UA,
@@ -1342,7 +1342,7 @@ function resolve2(embedUrl) {
       if (hashMatch) {
         return {
           url: hashMatch[1],
-          quality: "HD",
+          verified: true,
           headers: { "Referer": embedUrl }
         };
       }
@@ -1399,7 +1399,7 @@ var require_embedseek = __commonJS({
             }
             return {
               url: videoUrl,
-              quality: "1080p",
+              verified: true,
               serverName: "SeekStreaming",
               headers: {
                 "User-Agent": UA3,
@@ -1591,7 +1591,7 @@ var require_lulustream = __commonJS({
               m3u8Url = origin + m3u8Url;
             const stream = {
               url: m3u8Url,
-              quality: "1080p",
+              verified: true,
               serverName: "LuluStream",
               headers: {
                 "Referer": url,
