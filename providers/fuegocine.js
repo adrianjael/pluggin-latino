@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-17T18:37:55.988Z
+ * Generated: 2026-04-17T19:23:57.061Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2044,46 +2044,45 @@ var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
 var BASE_URL = "https://www.fuegocine.com";
-var SEARCH_BASE = `${BASE_URL}/feeds/posts/default?alt=json&max-results=10&q=`;
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+var SEARCH_BASE = `${BASE_URL}/feeds/posts/summary?alt=json&max-results=8&q=`;
+var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var DEFAULT_HEADERS = {
   "User-Agent": UA3,
   "Referer": `${BASE_URL}/`
 };
-function normalizeTitle(t) {
-  return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+function normalize(t) {
+  if (!t)
+    return "";
+  return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
 }
 function b64decode(str) {
-  if (typeof atob !== "undefined")
-    return atob(str);
-  return Buffer.from(str, "base64").toString("binary");
+  try {
+    return Buffer.from(str, "base64").toString("binary");
+  } catch (e) {
+    return "";
+  }
 }
 function decodeUrl(url) {
-  const b64Match = url.match(/[?&]r=([A-Za-z0-9+/=]+)/);
+  if (!url)
+    return "";
+  const b64Match = url.match(/[?&]r=([A-Za-z0-9+/=]{10,})/);
   if (b64Match) {
-    try {
-      const decoded = b64decode(b64Match[1]);
+    const decoded = b64decode(b64Match[1]);
+    if (decoded)
       return decodeUrl(decoded);
-    } catch (e) {
-      return url;
-    }
   }
   const linkMatch = url.match(/[?&]link=([^&]+)/);
   if (linkMatch) {
-    try {
-      const decoded = decodeURIComponent(linkMatch[1]);
+    const decoded = decodeURIComponent(linkMatch[1]);
+    if (decoded)
       return decodeUrl(decoded);
-    } catch (e) {
-      return url;
-    }
   }
   const driveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([A-Za-z0-9_-]+)/);
-  if (driveMatch) {
+  if (driveMatch)
     return `https://drive.usercontent.google.com/download?id=${driveMatch[1]}&export=download&confirm=t`;
-  }
   return url;
 }
-function extractLinks(html) {
+function extractSvLinks(html) {
   const links = [];
   const match = html.match(/const\s+_SV_LINKS\s*=\s*\[([\s\S]*?)\]\s*;/);
   if (!match)
@@ -2092,18 +2091,21 @@ function extractLinks(html) {
   const entryRegex = /\{[\s\S]*?lang\s*:\s*["']([^"']+)["'][\s\S]*?name\s*:\s*["']([^"']+)["'][\s\S]*?quality\s*:\s*["']([^"']+)["'][\s\S]*?url\s*:\s*["']([^"']+)["'][\s\S]*?\}/g;
   let m;
   while ((m = entryRegex.exec(block)) !== null) {
+    const rawUrl = m[4];
+    const decoded = decodeUrl(rawUrl);
     links.push({
       lang: m[1],
-      name: m[2].replace(/&#9989;/g, "").replace(/&amp;/g, "&"),
+      serverName: m[2].replace(/&#9989;/g, "").replace(/&amp;/g, "&").replace(/✅/g, "").trim(),
       quality: m[3],
-      url: decodeUrl(m[4])
+      url: decoded
     });
   }
   return links;
 }
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
-    var _a, _b, _c, _d;
+    var _a;
+    console.log(`[FuegoCine Turbo] Iniciando b\xFAsqueda para: ${title || tmdbId}`);
     try {
       let mediaTitle = title;
       if (!mediaTitle && tmdbId) {
@@ -2111,37 +2113,67 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }
       if (!mediaTitle)
         return [];
-      const searchTitle = season ? `${mediaTitle} ${season}x${episode}` : mediaTitle;
-      const searchJson = yield fetchJson(SEARCH_BASE + encodeURIComponent(searchTitle));
-      const entries = ((_a = searchJson.feed) == null ? void 0 : _a.entry) || [];
+      const cleanTitle = mediaTitle.split(":")[0].trim();
+      const searchTitle = mediaType === "tv" && season ? `${cleanTitle} ${season}x${String(episode).padStart(2, "0")}` : cleanTitle;
+      const searchUrl = SEARCH_BASE + encodeURIComponent(searchTitle);
+      const searchJson = yield fetchJson(searchUrl, { headers: DEFAULT_HEADERS });
+      const entries = ((_a = searchJson == null ? void 0 : searchJson.feed) == null ? void 0 : _a.entry) || [];
+      if (entries.length === 0) {
+        console.log(`[FuegoCine Turbo] Sin resultados para: ${searchTitle}`);
+        return [];
+      }
+      const normTarget = normalize(mediaTitle);
+      const validEntries = entries.filter((e) => {
+        var _a2;
+        const t = normalize(((_a2 = e.title) == null ? void 0 : _a2.$t) || "");
+        return t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
+      }).slice(0, 3);
+      const allRawLinks = [];
+      yield Promise.all(validEntries.map((entry) => __async(this, null, function* () {
+        var _a2, _b;
+        const url = (_b = (_a2 = entry.link) == null ? void 0 : _a2.find((l) => l.rel === "alternate")) == null ? void 0 : _b.href;
+        if (!url)
+          return;
+        const html = yield fetchHtml(url, { headers: DEFAULT_HEADERS });
+        const links = extractSvLinks(html);
+        allRawLinks.push(...links);
+      })));
+      if (allRawLinks.length === 0)
+        return [];
       const streams = [];
-      for (const entry of entries) {
-        const entryTitle = ((_b = entry.title) == null ? void 0 : _b.$t) || "";
-        const entryUrl = (_d = (_c = entry.link) == null ? void 0 : _c.find((l) => l.rel === "alternate")) == null ? void 0 : _d.href;
-        if (!entryUrl)
-          continue;
-        const normEntry = normalizeTitle(entryTitle);
-        const normTitle = normalizeTitle(mediaTitle);
-        if (!normEntry.includes(normTitle))
-          continue;
-        const html = yield fetchHtml(entryUrl);
-        const links = extractLinks(html);
-        for (const link of links) {
+      const langOrder = ["lat", "mex", "col", "esp", "sub"];
+      const sortedLinks = allRawLinks.sort((a, b) => {
+        const aIdx = langOrder.indexOf(String(a.lang).toLowerCase());
+        const bIdx = langOrder.indexOf(String(b.lang).toLowerCase());
+        return (aIdx === -1 ? 99 : aIdx) - (bIdx === -1 ? 99 : bIdx);
+      });
+      const resolutionResults = yield Promise.allSettled(
+        sortedLinks.map((link) => __async(this, null, function* () {
+          var _a2, _b;
           const result = yield resolveEmbed(link.url);
           if (result && result.url) {
-            streams.push({
+            const finalQuality = ((_a2 = link.quality) == null ? void 0 : _a2.includes("1080")) || ((_b = link.quality) == null ? void 0 : _b.includes("FHD")) ? "1080p" : result.quality || link.quality || "720p";
+            return {
               langLabel: link.lang,
-              serverLabel: link.name || "Server",
+              serverLabel: result.serverName || result.serverLabel || link.serverName || "Server",
               url: result.url,
-              quality: result.quality || link.quality || "720p",
-              headers: result.headers || DEFAULT_HEADERS
-            });
+              quality: finalQuality,
+              headers: result.headers || DEFAULT_HEADERS,
+              verified: true
+              // v6.0.1: Forzamos true ya que FuegoCine los marca como verificados
+            };
           }
+          return null;
+        }))
+      );
+      resolutionResults.forEach((res) => {
+        if (res.status === "fulfilled" && res.value) {
+          streams.push(res.value);
         }
-      }
+      });
       return yield finalizeStreams(streams, "FuegoCine", mediaTitle);
     } catch (e) {
-      console.error("[FuegoCine] error:", e.message);
+      console.error(`[FuegoCine Turbo] Error cr\xEDtico: ${e.message}`);
       return [];
     }
   });

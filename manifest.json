@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.9.26",
+  "version": "12.9.27",
   "scrapers": [
     {
       "id": "embed69",
@@ -210,7 +210,7 @@
       "id": "fuegocine",
       "name": "FuegoCine",
       "description": "Películas y series con enlaces directos y alta velocidad.",
-      "version": "2.0.0",
+      "version": "6.0.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
