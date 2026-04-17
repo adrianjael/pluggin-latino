@@ -1,6 +1,6 @@
 /**
  * unlimplay - Built from src/unlimplay/
- * Generated: 2026-04-17T20:09:43.077Z
+ * Generated: 2026-04-17T21:54:43.634Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -504,40 +504,113 @@ var require_engine = __commonJS({
 // src/resolvers/unlimplay.js
 var require_unlimplay = __commonJS({
   "src/resolvers/unlimplay.js"(exports2, module2) {
-    var { fetchHtml } = require_http();
-    var BASE_URL2 = "https://unlimplay.com";
-    function resolve2(url) {
+    var axios = require("axios");
+    var CryptoJS = require("crypto-js");
+    function decryptNitro(encryptedData, pd) {
+      try {
+        if (!encryptedData || encryptedData.includes("{"))
+          return encryptedData;
+        const data = encryptedData.replace(/ /g, "+");
+        const decrypted = CryptoJS.AES.decrypt(data, pd, {
+          keySize: 256 / 32,
+          iterations: 1e4,
+          hasher: CryptoJS.algo.SHA256
+        });
+        return decrypted.toString(CryptoJS.enc.Utf8);
+      } catch (e) {
+        return null;
+      }
+    }
+    function extractSurgicalTokens(html) {
+      const tokens = { ps: null };
+      const aaMatch = html.match(/ﾟωﾟﾉ[\s\S]*?\('ﾟωﾟﾉ'\)/);
+      if (!aaMatch)
+        return tokens;
+      const block = aaMatch[0];
+      const clean = block.replace(/[^\w]/g, "");
+      const hexCands = clean.match(/[a-f0-9]{8}/g) || [];
+      for (let cand of hexCands) {
+        if (!["00000000", "ffffffff"].includes(cand)) {
+          tokens.ps = cand;
+          break;
+        }
+      }
+      return tokens;
+    }
+    function resolve2(embedUrl) {
       return __async(this, null, function* () {
-        console.log(`[Unlimplay Nitro] Resolviendo: ${url}`);
         try {
-          const headers = {
-            "Referer": BASE_URL2 + "/",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          console.log(`[Unlimplay Nitro v25] Ejecutando arquitectura definitiva: ${embedUrl}`);
+          const slugMatch = embedUrl.match(/\/embed\/([a-zA-Z0-9]+)/);
+          if (!slugMatch)
+            return null;
+          const slug = slugMatch[1];
+          const mainHeaders = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Referer": "https://unlimplay.com/",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "es-MX,es;q=0.9,en-US;q=0.8"
           };
-          const html = yield fetchHtml(url, { headers });
-          const hlsMatch = html.match(/https?:\/\/[^"']+\/hls\/[^"']+(\?gt=[^"']*)?/);
-          if (hlsMatch) {
-            let m3u8Url = hlsMatch[0].replace(/\\/g, "");
-            console.log(`[Unlimplay Nitro] M3U8 Encontrado: ${m3u8Url.substring(0, 60)}...`);
-            if (m3u8Url.startsWith("/"))
-              m3u8Url = BASE_URL2 + m3u8Url;
-            return {
-              url: m3u8Url,
-              quality: "1080p",
-              headers: {
-                "Referer": url,
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-                "Accept": "*/*",
-                "Cache-Control": "no-cache"
+          const response = yield axios.get(embedUrl, { headers: mainHeaders, timeout: 12e3 });
+          const html = response.data;
+          const setCookie = response.headers["set-cookie"];
+          const cookies = setCookie ? setCookie.map((c) => c.split(";")[0]).join("; ") : "";
+          const { ps } = extractSurgicalTokens(html);
+          if (ps) {
+            console.log(`[Unlimplay Nitro v25] Token PS localizado: ${ps}. Realizando POST...`);
+            try {
+              const sourceResponse = yield axios.post(`https://unlimplay.com/ajax/sources/${slug}`, `ps=${ps}`, {
+                headers: {
+                  "Referer": embedUrl,
+                  "User-Agent": mainHeaders["User-Agent"],
+                  "X-Requested-With": "XMLHttpRequest",
+                  "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                  "Cookie": cookies,
+                  "Accept": "application/json"
+                }
+              });
+              if (sourceResponse.data && sourceResponse.data.sources) {
+                console.log("[Unlimplay Nitro v25] \u{1F513} Descifrando fuentes con Slug...");
+                const decrypted = decryptNitro(sourceResponse.data.sources, slug);
+                if (decrypted) {
+                  console.log("[Unlimplay Nitro v25] \u2705 Extracci\xF3n exitosa.");
+                  let finalUrl = decrypted;
+                  if (decrypted.includes("{")) {
+                    const parsed = JSON.parse(decrypted);
+                    finalUrl = parsed.file || parsed.sources && parsed.sources[0].file;
+                  }
+                  if (finalUrl)
+                    return formatResult(finalUrl);
+                }
               }
-            };
+            } catch (postError) {
+              console.log(`[Unlimplay Nitro v25] Error en POST: ${postError.message}`);
+            }
+          }
+          const hlsMatch = html.match(/https?:\/\/[^"'\\]+\/hls\/[^"'\\]+/);
+          if (hlsMatch) {
+            console.log("[Unlimplay Nitro v25] \u2705 Link HLS capturado por patr\xF3n directo.");
+            return formatResult(hlsMatch[0].replace(/\\/g, ""));
           }
           return null;
-        } catch (e) {
-          console.error(`[Unlimplay Nitro] Error: ${e.message}`);
+        } catch (error) {
+          console.error(`[Unlimplay Nitro v25] Error: ${error.message}`);
           return null;
         }
       });
+    }
+    function formatResult(m3u8Url) {
+      return {
+        url: m3u8Url,
+        quality: "Original",
+        verified: true,
+        serverName: "Unlimplay Nitro v25",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Referer": "https://unlimplay.com/",
+          "Origin": "https://unlimplay.com"
+        }
+      };
     }
     module2.exports = { resolve: resolve2 };
   }
@@ -574,7 +647,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         if (nitroResult && nitroResult.url) {
           streams.push({
             langLabel: item.language || "Latino",
-            serverLabel: `Unlimplay ${item.source || "Proxy"}`,
+            serverLabel: `Unlimplay Nitro ${item.source || ""}`,
             url: nitroResult.url,
             quality: nitroResult.quality || "1080p",
             headers: nitroResult.headers,

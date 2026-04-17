@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-17T20:09:42.975Z
+ * Generated: 2026-04-17T21:54:43.534Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2089,60 +2089,62 @@ function extractSvLinks(html) {
   if (!match)
     return links;
   const block = match[1];
-  const entryRegex = /\{[\s\S]*?lang\s*:\s*["']([^"']+)["'][\s\S]*?name\s*:\s*["']([^"']+)["'][\s\S]*?quality\s*:\s*["']([^"']+)["'][\s\S]*?url\s*:\s*["']([^"']+)["'][\s\S]*?\}/g;
-  let m;
-  while ((m = entryRegex.exec(block)) !== null) {
-    const rawUrl = m[4];
-    const decoded = decodeUrl(rawUrl);
-    links.push({
-      lang: m[1],
-      serverName: m[2].replace(/&#9989;/g, "").replace(/&amp;/g, "&").replace(/✅/g, "").trim(),
-      quality: m[3],
-      url: decoded
-    });
+  const entries = block.split(/\},?\s*\{/).map((e, i, arr) => {
+    if (arr.length === 1)
+      return e;
+    if (i === 0)
+      return e + "}";
+    if (i === arr.length - 1)
+      return "{" + e;
+    return "{" + e + "}";
+  });
+  for (const entry of entries) {
+    try {
+      const lang = (entry.match(/lang\s*:\s*["']([^"']+)["']/) || [])[1] || "lat";
+      const name = ((entry.match(/name\s*:\s*["']([^"']+)["']/) || [])[1] || "FC").replace(/&#9989;/g, "").replace(/&amp;/g, "&").replace(/✅/g, "").trim();
+      const quality = (entry.match(/quality\s*:\s*["']([^"']+)["']/) || [])[1] || "HD";
+      const rawUrl = (entry.match(/url\s*:\s*["']([^"']+)["']/) || [])[1] || "";
+      if (!rawUrl)
+        continue;
+      const decoded = decodeUrl(rawUrl);
+      links.push({
+        lang: lang.toLowerCase(),
+        serverName: name,
+        quality,
+        url: decoded
+      });
+    } catch (e) {
+    }
   }
   return links;
 }
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     var _a, _b;
-    console.log(`[FuegoCine] DEBUG: Input -> tmdbId:${tmdbId}, type:${mediaType}, s:${season}, e:${episode}, title:${title}`);
     try {
       let mediaTitle = title;
       if (!mediaTitle && tmdbId) {
-        console.log(`[FuegoCine] Buscando t\xEDtulo en TMDB para ID: ${tmdbId}`);
         mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
       }
-      if (!mediaTitle) {
-        console.log(`[FuegoCine] ERROR: No se pudo obtener el t\xEDtulo del contenido.`);
+      if (!mediaTitle)
         return [];
-      }
       const cleanTitle = mediaTitle.split(":")[0].trim();
       const searchTitle = mediaType === "tv" && season ? `${cleanTitle} ${season}x${String(episode).padStart(2, "0")}` : cleanTitle;
       const searchUrl = SEARCH_BASE + encodeURIComponent(searchTitle);
-      console.log(`[FuegoCine] URL de B\xFAsqueda: ${searchUrl}`);
+      console.log(`[FuegoCine Nitro v4] Buscando: ${searchTitle}`);
       const searchJson = yield fetchJson(searchUrl, { headers: { "User-Agent": UA3 } });
       const entries = ((_a = searchJson == null ? void 0 : searchJson.feed) == null ? void 0 : _a.entry) || [];
-      console.log(`[FuegoCine] Entradas encontradas en el feed: ${entries.length}`);
-      if (entries.length === 0) {
-        if (cleanTitle.includes(" ")) {
-          const retryTitle = cleanTitle.split(" ")[0];
-          console.log(`[FuegoCine] Reintentando con t\xEDtulo corto: ${retryTitle}`);
-          const retryUrl = SEARCH_BASE + encodeURIComponent(retryTitle);
-          const retryJson = yield fetchJson(retryUrl, { headers: { "User-Agent": UA3 } });
-          entries.push(...((_b = retryJson == null ? void 0 : retryJson.feed) == null ? void 0 : _b.entry) || []);
-        }
+      if (entries.length === 0 && cleanTitle.includes(" ")) {
+        const retryTitle = cleanTitle.split(" ")[0];
+        const retryJson = yield fetchJson(SEARCH_BASE + encodeURIComponent(retryTitle), { headers: { "User-Agent": UA3 } });
+        entries.push(...((_b = retryJson == null ? void 0 : retryJson.feed) == null ? void 0 : _b.entry) || []);
       }
       const normTarget = normalize(mediaTitle);
       const validEntries = entries.filter((e) => {
-        var _a2, _b2;
+        var _a2;
         const t = normalize(((_a2 = e.title) == null ? void 0 : _a2.$t) || "");
-        const match = t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
-        if (match)
-          console.log(`[FuegoCine] Match v\xE1lido encontrado: ${(_b2 = e.title) == null ? void 0 : _b2.$t}`);
-        return match;
+        return t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
       }).slice(0, 3);
-      console.log(`[FuegoCine] Entradas v\xE1lidas post-filtrado: ${validEntries.length}`);
       const allRawLinks = [];
       yield Promise.all(validEntries.map((entry) => __async(this, null, function* () {
         var _a2, _b2;
@@ -2158,8 +2160,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const streams = [];
       const langOrder = ["lat", "mex", "col", "esp", "sub"];
       const sortedLinks = allRawLinks.sort((a, b) => {
-        const aIdx = langOrder.indexOf(String(a.lang).toLowerCase());
-        const bIdx = langOrder.indexOf(String(b.lang).toLowerCase());
+        const aIdx = langOrder.indexOf(String(a.lang));
+        const bIdx = langOrder.indexOf(String(b.lang));
         return (aIdx === -1 ? 99 : aIdx) - (bIdx === -1 ? 99 : bIdx);
       });
       const resolutionResults = yield Promise.allSettled(
@@ -2170,8 +2172,8 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             const finalQuality = ((_a2 = link.quality) == null ? void 0 : _a2.includes("1080")) || ((_b2 = link.quality) == null ? void 0 : _b2.includes("FHD")) ? "1080p" : result.quality || link.quality || "720p";
             return {
               langLabel: "Latino",
-              // v6.0.2: Forzado Latino ya que el sitio es 100% Latino
-              serverLabel: result.serverName || result.serverLabel || link.serverName || "Server",
+              // v7.0: Forzamos Latino en la etiqueta para asegurar el match en la UI
+              serverLabel: result.serverName || link.serverName || "Server",
               url: result.url,
               quality: finalQuality,
               headers: result.headers || DEFAULT_HEADERS,
@@ -2182,13 +2184,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         }))
       );
       resolutionResults.forEach((res) => {
-        if (res.status === "fulfilled" && res.value) {
+        if (res.status === "fulfilled" && res.value)
           streams.push(res.value);
-        }
       });
       return yield finalizeStreams(streams, "FuegoCine", mediaTitle);
     } catch (e) {
-      console.error(`[FuegoCine Turbo] Error cr\xEDtico: ${e.message}`);
+      console.error(`[FuegoCine Nitro v4] Error: ${e.message}`);
       return [];
     }
   });
