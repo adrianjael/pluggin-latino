@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-17T16:22:06.338Z
+ * Generated: 2026-04-17T17:00:09.988Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1101,66 +1101,83 @@ var require_goodstream = __commonJS({
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var { fetchHtml: fetchHtml2, getSessionUA } = require_http();
-    var { detectQuality } = require_quality();
-    var UA4 = getSessionUA();
+    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     function unpackPacker(data) {
-      var match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
+      const match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
       if (!match)
         return null;
-      var p = match[1];
-      var a = parseInt(match[2]);
-      var c = parseInt(match[3]);
-      var k = match[4].split("|");
+      let [, p, a, c, k] = match;
+      a = parseInt(a);
+      c = parseInt(c);
+      k = k.split("|");
       while (c--) {
         if (k[c])
           p = p.replace(new RegExp("\\b" + c.toString(a) + "\\b", "g"), k[c]);
       }
       return p;
     }
+    function detectQuality(_0) {
+      return __async(this, arguments, function* (m3u8Url, headers = {}) {
+        try {
+          const res = yield fetch(m3u8Url, {
+            headers: __spreadValues({ "User-Agent": UA4 }, headers),
+            redirect: "follow"
+          });
+          const data = yield res.text();
+          if (!data.includes("#EXT-X-STREAM-INF")) {
+            const match = m3u8Url.match(/[_-](\d{3,4})p/);
+            return match ? `${match[1]}p` : "1080p";
+          }
+          let bestHeight = 0;
+          const lines = data.split("\n");
+          for (const line of lines) {
+            const m = line.match(/RESOLUTION=\d+x(\d+)/);
+            if (m) {
+              const h = parseInt(m[1]);
+              if (h > bestHeight)
+                bestHeight = h;
+            }
+          }
+          if (bestHeight >= 2160)
+            return "4K";
+          if (bestHeight >= 1080)
+            return "1080p";
+          if (bestHeight >= 720)
+            return "720p";
+          if (bestHeight >= 480)
+            return "480p";
+          return bestHeight > 0 ? `${bestHeight}p` : "1080p";
+        } catch (e) {
+          return "1080p";
+        }
+      });
+    }
     function resolve3(url) {
       return __async(this, null, function* () {
+        var _a;
         try {
-          console.log("[Fastream] Resolviendo: " + url);
-          var data = yield fetchHtml2(url, {
-            headers: { "User-Agent": UA4, "Referer": "https://www3.seriesmetro.net/" }
-          });
-          var unpacked = unpackPacker(data);
-          var m3u8Match;
-          if (!unpacked) {
-            m3u8Match = data.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
-            if (m3u8Match && m3u8Match[1]) {
-              var url1 = m3u8Match[1];
-              return {
-                url: url1,
-                quality: "1080p",
-                serverName: "Fastream",
-                headers: {
-                  "User-Agent": UA4,
-                  "Referer": "https://fastream.to/"
-                }
-              };
-            }
-            return null;
-          }
-          m3u8Match = unpacked.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/);
-          if (!m3u8Match || !m3u8Match[1])
-            return null;
-          var m3u8Url = m3u8Match[1];
-          var quality = yield detectQuality(m3u8Url, {
-            "Referer": "https://fastream.to/"
-          });
-          return {
-            url: m3u8Url,
-            quality: quality || "1080p",
-            serverName: "Fastream",
+          const res = yield fetch(url, {
             headers: {
               "User-Agent": UA4,
-              "Referer": "https://fastream.to/"
-            }
+              "Referer": "https://www3.seriesmetro.net/"
+            },
+            redirect: "follow"
+          });
+          const data = yield res.text();
+          const unpacked = unpackPacker(data);
+          if (!unpacked)
+            return null;
+          const m3u8 = (_a = unpacked.match(/file:"(https?:\/\/[^"]+\.m3u8[^"]*)"/)) == null ? void 0 : _a[1];
+          if (!m3u8)
+            return null;
+          const quality = yield detectQuality(m3u8, { "Referer": "https://fastream.to/" });
+          return {
+            url: m3u8,
+            quality,
+            headers: { "User-Agent": UA4, "Referer": "https://fastream.to/" }
           };
         } catch (e) {
-          console.log("[Fastream] Error: " + e.message);
+          console.error("[Fastream] Error:", e.message);
           return null;
         }
       });
