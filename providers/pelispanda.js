@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-17T19:23:57.101Z
+ * Generated: 2026-04-17T19:29:16.982Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2000,7 +2000,8 @@ var require_engine = __commonJS({
         for (const s of sorted) {
           const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
-          if (!isLatino) {
+          const skipFilter = providerName === "FuegoCine";
+          if (!isLatino && !skipFilter) {
             console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
             continue;
           }

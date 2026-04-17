@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-17T19:23:57.061Z
+ * Generated: 2026-04-17T19:29:16.948Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -476,7 +476,8 @@ var require_engine = __commonJS({
         for (const s of sorted) {
           const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
-          if (!isLatino) {
+          const skipFilter = providerName === "FuegoCine";
+          if (!isLatino && !skipFilter) {
             console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
             continue;
           }
@@ -2154,13 +2155,13 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           if (result && result.url) {
             const finalQuality = ((_a2 = link.quality) == null ? void 0 : _a2.includes("1080")) || ((_b = link.quality) == null ? void 0 : _b.includes("FHD")) ? "1080p" : result.quality || link.quality || "720p";
             return {
-              langLabel: link.lang,
+              langLabel: "Latino",
+              // v6.0.2: Forzado Latino ya que el sitio es 100% Latino
               serverLabel: result.serverName || result.serverLabel || link.serverName || "Server",
               url: result.url,
               quality: finalQuality,
               headers: result.headers || DEFAULT_HEADERS,
               verified: true
-              // v6.0.1: Forzamos true ya que FuegoCine los marca como verificados
             };
           }
           return null;

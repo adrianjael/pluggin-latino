@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-17T19:23:57.047Z
+ * Generated: 2026-04-17T19:29:16.936Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -549,7 +549,8 @@ var require_engine = __commonJS({
         for (const s of sorted) {
           const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
-          if (!isLatino) {
+          const skipFilter = providerName === "FuegoCine";
+          if (!isLatino && !skipFilter) {
             console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
             continue;
           }
