@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.9.17",
+  "version": "12.9.18",
   "scrapers": [
     {
       "id": "embed69",
@@ -164,7 +164,7 @@
       "id": "seriesmetro",
       "name": "SeriesMetro",
       "description": "Especialista en series y películas (Latino) con servidores Fastream",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",

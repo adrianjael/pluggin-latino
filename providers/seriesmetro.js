@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-16T21:54:35.244Z
+ * Generated: 2026-04-17T14:31:01.718Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1980,7 +1980,7 @@ var require_tmdb = __commonJS({
         }
       });
     }
-    function getTmdbAliases(tmdbId, mediaType) {
+    function getTmdbAliases2(tmdbId, mediaType) {
       return __async(this, null, function* () {
         if (!tmdbId)
           return [];
@@ -2010,7 +2010,7 @@ var require_tmdb = __commonJS({
         }
       });
     }
-    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo, getTmdbAliases };
+    module2.exports = { getTmdbTitle: getTmdbTitle2, getTmdbInfo, getTmdbAliases: getTmdbAliases2 };
   }
 });
 
@@ -2018,7 +2018,7 @@ var require_tmdb = __commonJS({
 var { fetchHtml, request } = require_http();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var { getTmdbTitle } = require_tmdb();
+var { getTmdbTitle, getTmdbAliases } = require_tmdb();
 var BASE = "https://www3.seriesmetro.net";
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var HEADERS = {
@@ -2044,20 +2044,41 @@ function buildSlug(title) {
 }
 function findContentUrl(tmdbInfo, mediaType) {
   return __async(this, null, function* () {
-    const { title, originalTitle } = tmdbInfo;
+    const { title, originalTitle, aliases = [] } = tmdbInfo;
     const category = mediaType === "movie" ? "pelicula" : "serie";
-    const slugs = [];
-    if (title)
-      slugs.push(buildSlug(title));
-    if (originalTitle && originalTitle !== title)
-      slugs.push(buildSlug(originalTitle));
-    for (const slug of slugs) {
-      const url = `${BASE}/${category}/${slug}/`;
+    const searchTerms = [
+      title,
+      originalTitle,
+      ...aliases
+    ].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+    console.log(`[SeriesMetro] Buscando "${title}" con ${searchTerms.length} t\xE9rminos...`);
+    for (const term of searchTerms) {
       try {
-        const data = yield fetchHtml(url, { headers: HEADERS });
+        const searchUrl = `${BASE}/?s=${encodeURIComponent(term)}`;
+        const searchHtml = yield fetchHtml(searchUrl, { headers: HEADERS });
+        if (searchHtml) {
+          const matches = [...searchHtml.matchAll(/<article[^>]*class="[^"]*post[^"]*"[^>]*>[\s\S]*?<a[^>]*href="([^"]+\/(?:serie|pelicula)\/([^/]+)\/)"[^>]*class="lnk-blk"/g)];
+          for (const [, url, slug2] of matches) {
+            const isCorrectType = url.includes(`/${category}/`);
+            if (!isCorrectType)
+              continue;
+            const slugFound = slug2.toLowerCase();
+            const slugSearch = buildSlug(term);
+            if (slugFound.includes(slugSearch) || slugSearch.includes(slugFound)) {
+              const data2 = yield fetchHtml(url, { headers: HEADERS });
+              if (data2 && (data2.includes("trembed=") || data2.includes("data-post="))) {
+                console.log(`[SeriesMetro] \u2713 Encontrado v\xEDa b\xFAsqueda: ${url}`);
+                return { url, html: data2 };
+              }
+            }
+          }
+        }
+        const slug = buildSlug(term);
+        const guestUrl = `${BASE}/${category}/${slug}/`;
+        const data = yield fetchHtml(guestUrl, { headers: HEADERS });
         if (data && (data.includes("trembed=") || data.includes("data-post="))) {
-          console.log(`[SeriesMetro] \u2713 Encontrado: /${category}/${slug}/`);
-          return { url, html: data };
+          console.log(`[SeriesMetro] \u2713 Encontrado v\xEDa slug directo: ${guestUrl}`);
+          return { url: guestUrl, html: data };
         }
       } catch (e) {
       }
@@ -2143,15 +2164,24 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     if (!tmdbId || !mediaType)
       return [];
     try {
-      let mediaTitle = title;
-      if (!mediaTitle && tmdbId) {
-        mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
+      let tmdbInfo = { title, originalTitle: title, aliases: [] };
+      if (tmdbId) {
+        const titleEs = yield getTmdbTitle(tmdbId, mediaType, "es-MX");
+        const titleEn = yield getTmdbTitle(tmdbId, mediaType, "en-US");
+        const aliases = yield getTmdbAliases(tmdbId, mediaType);
+        tmdbInfo = {
+          title: titleEs || titleEn || title,
+          originalTitle: titleEn || titleEs || title,
+          aliases
+        };
       }
-      if (!mediaTitle)
+      if (!tmdbInfo.title)
         return [];
-      const found = yield findContentUrl({ title: mediaTitle }, mediaType);
-      if (!found)
+      const found = yield findContentUrl(tmdbInfo, mediaType);
+      if (!found) {
+        console.log(`[SeriesMetro] \u2717 No se encontr\xF3 contenido para: ${tmdbInfo.title}`);
         return [];
+      }
       let targetUrl = found.url;
       if (mediaType === "tv" && season && episode) {
         const epUrl = yield getEpisodeUrl(found.url, found.html, season, episode);
@@ -2160,7 +2190,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         targetUrl = epUrl;
       }
       const streams = yield extractStreams(targetUrl, found.url);
-      return yield finalizeStreams(streams, "SeriesMetro", mediaTitle);
+      return yield finalizeStreams(streams, "SeriesMetro", tmdbInfo.title);
     } catch (e) {
       console.log(`[SeriesMetro] Error: ${e.message}`);
       return [];
