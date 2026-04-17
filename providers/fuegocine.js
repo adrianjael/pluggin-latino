@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-04-17T19:31:12.275Z
+ * Generated: 2026-04-17T19:36:14.666Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2105,34 +2105,48 @@ function extractSvLinks(html) {
 }
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
-    var _a;
-    console.log(`[FuegoCine Turbo] Iniciando b\xFAsqueda para: ${title || tmdbId}`);
+    var _a, _b;
+    console.log(`[FuegoCine] DEBUG: Input -> tmdbId:${tmdbId}, type:${mediaType}, s:${season}, e:${episode}, title:${title}`);
     try {
       let mediaTitle = title;
       if (!mediaTitle && tmdbId) {
+        console.log(`[FuegoCine] Buscando t\xEDtulo en TMDB para ID: ${tmdbId}`);
         mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
       }
-      if (!mediaTitle)
+      if (!mediaTitle) {
+        console.log(`[FuegoCine] ERROR: No se pudo obtener el t\xEDtulo del contenido.`);
         return [];
+      }
       const cleanTitle = mediaTitle.split(":")[0].trim();
       const searchTitle = mediaType === "tv" && season ? `${cleanTitle} ${season}x${String(episode).padStart(2, "0")}` : cleanTitle;
       const searchUrl = SEARCH_BASE + encodeURIComponent(searchTitle);
-      const searchJson = yield fetchJson(searchUrl, { headers: DEFAULT_HEADERS });
+      console.log(`[FuegoCine] URL de B\xFAsqueda: ${searchUrl}`);
+      const searchJson = yield fetchJson(searchUrl, { headers: { "User-Agent": UA3 } });
       const entries = ((_a = searchJson == null ? void 0 : searchJson.feed) == null ? void 0 : _a.entry) || [];
+      console.log(`[FuegoCine] Entradas encontradas en el feed: ${entries.length}`);
       if (entries.length === 0) {
-        console.log(`[FuegoCine Turbo] Sin resultados para: ${searchTitle}`);
-        return [];
+        if (cleanTitle.includes(" ")) {
+          const retryTitle = cleanTitle.split(" ")[0];
+          console.log(`[FuegoCine] Reintentando con t\xEDtulo corto: ${retryTitle}`);
+          const retryUrl = SEARCH_BASE + encodeURIComponent(retryTitle);
+          const retryJson = yield fetchJson(retryUrl, { headers: { "User-Agent": UA3 } });
+          entries.push(...((_b = retryJson == null ? void 0 : retryJson.feed) == null ? void 0 : _b.entry) || []);
+        }
       }
       const normTarget = normalize(mediaTitle);
       const validEntries = entries.filter((e) => {
-        var _a2;
+        var _a2, _b2;
         const t = normalize(((_a2 = e.title) == null ? void 0 : _a2.$t) || "");
-        return t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
+        const match = t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
+        if (match)
+          console.log(`[FuegoCine] Match v\xE1lido encontrado: ${(_b2 = e.title) == null ? void 0 : _b2.$t}`);
+        return match;
       }).slice(0, 3);
+      console.log(`[FuegoCine] Entradas v\xE1lidas post-filtrado: ${validEntries.length}`);
       const allRawLinks = [];
       yield Promise.all(validEntries.map((entry) => __async(this, null, function* () {
-        var _a2, _b;
-        const url = (_b = (_a2 = entry.link) == null ? void 0 : _a2.find((l) => l.rel === "alternate")) == null ? void 0 : _b.href;
+        var _a2, _b2;
+        const url = (_b2 = (_a2 = entry.link) == null ? void 0 : _a2.find((l) => l.rel === "alternate")) == null ? void 0 : _b2.href;
         if (!url)
           return;
         const html = yield fetchHtml(url, { headers: DEFAULT_HEADERS });
@@ -2150,10 +2164,10 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       });
       const resolutionResults = yield Promise.allSettled(
         sortedLinks.map((link) => __async(this, null, function* () {
-          var _a2, _b;
+          var _a2, _b2;
           const result = yield resolveEmbed(link.url);
           if (result && result.url) {
-            const finalQuality = ((_a2 = link.quality) == null ? void 0 : _a2.includes("1080")) || ((_b = link.quality) == null ? void 0 : _b.includes("FHD")) ? "1080p" : result.quality || link.quality || "720p";
+            const finalQuality = ((_a2 = link.quality) == null ? void 0 : _a2.includes("1080")) || ((_b2 = link.quality) == null ? void 0 : _b2.includes("FHD")) ? "1080p" : result.quality || link.quality || "720p";
             return {
               langLabel: "Latino",
               // v6.0.2: Forzado Latino ya que el sitio es 100% Latino
