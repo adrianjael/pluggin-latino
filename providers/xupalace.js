@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-17T18:33:42.976Z
+ * Generated: 2026-04-17T18:36:22.203Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1278,10 +1278,10 @@ var HTML_HEADERS = {
   "User-Agent": UA,
   "Accept": "text/html",
   "Accept-Language": "es-MX,es;q=0.9",
-  "Connection": "keep-alive"
+  "Connection": "keep-alive",
+  "Cache-Control": "no-cache"
 };
 var RESOLVER_MAP = {
-  // StreamWish (HlsWish)
   "hglink.to": { fn: resolveHlsWish, name: "StreamWish" },
   "vibuxer.com": { fn: resolveHlsWish, name: "StreamWish" },
   "hanerix.com": { fn: resolveHlsWish, name: "StreamWish" },
@@ -1291,19 +1291,15 @@ var RESOLVER_MAP = {
   "sfastwish.com": { fn: resolveHlsWish, name: "StreamWish" },
   "streamwish.to": { fn: resolveHlsWish, name: "StreamWish" },
   "awish.pro": { fn: resolveHlsWish, name: "StreamWish" },
-  // Filemoon
   "bysedikamoum.com": { fn: resolveFilemoon, name: "Filemoon" },
   "filemoon.sx": { fn: resolveFilemoon, name: "Filemoon" },
-  // VOE
   "voe.sx": { fn: resolveVoe, name: "VOE" },
   "voe-un-block.com": { fn: resolveVoe, name: "VOE" },
-  // VidHide / FileLions / Dintezu
   "vidhidepro.com": { fn: resolveVidhide, name: "VidHide" },
   "vidhide.com": { fn: resolveVidhide, name: "VidHide" },
   "dintezuvio.com": { fn: resolveVidhide, name: "VidHide" },
   "filelions.to": { fn: resolveVidhide, name: "VidHide" },
   "vidhidepre.com": { fn: resolveVidhide, name: "VidHide" },
-  // --- SERVIDORES ADICIONALES ---
   "streamtape.com": { fn: resolveStreamtape, name: "Streamtape" },
   "player-cdn.com": { fn: resolvePlayerCdn, name: "Player-CDN" },
   "xupalace.org": { fn: resolveGgtz, name: "GGTZ-Internal" }
@@ -1313,7 +1309,7 @@ function getImdbId(tmdbId, mediaType) {
     try {
       const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
       const url = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
-      const { data } = yield axios.get(url, { timeout: 5e3, headers: { "User-Agent": UA } });
+      const { data } = yield axios.get(url, { timeout: 3e3, headers: { "User-Agent": UA } });
       return data.imdb_id || null;
     } catch (e) {
       return null;
@@ -1343,34 +1339,34 @@ function getXuSlugs(imdbId, title) {
 function getEmbeds(slug, mediaType, season, episode) {
   return __async(this, null, function* () {
     try {
-      let path;
-      if (mediaType === "movie" || mediaType === "movies") {
-        path = `/video/${slug}/`;
-      } else {
-        path = `/video/${slug}-${season}x${String(episode).padStart(2, "0")}/`;
-      }
-      console.log(`[XuPalace] Path: ${path}`);
+      const path = mediaType === "movie" || mediaType === "movies" ? `/video/${slug}/` : `/video/${slug}-${season}x${String(episode).padStart(2, "0")}/`;
       const { data: html } = yield axios.get(`${BASE_URL}${path}`, {
-        timeout: 8e3,
+        timeout: 4500,
+        // Timeout agresivo para búsqueda paralela
         headers: HTML_HEADERS
       });
       const matches = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'[^)]+\)[^<]*data-lang="(\d+)"/g)];
       if (matches.length === 0) {
         const fallback = [...html.matchAll(/go_to_playerVast\('(https?:\/\/[^']+)'/g)];
-        return { 0: [...new Set(fallback.map((m) => m[1]))] };
+        if (fallback.length === 0)
+          return null;
+        return { 0: [...new Set(fallback.map((m) => m[1]))], _slug: slug };
       }
-      const byLang = {};
+      const byLang = { _slug: slug };
+      let hasData = false;
       for (const m of matches) {
         const url = m[1];
         const lang = parseInt(m[2]);
         if (!byLang[lang])
           byLang[lang] = [];
-        if (!byLang[lang].includes(url))
+        if (!byLang[lang].includes(url)) {
           byLang[lang].push(url);
+          hasData = true;
+        }
       }
-      return byLang;
+      return hasData ? byLang : null;
     } catch (e) {
-      return {};
+      return null;
     }
   });
 }
@@ -1378,56 +1374,58 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
-    let mediaTitle = title;
-    if (!mediaTitle) {
-      mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
-    }
+    let mediaTitle = title || (yield getTmdbTitle(tmdbId, mediaType));
     const LANG_NAMES = { 0: "Latino", 1: "Espa\xF1ol", 2: "Subtitulado" };
     try {
       const imdbId = yield getImdbId(tmdbId, mediaType);
       const slugVariants = getXuSlugs(imdbId, mediaTitle);
-      let allStreams = [];
-      for (const slug of slugVariants) {
-        if (allStreams.length > 0)
+      console.log(`[XuPalace Turbo] Lanzando ${slugVariants.length} b\xFAsquedas en paralelo...`);
+      const searchPromises = slugVariants.map((s) => getEmbeds(s, mediaType, season, episode));
+      const resultsPool = yield Promise.all(searchPromises);
+      let winner = null;
+      for (const res of resultsPool) {
+        if (res && Object.keys(res).length > 1) {
+          winner = res;
           break;
-        const byLang = yield getEmbeds(slug, mediaType, season, episode);
-        if (Object.keys(byLang).length === 0)
+        }
+      }
+      if (!winner)
+        return [];
+      console.log(`[XuPalace Turbo] Ganador: ${winner._slug}. Resolviendo enlaces...`);
+      let allStreams = [];
+      for (const lang of [0, 1, 2]) {
+        const urls = winner[lang];
+        if (!urls || urls.length === 0)
           continue;
-        for (const lang of [0, 1, 2]) {
-          const urls = byLang[lang];
-          if (!urls || urls.length === 0)
-            continue;
-          const langName = LANG_NAMES[lang];
-          console.log(`[XuPalace] Resolviendo ${langName} para slug: ${slug}`);
-          const results = yield Promise.allSettled(
-            urls.map((url) => __async(this, null, function* () {
-              try {
-                const urlObj = new URL(url);
-                const domain = urlObj.hostname.replace("www.", "");
-                const resolver = RESOLVER_MAP[domain];
-                if (!resolver)
-                  return null;
-                const result = yield resolver.fn(url);
-                if (result) {
-                  return {
-                    langLabel: langName,
-                    serverLabel: resolver.name,
-                    url: result.url,
-                    quality: result.quality || "1080p",
-                    headers: result.headers || {}
-                  };
-                }
-              } catch (e) {
+        const langName = LANG_NAMES[lang];
+        const resolutionResults = yield Promise.allSettled(
+          urls.map((url) => __async(this, null, function* () {
+            try {
+              const urlObj = new URL(url);
+              const domain = urlObj.hostname.replace("www.", "");
+              const resolver = RESOLVER_MAP[domain];
+              if (!resolver)
+                return null;
+              const result = yield resolver.fn(url);
+              if (result) {
+                return {
+                  langLabel: langName,
+                  serverLabel: resolver.name,
+                  url: result.url,
+                  quality: result.quality || "1080p",
+                  headers: result.headers || {}
+                };
               }
-              return null;
-            }))
-          );
-          const validStreams = results.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
-          if (validStreams.length > 0) {
-            allStreams.push(...validStreams);
-            if (lang === 0)
-              break;
-          }
+            } catch (e) {
+            }
+            return null;
+          }))
+        );
+        const valid = resolutionResults.filter((r) => r.status === "fulfilled" && r.value).map((r) => r.value);
+        if (valid.length > 0) {
+          allStreams.push(...valid);
+          if (lang === 0)
+            break;
         }
       }
       return yield finalizeStreams(allStreams, "XuPalace", mediaTitle);
