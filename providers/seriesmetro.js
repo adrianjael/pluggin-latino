@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-17T14:42:37.991Z
+ * Generated: 2026-04-17T14:45:09.577Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1136,7 +1136,12 @@ var require_fastream = __commonJS({
                 url: url1,
                 quality: "1080p",
                 serverName: "Fastream",
-                headers: { "User-Agent": UA4, "Referer": "https://fastream.to/" }
+                headers: {
+                  "User-Agent": UA4,
+                  "Referer": "https://fastream.to/",
+                  "Origin": "https://fastream.to",
+                  "Accept": "*/*"
+                }
               };
             }
             return null;
@@ -1145,12 +1150,21 @@ var require_fastream = __commonJS({
           if (!m3u8Match || !m3u8Match[1])
             return null;
           var m3u8Url = m3u8Match[1];
-          var quality = yield detectQuality(m3u8Url, { "Referer": "https://fastream.to/" });
+          var quality = yield detectQuality(m3u8Url, {
+            "Referer": "https://fastream.to/",
+            "Origin": "https://fastream.to",
+            "Accept": "*/*"
+          });
           return {
             url: m3u8Url,
             quality: quality || "1080p",
             serverName: "Fastream",
-            headers: { "User-Agent": UA4, "Referer": "https://fastream.to/" }
+            headers: {
+              "User-Agent": UA4,
+              "Referer": "https://fastream.to/",
+              "Origin": "https://fastream.to",
+              "Accept": "*/*"
+            }
           };
         } catch (e) {
           console.log("[Fastream] Error: " + e.message);
