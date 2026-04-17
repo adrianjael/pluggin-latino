@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-17T14:38:56.152Z
+ * Generated: 2026-04-17T14:42:37.991Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2046,53 +2046,53 @@ function findContentUrl(tmdbInfo, mediaType) {
   return __async(this, null, function* () {
     const { title, originalTitle, aliases = [] } = tmdbInfo;
     const category = mediaType === "movie" ? "pelicula" : "serie";
-    const topTitles = [title, originalTitle].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
-    const guestUrls = topTitles.map((t) => ({ url: `${BASE}/${category}/${buildSlug(t)}/`, term: t }));
-    console.log(`[SeriesMetro] Probando slugs directos para: ${topTitles.join(", ")}`);
-    const guestResults = yield Promise.allSettled(guestUrls.map((g) => fetchHtml(g.url, { headers: HEADERS })));
-    for (let i = 0; i < guestResults.length; i++) {
-      const res = guestResults[i];
-      if (res.status === "fulfilled" && res.value && (res.value.includes("trembed=") || res.value.includes("data-post="))) {
-        console.log(`[SeriesMetro] \u2713 Encontrado v\xEDa slug paralelo: ${guestUrls[i].url}`);
-        return { url: guestUrls[i].url, html: res.value };
-      }
-    }
-    const searchTerms = topTitles;
-    for (const term of searchTerms) {
+    const searchTerms = [title, originalTitle].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
+    if (searchTerms.length === 0)
+      return null;
+    console.log(`[SeriesMetro] Probando Discovery paralelo para: ${searchTerms[0]}`);
+    const validateUrl = (url) => __async(this, null, function* () {
       try {
-        console.log(`[SeriesMetro] Buscando activamente: "${term}"`);
-        const searchUrl = `${BASE}/?s=${encodeURIComponent(term)}`;
-        const searchHtml = yield fetchHtml(searchUrl, { headers: HEADERS });
-        if (searchHtml) {
-          const matches = [...searchHtml.matchAll(/<article[^>]*class="[^"]*post[^"]*"[^>]*>[\s\S]*?<a[^>]*href="([^"]+\/(?:serie|pelicula)\/([^/]+)\/)"[^>]*class="lnk-blk"/g)];
-          for (const [, url, slug] of matches) {
-            if (!url.includes(`/${category}/`))
-              continue;
-            const slugFound = slug.toLowerCase();
-            const slugSearch = buildSlug(term);
-            if (slugFound.includes(slugSearch) || slugSearch.includes(slugFound)) {
-              const data = yield fetchHtml(url, { headers: HEADERS });
-              if (data && (data.includes("trembed=") || data.includes("data-post="))) {
-                console.log(`[SeriesMetro] \u2713 Encontrado v\xEDa b\xFAsqueda: ${url}`);
-                return { url, html: data };
-              }
-            }
-          }
-        }
-      } catch (e) {
-      }
-    }
-    const secondaryTerms = aliases.filter((a) => !topTitles.includes(a)).slice(0, 2);
-    for (const term of secondaryTerms) {
-      const slug = buildSlug(term);
-      const guestUrl = `${BASE}/${category}/${slug}/`;
-      try {
-        const data = yield fetchHtml(guestUrl, { headers: HEADERS });
+        const data = yield fetchHtml(url, { headers: HEADERS });
         if (data && (data.includes("trembed=") || data.includes("data-post="))) {
-          return { url: guestUrl, html: data };
+          return { url, html: data };
         }
       } catch (e) {
       }
+      return null;
+    });
+    const discoveryPromises = [];
+    searchTerms.forEach((t) => {
+      discoveryPromises.push(validateUrl(`${BASE}/${category}/${buildSlug(t)}/`));
+    });
+    const activeSearch = () => __async(this, null, function* () {
+      try {
+        const searchUrl = `${BASE}/?s=${encodeURIComponent(searchTerms[0])}`;
+        const searchHtml = yield fetchHtml(searchUrl, { headers: HEADERS });
+        if (!searchHtml)
+          return null;
+        const matches = [...searchHtml.matchAll(/<article[^>]*class="[^"]*post[^"]*"[^>]*>[\s\S]*?<a[^>]*href="([^"]+\/(?:serie|pelicula)\/([^/]+)\/)"[^>]*class="lnk-blk"/g)];
+        for (const [, url, slug] of matches) {
+          if (!url.includes(`/${category}/`))
+            continue;
+          const res = yield validateUrl(url);
+          if (res)
+            return res;
+        }
+      } catch (e) {
+      }
+      return null;
+    });
+    discoveryPromises.push(activeSearch());
+    const fastResult = yield Promise.any(discoveryPromises.map((p) => p.then((res) => res || Promise.reject())));
+    if (fastResult) {
+      console.log(`[SeriesMetro] \u2713 Contenido encontrado r\xE1pidamente: ${fastResult.url}`);
+      return fastResult;
+    }
+    const secondaryTerms = aliases.filter((a) => !searchTerms.includes(a)).slice(0, 2);
+    for (const term of secondaryTerms) {
+      const res = yield validateUrl(`${BASE}/${category}/${buildSlug(term)}/`);
+      if (res)
+        return res;
     }
     return null;
   });
@@ -2122,7 +2122,6 @@ function getEpisodeUrl(serieUrl, serieHtml, season, episode) {
 }
 function extractStreams(pageUrl, referer) {
   return __async(this, null, function* () {
-    var _a;
     try {
       const data = yield fetchHtml(pageUrl, { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": referer }) });
       const options = [...data.matchAll(/href="#options-(\d+)"[^>]*>[\s\S]*?<span class="server">([\s\S]*?)<\/span>/g)];
@@ -2138,33 +2137,35 @@ function extractStreams(pageUrl, referer) {
         const bi = LANG_PRIORITY.indexOf(bL);
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       });
-      const streams = [];
-      for (const [, idx, srvRaw] of sorted) {
-        const srvText = srvRaw.replace(/<[^>]+>/g, "").trim();
-        const langRaw = srvText.split("-").pop().trim().toLowerCase();
-        const lang = LANG_MAP[langRaw] || langRaw;
+      const resolveTask = (idx, srvRaw) => __async(this, null, function* () {
+        var _a;
         try {
+          const srvText = srvRaw.replace(/<[^>]+>/g, "").trim();
+          const langRaw = srvText.split("-").pop().trim().toLowerCase();
+          const lang = LANG_MAP[langRaw] || langRaw;
           const embedPage = yield fetchHtml(
             `${BASE}/?trembed=${idx}&trid=${trid}&trtype=${trtype}`,
             { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": pageUrl }) }
           );
           const iframeUrl = (_a = embedPage.match(/<iframe[^>]*src="([^"]+)"/i)) == null ? void 0 : _a[1];
           if (!iframeUrl)
-            continue;
+            return null;
           const stream = yield resolveEmbed(iframeUrl);
           if (stream && stream.url) {
-            streams.push({
+            return {
               langLabel: lang,
               serverLabel: stream.serverName || "Server",
               url: stream.url,
               quality: stream.quality || "HD",
               headers: stream.headers || HEADERS
-            });
+            };
           }
         } catch (e) {
         }
-      }
-      return streams;
+        return null;
+      });
+      const results = yield Promise.all(sorted.slice(0, 6).map(([, idx, srvRaw]) => resolveTask(idx, srvRaw)));
+      return results.filter(Boolean);
     } catch (e) {
       return [];
     }
@@ -2177,14 +2178,11 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
     try {
       let tmdbInfo = { title, originalTitle: title, aliases: [] };
       if (tmdbId) {
-        const [titleEs, titleEn, aliases] = yield Promise.all([
-          getTmdbTitle(tmdbId, mediaType, "es-MX"),
-          getTmdbTitle(tmdbId, mediaType, "en-US"),
-          getTmdbAliases(tmdbId, mediaType)
-        ]);
+        const aliases = yield getTmdbAliases(tmdbId, mediaType);
         tmdbInfo = {
-          title: titleEs || titleEn || title,
-          originalTitle: titleEn || titleEs || title,
+          title: aliases[1] || aliases[0] || title,
+          // Es suele ser el segundo en getTmdbAliases
+          originalTitle: aliases[0] || title,
           aliases
         };
       }
