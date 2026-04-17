@@ -1,6 +1,6 @@
 /**
  * xupalace - Built from src/xupalace/
- * Generated: 2026-04-17T18:17:36.400Z
+ * Generated: 2026-04-17T18:33:42.976Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1325,12 +1325,18 @@ function getXuSlugs(imdbId, title) {
   if (imdbId)
     variants.push(imdbId);
   if (title) {
-    const firstWord = title.split(" ")[0].toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (firstWord)
-      variants.push(firstWord);
-    const fullSlug = title.toUpperCase().replace(/[^A-Z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    const titleUpper = title.toUpperCase();
+    const fullSlug = titleUpper.replace(/[^A-Z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
     if (fullSlug)
       variants.push(fullSlug);
+    if (titleUpper.startsWith("THE ")) {
+      const noThe = titleUpper.replace("THE ", "").replace(/[^A-Z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      if (noThe)
+        variants.push(noThe);
+    }
+    const firstWord = titleUpper.split(" ")[0].replace(/[^A-Z0-9]/g, "");
+    if (firstWord && firstWord !== "THE")
+      variants.push(firstWord);
   }
   return [...new Set(variants)];
 }
