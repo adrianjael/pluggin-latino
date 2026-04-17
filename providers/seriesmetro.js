@@ -1,6 +1,6 @@
 /**
  * seriesmetro - Built from src/seriesmetro/
- * Generated: 2026-04-17T14:45:09.577Z
+ * Generated: 2026-04-17T14:49:15.274Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -997,20 +997,20 @@ var require_vidhide = __commonJS({
 // src/resolvers/quality.js
 var require_quality = __commonJS({
   "src/resolvers/quality.js"(exports2, module2) {
-    var axios3 = require("axios");
+    var { request: request2 } = require_http();
     var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     function detectQuality(_0) {
       return __async(this, arguments, function* (url, headers = {}) {
         try {
           if (!url || !url.includes(".m3u8"))
             return "1080p";
-          const { data } = yield axios3.get(url, {
+          const res = yield request2(url, {
             timeout: 5e3,
             headers: __spreadValues({
               "User-Agent": UA4
-            }, headers),
-            responseType: "text"
+            }, headers)
           });
+          const data = yield res.text();
           if (!data.includes("#EXT-X-STREAM-INF")) {
             const match = url.match(/[_-](\d{3,4})p/i);
             return match ? `${match[1]}p` : "1080p";
@@ -1020,9 +1020,9 @@ var require_quality = __commonJS({
           for (const line of lines) {
             const match = line.match(/RESOLUTION=\d+x(\d+)/i);
             if (match) {
-              const res = parseInt(match[1]);
-              if (res > maxRes)
-                maxRes = res;
+              const res2 = parseInt(match[1]);
+              if (res2 > maxRes)
+                maxRes = res2;
             }
           }
           if (maxRes > 0) {
