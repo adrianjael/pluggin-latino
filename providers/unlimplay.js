@@ -1,6 +1,6 @@
 /**
  * unlimplay - Built from src/unlimplay/
- * Generated: 2026-04-28T21:37:27.241Z
+ * Generated: 2026-04-28T21:48:27.046Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -509,34 +509,44 @@ var require_unlimplay = __commonJS({
     function solveNitro2(embedUrl) {
       return __async(this, null, function* () {
         try {
-          console.log("[Unlimplay Nitro v26] Ejecutando resoluci\xF3n definitiva:", embedUrl);
+          console.log("[Unlimplay Nitro v26] Iniciando resoluci\xF3n corregida:", embedUrl);
           const slug = embedUrl.split("/").pop().split("?")[0];
           const response = yield axios.get(embedUrl, {
             headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+              "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36",
               "Referer": "https://unlimplay.com/"
             }
           });
+          const html = response.data;
           const cookie = response.headers["set-cookie"] ? response.headers["set-cookie"].map((c) => c.split(";")[0]).join("; ") : "";
+          let ps = slug;
+          const psMatch = html.match(/ps\s*=\s*['"]?(\d{10,20})['"]?/i) || html.match(/['"](\d{15,18})['"]/);
+          if (psMatch) {
+            ps = psMatch[1];
+            console.log("[Unlimplay Nitro v26] Token PS din\xE1mico localizado:", ps);
+          } else {
+            console.log("[Unlimplay Nitro v26] No se hall\xF3 PS din\xE1mico, usando slug como \xFAltimo recurso.");
+          }
           const apiUrl = `https://unlimplay.com/ajax/sources/${slug}`;
-          const sourceResponse = yield axios.post(apiUrl, `ps=${encodeURIComponent(slug)}`, {
+          const sourceResponse = yield axios.post(apiUrl, `ps=${encodeURIComponent(ps)}`, {
             headers: {
-              "authority": "unlimplay.com",
-              "accept": "*/*",
-              "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-              "cookie": cookie,
-              "origin": "https://unlimplay.com",
-              "referer": embedUrl,
-              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-              "x-requested-with": "XMLHttpRequest"
+              "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36",
+              "Referer": embedUrl,
+              "X-Requested-With": "XMLHttpRequest",
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Cookie": cookie
             }
           });
-          if (!sourceResponse.data)
+          if (!sourceResponse.data) {
+            console.log("[Unlimplay Nitro v26] El servidor no respondi\xF3 con datos.");
             return null;
+          }
           const encryptedData = typeof sourceResponse.data === "string" ? sourceResponse.data : sourceResponse.data.sources;
-          if (!encryptedData)
+          if (!encryptedData) {
+            console.log("[Unlimplay Nitro v26] No se encontraron fuentes cifradas.");
             return null;
-          const decrypted = decryptNitro(encryptedData);
+          }
+          const decrypted = decryptNitro(encryptedData, slug);
           if (!decrypted)
             return null;
           const json = JSON.parse(decrypted);
@@ -553,23 +563,22 @@ var require_unlimplay = __commonJS({
           });
           return results.length > 0 ? results : null;
         } catch (e) {
-          console.log("[Unlimplay Nitro v26] Error:", e.message);
+          console.log("[Unlimplay Nitro v26] Error cr\xEDtico:", e.message);
           return null;
         }
       });
     }
-    function decryptNitro(encrypted) {
+    function decryptNitro(data, slug) {
       try {
         const password = "pd1234567890";
-        let bytes = CryptoJS.AES.decrypt(encrypted, password);
+        let bytes = CryptoJS.AES.decrypt(data, password);
         let decrypted = bytes.toString(CryptoJS.enc.Utf8);
         if (!decrypted || !decrypted.includes("file")) {
-          const salt = CryptoJS.lib.WordArray.random(128 / 8);
-          const key = CryptoJS.PBKDF2(password, salt, {
-            keySize: 256 / 32,
-            iterations: 1e4,
-            hasher: CryptoJS.algo.SHA256
+          bytes = CryptoJS.AES.decrypt(data, slug, {
+            mode: CryptoJS.mode.ECB,
+            padding: CryptoJS.pad.Pkcs7
           });
+          decrypted = bytes.toString(CryptoJS.enc.Utf8);
         }
         return decrypted && decrypted.includes("file") ? decrypted : null;
       } catch (e) {
