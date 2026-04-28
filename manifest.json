@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.12.0",
+  "version": "12.12.1",
   "scrapers": [
     {
       "id": "embed69",
@@ -302,7 +302,7 @@
       "id": "unlimplay",
       "name": "Unlimplay",
       "description": "Streaming ultra-rápido basado en IDs de TMDB (Latino).",
-      "version": "3.1.5",
+      "version": "3.2.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
