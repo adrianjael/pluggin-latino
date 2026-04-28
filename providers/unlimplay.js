@@ -1,6 +1,6 @@
 /**
  * unlimplay - Built from src/unlimplay/
- * Generated: 2026-04-28T21:54:51.334Z
+ * Generated: 2026-04-28T22:03:26.934Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -509,7 +509,7 @@ var require_unlimplay = __commonJS({
     function solveNitro2(embedUrl) {
       return __async(this, null, function* () {
         try {
-          console.log("[Unlimplay Titanium v27] Iniciando resoluci\xF3n de alta precisi\xF3n:", embedUrl);
+          console.log("[Unlimplay Diamond v30] Iniciando resoluci\xF3n de alta precisi\xF3n...");
           const slug = embedUrl.split("/").pop().split("?")[0];
           const response = yield axios.get(embedUrl, {
             headers: {
@@ -521,15 +521,15 @@ var require_unlimplay = __commonJS({
           const cookie = response.headers["set-cookie"] ? response.headers["set-cookie"].map((c) => c.split(";")[0]).join("; ") : "";
           let p = null;
           let ps = null;
-          const pMatches = html.match(/[a-zA-Z0-9+/]{40,}={0,2}/g) || [];
-          p = pMatches.find((m) => m.length > 80) || null;
-          const psMatch = html.match(/['"]?(\d{15,18})['"]?/);
+          const pMatch = html.match(/var\s+p\s*=\s*["']([^"']+)["']/) || html.match(/p\s*=\s*["']([^"']+)["']/) || html.match(/["'](YUxW[a-zA-Z0-9+/=,]+)["']/);
+          p = pMatch ? pMatch[1] : null;
+          const psMatch = html.match(/window\.ps\s*=\s*["']?(\d{10,20})["']?/) || html.match(/ps\s*=\s*["']?(\d{10,20})["']?/) || html.match(/["'](\d{15,18})["']/);
           ps = psMatch ? psMatch[1] : slug;
           if (!p) {
-            console.log("[Unlimplay Titanium v27] No se hall\xF3 el token p en el HTML.");
+            console.log("[Unlimplay Diamond v30] Error: No se localiz\xF3 el token p en el HTML.");
             return null;
           }
-          console.log("[Unlimplay Titanium v27] Tokens localizados:", { p: p.substring(0, 10) + "...", ps });
+          console.log("[Unlimplay Diamond v30] Tokens capturados con \xE9xito.");
           const apiUrl = `https://unlimplay.com/api/?p=${encodeURIComponent(p)}&ps=${encodeURIComponent(ps)}`;
           const sourceResponse = yield axios.get(apiUrl, {
             headers: {
@@ -561,7 +561,7 @@ var require_unlimplay = __commonJS({
           });
           return results.length > 0 ? results : null;
         } catch (e) {
-          console.log("[Unlimplay Titanium v27] Error:", e.message);
+          console.log("[Unlimplay Diamond v30] Error cr\xEDtico:", e.message);
           return null;
         }
       });
@@ -571,9 +571,6 @@ var require_unlimplay = __commonJS({
         const password = "pd1234567890";
         let bytes = CryptoJS.AES.decrypt(data, password);
         let decrypted = bytes.toString(CryptoJS.enc.Utf8);
-        if (!decrypted || !decrypted.includes("file")) {
-          console.log("[Unlimplay Titanium v27] Descifrado fallido, revisando semilla...");
-        }
         return decrypted && decrypted.includes("file") ? decrypted : null;
       } catch (e) {
         return null;
