@@ -1,6 +1,6 @@
 /**
  * pelisplus - Built from src/pelisplus/
- * Generated: 2026-04-28T22:03:26.883Z
+ * Generated: 2026-04-28T22:09:48.132Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;

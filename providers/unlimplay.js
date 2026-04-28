@@ -1,6 +1,6 @@
 /**
  * unlimplay - Built from src/unlimplay/
- * Generated: 2026-04-28T22:03:26.934Z
+ * Generated: 2026-04-28T22:09:48.182Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -504,46 +504,45 @@ var require_engine = __commonJS({
 // src/resolvers/unlimplay.js
 var require_unlimplay = __commonJS({
   "src/resolvers/unlimplay.js"(exports2, module2) {
-    var axios = require("axios");
+    var { fetchJson: fetchJson2 } = require_http();
     var CryptoJS = require("crypto-js");
     function solveNitro2(embedUrl) {
       return __async(this, null, function* () {
         try {
-          console.log("[Unlimplay Diamond v30] Iniciando resoluci\xF3n de alta precisi\xF3n...");
+          console.log("[Unlimplay Nitro v34] Iniciando resoluci\xF3n POST...");
           const slug = embedUrl.split("/").pop().split("?")[0];
-          const response = yield axios.get(embedUrl, {
+          const response = yield fetchJson2(embedUrl, {
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
               "Referer": "https://unlimplay.com/"
             }
           });
           const html = response.data;
-          const cookie = response.headers["set-cookie"] ? response.headers["set-cookie"].map((c) => c.split(";")[0]).join("; ") : "";
-          let p = null;
-          let ps = null;
-          const pMatch = html.match(/var\s+p\s*=\s*["']([^"']+)["']/) || html.match(/p\s*=\s*["']([^"']+)["']/) || html.match(/["'](YUxW[a-zA-Z0-9+/=,]+)["']/);
-          p = pMatch ? pMatch[1] : null;
-          const psMatch = html.match(/window\.ps\s*=\s*["']?(\d{10,20})["']?/) || html.match(/ps\s*=\s*["']?(\d{10,20})["']?/) || html.match(/["'](\d{15,18})["']/);
-          ps = psMatch ? psMatch[1] : slug;
+          if (!html)
+            return null;
+          const pMatch = html.match(/p\s*[:=]\s*["']([^"']+)["']/i) || html.match(/["'](YUxW[a-zA-Z0-9+/=,]+)["']/);
+          const p = pMatch ? pMatch[1] : null;
+          const psMatch = html.match(/ps\s*[:=]\s*["']?(\d{10,20})["']?/i) || html.match(/["'](\d{15,18})["']/);
+          const ps = psMatch ? psMatch[1] : slug;
           if (!p) {
-            console.log("[Unlimplay Diamond v30] Error: No se localiz\xF3 el token p en el HTML.");
+            console.log("[Unlimplay Nitro v34] No se hall\xF3 el token p.");
             return null;
           }
-          console.log("[Unlimplay Diamond v30] Tokens capturados con \xE9xito.");
-          const apiUrl = `https://unlimplay.com/api/?p=${encodeURIComponent(p)}&ps=${encodeURIComponent(ps)}`;
-          const sourceResponse = yield axios.get(apiUrl, {
+          const apiUrl = `https://unlimplay.com/api/?p=${encodeURIComponent(p)}`;
+          console.log("[Unlimplay Nitro v34] Realizando POST a la API...");
+          const sourceResponse = yield fetchJson2(apiUrl, {
+            method: "POST",
+            body: `ps=${encodeURIComponent(ps)}`,
             headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "X-Requested-With": "XMLHttpRequest",
               "Referer": embedUrl,
-              "Cookie": cookie,
-              "X-Requested-With": "XMLHttpRequest"
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             }
           });
-          if (!sourceResponse.data)
+          if (!sourceResponse.success || !sourceResponse.data)
             return null;
           const encryptedData = typeof sourceResponse.data === "string" ? sourceResponse.data : sourceResponse.data.sources;
-          if (!encryptedData)
-            return null;
           const decrypted = decryptTitanium(encryptedData);
           if (!decrypted)
             return null;
@@ -561,7 +560,7 @@ var require_unlimplay = __commonJS({
           });
           return results.length > 0 ? results : null;
         } catch (e) {
-          console.log("[Unlimplay Diamond v30] Error cr\xEDtico:", e.message);
+          console.log("[Unlimplay Nitro v34] Error:", e.message);
           return null;
         }
       });
