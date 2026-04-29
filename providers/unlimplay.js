@@ -1,6 +1,6 @@
 /**
  * unlimplay - Built from src/unlimplay/
- * Generated: 2026-04-28T22:11:19.540Z
+ * Generated: 2026-04-29T15:26:53.122Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -504,20 +504,19 @@ var require_engine = __commonJS({
 // src/resolvers/unlimplay.js
 var require_unlimplay = __commonJS({
   "src/resolvers/unlimplay.js"(exports2, module2) {
-    var { fetchJson: fetchJson2 } = require_http();
+    var { fetchHtml } = require_http();
     var CryptoJS = require("crypto-js");
     function solveNitro2(embedUrl) {
       return __async(this, null, function* () {
         try {
-          console.log("[Unlimplay Nitro v34] Iniciando resoluci\xF3n POST...");
+          console.log("[Unlimplay Nitro v35] Iniciando resoluci\xF3n POST...");
           const slug = embedUrl.split("/").pop().split("?")[0];
-          const response = yield fetchJson2(embedUrl, {
+          const html = yield fetchHtml(embedUrl, {
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
               "Referer": "https://unlimplay.com/"
             }
           });
-          const html = response.data;
           if (!html)
             return null;
           const pMatch = html.match(/p\s*[:=]\s*["']([^"']+)["']/i) || html.match(/["'](YUxW[a-zA-Z0-9+/=,]+)["']/);
@@ -525,12 +524,12 @@ var require_unlimplay = __commonJS({
           const psMatch = html.match(/ps\s*[:=]\s*["']?(\d{10,20})["']?/i) || html.match(/["'](\d{15,18})["']/);
           const ps = psMatch ? psMatch[1] : slug;
           if (!p) {
-            console.log("[Unlimplay Nitro v34] No se hall\xF3 el token p.");
+            console.log("[Unlimplay Nitro v35] No se hall\xF3 el token p.");
             return null;
           }
           const apiUrl = `https://unlimplay.com/api/?p=${encodeURIComponent(p)}`;
-          console.log("[Unlimplay Nitro v34] Realizando POST a la API...");
-          const sourceResponse = yield fetchJson2(apiUrl, {
+          console.log("[Unlimplay Nitro v35] Realizando POST a la API...");
+          const sourceText = yield fetchHtml(apiUrl, {
             method: "POST",
             body: `ps=${encodeURIComponent(ps)}`,
             headers: {
@@ -540,27 +539,40 @@ var require_unlimplay = __commonJS({
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             }
           });
-          if (!sourceResponse.success || !sourceResponse.data)
+          if (!sourceText) {
+            console.log("[Unlimplay Nitro v35] La API no devolvi\xF3 respuesta.");
             return null;
-          const encryptedData = typeof sourceResponse.data === "string" ? sourceResponse.data : sourceResponse.data.sources;
+          }
+          let encryptedData = sourceText;
+          try {
+            const json = JSON.parse(sourceText);
+            encryptedData = json.data || json.sources || sourceText;
+          } catch (e) {
+          }
           const decrypted = decryptTitanium(encryptedData);
-          if (!decrypted)
+          if (!decrypted) {
+            console.log("[Unlimplay Nitro v35] Fall\xF3 el descifrado Titanum.");
             return null;
-          const json = JSON.parse(decrypted);
+          }
+          const jsonDecrypted = JSON.parse(decrypted);
           const results = [];
-          const sources = json.file ? [json] : json.sources || [];
+          const sources = jsonDecrypted.file ? [jsonDecrypted] : jsonDecrypted.sources || [];
           sources.forEach((s) => {
             if (s.file) {
+              let finalUrl = s.file;
+              if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
+                finalUrl += "#.m3u8";
+              }
               results.push({
-                file: s.file,
+                file: finalUrl,
                 label: s.label || "Directo",
-                type: s.file.includes("m3u8") ? "hls" : "mp4"
+                type: finalUrl.includes(".m3u8") ? "hls" : "mp4"
               });
             }
           });
           return results.length > 0 ? results : null;
         } catch (e) {
-          console.log("[Unlimplay Nitro v34] Error:", e.message);
+          console.log("[Unlimplay Nitro v35] Error cr\xEDtico:", e.message);
           return null;
         }
       });
