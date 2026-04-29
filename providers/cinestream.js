@@ -1,6 +1,6 @@
 /**
  * cinestream - Built from src/cinestream/
- * Generated: 2026-04-29T20:34:47.739Z
+ * Generated: 2026-04-29T20:36:34.696Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1799,68 +1799,45 @@ var require_dropcdn = __commonJS({
     function resolve3(url, signal = null) {
       return __async(this, null, function* () {
         try {
-          console.log(`[DropCDN] Resolving with deep validation headers: ${url}`);
+          console.log(`[DropCDN] Resolving (IP-Local Strategy): ${url}`);
           const HEADERS2 = {
-            "accept": "*/*",
-            "accept-language": "es-ES,es;q=0.9",
-            "cache-control": "no-cache",
-            "pragma": "no-cache",
-            "sec-ch-ua": '"Google Chrome";v="124", "Not.A/Brand";v="8", "Chromium";v="124"',
-            "sec-ch-ua-mobile": "?1",
-            "sec-ch-ua-platform": '"Android"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "cross-site",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 11; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Referer": "https://dr0pstream.com/",
             "Origin": "https://dr0pstream.com",
             "X-Requested-With": "XMLHttpRequest",
-            "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+            "Accept": "*/*"
           };
+          let targetUrl = url;
           if (url.includes(".m3u8")) {
-            console.log(`[DropCDN] Direct link detected, applying headers passthrough.`);
+            const idMatch = url.match(/\/([a-zA-Z0-9]+)_o\//) || url.match(/\/e\/([a-zA-Z0-9]+)/);
+            if (idMatch) {
+              targetUrl = `https://dr0pstream.com/e/${idMatch[1]}`;
+              console.log(`[DropCDN] Refreshing token for current IP via: ${targetUrl}`);
+            }
+          }
+          const response = yield fetch(targetUrl, {
+            headers: HEADERS2,
+            signal
+          });
+          if (!response.ok)
+            return null;
+          const html = yield response.text();
+          const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+          if (m3u8Match) {
             return {
-              url,
-              quality: extractQuality2(url),
+              url: m3u8Match[1],
+              quality: "HD",
               verified: true,
               serverName: "DropCDN",
               headers: HEADERS2
             };
           }
-          const response = yield fetch(url, {
-            headers: HEADERS2,
-            signal
-          });
-          if (!response.ok) {
-            console.log(`[DropCDN] Error HTTP: ${response.status}`);
-            return null;
-          }
-          const html = yield response.text();
-          const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
-          if (m3u8Match) {
-            let finalUrl = m3u8Match[1];
-            return {
-              url: finalUrl,
-              quality: extractQuality2(finalUrl),
-              verified: true,
-              serverName: "DropCDN",
-              headers: __spreadValues({}, HEADERS2)
-            };
-          }
           return null;
         } catch (error) {
-          console.error(`[DropCDN] Error cr\xEDtico: ${error.message}`);
+          console.error(`[DropCDN] Error: ${error.message}`);
           return null;
         }
       });
-    }
-    function extractQuality2(url) {
-      if (url.includes("1080p"))
-        return "1080p";
-      if (url.includes("720p"))
-        return "720p";
-      if (url.includes("4k") || url.includes("2160p"))
-        return "4K";
-      return "HD";
     }
     module2.exports = { resolve: resolve3 };
   }
