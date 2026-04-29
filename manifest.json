@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.12.13",
+  "version": "12.12.14",
   "scrapers": [
     {
       "id": "embed69",
@@ -365,7 +365,7 @@
         "mp4"
       ],
       "limited": false,
-      "supportsExternalPlayer": true
+      "supportsExternalPlayer": false
     }
   ]
 }

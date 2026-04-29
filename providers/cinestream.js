@@ -1,6 +1,6 @@
 /**
  * cinestream - Built from src/cinestream/
- * Generated: 2026-04-29T17:02:22.737Z
+ * Generated: 2026-04-29T17:31:11.956Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -545,11 +545,18 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           const quality = extractQuality(streamTitle);
           const serverLabel = s.name.split("|").pop().trim().replace("\u{1F310}", "").trim();
           if (s.url && s.url.startsWith("http")) {
+            let finalUrl = s.url;
+            if (finalUrl.includes("87d6a6ef6b58-webstreamrmbg/")) {
+              finalUrl = finalUrl.replace("87d6a6ef6b58-webstreamrmbg/", "87d6a6ef6b58-webstreamrmbg.baby-beamup.club/");
+            }
+            if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4") && !finalUrl.includes(".mkv")) {
+              finalUrl += "#.m3u8";
+            }
             const streamHeaders = s.behaviorHints && s.behaviorHints.proxyHeaders && s.behaviorHints.proxyHeaders.request || { "Referer": "https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/" };
             results.push({
               name: `CineStream - ${quality}`,
               title: `Latino - ${serverLabel}`,
-              url: s.url,
+              url: finalUrl,
               quality,
               headers: streamHeaders
             });
