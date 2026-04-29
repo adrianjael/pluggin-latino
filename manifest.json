@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.12.2",
+  "version": "12.12.3",
   "scrapers": [
     {
       "id": "embed69",
@@ -288,29 +288,6 @@
       "filename": "providers/lamovie.js",
       "enabled": true,
       "logo": "https://play-lh.googleusercontent.com/w6wZPZLiweiDQv3pGZmRhJY9XGdASutnaOvH_3JXgPFFlMAnLI6toc0HalgxMdYsSl3R=w240-h480-rw",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ],
-      "limited": false,
-      "supportsExternalPlayer": true
-    },
-    {
-      "id": "unlimplay",
-      "name": "Unlimplay",
-      "description": "Streaming ultra-rápido basado en IDs de TMDB (Latino).",
-      "version": "3.2.1",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/unlimplay.js",
-      "enabled": true,
-      "logo": "https://png.pngtree.com/png-clipart/20211024/original/pngtree-movie-streaming-vector-illustration-png-image_6867710.png",
       "contentLanguage": [
         "es"
       ],
