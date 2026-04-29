@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-29T16:46:26.858Z
+ * Generated: 2026-04-29T16:50:55.950Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -564,23 +564,29 @@ function getStreams(tmdbId = "76600", mediaType = "movie", season = null, episod
           const decData = yield decResponse.json();
           const mediaData = decData.result;
           if (mediaData && mediaData.sources) {
-            mediaData.sources.forEach((source) => {
+            for (const source of mediaData.sources) {
               if (source.url) {
                 const quality = source.quality || extractQuality(source.url);
+                const streamHeaders = {
+                  "User-Agent": currentUA,
+                  "Referer": "https://videasy.net/",
+                  "Origin": "https://videasy.net",
+                  "Accept": "*/*"
+                };
+                const alive = yield isUrlAlive(source.url, streamHeaders);
+                if (!alive) {
+                  console.log(`[BrazucaPlay] Enlace descartado (Servidor ca\xEDdo o l\xEDmite excedido): ${source.url.substring(0, 50)}...`);
+                  continue;
+                }
                 results.push({
                   name: `Brazuca - ${quality}`,
                   title: `Latino - ${source.label || serverName}`,
                   url: source.url,
                   quality,
-                  headers: {
-                    "User-Agent": currentUA,
-                    "Referer": "https://videasy.net/",
-                    "Origin": "https://videasy.net",
-                    "Accept": "*/*"
-                  }
+                  headers: streamHeaders
                 });
               }
-            });
+            }
           }
         } catch (innerError) {
           console.log(`[BrazucaPlay] Error en servidor ${serverName}:`, innerError.message);
@@ -590,6 +596,19 @@ function getStreams(tmdbId = "76600", mediaType = "movie", season = null, episod
       console.log("[BrazucaPlay] Error cr\xEDtico:", error.message);
     }
     return finalizeStreams(results);
+  });
+}
+function isUrlAlive(url, headers) {
+  return __async(this, null, function* () {
+    try {
+      const response = yield fetch(url, {
+        method: "GET",
+        headers: __spreadProps(__spreadValues({}, headers), { "Range": "bytes=0-1" })
+      });
+      return response.ok || response.status === 206;
+    } catch (e) {
+      return false;
+    }
   });
 }
 function extractQuality(url) {
