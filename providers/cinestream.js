@@ -1,6 +1,6 @@
 /**
  * cinestream - Built from src/cinestream/
- * Generated: 2026-04-29T17:35:35.671Z
+ * Generated: 2026-04-29T18:03:42.795Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -504,7 +504,7 @@ var require_engine = __commonJS({
 // src/cinestream/index.js
 var { fetchJson, setSessionUA } = require_http();
 var { finalizeStreams } = require_engine();
-var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+var TMDB_API_KEY = "d131017ccc6e5462a81c9304d21476de";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var API_BASE = "https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/%7B%22mx%22%3A%22on%22%7D";
 var HEADERS = {
@@ -544,30 +544,28 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
             continue;
           const quality = extractQuality(streamTitle);
           const serverLabel = s.name.split("|").pop().trim().replace("\u{1F310}", "").trim();
-          if (s.url && s.url.startsWith("http")) {
-            let finalUrl = s.url;
-            if (finalUrl.includes("87d6a6ef6b58-webstreamrmbg/")) {
-              finalUrl = finalUrl.replace("87d6a6ef6b58-webstreamrmbg/", "87d6a6ef6b58-webstreamrmbg.baby-beamup.club/");
-            }
-            if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4") && !finalUrl.includes(".mkv")) {
-              finalUrl += "#.m3u8";
-            }
-            const streamHeaders = s.behaviorHints && s.behaviorHints.proxyHeaders && s.behaviorHints.proxyHeaders.request || { "Referer": "https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/" };
-            results.push({
-              name: `CineStream - ${quality}`,
-              title: `Latino - ${serverLabel}`,
-              url: finalUrl,
-              quality,
-              headers: streamHeaders
-            });
+          let finalUrl = s.url;
+          if (finalUrl.includes("87d6a6ef6b58-webstreamrmbg/")) {
+            finalUrl = finalUrl.replace("87d6a6ef6b58-webstreamrmbg/", "87d6a6ef6b58-webstreamrmbg.baby-beamup.club/");
           }
+          if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4") && !finalUrl.includes(".mkv")) {
+            finalUrl += "#.m3u8";
+          }
+          const streamHeaders = s.behaviorHints && s.behaviorHints.proxyHeaders && s.behaviorHints.proxyHeaders.request || { "Referer": "https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/" };
+          results.push({
+            langLabel: "Latino",
+            serverLabel: `CineStream - ${serverLabel}`,
+            url: finalUrl,
+            quality,
+            headers: streamHeaders
+          });
         } catch (e) {
         }
       }
     } catch (error) {
       console.log("[CineStream] Error cr\xEDtico:", error.message);
     }
-    return finalizeStreams(results);
+    return finalizeStreams(results, "CineStream", title);
   });
 }
 function extractQuality(text) {
