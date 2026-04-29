@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-29T16:14:13.482Z
+ * Generated: 2026-04-29T16:18:39.948Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -636,8 +636,35 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           return;
         }
         let finalUrl = url;
-        if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
-          finalUrl += "#.m3u8";
+        if (finalUrl.includes(".urlset/master.m3u8") && finalUrl.includes(",")) {
+          try {
+            const parts = finalUrl.split(",");
+            let filteredParts = parts.filter((part) => {
+              const lowP = part.toLowerCase();
+              if (!lowP.endsWith(".m4a") && !lowP.endsWith(".aac") && !lowP.endsWith(".ac3"))
+                return true;
+              if (lowP.includes("latin-america") || lowP.includes("latino") || lowP.includes("mex") || lowP.includes("spa-lat"))
+                return true;
+              return false;
+            });
+            let hasAudio = filteredParts.some((p) => p.toLowerCase().endsWith(".m4a") || p.toLowerCase().endsWith(".aac") || p.toLowerCase().endsWith(".ac3"));
+            if (!hasAudio) {
+              filteredParts = parts.filter((part) => {
+                const lowP = part.toLowerCase();
+                if (!lowP.endsWith(".m4a") && !lowP.endsWith(".aac") && !lowP.endsWith(".ac3"))
+                  return true;
+                if (lowP.includes("spanish") && !lowP.includes("spain"))
+                  return true;
+                return false;
+              });
+              hasAudio = filteredParts.some((p) => p.toLowerCase().endsWith(".m4a") || p.toLowerCase().endsWith(".aac") || p.toLowerCase().endsWith(".ac3"));
+            }
+            if (hasAudio) {
+              finalUrl = filteredParts.join(",");
+            }
+          } catch (e) {
+            console.log("[CinemaCity] Error filtrando audios Nginx VOD:", e.message);
+          }
         }
         streams.push({
           langLabel: "Latino",
