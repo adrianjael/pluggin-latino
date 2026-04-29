@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-04-29T16:05:43.394Z
+ * Generated: 2026-04-29T16:08:17.308Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -639,6 +639,12 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4")) {
           finalUrl += "#.m3u8";
         }
+        const pipeHeaders = [
+          `User-Agent=${currentUA}`,
+          `Referer=https://cinemacity.cc/`,
+          `Cookie=dle_user_id=32729; dle_password=894171c6a8dab18ee594d5c652009a35;`
+        ];
+        finalUrl = `${finalUrl}|${pipeHeaders.join("|")}`;
         streams.push({
           langLabel: "Latino",
           // Forzamos etiqueta oficial
