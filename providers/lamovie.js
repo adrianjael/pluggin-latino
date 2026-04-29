@@ -461,19 +461,22 @@ function getStreams(tmdbId, mediaType, season, episode) {
             var $ = cheerio.load(html);
             var embeds = [];
             
-            // Priorizamos Latino
-            var latinoGroup = $('.lang-group').filter(function() {
-               return $(this).text().toLowerCase().includes('latino');
-            });
-            
-            var targetSelection = latinoGroup.length > 0 ? latinoGroup.find('.server-video') : $('.server-video');
-            
-            targetSelection.each(function() {
-              var videoUrl = $(this).attr('data-video');
-              var name = $(this).text().trim() || "Server";
-              if (videoUrl) {
-                embeds.push({ url: videoUrl, quality: "1080p", server: name });
-              }
+            $('.lang-group').each(function() {
+               var $group = $(this);
+               var langText = $group.find('.lang-title').text().trim().toLowerCase();
+               var langLabel = "Latino"; // Default
+               
+               if (langText.includes('latino')) langLabel = "Latino";
+               else if (langText.includes('espa\xF1ol') || langText.includes('castellano')) langLabel = "Castellano";
+               else if (langText.includes('sub')) langLabel = "Subtitulado";
+               
+               $group.find('.server-video').each(function() {
+                  var videoUrl = $(this).attr('data-video');
+                  var name = $(this).text().trim() || "Server";
+                  if (videoUrl) {
+                    embeds.push({ url: videoUrl, quality: "1080p", server: name, language: langLabel });
+                  }
+               });
             });
             
             if (!embeds.length) {
@@ -481,7 +484,32 @@ function getStreams(tmdbId, mediaType, season, episode) {
               return [];
             }
             console.log("[LaMovie] " + embeds.length + " embed(s) encontrados...");
-            return processEmbeds(embeds);
+            
+            // Refactored processEmbeds logic to include language
+            var results = [];
+            function processNext(i) {
+               if (i >= embeds.length) return Promise.resolve(results);
+               var embed = embeds[i];
+               var resolver = getResolver(embed.url);
+               if (!resolver) return processNext(i + 1);
+               
+               return resolver(embed.url).then(function(result) {
+                  if (result && result.url) {
+                     var serverName = getServerName(embed.url);
+                     var displayQuality = serverName + " \xB7 " + (embed.quality || "1080p") + " \xB7 " + embed.language;
+                     results.push({
+                        name: "\u2705 LaMovie",
+                        title: displayQuality,
+                        url: result.url,
+                        quality: displayQuality,
+                        headers: result.headers || {}
+                     });
+                  }
+                  return processNext(i + 1);
+               }).catch(function() { return processNext(i + 1); });
+            }
+            
+            return processNext(0);
           });
         });
       });
