@@ -225,6 +225,29 @@ function resolveLacloud(embedUrl) {
     return null;
   });
 }
+function resolvePacker(embedUrl) {
+  return get(embedUrl, { "Referer": BASE_URL + "/" }).then(function(html) {
+    try {
+      var packedMatch = html.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[\s\S]*?\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*[']([\s\S]+?)[']\.split\([']\|[']\)/);
+      if (!packedMatch) return null;
+      
+      var unpacked = unpack(packedMatch[1], parseInt(packedMatch[2]), packedMatch[4].split('|'));
+      var streamMatch = unpacked.match(/["'](https?:\/\/[^"']+\.m3u8[^"']*)["']/) || 
+                        unpacked.match(/["'](\/[^"']+\.m3u8[^"']*)["']/) || 
+                        unpacked.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
+      
+      if (streamMatch) {
+        var hlsLink = streamMatch[1];
+        if (hlsLink.startsWith('/')) {
+           var baseUrl = embedUrl.match(/^(https?:\/\/[^/]+)/)[1];
+           hlsLink = baseUrl + hlsLink;
+        }
+        return { url: hlsLink, quality: "1080p", headers: { "Referer": embedUrl, "User-Agent": DEFAULT_HEADERS["User-Agent"] } };
+      }
+    } catch (e) { console.log("[LaMovie] Error unpacker: " + e.message); }
+    return null;
+  });
+}
 function resolveVimeos(embedUrl) {
   var originMatch = embedUrl.match(/^(https?:\/\/[^/]+)/);
   var origin = originMatch ? originMatch[1] : "https://vimeos.net";
@@ -268,6 +291,7 @@ function getResolver(url) {
   if (url.indexOf("voe.sx") !== -1) return resolveVoe;
   if (url.indexOf("vimeos.net") !== -1) return resolveVimeos;
   if (url.indexOf("lacloud.live") !== -1) return resolveLacloud;
+  if (url.indexOf("earnvids.com") !== -1 || url.indexOf("hglink.to") !== -1 || url.indexOf("earnl.one") !== -1 || url.indexOf("vidnova.online") !== -1 || url.indexOf("streamfort.online") !== -1 || url.indexOf("dsvplay.com") !== -1) return resolvePacker;
   return null;
 }
 function getServerName(url) {
@@ -275,6 +299,9 @@ function getServerName(url) {
   if (url.indexOf("voe.sx") !== -1) return "VOE";
   if (url.indexOf("vimeos.net") !== -1) return "Vimeos";
   if (url.indexOf("lacloud.live") !== -1) return "Lacloud (Directo)";
+  if (url.indexOf("earnvids.com") !== -1 || url.indexOf("earnl.one") !== -1 || url.indexOf("vidnova.online") !== -1) return "EarnVids";
+  if (url.indexOf("hglink.to") !== -1 || url.indexOf("streamfort.online") !== -1) return "StreamHG";
+  if (url.indexOf("dsvplay.com") !== -1) return "DoodStream";
   return "Online";
 }
 function getTmdbInfo(tmdbId, mediaType) {
@@ -523,7 +550,28 @@ function getStreams(tmdbId, mediaType, season, episode) {
   }
 }
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { getStreams };
+  module.exports = {
+  getStreams: getStreams
+};
+
+// --- UTILS: P.A.C.K.E.R. UNPACKER ---
+function unpack(payload, radix, symtab) {
+    var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var unbase = function(str) {
+        var result = 0;
+        for (var i = 0; i < str.length; i++) {
+            var pos = chars.indexOf(str[i]);
+            if (pos === -1) return NaN;
+            result = result * radix + pos;
+        }
+        return result;
+    };
+    return payload.replace(/\b([0-9a-zA-Z]+)\b/g, function(match) {
+        var idx = unbase(match);
+        if (isNaN(idx) || idx >= symtab.length) return match;
+        return (symtab[idx] && symtab[idx] !== '') ? symtab[idx] : match;
+    });
+}
 } else {
   global.getStreams = getStreams;
 }
