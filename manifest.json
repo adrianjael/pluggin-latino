@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.12.14",
+  "version": "12.12.15",
   "scrapers": [
     {
       "id": "embed69",
@@ -348,7 +348,7 @@
       "id": "cinestream",
       "name": "CineStream",
       "description": "Agregador Multidioma con filtro inteligente Latino.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
