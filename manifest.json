@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.12.23",
+  "version": "12.12.24",
   "scrapers": [
     {
       "id": "embed69",
@@ -144,8 +144,11 @@
       "description": "Películas en HD (Latino) con servidores rápidos como Voe y Filemoon",
       "version": "2.3.0",
       "author": "AdrianJael",
+      "version": "2.3.1",
+      "author": "AdrianJael",
       "supportedTypes": [
-        "movie"
+        "movie",
+        "tv"
       ],
       "filename": "providers/cinecalidad.js",
       "enabled": true,

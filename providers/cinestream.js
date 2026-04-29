@@ -1,6 +1,6 @@
 /**
  * cinestream - Built from src/cinestream/
- * Generated: 2026-04-29T20:47:28.502Z
+ * Generated: 2026-04-29T20:50:55.565Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -475,7 +475,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.0`);
+        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.1`);
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
@@ -483,10 +483,8 @@ var require_engine = __commonJS({
           const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
           const skipFilter = providerName === "FuegoCine";
-          if (!isLatino && !skipFilter) {
-            console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
+          if (!isLatino && !skipFilter)
             continue;
-          }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
           const isVerified = s.verified === true;
@@ -502,11 +500,10 @@ var require_engine = __commonJS({
             url: s.url,
             quality,
             verified: isVerified,
-            // Propiedad crítica para el 'check' de la UI de Nuvio
             provider: server,
             language: rawLang,
             headers: s.headers || {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
           });
         }
