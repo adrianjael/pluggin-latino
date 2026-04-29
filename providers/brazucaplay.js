@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-29T16:41:57.324Z
+ * Generated: 2026-04-29T16:46:26.858Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -568,13 +568,14 @@ function getStreams(tmdbId = "76600", mediaType = "movie", season = null, episod
               if (source.url) {
                 const quality = source.quality || extractQuality(source.url);
                 results.push({
-                  langLabel: "Latino",
-                  serverLabel: `Brazuca-${serverName}`,
+                  name: `Brazuca - ${quality}`,
+                  title: `Latino - ${source.label || serverName}`,
                   url: source.url,
                   quality,
                   headers: {
                     "User-Agent": currentUA,
                     "Referer": "https://videasy.net/",
+                    "Origin": "https://videasy.net",
                     "Accept": "*/*"
                   }
                 });
