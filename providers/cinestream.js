@@ -1,6 +1,6 @@
 /**
  * cinestream - Built from src/cinestream/
- * Generated: 2026-04-29T20:50:55.565Z
+ * Generated: 2026-04-29T20:51:56.203Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1795,22 +1795,26 @@ var require_dropcdn = __commonJS({
   "src/resolvers/dropcdn.js"(exports2, module2) {
     function resolve3(url, signal = null) {
       return __async(this, null, function* () {
+        var _a;
         try {
           let embedUrl = url;
           const idMatch = url.match(/\/([a-zA-Z0-9]+)_o\//) || url.match(/\/e\/([a-zA-Z0-9]+)/);
           if (idMatch) {
             embedUrl = `https://dr0pstream.com/e/${idMatch[1]}`;
           }
-          console.log(`[DropCDN] Iniciando Handshake en: ${embedUrl}`);
+          console.log(`[DropCDN] Handshake Profundo: ${embedUrl}`);
           const HEADERS2 = {
             "User-Agent": "Mozilla/5.0 (Linux; Android 11; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Referer": "https://dr0pstream.com/",
             "Origin": "https://dr0pstream.com",
-            "X-Requested-With": "XMLHttpRequest"
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "*/*"
           };
           const response = yield fetch(embedUrl, { headers: HEADERS2, signal });
           if (!response.ok)
             return null;
+          const setCookie = response.headers.get("set-cookie");
+          const cookies = setCookie ? setCookie.split(",").map((c) => c.split(";")[0]).join("; ") : "";
           const html = yield response.text();
           const fileCode = embedUrl.split("/").pop();
           const hashMatch = html.match(/hash\s*[:=]\s*['"]([a-f0-9]{32})['"]/i) || html.match(/['"]([a-f0-9]{32})['"]/);
@@ -1818,10 +1822,11 @@ var require_dropcdn = __commonJS({
           if (fileCode && hashMatch) {
             const hash = hashMatch[1];
             const viewId = viewIdMatch ? viewIdMatch[1] : `0-${Date.now()}`;
-            console.log(`[DropCDN] Validando sesi\xF3n (Handshake): hash=${hash}, view_id=${viewId}`);
+            console.log(`[DropCDN] Validando con Hash: ${hash}`);
             const validationUrl = `https://dr0pstream.com/dl?op=view&file_code=${fileCode}&hash=${hash}&view_id=${viewId}&adb=0`;
             yield fetch(validationUrl, {
               headers: __spreadProps(__spreadValues({}, HEADERS2), {
+                "Cookie": cookies,
                 "Accept": "application/json, text/javascript, */*; q=0.01"
               }),
               signal
@@ -1830,18 +1835,22 @@ var require_dropcdn = __commonJS({
           }
           const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
           if (m3u8Match) {
-            console.log("[DropCDN] Handshake completado. Enlace activado.");
+            let finalUrl = m3u8Match[1];
+            console.log(`[DropCDN] Token extra\xEDdo: ${(_a = finalUrl.split("t=")[1]) == null ? void 0 : _a.substring(0, 10)}...`);
             return {
-              url: m3u8Match[1],
+              url: finalUrl,
               quality: "HD",
               verified: true,
               serverName: "DropCDN",
-              headers: HEADERS2
+              headers: __spreadProps(__spreadValues({}, HEADERS2), {
+                "Cookie": cookies
+                // Pasamos las cookies al reproductor por si acaso
+              })
             };
           }
           return null;
         } catch (error) {
-          console.error(`[DropCDN] Fallo en Handshake: ${error.message}`);
+          console.error(`[DropCDN] Error: ${error.message}`);
           return null;
         }
       });
