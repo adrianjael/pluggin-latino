@@ -138,7 +138,7 @@ function resolveVoe(embedUrl) {
           var decoded = voeDecode(encodedArray, replMatch[1]);
           if (decoded && (decoded.source || decoded.direct_access_url)) {
             var url2 = decoded.source || decoded.direct_access_url;
-            return { url: url2, quality: "1080p", headers: { "Referer": embedUrl } };
+            return { url: url2, quality: "1080p", verified: true, headers: { "Referer": embedUrl } };
           }
         }
         return null;
@@ -156,7 +156,7 @@ function resolveVoe(embedUrl) {
         } catch (e) {
         }
       }
-      return { url, quality: "1080p", headers: { "Referer": embedUrl } };
+      return { url, quality: "1080p", verified: true, headers: { "Referer": embedUrl } };
     }
     return null;
   }).catch(function(err) {
@@ -196,7 +196,7 @@ function resolveHlswish(embedUrl) {
     if (fileMatch) {
       var url = fileMatch[1];
       if (url.charAt(0) === "/") url = embedHost + url;
-      return { url, quality: "1080p", headers: { "User-Agent": DEFAULT_HEADERS["User-Agent"], "Referer": embedHost + "/" } };
+      return { url, quality: "1080p", verified: true, headers: { "User-Agent": DEFAULT_HEADERS["User-Agent"], "Referer": embedHost + "/" } };
     }
     var packMatch = data.match(/eval\(function\(p,a,c,k,e,[a-z]\)\{[^}]+\}\s*\('([\s\S]+?)',\s*(\d+),\s*(\d+),\s*'([\s\S]+?)'\.split\('\|'\)/);
     if (packMatch) {
@@ -205,11 +205,11 @@ function resolveHlswish(embedUrl) {
       if (m3u8Match) {
         var url = m3u8Match[1];
         if (url.charAt(0) === "/") url = embedHost + url;
-        return { url, quality: "1080p", headers: { "User-Agent": DEFAULT_HEADERS["User-Agent"], "Referer": embedHost + "/" } };
+        return { url, quality: "1080p", verified: true, headers: { "User-Agent": DEFAULT_HEADERS["User-Agent"], "Referer": embedHost + "/" } };
       }
     }
     var rawM3u8 = data.match(/https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*/i);
-    if (rawM3u8) return { url: rawM3u8[0], quality: "1080p", headers: { "User-Agent": DEFAULT_HEADERS["User-Agent"], "Referer": embedHost + "/" } };
+    if (rawM3u8) return { url: rawM3u8[0], quality: "1080p", verified: true, headers: { "User-Agent": DEFAULT_HEADERS["User-Agent"], "Referer": embedHost + "/" } };
     return null;
   }).catch(function(err) {
     console.log("[HLSWish] Error: " + err.message);
@@ -220,7 +220,7 @@ function resolveLacloud(embedUrl) {
   return get(embedUrl, { "Referer": BASE_URL + "/" }).then(function(html) {
     var m = html.match(/const src\s*=\s*["']([^"']+)["']/);
     if (m) {
-      return { url: m[1], quality: "1080p", headers: { "Referer": embedUrl, "User-Agent": DEFAULT_HEADERS["User-Agent"] } };
+      return { url: m[1], quality: "1080p", verified: true, headers: { "Referer": embedUrl, "User-Agent": DEFAULT_HEADERS["User-Agent"] } };
     }
     return null;
   });
@@ -242,7 +242,7 @@ function resolvePacker(embedUrl) {
            var baseUrl = embedUrl.match(/^(https?:\/\/[^/]+)/)[1];
            hlsLink = baseUrl + hlsLink;
         }
-        return { url: hlsLink, quality: "1080p", headers: { "Referer": embedUrl, "User-Agent": DEFAULT_HEADERS["User-Agent"] } };
+        return { url: hlsLink, quality: "1080p", verified: true, headers: { "Referer": embedUrl, "User-Agent": DEFAULT_HEADERS["User-Agent"] } };
       }
     } catch (e) { console.log("[LaMovie] Error unpacker: " + e.message); }
     return null;
@@ -276,7 +276,7 @@ function resolveVimeos(embedUrl) {
       var iParam = (masterUrl.match(/[?&]i=([^&]*)/) || ["", "?"])[1];
       console.log("[Vimeos] Intento " + n + " i=" + iParam + ": " + masterUrl.slice(0, 100));
       if (iParam === "0.0") {
-        return { url: masterUrl, quality: "1080p", headers: playHeaders };
+        return { url: masterUrl, quality: "1080p", verified: true, headers: playHeaders };
       }
       return attempt(n + 1);
     }).catch(function(err) {
@@ -497,6 +497,8 @@ function getStreams(tmdbId, mediaType, season, episode) {
                else if (langText.includes('espa\xF1ol') || langText.includes('castellano')) langLabel = "Castellano";
                else if (langText.includes('sub')) langLabel = "Subtitulado";
                
+               if (langLabel !== "Latino") return;
+               
                $group.find('.server-video').each(function() {
                   var videoUrl = $(this).attr('data-video');
                   var name = $(this).text().trim() || "Server";
@@ -523,12 +525,19 @@ function getStreams(tmdbId, mediaType, season, episode) {
                return resolver(embed.url).then(function(result) {
                   if (result && result.url) {
                      var serverName = getServerName(embed.url);
-                     var displayQuality = serverName + " \xB7 " + (embed.quality || "1080p") + " \xB7 " + embed.language;
+                     var isVerified = result.verified === true;
+                     var qualityLabel = embed.quality || result.quality || "1080p";
+                     var checkMark = isVerified ? " \u2705" : "";
+                     
+                     var streamName = "LaMovie - " + qualityLabel + checkMark;
+                     var streamTitle = embed.language + " - " + serverName + " " + qualityLabel;
+
                      results.push({
-                        name: "\u2705 LaMovie",
-                        title: displayQuality,
+                        name: streamName,
+                        title: streamTitle,
                         url: result.url,
-                        quality: displayQuality,
+                        quality: qualityLabel,
+                        verified: isVerified,
                         headers: result.headers || {}
                      });
                   }
