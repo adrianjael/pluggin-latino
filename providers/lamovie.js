@@ -128,22 +128,53 @@ function voeDecode(ct, luts) {
 }
 function resolveVoe(embedUrl) {
   return get(embedUrl, { "Referer": embedUrl }).then(function(data) {
-    var rMain = data.match(/json">\s*\[s*['"]([^'"]+)['"]\s*\]\s*<\/script>\s*<script[^>]*src=['"]([^'"]+)['"]/i);
-    if (rMain) {
-      var encodedArray = rMain[1];
-      var loaderUrl = resolveRelativeUrl(rMain[2], embedUrl);
-      return get(loaderUrl, { "Referer": embedUrl }).then(function(jsData) {
-        var replMatch = jsData.match(/(\[(?:'[^']{1,10}'[\s,]*){4,12}\])/i) || jsData.match(/(\[(?:"[^"]{1,10}"[,\s]*){4,12}\])/i);
-        if (replMatch) {
-          var decoded = voeDecode(encodedArray, replMatch[1]);
-          if (decoded && (decoded.source || decoded.direct_access_url)) {
-            var url2 = decoded.source || decoded.direct_access_url;
-            return { url: url2, quality: "1080p", verified: true, headers: { "Referer": embedUrl } };
+    if (data.indexOf("window.location.href") !== -1 && data.length < 2000) {
+      var rm = data.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+      if (rm) return resolveVoe(rm[1]);
+    }
+
+    var jsonMatch = data.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+    if (jsonMatch) {
+      try {
+        var parsed = JSON.parse(jsonMatch[1].trim());
+        var encText = Array.isArray(parsed) ? parsed[0] : parsed;
+        if (typeof encText === "string") {
+          var decoded = encText.replace(/[a-zA-Z]/g, function(c) {
+            var code = c.charCodeAt(0);
+            var limit = c <= "Z" ? 90 : 122;
+            var shifted = code + 13;
+            return String.fromCharCode(limit >= shifted ? shifted : shifted - 26);
+          });
+
+          var noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+          for (var i = 0; i < noise.length; i++) {
+            decoded = decoded.split(noise[i]).join("");
+          }
+
+          var b64_1 = b64decode(decoded);
+          if (b64_1) {
+            var shiftedStr = "";
+            for (var j = 0; j < b64_1.length; j++) {
+              shiftedStr += String.fromCharCode(b64_1.charCodeAt(j) - 3);
+            }
+            var reversed = shiftedStr.split("").reverse().join("");
+            var decrypted = b64decode(reversed);
+            if (decrypted) {
+              var finalData = JSON.parse(decrypted);
+              if (finalData && (finalData.source || finalData.direct_access_url)) {
+                return { 
+                   url: finalData.source || finalData.direct_access_url, 
+                   quality: "1080p", 
+                   verified: true, 
+                   headers: { "Referer": embedUrl, "User-Agent": DEFAULT_HEADERS["User-Agent"] } 
+                };
+              }
+            }
           }
         }
-        return null;
-      });
+      } catch (ex) { console.log("[VOE] Decrypt error: " + ex.message); }
     }
+
     var re = /(?:mp4|hls)['"\s]*:\s*['"]([^'"]+)['"]/gi;
     var m;
     while ((m = re.exec(data)) !== null) {
@@ -488,15 +519,26 @@ function getStreams(tmdbId, mediaType, season, episode) {
             var $ = cheerio.load(html);
             var embeds = [];
             
+            var langMap = {};
+            $('.server-tab .tab').each(function() {
+                var id = $(this).attr('data-id');
+                var type = $(this).attr('data-type') || $(this).text();
+                if (id && type) langMap[id] = type.toLowerCase();
+            });
+
             $('.lang-group').each(function() {
                var $group = $(this);
-               var langText = $group.find('.lang-title').text().trim().toLowerCase();
-               var langLabel = "Latino"; // Default
+               var groupId = $group.attr('data-id');
+               var langText = langMap[groupId] || $group.find('.lang-title').text().trim().toLowerCase() || "";
                
+               var langLabel = "Desconocido"; 
                if (langText.includes('latino')) langLabel = "Latino";
                else if (langText.includes('espa\xF1ol') || langText.includes('castellano')) langLabel = "Castellano";
                else if (langText.includes('sub')) langLabel = "Subtitulado";
                
+               // Si no se encuentra idioma pero es el grupo activo, asumimos Latino como fallback
+               if (langLabel === "Desconocido" && $group.hasClass('active')) langLabel = "Latino";
+
                if (langLabel !== "Latino") return;
                
                $group.find('.server-video').each(function() {

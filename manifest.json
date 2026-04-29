@@ -326,7 +326,7 @@
       "id": "lamovie",
       "name": "LaMovie",
       "description": "Proveedor premium con enlaces directos en 1080p y enfoque Latino.",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
