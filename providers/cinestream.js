@@ -1,6 +1,6 @@
 /**
  * cinestream - Built from src/cinestream/
- * Generated: 2026-04-29T18:14:10.979Z
+ * Generated: 2026-04-29T18:20:15.894Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -395,6 +395,12 @@ var require_mirrors = __commonJS({
         "seekplays",
         "seekstreaming",
         "embedseek"
+      ],
+      DROPCDN: [
+        "dropcdn",
+        "dropload",
+        "r1.dropcdn.io",
+        "r1.dropload.io"
       ]
     };
     function isMirror(url, groupName) {
