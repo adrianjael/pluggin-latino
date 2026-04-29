@@ -1,6 +1,6 @@
 /**
  * cinestream - Built from src/cinestream/
- * Generated: 2026-04-29T18:03:42.795Z
+ * Generated: 2026-04-29T18:14:10.979Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -551,7 +551,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
           if (!finalUrl.includes(".m3u8") && !finalUrl.includes(".mp4") && !finalUrl.includes(".mkv")) {
             finalUrl += "#.m3u8";
           }
-          const streamHeaders = s.behaviorHints && s.behaviorHints.proxyHeaders && s.behaviorHints.proxyHeaders.request || { "Referer": "https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/" };
+          const baseHeaders = {
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/",
+            "Origin": "https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club",
+            "Accept": "*/*"
+          };
+          const customHeaders = s.behaviorHints && s.behaviorHints.proxyHeaders && s.behaviorHints.proxyHeaders.request || {};
+          const streamHeaders = __spreadValues(__spreadValues({}, baseHeaders), customHeaders);
           results.push({
             langLabel: "Latino",
             serverLabel: `CineStream - ${serverLabel}`,
