@@ -557,36 +557,36 @@ function getStreams(tmdbId, mediaType, season, episode) {
 
             // Refactored processEmbeds logic to include language
             var results = [];
-            function processNext(i) {
-              if (i >= embeds.length) return Promise.resolve(results);
-              var embed = embeds[i];
-              var resolver = getResolver(embed.url);
-              if (!resolver) return processNext(i + 1);
+            var promises = embeds.map(function(embed) {
+               var resolver = getResolver(embed.url);
+               if (!resolver) return Promise.resolve();
 
-              return resolver(embed.url).then(function (result) {
-                if (result && result.url) {
-                  var serverName = getServerName(embed.url);
-                  var isVerified = result.verified === true;
-                  var qualityLabel = embed.quality || result.quality || "1080p";
-                  var checkMark = isVerified ? " \u2705" : "";
+               return resolver(embed.url).then(function(result) {
+                  if (result && result.url) {
+                    var serverName = getServerName(embed.url);
+                    var isVerified = result.verified === true;
+                    var qualityLabel = embed.quality || result.quality || "1080p";
+                    var checkMark = isVerified ? " \u2705" : "";
 
-                  var streamName = "La.movie - " + qualityLabel + checkMark;
-                  var streamTitle = embed.language + " - " + serverName + " " + qualityLabel;
+                    var streamName = "La.movie - " + qualityLabel + checkMark;
+                    var streamTitle = embed.language + " - " + serverName + " " + qualityLabel;
 
-                  results.push({
-                    name: streamName,
-                    title: streamTitle,
-                    url: result.url,
-                    quality: qualityLabel,
-                    verified: isVerified,
-                    headers: result.headers || {}
-                  });
-                }
-                return processNext(i + 1);
-              }).catch(function () { return processNext(i + 1); });
-            }
+                    results.push({
+                      name: streamName,
+                      title: streamTitle,
+                      url: result.url,
+                      quality: qualityLabel,
+                      verified: isVerified,
+                      headers: result.headers || {}
+                    });
+                  }
+               }).catch(function(e) { console.log("[LaMovie] Skip embed: " + e.message); });
+            });
 
-            return processNext(0);
+            return Promise.all(promises).then(function() {
+               console.log("[LaMovie] Total final: " + results.length + " streams");
+               return results;
+            });
           });
         });
       });
