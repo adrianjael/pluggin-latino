@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-30T17:00:24.908Z
+ * Generated: 2026-04-30T17:03:10.370Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -633,11 +633,9 @@ var require_engine = __commonJS({
             continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
-          const isVerified = s.verified === true;
           const isReal = s.isReal === true;
-          const checkMark = isVerified ? " \u2705" : "";
-          const realLabel = isReal ? " [Real]" : "";
-          const streamName = `${providerName} - ${quality}${realLabel}${checkMark}`;
+          const checkMark = isReal ? " \u2705" : "";
+          const streamName = `${providerName} - ${quality}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;

@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-30T16:55:40.598Z
+ * Generated: 2026-04-30T17:03:10.390Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1927,6 +1927,10 @@ var require_mirrors = __commonJS({
         "398fitus",
         "filemoon.sx",
         "filemoon.to",
+        "filemoon.lat",
+        "filemoon.live",
+        "filemoon.online",
+        "filemoon.me",
         "bysedikamoum"
       ],
       VOE: [
@@ -2422,11 +2426,9 @@ var require_engine = __commonJS({
             continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
-          const isVerified = s.verified === true;
           const isReal = s.isReal === true;
-          const checkMark = isVerified ? " \u2705" : "";
-          const realLabel = isReal ? " [Real]" : "";
-          const streamName = `${providerName} - ${quality}${realLabel}${checkMark}`;
+          const checkMark = isReal ? " \u2705" : "";
+          const streamName = `${providerName} - ${quality}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
