@@ -1,6 +1,6 @@
 /**
  * videasy - Built from src/videasy/
- * Generated: 2026-04-30T17:05:22.276Z
+ * Generated: 2026-04-30T17:13:58.485Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -588,10 +588,10 @@ var API_DEC = "https://enc-dec.app/api/dec-videasy";
 var TMDB_API_KEY = "1c29a5198ee1854bd5eb45dbe8d17d92";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var SERVERS = {
-  "Omen": { url: "https://api.videasy.net/lamovie/sources-with-title", label: "L-Movie" },
-  "Gekko": { url: "https://api2.videasy.net/cuevana/sources-with-title", label: "Cuevana" },
-  "Vimeos": { url: "https://api.videasy.net/vimeos/sources-with-title", label: "Vimeos" },
-  "Raze": { url: "https://api.videasy.net/superflix/sources-with-title", label: "Superflix" }
+  "Omen": { url: "https://api.videasy.net/lamovie/sources-with-title", label: "L-Movie", lang: "Latino" },
+  "Gekko": { url: "https://api2.videasy.net/cuevana/sources-with-title", label: "Cuevana", lang: "Latino" },
+  "Vimeos": { url: "https://api.videasy.net/vimeos/sources-with-title", label: "Vimeos", lang: "Latino" },
+  "Raze": { url: "https://api.videasy.net/superflix/sources-with-title", label: "Superflix", lang: "Auto" }
 };
 var CINEBY_HEADERS = {
   "Accept": "*/*",
@@ -638,9 +638,18 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
                 let quality = (source.quality || "HD").toUpperCase();
                 if (quality === "AUTO")
                   quality = "1080p";
+                let audio = config.lang;
+                if (serverId === "Raze") {
+                  const label = (source.label || "").toLowerCase();
+                  if (label.includes("lat") || label.includes("spa") || label.includes("esp")) {
+                    audio = "Latino";
+                  } else {
+                    audio = "Ingl\xE9s";
+                  }
+                }
                 localResults.push({
                   serverName: config.label,
-                  audio: "Latino",
+                  audio,
                   quality,
                   url: source.url,
                   headers: serverId === "Raze" ? ANDROID_HEADERS : CINEBY_HEADERS
