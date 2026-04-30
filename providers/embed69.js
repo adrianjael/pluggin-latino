@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-29T15:56:48.355Z
+ * Generated: 2026-04-30T14:36:52.302Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -478,6 +478,47 @@ var require_mirrors = __commonJS({
         "seekplays",
         "seekstreaming",
         "embedseek"
+      ],
+      DROPCDN: [
+        "dropcdn.io",
+        "dropload.io",
+        "dropcdn",
+        "dropload",
+        "dr0pstream"
+      ],
+      DOODSTREAM: [
+        "dood.li",
+        "dood.la",
+        "ds2video.com",
+        "ds2play.com",
+        "dood.yt",
+        "dood.ws",
+        "dood.so",
+        "dood.to",
+        "dood.pm",
+        "dood.watch",
+        "dood.sh",
+        "dood.cx",
+        "dood.wf",
+        "dood.re",
+        "dood.one",
+        "dood.tech",
+        "dood.work",
+        "doods.pro",
+        "dooood.com",
+        "doodstream.com",
+        "doodstream.co",
+        "d000d.com",
+        "d0000d.com",
+        "doodapi.com",
+        "d0o0d.com",
+        "do0od.com",
+        "dooodster.com",
+        "vidply.com",
+        "do7go.com",
+        "all3do.com",
+        "doply.net",
+        "dsvplay.com"
       ]
     };
     function isMirror2(url, groupName) {
@@ -528,6 +569,8 @@ var require_engine = __commonJS({
         return "VOE";
       if (isMirror2(u, "FILEMOON") || isMirror2(s, "FILEMOON"))
         return "Filemoon";
+      if (isMirror2(u, "DOODSTREAM") || isMirror2(s, "DOODSTREAM"))
+        return "DoodStream";
       if (url) {
         try {
           const domainParts = new URL(url).hostname.replace("www.", "").split(".");
@@ -542,7 +585,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.0`);
+        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.1`);
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
@@ -550,10 +593,8 @@ var require_engine = __commonJS({
           const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
           const skipFilter = providerName === "FuegoCine";
-          if (!isLatino && !skipFilter) {
-            console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
+          if (!isLatino && !skipFilter)
             continue;
-          }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
           const isVerified = s.verified === true;
@@ -569,11 +610,10 @@ var require_engine = __commonJS({
             url: s.url,
             quality,
             verified: isVerified,
-            // Propiedad crítica para el 'check' de la UI de Nuvio
             provider: server,
             language: rawLang,
             headers: s.headers || {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
           });
         }

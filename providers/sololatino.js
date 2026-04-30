@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-30T14:27:15.601Z
+ * Generated: 2026-04-30T14:36:52.263Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -412,6 +412,40 @@ var require_mirrors = __commonJS({
         "dropcdn",
         "dropload",
         "dr0pstream"
+      ],
+      DOODSTREAM: [
+        "dood.li",
+        "dood.la",
+        "ds2video.com",
+        "ds2play.com",
+        "dood.yt",
+        "dood.ws",
+        "dood.so",
+        "dood.to",
+        "dood.pm",
+        "dood.watch",
+        "dood.sh",
+        "dood.cx",
+        "dood.wf",
+        "dood.re",
+        "dood.one",
+        "dood.tech",
+        "dood.work",
+        "doods.pro",
+        "dooood.com",
+        "doodstream.com",
+        "doodstream.co",
+        "d000d.com",
+        "d0000d.com",
+        "doodapi.com",
+        "d0o0d.com",
+        "do0od.com",
+        "dooodster.com",
+        "vidply.com",
+        "do7go.com",
+        "all3do.com",
+        "doply.net",
+        "dsvplay.com"
       ]
     };
     function isMirror(url, groupName) {
@@ -462,6 +496,8 @@ var require_engine = __commonJS({
         return "VOE";
       if (isMirror(u, "FILEMOON") || isMirror(s, "FILEMOON"))
         return "Filemoon";
+      if (isMirror(u, "DOODSTREAM") || isMirror(s, "DOODSTREAM"))
+        return "DoodStream";
       if (url) {
         try {
           const domainParts = new URL(url).hostname.replace("www.", "").split(".");
@@ -1986,6 +2022,73 @@ var require_vidsrc = __commonJS({
   }
 });
 
+// src/resolvers/doodstream.js
+var require_doodstream = __commonJS({
+  "src/resolvers/doodstream.js"(exports2, module2) {
+    var { getSessionUA } = require_http();
+    function resolve3(url, signal = null) {
+      return __async(this, null, function* () {
+        try {
+          const UA4 = getSessionUA();
+          console.log(`[DoodStream] Resolviendo: ${url}`);
+          let embedUrl = url;
+          if (!embedUrl.includes("/e/")) {
+            embedUrl = embedUrl.replace(/\/(d|f)\//, "/e/");
+          }
+          const response = yield fetch(embedUrl, {
+            signal,
+            headers: { "User-Agent": UA4 }
+          });
+          if (!response.ok)
+            return null;
+          const html = yield response.text();
+          const fetchRegex = /\$\.get\(['"](\/pass_md5\/[\w-]+)\/([\w-]+)['"]/i;
+          const match = html.match(fetchRegex);
+          if (!match) {
+            console.log("[DoodStream] No se encontraron tokens (pass_md5)");
+            return null;
+          }
+          const passPath = match[1];
+          const token = match[2];
+          const domain = new URL(embedUrl).origin;
+          const passUrl = domain + passPath;
+          const passRes = yield fetch(passUrl, {
+            headers: {
+              "User-Agent": UA4,
+              "Referer": embedUrl
+            },
+            signal
+          });
+          if (!passRes.ok)
+            return null;
+          const videoBaseUrl = yield passRes.text();
+          const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+          let randomString = "";
+          for (let i = 0; i < 10; i++) {
+            randomString += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          const expiry = Date.now();
+          const finalVideoUrl = `${videoBaseUrl}${randomString}?token=${token}&expiry=${expiry}`;
+          return {
+            url: finalVideoUrl,
+            quality: "720p",
+            verified: true,
+            serverName: "DoodStream",
+            headers: {
+              "User-Agent": UA4,
+              "Referer": domain + "/"
+            }
+          };
+        } catch (e) {
+          console.error(`[DoodStream] Error: ${e.message}`);
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve3 };
+  }
+});
+
 // src/utils/resolvers.js
 var require_resolvers = __commonJS({
   "src/utils/resolvers.js"(exports2, module2) {
@@ -2006,6 +2109,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolveLulustream } = require_lulustream();
     var { resolve: resolveDropcdn } = require_dropcdn();
     var { resolve: resolveVidsrc } = require_vidsrc();
+    var { resolve: resolveDoodstream } = require_doodstream();
     var { getSessionUA } = require_http();
     var { isMirror } = require_mirrors();
     var UA4 = getSessionUA();
@@ -2121,6 +2225,11 @@ var require_resolvers = __commonJS({
         }
         if (s.includes("vidsrc") || s.includes("moviesapi.to") || s.includes("moviesapi.club")) {
           const res = yield resolveVidsrc(url, signal);
+          if (res)
+            return applyPiping(res);
+        }
+        if (isMirror(s, "DOODSTREAM")) {
+          const res = yield resolveDoodstream(url, signal);
           if (res)
             return applyPiping(res);
         }
