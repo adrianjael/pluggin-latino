@@ -576,7 +576,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
                   var qualityLabel = embed.quality || result.quality || "1080p";
                   var checkMark = isVerified ? " \u2705" : "";
 
-                  var streamName = "LaMovie - " + qualityLabel + checkMark;
+                  var streamName = "[DEBUG-v2.4] LaMovie - " + qualityLabel + checkMark;
                   var streamTitle = embed.language + " - " + serverName + " " + qualityLabel;
 
                   results.push({
