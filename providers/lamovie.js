@@ -520,43 +520,37 @@ function getStreams(tmdbId, mediaType, season, episode) {
             var embeds = [];
 
             var langMap = {};
-            $('.server-tab .tab').each(function () {
-              var id = $(this).attr('data-id');
-              var type = $(this).attr('data-type') || $(this).text();
-              if (id && type) langMap[id] = type.trim().toLowerCase();
+            $('.server-tab .tab').each(function() {
+                var id = $(this).attr('data-id');
+                var type = $(this).attr('data-type') || $(this).text();
+                if (id && type) langMap[id] = type.trim().toLowerCase();
             });
-            console.log("[LaMovie] LangMap: " + JSON.stringify(langMap));
 
-            $('.lang-group').each(function () {
-              var $group = $(this);
-              var groupId = $group.attr('data-id');
-              var langText = langMap[groupId] || $group.find('.lang-title').text().trim().toLowerCase() || "";
+            $('.lang-group').each(function() {
+               var $group = $(this);
+               var groupId = $group.attr('data-id');
+               var langText = langMap[groupId] || $group.find('.lang-title').text().trim().toLowerCase() || "";
+               
+               var langLabel = "Desconocido"; 
 
-              console.log("[LaMovie] Procesando grupo: " + groupId + " (Text: " + langText + ")");
-
-              var langLabel = "Desconocido";
               if (langText.includes('latino')) langLabel = "Latino";
               else if (langText.includes('espa\xF1ol') || langText.includes('castellano')) langLabel = "Castellano";
               else if (langText.includes('sub')) langLabel = "Subtitulado";
 
               if (langLabel === "Desconocido" && $group.hasClass('active')) langLabel = "Latino";
 
-              console.log("[LaMovie] Label asignado: " + langLabel);
-
               if (langLabel !== "Latino") return;
 
-              $group.find('.server-video').each(function () {
-                var videoUrl = $(this).attr('data-video');
-                var name = $(this).text().trim() || "Server";
-                console.log("[LaMovie] Embed encontrado: " + name + " -> " + videoUrl);
-                if (videoUrl) {
-                  embeds.push({ url: videoUrl, quality: "1080p", server: name, language: langLabel });
-                }
-              });
+               $group.find('.server-video').each(function() {
+                  var videoUrl = $(this).attr('data-video');
+                  var name = $(this).text().trim() || "Server";
+                  if (videoUrl) {
+                    embeds.push({ url: videoUrl, quality: "1080p", server: name, language: langLabel });
+                  }
+               });
             });
 
             if (!embeds.length) {
-              console.log("[LaMovie] Sin embeds encontrados en HTML");
               return [];
             }
             console.log("[LaMovie] " + embeds.length + " embed(s) encontrados...");
@@ -576,7 +570,7 @@ function getStreams(tmdbId, mediaType, season, episode) {
                   var qualityLabel = embed.quality || result.quality || "1080p";
                   var checkMark = isVerified ? " \u2705" : "";
 
-                  var streamName = "[DEBUG-v2.4] LaMovie - " + qualityLabel + checkMark;
+                  var streamName = "La.movie - " + qualityLabel + checkMark;
                   var streamTitle = embed.language + " - " + serverName + " " + qualityLabel;
 
                   results.push({
