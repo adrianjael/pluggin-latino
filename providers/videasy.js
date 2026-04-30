@@ -1,6 +1,6 @@
 /**
  * videasy - Built from src/videasy/
- * Generated: 2026-04-30T17:13:58.485Z
+ * Generated: 2026-04-30T17:15:56.125Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -591,7 +591,7 @@ var SERVERS = {
   "Omen": { url: "https://api.videasy.net/lamovie/sources-with-title", label: "L-Movie", lang: "Latino" },
   "Gekko": { url: "https://api2.videasy.net/cuevana/sources-with-title", label: "Cuevana", lang: "Latino" },
   "Vimeos": { url: "https://api.videasy.net/vimeos/sources-with-title", label: "Vimeos", lang: "Latino" },
-  "Raze": { url: "https://api.videasy.net/superflix/sources-with-title", label: "Superflix", lang: "Auto" }
+  "Raze": { url: "https://api.videasy.net/superflix/sources-with-title", label: "Superflix", lang: "Latino" }
 };
 var CINEBY_HEADERS = {
   "Accept": "*/*",
@@ -639,11 +639,9 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
                 if (quality === "AUTO")
                   quality = "1080p";
                 let audio = config.lang;
-                if (serverId === "Raze") {
-                  const label = (source.label || "").toLowerCase();
-                  if (label.includes("lat") || label.includes("spa") || label.includes("esp")) {
-                    audio = "Latino";
-                  } else {
+                if (serverId === "Raze" && source.label) {
+                  const label = source.label.toLowerCase();
+                  if (label.includes("eng") || label.includes("en-us")) {
                     audio = "Ingl\xE9s";
                   }
                 }
