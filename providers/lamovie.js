@@ -318,9 +318,9 @@ function resolveVimeos(embedUrl) {
   return attempt(1);
 }
 function resolveDoodstream(embedUrl) {
-  var UA = DEFAULT_HEADERS["User-Agent"];
+  var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
   var embedHost = embedUrl.replace(/\/(d|f)\//, "/e/");
-  return get(embedHost, { "User-Agent": UA }).then(function(html) {
+  return get(embedHost, { "User-Agent": UA, "Referer": "https://lamovie.cc/" }).then(function(html) {
     var match = html.match(/\$\.get\(['"](\/pass_md5\/[\w-]+)\/([\w-]+)['"]/i);
     if (!match) return null;
     var passPath = match[1];

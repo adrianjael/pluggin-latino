@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-30T14:36:52.263Z
+ * Generated: 2026-04-30T14:46:24.334Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2037,7 +2037,11 @@ var require_doodstream = __commonJS({
           }
           const response = yield fetch(embedUrl, {
             signal,
-            headers: { "User-Agent": UA4 }
+            headers: {
+              "User-Agent": UA4,
+              "Referer": "https://lamovie.cc/"
+              // Referer de confianza para evadir 403
+            }
           });
           if (!response.ok)
             return null;
