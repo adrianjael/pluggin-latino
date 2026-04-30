@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-30T18:57:55.781Z
+ * Generated: 2026-04-30T19:02:41.362Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1386,7 +1386,8 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                   console.error(`[Embed69] Decoding error: ${err.message}`);
                 }
               }
-              if (decodedLink.includes("/d/") || decodedLink.includes("embed69.org/f/"))
+              const sLink = decodedLink.toLowerCase();
+              if (sLink.includes("/d/") || sLink.includes("/download/") || sLink.includes("/get/") || sLink.includes("embed69.org/f/") || sLink.includes("mediafire.com") || sLink.includes("mega.nz"))
                 return;
               if (seenUrls.has(decodedLink))
                 return;
