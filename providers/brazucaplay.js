@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T17:13:58.329Z
+ * Generated: 2026-04-30T17:17:47.621Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -485,18 +485,22 @@ var require_engine = __commonJS({
     var { isMirror } = require_mirrors();
     function normalizeLanguage(lang) {
       const l = (lang || "").toLowerCase();
-      if (l === "latino" || l === "espa\xF1ol")
-        return lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase();
+      if (l === "latino" || l === "espa\xF1ol" || l === "lat" || l === "auto") {
+        return "Latino";
+      }
       if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dub") || l.includes("dual")) {
         return "Latino";
       }
-      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
+      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast") || l === "esp") {
         return "Espa\xF1ol";
       }
-      if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
+      if (l.includes("sub") || l.includes("vose") || l === "sub") {
         return "Subtitulado";
       }
-      return lang || "Desconocido";
+      if (l.includes("eng") || l.includes("en-us") || l === "en") {
+        return "Ingl\xE9s";
+      }
+      return lang || "Latino";
     }
     function normalizeServer(server, url = "", resolvedServerName = null) {
       if (resolvedServerName)
