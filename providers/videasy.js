@@ -1,6 +1,6 @@
 /**
  * videasy - Built from src/videasy/
- * Generated: 2026-04-30T16:41:00.180Z
+ * Generated: 2026-04-30T16:47:08.470Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -548,10 +548,10 @@ var API_DEC = "https://enc-dec.app/api/dec-videasy";
 var TMDB_API_KEY = "1c29a5198ee1854bd5eb45dbe8d17d92";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var SERVERS = {
-  "Omen": { url: "https://api.videasy.net/lamovie/sources-with-title" },
-  "Gekko": { url: "https://api2.videasy.net/cuevana/sources-with-title" },
-  "Vimeos": { url: "https://api.videasy.net/vimeos/sources-with-title" },
-  "Raze": { url: "https://api.videasy.net/superflix/sources-with-title" }
+  "Omen": { url: "https://api.videasy.net/lamovie/sources-with-title", label: "L-Movie" },
+  "Gekko": { url: "https://api2.videasy.net/cuevana/sources-with-title", label: "Cuevana" },
+  "Vimeos": { url: "https://api.videasy.net/vimeos/sources-with-title", label: "Vimeos" },
+  "Raze": { url: "https://api.videasy.net/superflix/sources-with-title", label: "Superflix" }
 };
 var CINEBY_HEADERS = {
   "Accept": "*/*",
@@ -559,9 +559,14 @@ var CINEBY_HEADERS = {
   "Referer": "https://cineby.sc/",
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/126.0.0.0 (Edition std-2)"
 };
+var ANDROID_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+  "Referer": "https://player.videasy.net/",
+  "Origin": "https://player.videasy.net"
+};
 function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
   return __async(this, null, function* () {
-    console.log(`[VidEasy Latino] Resolviendo v\xEDa Cineby (Double Enc): ${tmdbId}`);
+    console.log(`[VidEasy Latino] Resolviendo v2.6.8 (Premium UI): ${tmdbId}`);
     const results = [];
     try {
       setSessionUA(CINEBY_HEADERS["User-Agent"]);
@@ -571,7 +576,7 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
       const title = tmdbData.title || tmdbData.name;
       const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
       const doubleEncTitle = encodeURIComponent(encodeURIComponent(title));
-      for (const [serverName, config] of Object.entries(SERVERS)) {
+      for (const [serverId, config] of Object.entries(SERVERS)) {
         try {
           let searchUrl = `${config.url}?title=${doubleEncTitle}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
           if (mediaType === "tv")
@@ -592,12 +597,18 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
           if (mediaData && mediaData.sources) {
             for (const source of mediaData.sources) {
               if (source.url) {
+                let quality = (source.quality || "HD").toUpperCase();
+                if (quality === "AUTO")
+                  quality = "1080p";
+                const finalHeaders = serverId === "Raze" ? ANDROID_HEADERS : CINEBY_HEADERS;
                 results.push({
-                  serverName,
+                  serverName: config.label,
                   audio: "Latino",
-                  quality: source.quality || "HD",
+                  quality,
                   url: source.url,
-                  headers: CINEBY_HEADERS
+                  verified: true,
+                  // Esto activa el "comprobador" (check verde)
+                  headers: finalHeaders
                 });
               }
             }
@@ -607,7 +618,14 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
       }
     } catch (error) {
     }
-    return finalizeStreams(results, "VidEasy Latino", "");
+    const finalResults = results.map((s) => ({
+      name: `${s.serverName} - ${s.quality} [Latino]`,
+      title: `Servidor: ${s.serverName} | Audio: Latino \u2705`,
+      url: s.url,
+      quality: s.quality,
+      headers: s.headers
+    }));
+    return finalResults;
   });
 }
 module.exports = { getStreams };

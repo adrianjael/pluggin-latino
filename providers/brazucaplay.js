@@ -1,47 +1,11 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T16:41:00.218Z
+ * Generated: 2026-04-30T16:47:08.508Z
  */
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -168,387 +132,13 @@ var require_http = __commonJS({
   }
 });
 
-// src/utils/m3u8.js
-var require_m3u8 = __commonJS({
-  "src/utils/m3u8.js"(exports2, module2) {
-    var { getSessionUA } = require_http();
-    function getQualityFromHeight(height) {
-      if (!height)
-        return "1080p";
-      const h = parseInt(height);
-      if (h >= 2160)
-        return "4K";
-      if (h >= 1440)
-        return "1440p";
-      if (h >= 1080)
-        return "1080p";
-      if (h >= 720)
-        return "720p";
-      if (h >= 480)
-        return "480p";
-      if (h >= 360)
-        return "360p";
-      return "1080p";
-    }
-    function parseBestQuality(content, url = "") {
-      if (content) {
-        const lines = content.split("\n");
-        let bestHeight = 0;
-        for (const line of lines) {
-          if (line.includes("RESOLUTION=")) {
-            const match = line.match(/RESOLUTION=\d+x(\d+)/i);
-            if (match) {
-              const height = parseInt(match[1]);
-              if (height > bestHeight)
-                bestHeight = height;
-            }
-          }
-        }
-        if (bestHeight > 0)
-          return getQualityFromHeight(bestHeight);
-      }
-      const qMatch = url.match(/([_-]|\/)(\d{3,4})([pP]|(\.m3u8))?/);
-      if (qMatch) {
-        const h = parseInt(qMatch[2]);
-        if (h >= 360 && h <= 4320)
-          return getQualityFromHeight(h);
-      }
-      return "1080p";
-    }
-    var VALIDATION_CACHE = /* @__PURE__ */ new Map();
-    function validateStream(stream, signal = null) {
-      return __async(this, null, function* () {
-        if (!stream || !stream.url)
-          return stream;
-        const { url, headers } = stream;
-        if (VALIDATION_CACHE.has(url))
-          return __spreadValues(__spreadValues({}, stream), VALIDATION_CACHE.get(url));
-        try {
-          const fetchOptions = {
-            method: "GET",
-            headers: __spreadValues({
-              "User-Agent": getSessionUA()
-            }, headers || {})
-          };
-          if (signal)
-            fetchOptions.signal = signal;
-          const response = yield fetch(url, fetchOptions);
-          if (!response.ok)
-            return __spreadProps(__spreadValues({}, stream), { verified: false });
-          const text = yield response.text();
-          let resultData = { verified: true };
-          if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
-            resultData.quality = parseBestQuality(text, url);
-          }
-          VALIDATION_CACHE.set(url, resultData);
-          return __spreadValues(__spreadValues({}, stream), resultData);
-        } catch (error) {
-          const resultData = { quality: parseBestQuality("", url), verified: true };
-          VALIDATION_CACHE.set(url, resultData);
-          return __spreadValues(__spreadValues({}, stream), resultData);
-        }
-      });
-    }
-    module2.exports = { validateStream, getQualityFromHeight };
-  }
-});
-
-// src/utils/sorting.js
-var sorting_exports = {};
-__export(sorting_exports, {
-  sortStreamsByQuality: () => sortStreamsByQuality
-});
-function sortStreamsByQuality(streams) {
-  if (!Array.isArray(streams))
-    return [];
-  return [...streams].sort((a, b) => {
-    const scoreA = QUALITY_SCORE[a.quality] || 0;
-    const scoreB = QUALITY_SCORE[b.quality] || 0;
-    if (scoreA !== scoreB) {
-      return scoreB - scoreA;
-    }
-    const serverA = (a.serverLabel || "").split(" ")[0];
-    const serverB = (b.serverLabel || "").split(" ")[0];
-    const speedA = SERVER_SCORE[serverA] || 0;
-    const speedB = SERVER_SCORE[serverB] || 0;
-    if (speedA !== speedB) {
-      return speedB - speedA;
-    }
-    if (a.verified && !b.verified)
-      return -1;
-    if (!a.verified && b.verified)
-      return 1;
-    return 0;
-  });
-}
-var QUALITY_SCORE, SERVER_SCORE;
-var init_sorting = __esm({
-  "src/utils/sorting.js"() {
-    QUALITY_SCORE = {
-      "4K": 100,
-      "1440p": 90,
-      "1080p": 80,
-      "720p": 70,
-      "480p": 60,
-      "360p": 50,
-      "240p": 40,
-      "Auto": 30,
-      "Unknown": 0
-    };
-    SERVER_SCORE = {
-      "VOE": 10,
-      "Filemoon": 10,
-      "Tplayer": 10,
-      "Vimeos": 10,
-      "Netu": 5,
-      "GoodStream": 10,
-      "StreamWish": -5,
-      "VidHide": -5
-    };
-  }
-});
-
-// src/utils/mirrors.js
-var require_mirrors = __commonJS({
-  "src/utils/mirrors.js"(exports2, module2) {
-    var MIRRORS = {
-      VIDHIDE: [
-        "vidhide",
-        "minochinos",
-        "vadisov",
-        "vaiditv",
-        "amusemre",
-        "callistanise",
-        "vhaudm",
-        "mdfury",
-        "dintezuvio",
-        "acek-cdn",
-        "vedonm",
-        "vidhidepro",
-        "vidhidevip",
-        "masukestin",
-        "vidoza"
-      ],
-      STREAMWISH: [
-        "hlswish",
-        "streamwish",
-        "hglink",
-        "hglamioz",
-        "hglink.to",
-        "audinifer",
-        "embedwish",
-        "awish",
-        "dwish",
-        "strwish",
-        "filelions",
-        "wishembed",
-        "wishfast",
-        "hanerix"
-      ],
-      FILEMOON: [
-        "filemoon",
-        "moonalu",
-        "moonembed",
-        "bysedikamoum",
-        "r66nv9ed",
-        "398fitus",
-        "filemoon.sx",
-        "filemoon.to",
-        "bysedikamoum"
-      ],
-      VOE: [
-        "voe.sx",
-        "voe-sx",
-        "voex.sx",
-        "marissashare",
-        "cloudwindow",
-        "marissasharecareer"
-      ],
-      FASTREAM: [
-        "fastream",
-        "fastplay",
-        "fembed"
-      ],
-      OKRU: [
-        "ok.ru",
-        "okru"
-      ],
-      PIXELDRAIN: [
-        "pixeldrain"
-      ],
-      BUZZHEAVIER: [
-        "buzzheavier",
-        "bzh.sh"
-      ],
-      GOODSTREAM: [
-        "goodstream",
-        "gs.one"
-      ],
-      LULUSTREAM: [
-        "lulustream",
-        "luluvdo",
-        "luluvids",
-        "pondy",
-        "lulupuv"
-      ],
-      SEEKSTREAMING: [
-        "seekplays",
-        "seekstreaming",
-        "embedseek"
-      ],
-      DROPCDN: [
-        "dropcdn.io",
-        "dropload.io",
-        "dropcdn",
-        "dropload",
-        "dr0pstream"
-      ],
-      DOODSTREAM: [
-        "dood.li",
-        "dood.la",
-        "ds2video.com",
-        "ds2play.com",
-        "dood.yt",
-        "dood.ws",
-        "dood.so",
-        "dood.to",
-        "dood.pm",
-        "dood.watch",
-        "dood.sh",
-        "dood.cx",
-        "dood.wf",
-        "dood.re",
-        "dood.one",
-        "dood.tech",
-        "dood.work",
-        "doods.pro",
-        "dooood.com",
-        "doodstream.com",
-        "doodstream.co",
-        "d000d.com",
-        "d0000d.com",
-        "doodapi.com",
-        "d0o0d.com",
-        "do0od.com",
-        "dooodster.com",
-        "vidply.com",
-        "do7go.com",
-        "all3do.com",
-        "doply.net",
-        "dsvplay.com"
-      ]
-    };
-    function isMirror(url, groupName) {
-      if (!url || !MIRRORS[groupName])
-        return false;
-      const s = url.toLowerCase();
-      return MIRRORS[groupName].some((m) => s.includes(m));
-    }
-    module2.exports = { MIRRORS, isMirror };
-  }
-});
-
-// src/utils/engine.js
-var require_engine = __commonJS({
-  "src/utils/engine.js"(exports2, module2) {
-    var { validateStream } = require_m3u8();
-    var { sortStreamsByQuality: sortStreamsByQuality2 } = (init_sorting(), __toCommonJS(sorting_exports));
-    var { isMirror } = require_mirrors();
-    function normalizeLanguage(lang) {
-      const l = (lang || "").toLowerCase();
-      if (l === "latino" || l === "espa\xF1ol")
-        return lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase();
-      if (l.includes("lat") || l.includes("mex") || l.includes("col") || l.includes("arg") || l.includes("chi") || l.includes("per") || l.includes("dub") || l.includes("dual")) {
-        return "Latino";
-      }
-      if (l.includes("esp") || l.includes("cas") || l.includes("spa") || l.includes("cast")) {
-        return "Espa\xF1ol";
-      }
-      if (l.includes("sub") || l.includes("vose") || l.includes("eng")) {
-        return "Subtitulado";
-      }
-      return lang || "Desconocido";
-    }
-    function normalizeServer(server, url = "", resolvedServerName = null) {
-      if (resolvedServerName)
-        return resolvedServerName;
-      const u = (url || "").toLowerCase();
-      const s = (server || "").toLowerCase();
-      if (u.includes("goodstream") || s.includes("goodstream"))
-        return "GoodStream";
-      if (u.includes("vimeos") || u.includes("vms.sh") || s.includes("vimeos"))
-        return "Vimeos";
-      if (isMirror(u, "VIDHIDE") || isMirror(s, "VIDHIDE"))
-        return "VidHide";
-      if (isMirror(u, "STREAMWISH") || isMirror(s, "STREAMWISH"))
-        return "StreamWish";
-      if (isMirror(u, "VOE") || isMirror(s, "VOE"))
-        return "VOE";
-      if (isMirror(u, "FILEMOON") || isMirror(s, "FILEMOON"))
-        return "Filemoon";
-      if (isMirror(u, "DOODSTREAM") || isMirror(s, "DOODSTREAM"))
-        return "DoodStream";
-      if (url) {
-        try {
-          const domainParts = new URL(url).hostname.replace("www.", "").split(".");
-          const mainName = domainParts.length > 1 ? domainParts[domainParts.length - 2] : domainParts[0];
-          return mainName.charAt(0).toUpperCase() + mainName.slice(1);
-        } catch (e) {
-        }
-      }
-      return server || "Servidor";
-    }
-    function finalizeStreams2(streams, providerName, mediaTitle) {
-      return __async(this, null, function* () {
-        if (!Array.isArray(streams) || streams.length === 0)
-          return [];
-        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.1`);
-        const sorted = sortStreamsByQuality2(streams);
-        const processed = [];
-        const seenTitles = /* @__PURE__ */ new Set();
-        for (const s of sorted) {
-          const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
-          const isLatino = rawLang.toLowerCase().includes("latino");
-          const skipFilter = providerName === "FuegoCine";
-          if (!isLatino && !skipFilter)
-            continue;
-          const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
-          const quality = s.quality || "HD";
-          const isVerified = s.verified === true;
-          const checkMark = isVerified ? " \u2705" : "";
-          const streamName = `${providerName} - ${quality}${checkMark}`;
-          const streamTitle = `${rawLang} - ${server}`;
-          if (seenTitles.has(streamName + streamTitle + s.url))
-            continue;
-          seenTitles.add(streamName + streamTitle + s.url);
-          processed.push({
-            name: streamName,
-            title: streamTitle,
-            url: s.url,
-            quality,
-            verified: isVerified,
-            provider: server,
-            language: rawLang,
-            headers: s.headers || {
-              "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
-          });
-        }
-        return processed;
-      });
-    }
-    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
-  }
-});
-
 // src/brazucaplay/index.js
 var { fetchJson, setSessionUA } = require_http();
-var { finalizeStreams } = require_engine();
 var API_DEC = "https://enc-dec.app/api/dec-videasy";
 var TMDB_API_KEY = "d131017ccc6e5462a81c9304d21476de";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var SERVERS = {
-  "Gekko": { url: "https://api2.videasy.net/cuevana/sources-with-title", language: "Spanish" }
+  "Gekko": { url: "https://api2.videasy.net/cuevana/sources-with-title", label: "Cuevana" }
 };
 var CINEBY_HEADERS = {
   "Accept": "*/*",
@@ -558,7 +148,6 @@ var CINEBY_HEADERS = {
 };
 function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
   return __async(this, null, function* () {
-    console.log(`[BrazucaPlay] Resolviendo v\xEDa Cineby: ${tmdbId}`);
     const results = [];
     try {
       setSessionUA(CINEBY_HEADERS["User-Agent"]);
@@ -568,7 +157,7 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
       const title = tmdbData.title || tmdbData.name;
       const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
       const doubleEncTitle = encodeURIComponent(encodeURIComponent(title));
-      for (const [serverName, config] of Object.entries(SERVERS)) {
+      for (const [serverId, config] of Object.entries(SERVERS)) {
         try {
           let searchUrl = `${config.url}?title=${doubleEncTitle}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
           if (mediaType === "tv")
@@ -589,11 +178,14 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
           if (mediaData && mediaData.sources) {
             for (const source of mediaData.sources) {
               if (source.url) {
+                let quality = (source.quality || "HD").toUpperCase();
+                if (quality === "AUTO")
+                  quality = "1080p";
                 results.push({
-                  serverName,
-                  audio: "Latino",
-                  quality: source.quality || "HD",
+                  name: `BrazucaPlay - ${config.label} ${quality} [Latino]`,
+                  title: `Servidor: ${config.label} | Audio: Latino \u2705`,
                   url: source.url,
+                  quality,
                   headers: CINEBY_HEADERS
                 });
               }
@@ -604,7 +196,7 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
       }
     } catch (error) {
     }
-    return finalizeStreams(results, "BrazucaPlay", "");
+    return results;
   });
 }
 module.exports = { getStreams };
