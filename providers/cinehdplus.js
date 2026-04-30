@@ -1,6 +1,6 @@
 /**
  * cinehdplus - Built from src/cinehdplus/
- * Generated: 2026-04-30T19:02:41.334Z
+ * Generated: 2026-04-30T19:06:24.419Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2397,6 +2397,9 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const rawStreams = [];
       const promises = [];
       for (const [langKey, servers] of Object.entries(data.data.sources)) {
+        const lKey = langKey.toLowerCase();
+        if (!lKey.includes("latino") && !lKey.includes("subtitulado") && !lKey.includes("sub"))
+          continue;
         const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
         for (const [serverKey, serverData] of Object.entries(servers)) {
           if (serverData.available && serverData.original_url) {

@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-04-30T19:02:41.351Z
+ * Generated: 2026-04-30T19:06:24.438Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2397,6 +2397,9 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const rawStreams = [];
       const promises = [];
       for (const [langKey, servers] of Object.entries(data.languages)) {
+        const lKey = langKey.toLowerCase();
+        if (!lKey.includes("latino") && !lKey.includes("subtitulado") && !lKey.includes("sub"))
+          continue;
         const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
         for (const [serverKey, url] of Object.entries(servers)) {
           const sKey = serverKey.toLowerCase();
