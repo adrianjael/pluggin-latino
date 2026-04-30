@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T16:20:04.523Z
+ * Generated: 2026-04-30T16:31:33.753Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -550,25 +550,28 @@ var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var SERVERS = {
   "Kayo": { url: "https://api.videasy.net/cuevana-spanish/sources-with-title", language: "Spanish" }
 };
-var ARMORED_HEADERS = {
-  "Accept": "*/*",
-  "Accept-Language": "es-ES,es;q=0.9",
-  "Sec-CH-UA": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
-  "Sec-CH-UA-Mobile": "?1",
-  "Sec-CH-UA-Platform": '"Android"',
-  "Sec-Fetch-Dest": "empty",
-  "Sec-Fetch-Mode": "cors",
-  "Sec-Fetch-Site": "cross-site",
-  "Referer": "https://videasy.net/",
-  "Origin": "https://videasy.net",
+var CLONED_HEADERS = {
+  "accept": "*/*",
+  "accept-language": "es-ES,es;q=0.9",
+  "cache-control": "no-cache",
+  "pragma": "no-cache",
+  "priority": "u=1, i",
+  "sec-ch-ua": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+  "sec-ch-ua-mobile": "?1",
+  "sec-ch-ua-platform": '"Android"',
+  "sec-fetch-dest": "empty",
+  "sec-fetch-mode": "cors",
+  "sec-fetch-site": "cross-site",
+  "Referer": "https://player.videasy.net/",
+  "Origin": "https://player.videasy.net",
   "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 };
 function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
   return __async(this, null, function* () {
-    console.log(`[BrazucaPlay] Resolviendo: ${tmdbId} | ${mediaType}`);
+    console.log(`[BrazucaPlay] Resolviendo con clonaci\xF3n: ${tmdbId}`);
     const results = [];
     try {
-      setSessionUA(ARMORED_HEADERS["User-Agent"]);
+      setSessionUA(CLONED_HEADERS["User-Agent"]);
       const tmdbUrl = `${TMDB_BASE_URL}/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`;
       const tmdbData = yield fetchJson(tmdbUrl);
       const imdbId = tmdbData.external_ids && tmdbData.external_ids.imdb_id ? tmdbData.external_ids.imdb_id : "";
@@ -579,13 +582,13 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
           let searchUrl = `${config.url}?title=${encodeURIComponent(title)}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
           if (mediaType === "tv")
             searchUrl += `&seasonId=${season || 1}&episodeId=${episode || 1}`;
-          const encryptedRes = yield fetch(searchUrl, { headers: ARMORED_HEADERS });
+          const encryptedRes = yield fetch(searchUrl, { headers: CLONED_HEADERS });
           const encryptedText = yield encryptedRes.text();
           if (!encryptedText || encryptedText.length < 20 || encryptedText.startsWith("<!"))
             continue;
           const decRes = yield fetch(API_DEC, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "User-Agent": ARMORED_HEADERS["User-Agent"] },
+            headers: { "Content-Type": "application/json", "User-Agent": CLONED_HEADERS["User-Agent"] },
             body: JSON.stringify({ text: encryptedText, id: String(tmdbId) })
           });
           if (!decRes.ok)
@@ -600,7 +603,7 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
                   audio: "Latino",
                   quality: source.quality || "HD",
                   url: source.url,
-                  headers: ARMORED_HEADERS
+                  headers: CLONED_HEADERS
                 });
               }
             }
