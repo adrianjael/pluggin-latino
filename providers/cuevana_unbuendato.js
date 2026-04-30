@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-04-30T18:23:32.688Z
+ * Generated: 2026-04-30T18:26:44.093Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2359,7 +2359,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
-    const rawId = tmdbId.toString().split(":")[0];
+    const rawId = tmdbId.toString().includes(":") ? tmdbId.toString().split(":").find((x) => !isNaN(x) && x.length > 0) : tmdbId;
     const isMovie = mediaType === "movie" || mediaType === "movies";
     let apiUrl = `https://cuevana.unbuendato.com/?id=${rawId}`;
     if (!isMovie && season && episode) {
