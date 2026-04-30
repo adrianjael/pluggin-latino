@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-30T16:55:40.578Z
+ * Generated: 2026-04-30T17:00:24.908Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -459,6 +459,10 @@ var require_mirrors = __commonJS({
         "398fitus",
         "filemoon.sx",
         "filemoon.to",
+        "filemoon.lat",
+        "filemoon.live",
+        "filemoon.online",
+        "filemoon.me",
         "bysedikamoum"
       ],
       VOE: [
