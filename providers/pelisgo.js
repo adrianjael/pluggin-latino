@@ -1,6 +1,6 @@
 /**
  * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-30T18:34:58.782Z
+ * Generated: 2026-04-30T18:43:25.857Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -700,7 +700,7 @@ var require_engine = __commonJS({
         const { validateStream: validateStream2 } = require_m3u8();
         const sorted = sortStreamsByQuality2(streams);
         const CONCURRENCY_LIMIT = 5;
-        const MAX_VALIDATIONS = 15;
+        const MAX_VALIDATIONS = 5;
         const validatedStreams = [];
         for (let i = 0; i < sorted.length; i += CONCURRENCY_LIMIT) {
           if (i >= MAX_VALIDATIONS) {
@@ -710,9 +710,11 @@ var require_engine = __commonJS({
           const batch = sorted.slice(i, i + CONCURRENCY_LIMIT);
           const batchResults = yield Promise.all(batch.map((s) => __async(this, null, function* () {
             try {
+              if (s.isReal === true)
+                return s;
               if (s.url && (s.url.includes(".m3u8") || s.url.includes(".mp4"))) {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3e3);
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
                 try {
                   const validated = yield validateStream2(s, controller.signal);
                   clearTimeout(timeoutId);
@@ -846,6 +848,7 @@ var require_voe = __commonJS({
                   url: data.source,
                   quality: streamQuality,
                   verified: isLive,
+                  isReal: validation ? validation.isReal : false,
                   serverName: "VOE",
                   headers: reqHeaders
                 };
@@ -869,6 +872,7 @@ var require_voe = __commonJS({
               url: fallbackUrl,
               quality: streamQuality,
               verified: isLive,
+              isReal: validation ? validation.isReal : false,
               serverName: "VOE",
               headers: reqHeaders
             };
@@ -1007,6 +1011,7 @@ var require_hlswish = __commonJS({
             url: validResult.url,
             quality: streamQuality,
             verified: isLive,
+            isReal: validation ? validation.isReal : false,
             serverName: "StreamWish",
             headers: reqHeaders
           };
@@ -1264,6 +1269,7 @@ var require_vidhide = __commonJS({
             url: finalUrl,
             quality: streamQuality,
             verified: isLive,
+            isReal: validation ? validation.isReal : false,
             serverName: "VidHide",
             headers: reqHeaders
           };
