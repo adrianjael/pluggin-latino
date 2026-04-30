@@ -363,7 +363,7 @@
     {
       "id": "brazucaplay",
       "name": "BrazucaPlay",
-      "description": "Conteúdo em Português e Latino via VidEasy API.",
+      "description": "Películas y series en Latino (vía Cuevana/Kayo).",
       "version": "2.6.7",
       "author": "AdrianJael",
       "supportedTypes": [
@@ -372,9 +372,8 @@
       ],
       "filename": "providers/brazucaplay.js",
       "enabled": true,
-      "logo": "https://img.icons8.com/color/48/000000/brazil-flag.png",
+      "logo": "https://i.postimg.cc/9F6zdnyb/brazucaplay.png",
       "contentLanguage": [
-        "pt",
         "es"
       ],
       "formats": [
