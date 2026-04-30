@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-29T15:56:48.433Z
+ * Generated: 2026-04-30T14:27:15.601Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -405,6 +405,13 @@ var require_mirrors = __commonJS({
         "seekplays",
         "seekstreaming",
         "embedseek"
+      ],
+      DROPCDN: [
+        "dropcdn.io",
+        "dropload.io",
+        "dropcdn",
+        "dropload",
+        "dr0pstream"
       ]
     };
     function isMirror(url, groupName) {
@@ -469,7 +476,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.0`);
+        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.1`);
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
@@ -477,10 +484,8 @@ var require_engine = __commonJS({
           const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
           const skipFilter = providerName === "FuegoCine";
-          if (!isLatino && !skipFilter) {
-            console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
+          if (!isLatino && !skipFilter)
             continue;
-          }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
           const isVerified = s.verified === true;
@@ -496,11 +501,10 @@ var require_engine = __commonJS({
             url: s.url,
             quality,
             verified: isVerified,
-            // Propiedad crítica para el 'check' de la UI de Nuvio
             provider: server,
             language: rawLang,
             headers: s.headers || {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
           });
         }
@@ -1787,6 +1791,201 @@ var require_lulustream = __commonJS({
   }
 });
 
+// src/resolvers/dropcdn.js
+var require_dropcdn = __commonJS({
+  "src/resolvers/dropcdn.js"(exports2, module2) {
+    function resolve3(url, signal = null) {
+      return __async(this, null, function* () {
+        try {
+          const normalizedUrl = url.toString().replace("/d/", "/").replace("/e/", "/").replace("/embed-", "/");
+          const idMatch = normalizedUrl.match(/\/([a-zA-Z0-9]+)$/) || normalizedUrl.match(/\/([a-zA-Z0-9]+)_o\//);
+          const fileCode = idMatch ? idMatch[1] : normalizedUrl.split("/").pop();
+          const embedUrl = `https://dr0pstream.com/e/${fileCode}`;
+          console.log(`[DropCDN] Iniciando Handshake ds2 (v2.6): ${fileCode}`);
+          const UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+          const BROWSER_HEADERS = {
+            "User-Agent": UA4,
+            "Accept": "*/*",
+            "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+            "Referer": "https://dr0pstream.com/",
+            "Origin": "https://dr0pstream.com",
+            "X-Requested-With": "XMLHttpRequest"
+          };
+          const response = yield fetch(embedUrl, { headers: BROWSER_HEADERS, signal });
+          if (!response.ok)
+            return null;
+          const html = yield response.text();
+          const cookiePairs = [];
+          const cookiePattern = /\$\.cookie\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]*)['"]/g;
+          let cMatch;
+          while (cMatch = cookiePattern.exec(html)) {
+            cookiePairs.push(`${cMatch[1]}=${cMatch[2]}`);
+          }
+          const cookieHeader = cookiePairs.join("; ");
+          let unpacked = "";
+          const packerMatch = html.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?return p\\}\\('(.*?)',(\\d+),(\\d+),'(.*?)'\\.split\\('\\|'\\)\\)\\)", "s"));
+          if (packerMatch) {
+            unpacked = unpack(packerMatch[0]);
+          }
+          const longNumbers = unpacked.match(/\b\d{10}\b/g) || [];
+          const hexHashes = unpacked.match(/\b([a-f0-9]{32})\b/g) || [];
+          const viewIds = unpacked.match(/\b\d{6,7}\b/g) || [];
+          if (longNumbers.length > 0 && hexHashes.length > 0) {
+            const part1 = longNumbers[longNumbers.length - 1];
+            const part2 = hexHashes[hexHashes.length - 1];
+            const dynamicHash = `${part1}-${part2}`;
+            const viewId = viewIds.length > 0 ? viewIds[viewIds.length - 1] : `303030`;
+            const beaconUrl = `https://dr0pstream.com/dl?op=view&file_code=${fileCode}&hash=${dynamicHash}&view_id=${viewId}&adb=0`;
+            console.log(`[DropCDN] Enviando Beacon: ${viewId}`);
+            yield fetch(beaconUrl, {
+              headers: __spreadProps(__spreadValues({}, BROWSER_HEADERS), { "Cookie": cookieHeader, "Referer": embedUrl })
+            }).catch(() => {
+            });
+          }
+          const searchContext = unpacked + "\n" + html;
+          const m3u8Matches = searchContext.match(/https?:\/\/[^"']+\.m3u8[^"']*/g);
+          if (m3u8Matches && m3u8Matches.length > 0) {
+            let m3u8Url = m3u8Matches.find((u) => u.includes("master.m3u8") && u.includes("?t=")) || m3u8Matches.find((u) => u.includes("master.m3u8")) || m3u8Matches[0];
+            m3u8Url = m3u8Url.replace(/\\\//g, "/");
+            if (m3u8Url.includes("dropcdn.io")) {
+              m3u8Url = m3u8Url.replace("r1.dropcdn.io", "ds2.dropcdn.io").replace("_o/", "/").replace("_o.m3u8", ".m3u8");
+              if (!m3u8Url.includes("srv=")) {
+                m3u8Url += (m3u8Url.includes("?") ? "&" : "?") + "srv=ds2i";
+              }
+              console.log(`[DropCDN] \u2705 Protocolo ds2 Sincronizado`);
+            }
+            return {
+              url: m3u8Url,
+              quality: "HD",
+              verified: true,
+              serverName: "DropCDN",
+              headers: __spreadProps(__spreadValues({}, BROWSER_HEADERS), {
+                "Cookie": cookieHeader,
+                "Referer": "https://dr0pstream.com/"
+              })
+            };
+          }
+          return null;
+        } catch (error) {
+          return null;
+        }
+      });
+    }
+    function unpack(packed) {
+      try {
+        const m = packed.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?return p\\}\\('(.+)',(\\d+),(\\d+),'(.+)'\\.split\\('\\|'\\)\\)\\)", "s"));
+        if (!m)
+          return packed;
+        let p = m[1];
+        const a = parseInt(m[2]), c = parseInt(m[3]), k = m[4].split("|");
+        p = p.replace(/\\'/g, "'").replace(/\\\\/g, "\\");
+        const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const encode = (i, b) => i < b ? alphabet[i] : encode(Math.floor(i / b), b) + alphabet[i % b];
+        for (let i = c - 1; i >= 0; i--) {
+          if (k[i])
+            p = p.replace(new RegExp("\\b" + encode(i, a) + "\\b", "g"), k[i]);
+        }
+        return p;
+      } catch (e) {
+        return packed;
+      }
+    }
+    module2.exports = { resolve: resolve3 };
+  }
+});
+
+// src/resolvers/vidsrc.js
+var require_vidsrc = __commonJS({
+  "src/resolvers/vidsrc.js"(exports2, module2) {
+    function resolve3(url, signal = null) {
+      return __async(this, null, function* () {
+        try {
+          let embedUrl = url.toString().replace("vidsrc.to", "vidsrc.xyz").replace("vidsrc.pm", "vidsrc.xyz").replace("moviesapi.club/movie", "cdn.moviesapi.to/embed/movie").replace("moviesapi.to/movie", "cdn.moviesapi.to/embed/movie");
+          console.log(`[VidSrc] Iniciando Resoluci\xF3n: ${embedUrl}`);
+          const UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+          const headers = { "User-Agent": UA4, "Referer": "https://vidsrc.xyz/" };
+          const res1 = yield fetch(embedUrl, { headers, signal });
+          if (!res1.ok)
+            return null;
+          const html1 = yield res1.text();
+          const iframeMatch = html1.match(/src=['"]([^"]+)['"] f/);
+          if (!iframeMatch)
+            return null;
+          let nextUrl = iframeMatch[1];
+          if (nextUrl.startsWith("//"))
+            nextUrl = "https:" + nextUrl;
+          const res2 = yield fetch(nextUrl, { headers: __spreadProps(__spreadValues({}, headers), { "Referer": embedUrl }), signal });
+          if (!res2.ok)
+            return null;
+          const html2 = yield res2.text();
+          const encryptedMatch = html2.match(/id="([^"]+)" style="display:none;">([^<]+)/);
+          if (!encryptedMatch)
+            return null;
+          const decId = encryptedMatch[1];
+          const cipherText = encryptedMatch[2];
+          const decrypted = crsdiv(cipherText, decId);
+          if (!decrypted)
+            return null;
+          const finalUrl = decrypted.split(" ")[0].replace("{v1}", "thrumbleandjaxon.com");
+          console.log(`[VidSrc] \xA1Enlace Descifrado!: ${finalUrl.substring(0, 50)}...`);
+          return {
+            url: finalUrl,
+            quality: "HD",
+            verified: true,
+            serverName: "VidSrc",
+            headers: {
+              "User-Agent": UA4,
+              "Referer": nextUrl,
+              "Origin": new URL(nextUrl).origin
+            }
+          };
+        } catch (error) {
+          console.error(`[VidSrc] Error: ${error.message}`);
+          return null;
+        }
+      });
+    }
+    function crsdiv(a, decId) {
+      try {
+        if (decId === "sXnL9MQIry") {
+          const b = Array.from("pWB9V)[*4I`nJpp?ozyB~dbr9yt!_n4u").map((c) => c.charCodeAt(0));
+          const d = a.match(/.{2}/g).map((x) => parseInt(x, 16));
+          const decrypted = d.map((v, i) => (v ^ b[i % b.length]) - 3);
+          return atob(String.fromCharCode(...decrypted));
+        }
+        if (decId === "IhWrImMIGL") {
+          const d = Array.from(a).map((ch) => {
+            const code = ch.charCodeAt(0);
+            if (code >= 97 && code <= 109 || code >= 65 && code <= 77)
+              return String.fromCharCode(code + 13);
+            if (code >= 110 && code <= 122 || code >= 78 && code <= 90)
+              return String.fromCharCode(code - 13);
+            return ch;
+          }).join("");
+          return atob(d);
+        }
+        if (decId === "xTyBxQyGTA") {
+          const b = a.split("").reverse().join("");
+          let c = "";
+          for (let i = 0; i < b.length; i += 2)
+            c += b[i];
+          return atob(c);
+        }
+        if (["JoAHUMCLXV", "Oi3v1dAlaM", "TsA2KGDGux"].includes(decId)) {
+          const shift = { "JoAHUMCLXV": 3, "Oi3v1dAlaM": 5, "TsA2KGDGux": 7 }[decId];
+          const b64 = a.split("").reverse().join("").replace(/-/g, "+").replace(/_/g, "/");
+          const decoded = atob(b64);
+          return Array.from(decoded).map((ch) => String.fromCharCode(ch.charCodeAt(0) - shift)).join("");
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+    module2.exports = { resolve: resolve3 };
+  }
+});
+
 // src/utils/resolvers.js
 var require_resolvers = __commonJS({
   "src/utils/resolvers.js"(exports2, module2) {
@@ -1805,6 +2004,8 @@ var require_resolvers = __commonJS({
     var { resolve: resolveEmbedseek } = require_embedseek();
     var { resolve: resolveTplayer } = require_tplayer();
     var { resolve: resolveLulustream } = require_lulustream();
+    var { resolve: resolveDropcdn } = require_dropcdn();
+    var { resolve: resolveVidsrc } = require_vidsrc();
     var { getSessionUA } = require_http();
     var { isMirror } = require_mirrors();
     var UA4 = getSessionUA();
@@ -1913,6 +2114,16 @@ var require_resolvers = __commonJS({
           return applyPiping(yield resolveEmbedseek(url));
         if (isMirror(s, "LULUSTREAM"))
           return applyPiping(yield resolveLulustream(url));
+        if (isMirror(s, "DROPCDN")) {
+          const res = yield resolveDropcdn(url, signal);
+          if (res)
+            return applyPiping(res);
+        }
+        if (s.includes("vidsrc") || s.includes("moviesapi.to") || s.includes("moviesapi.club")) {
+          const res = yield resolveVidsrc(url, signal);
+          if (res)
+            return applyPiping(res);
+        }
         const isKnown = isMirror(s, "VOE") || isMirror(s, "STREAMWISH") || isMirror(s, "FILEMOON") || isMirror(s, "VIDHIDE") || isMirror(s, "FASTREAM") || isMirror(s, "OKRU") || isMirror(s, "GOODSTREAM") || s.includes("vimeos") || s.includes("vms.sh") || s.includes("la.movie");
         if (isKnown) {
           console.log(`[Resolvers] Known server failed resolution (Down): ${url}`);
@@ -1976,11 +2187,29 @@ function getDirectStream(id, token, cookie, playerUrl) {
         config.headers["cookie"] = cookie;
       const { data } = yield axios3.post(`${BASE_URL}/s.php`, body, config);
       if (data && data.u) {
-        let finalUrl = data.u;
+        let videoUrl = data.u;
         if (data.sig) {
-          finalUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(data.u)}&sig=${data.sig}`;
+          videoUrl = `${BASE_URL}/p.php?url=${encodeURIComponent(data.u)}&sig=${data.sig}`;
         }
-        return finalUrl;
+        if (videoUrl.includes("/api/source/")) {
+          const domain = new URL(videoUrl).hostname;
+          const apiRes = yield fetch(videoUrl, {
+            method: "POST",
+            headers: __spreadProps(__spreadValues({}, HEADERS), {
+              "Referer": playerUrl,
+              "Content-Type": "application/x-www-form-urlencoded"
+            }),
+            body: `r=https%3A%2F%2Fre.sololatino.net%2F&d=${domain}`
+          });
+          const apiData = yield apiRes.json();
+          if (apiData.success && apiData.data && apiData.data.length > 0) {
+            videoUrl = apiData.data[apiData.data.length - 1].file;
+          }
+        }
+        if (!videoUrl.startsWith("http")) {
+          videoUrl = BASE_URL + videoUrl;
+        }
+        return videoUrl;
       }
       return null;
     } catch (e) {
@@ -2040,15 +2269,41 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       }).slice(0, 5);
       const resultsRaw = yield Promise.all(servers.map((ser) => __async(this, null, function* () {
         const [name, id] = ser;
-        const finalUrl = yield getDirectStream(id, token, cookie, playerUrl);
+        let finalUrl = yield getDirectStream(id, token, cookie, playerUrl);
         if (finalUrl) {
-          const resolvedResult = yield resolveEmbed(finalUrl);
+          let resolvedResult = null;
+          let finalHeaders = { "User-Agent": UA3, "Referer": playerUrl, "Origin": BASE_URL };
+          try {
+            const finalRes = yield fetch(finalUrl, {
+              method: "HEAD",
+              headers: { "User-Agent": UA3, "Referer": playerUrl },
+              redirect: "follow"
+            });
+            if (finalRes.url && finalRes.url.includes("mediafire.com")) {
+              return {
+                url: finalRes.url,
+                serverName: `${name} - Directo`,
+                langLabel: "Latino",
+                quality: "1080p",
+                verified: true,
+                headers: {
+                  "User-Agent": UA3,
+                  "Referer": "https://player.pelisserieshoy.com/"
+                }
+              };
+            }
+            if (finalRes.url)
+              finalUrl = finalRes.url;
+          } catch (e2) {
+          }
+          resolvedResult = yield resolveEmbed(finalUrl);
           return {
             url: finalUrl,
             serverName: ((resolvedResult == null ? void 0 : resolvedResult.serverName) ? `${name} - ${resolvedResult.serverName}` : name).replace(/ - Direct/g, ""),
             langLabel: "Latino",
             quality: "1080p",
-            headers: { "User-Agent": UA3, "Referer": playerUrl, "Origin": BASE_URL }
+            verified: resolvedResult ? resolvedResult.verified : false,
+            headers: (resolvedResult == null ? void 0 : resolvedResult.headers) || finalHeaders
           };
         }
         return null;
