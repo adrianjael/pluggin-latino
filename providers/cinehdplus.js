@@ -1,6 +1,6 @@
 /**
  * cinehdplus - Built from src/cinehdplus/
- * Generated: 2026-04-30T18:43:25.800Z
+ * Generated: 2026-04-30T18:57:55.748Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2275,7 +2275,7 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
-        if (s.includes("hqq.ac") || s.includes("hqq.tv") || s.includes("netu.tv") || s.includes("waaw.to")) {
+        if (s.includes("hqq.ac") || s.includes("hqq.tv") || s.includes("netu.tv") || s.includes("waaw.to") || s.includes("netu.to") || s.includes("hqq.to")) {
           return null;
         }
         if (isMirror(s, "VOE")) {
@@ -2383,16 +2383,13 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
     if (!isMovie && season && episode) {
       apiUrl += `&season=${season}&episode=${episode}`;
     }
-    console.log(`[CineHDPlus] Buscando: ${apiUrl}`);
-    const axios3 = require("axios");
+    const { fetchJson } = require_http();
     try {
-      const response = yield axios3.get(apiUrl, {
+      const data = yield fetchJson(apiUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
-        },
-        timeout: 8e3
+        }
       });
-      const data = response.data;
       if (!data.success || !data.data || !data.data.sources) {
         console.log("[CineHDPlus] Sin resultados");
         return [];
@@ -2401,13 +2398,16 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const promises = [];
       for (const [langKey, servers] of Object.entries(data.data.sources)) {
         const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
-        for (const [serverName, serverData] of Object.entries(servers)) {
+        for (const [serverKey, serverData] of Object.entries(servers)) {
           if (serverData.available && serverData.original_url) {
+            const sKey = serverKey.toLowerCase();
+            if (sKey.includes("netu") || sKey.includes("hqq") || sKey.includes("waaw"))
+              continue;
             promises.push(
               resolveEmbed(serverData.original_url).then((res) => {
                 if (res) {
                   return __spreadProps(__spreadValues({}, res), {
-                    serverName: serverName.charAt(0).toUpperCase() + serverName.slice(1),
+                    serverName: res.serverName || serverKey.charAt(0).toUpperCase() + serverKey.slice(1),
                     lang: langLabel
                   });
                 }

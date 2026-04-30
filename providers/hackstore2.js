@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-30T18:43:25.846Z
+ * Generated: 2026-04-30T18:57:55.801Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2141,7 +2141,7 @@ var require_resolvers = __commonJS({
         if (!url)
           return null;
         const s = url.toLowerCase();
-        if (s.includes("hqq.ac") || s.includes("hqq.tv") || s.includes("netu.tv") || s.includes("waaw.to")) {
+        if (s.includes("hqq.ac") || s.includes("hqq.tv") || s.includes("netu.tv") || s.includes("waaw.to") || s.includes("netu.to") || s.includes("hqq.to")) {
           return null;
         }
         if (isMirror(s, "VOE")) {
