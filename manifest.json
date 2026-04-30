@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "2.8.1",
+  "version": "12.12.12",
   "scrapers": [
     {
       "id": "embed69",
@@ -42,13 +42,15 @@
       "formats": [
         "m3u8",
         "mp4"
-      ]
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     },
     {
       "id": "pelisgo",
       "name": "PelisGo",
-      "description": "PelisGo - Calidad 4K y 1080p en Latino.",
-      "version": "2.1.2",
+      "description": "Descargas directas y streaming de alta fidelidad.",
+      "version": "9.0.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -56,62 +58,22 @@
       ],
       "filename": "providers/pelisgo.js",
       "enabled": true,
-      "logo": "https://pelisgo.pro/logo.png",
+      "logo": "https://pelisgo.online/icon.webp",
       "contentLanguage": [
         "es"
       ],
       "formats": [
         "m3u8",
         "mp4"
-      ]
-    },
-    {
-      "id": "animekai",
-      "name": "AnimeKai",
-      "description": "El mejor contenido de anime en Latino y subtitulado.",
-      "version": "1.4.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
       ],
-      "filename": "providers/animekai.js",
-      "enabled": true,
-      "logo": "https://animekai.to/favicon.ico",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
-    },
-    {
-      "id": "cuevana",
-      "name": "Cuevana 3",
-      "description": "Cuevana 3 - El clásico del streaming en Latino.",
-      "version": "3.0.1",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/cuevana.js",
-      "enabled": true,
-      "logo": "https://cuevana3.ch/favicon.ico",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
+      "limited": false,
+      "supportsExternalPlayer": true
     },
     {
       "id": "pelisplus",
-      "name": "PelisPlus",
-      "description": "PelisPlus - Gran catálogo de películas y series.",
-      "version": "2.2.0",
+      "name": "PelisPlusHD",
+      "description": "Películas y series en espanol latino desde PelisPlusHD.la",
+      "version": "12.6.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -119,252 +81,228 @@
       ],
       "filename": "providers/pelisplus.js",
       "enabled": true,
-      "logo": "https://pelisplus.so/favicon.ico",
+      "logo": "https://www.pelisplushd.la/images/logo/logo5.png",
       "contentLanguage": [
         "es"
       ],
       "formats": [
         "m3u8",
         "mp4"
-      ]
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     },
     {
-      "id": "gnula",
-      "name": "Gnula",
-      "description": "Gnula - Películas de estreno en Latino y Castellano.",
-      "version": "1.8.0",
+      "id": "hackstore",
+      "name": "HackStore",
+      "description": "API Nativa de Películas en HD",
+      "version": "12.9.2",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
         "tv"
       ],
-      "filename": "providers/gnula.js",
+      "filename": "providers/hackstore2.js",
       "enabled": true,
-      "logo": "https://gnula.nu/favicon.ico",
+      "logo": "https://hackstore.mx/wp-content/uploads/2025/07/cropped-fire-1-180x180.png",
       "contentLanguage": [
         "es"
       ],
       "formats": [
         "m3u8",
         "mp4"
-      ]
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     },
     {
-      "id": "megadede",
-      "name": "Megadede",
-      "description": "Megadede - Series y películas actualizadas diariamente.",
-      "version": "2.0.0",
+      "id": "pelispanda",
+      "name": "PelisPanda",
+      "description": "Películas y series directo desde pelispanda.org",
+      "version": "12.9.8",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
         "tv"
       ],
-      "filename": "providers/megadede.js",
+      "filename": "providers/pelispanda.js",
       "enabled": true,
-      "logo": "https://www.megadede.com/favicon.ico",
+      "logo": "https://pelispanda.org/wp-content/themes/wpreact/public/image/logo.png",
       "contentLanguage": [
         "es"
       ],
       "formats": [
         "m3u8",
         "mp4"
-      ]
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     },
     {
-      "id": "hdtoday",
-      "name": "HDToday",
-      "description": "HDToday - Películas y series en HD (Inglés con Subs).",
-      "version": "1.5.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/hdtoday.js",
-      "enabled": true,
-      "logo": "https://hdtoday.tv/favicon.ico",
-      "contentLanguage": [
-        "en"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
-    },
-    {
-      "id": "upmovie",
-      "name": "UpMovie",
-      "description": "UpMovie - Estrenos rápidos y servidores estables.",
-      "version": "1.3.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/upmovie.js",
-      "enabled": true,
-      "logo": "https://upmovie.to/favicon.ico",
-      "contentLanguage": [
-        "es",
-        "en"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
-    },
-    {
-      "id": "film24",
-      "name": "Film24",
-      "description": "Film24 - Cine europeo y estrenos internacionales.",
-      "version": "1.2.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/film24.js",
-      "enabled": true,
-      "logo": "https://film24.org/favicon.ico",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
-    },
-    {
-      "id": "vidsrc",
-      "name": "VidSrc",
-      "description": "VidSrc - Multi-servidor internacional (Varios Idiomas).",
-      "version": "2.0.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/vidsrc.js",
-      "enabled": true,
-      "logo": "https://vidsrc.me/favicon.ico",
-      "contentLanguage": [
-        "en",
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
-    },
-    {
-      "id": "primewire",
-      "name": "PrimeWire",
-      "description": "PrimeWire - El gigante del streaming (Inglés).",
-      "version": "1.6.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/primewire.js",
-      "enabled": true,
-      "logo": "https://www.primewire.li/favicon.ico",
-      "contentLanguage": [
-        "en"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
-    },
-    {
-      "id": "movie4k",
-      "name": "Movie4K",
-      "description": "Movie4K - Calidad máxima en estrenos.",
-      "version": "1.4.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "movie",
-        "tv"
-      ],
-      "filename": "providers/movie4k.js",
-      "enabled": true,
-      "logo": "https://movie4k.to/favicon.ico",
-      "contentLanguage": [
-        "de",
-        "en"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
-    },
-    {
-      "id": "solopeliculas",
-      "name": "SoloPeliculas",
-      "description": "SoloPeliculas - Enfoque 100% en cine Latino.",
-      "version": "2.1.0",
+      "id": "cinecalidad",
+      "name": "CineCalidad",
+      "description": "Películas en HD (Latino) con servidores rápidos como Voe y Filemoon",
+      "version": "2.3.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie"
       ],
-      "filename": "providers/solopeliculas.js",
+      "filename": "providers/cinecalidad.js",
       "enabled": true,
-      "logo": "https://solopeliculas.biz/favicon.ico",
+      "logo": "https://image.firstory-cdn.me/Avatar/cm0dkng7s07o601qjdh958yiy/1724832356858.jpg",
       "contentLanguage": [
         "es"
       ],
       "formats": [
         "m3u8",
         "mp4"
-      ]
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
     },
     {
-      "id": "seriespedia",
-      "name": "SeriesPedia",
-      "description": "SeriesPedia - Todas tus series favoritas en un solo lugar.",
-      "version": "1.9.0",
-      "author": "AdrianJael",
-      "supportedTypes": [
-        "tv"
-      ],
-      "filename": "providers/seriespedia.js",
-      "enabled": true,
-      "logo": "https://seriespedia.net/favicon.ico",
-      "contentLanguage": [
-        "es"
-      ],
-      "formats": [
-        "m3u8",
-        "mp4"
-      ]
-    },
-    {
-      "id": "fuegoanime",
-      "name": "FuegoAnime",
-      "description": "FuegoAnime - Tu dosis diaria de anime.",
-      "version": "1.1.0",
+      "id": "seriesmetro",
+      "name": "SeriesMetro",
+      "description": "Especialista en series y películas (Latino) con servidores Fastream",
+      "version": "2.3.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
         "tv"
       ],
-      "filename": "providers/fuegoanime.js",
+      "filename": "providers/seriesmetro.js",
       "enabled": true,
-      "logo": "https://fuegoanime.com/favicon.ico",
+      "logo": "https://www3.seriesmetro.net/wp-content/uploads/2024/04/cropped-Favicon2-180x180.png",
       "contentLanguage": [
         "es"
       ],
       "formats": [
         "m3u8",
         "mp4"
-      ]
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "xupalace",
+      "name": "XuPalace",
+      "description": "Películas y series en alta definición (Latino, Español y Subtitulado)",
+      "version": "6.0.1",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/xupalace.js",
+      "enabled": true,
+      "logo": "https://static.vecteezy.com/system/resources/previews/004/532/988/non_2x/cinema-set-in-flat-design-style-popcorn-soda-or-coffee-movie-clapper-and-reel-vector.jpg",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "fuegocine",
+      "name": "FuegoCine",
+      "description": "Películas y series con enlaces directos y alta velocidad.",
+      "version": "6.0.4",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/fuegocine.js",
+      "enabled": true,
+      "logo": "https://www.fuegocine.com/favicon.ico",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "playhubmax",
+      "name": "PlayHubMax",
+      "description": "API privada con contenido premium en Latino.",
+      "version": "2.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/playhubmax.js",
+      "enabled": true,
+      "logo": "https://i.ibb.co/qqKWJyk/logo-rayo-morado-fondo-blanco-121452-121.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "tioplus",
+      "name": "TioPlus",
+      "description": "Películas y series en HD (Latino) con bypass de doble Base64.",
+      "version": "2.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/tioplus.js",
+      "enabled": true,
+      "logo": "https://tioplus.app/images/logo2.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "cinemacity",
+      "name": "CinemaCity",
+      "description": "Películas de estreno (Filtro Estricto Latino).",
+      "version": "1.0.4",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/cinemacity.js",
+      "enabled": true,
+      "logo": "https://cinemacity.cc/templates/cinemacity/images/favicon.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": false
     },
     {
       "id": "brazucaplay",
       "name": "BrazucaPlay",
       "description": "Películas y series en Latino (vía Cuevana/Kayo).",
-      "version": "2.8.1",
+      "version": "1.0.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
