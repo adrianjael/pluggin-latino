@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-30T17:22:23.367Z
+ * Generated: 2026-04-30T17:23:30.511Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -551,7 +551,16 @@ var require_engine = __commonJS({
         const validatedStreams = yield Promise.all(sorted.map((s) => __async(this, null, function* () {
           try {
             if (s.url && (s.url.includes(".m3u8") || s.url.includes(".mp4"))) {
-              return yield validateStream2(s);
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 2500);
+              try {
+                const validated = yield validateStream2(s, controller.signal);
+                clearTimeout(timeoutId);
+                return validated;
+              } catch (e) {
+                clearTimeout(timeoutId);
+                return __spreadProps(__spreadValues({}, s), { verified: false, isReal: false });
+              }
             }
           } catch (e) {
           }
@@ -560,10 +569,17 @@ var require_engine = __commonJS({
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of validatedStreams) {
+          if (!s)
+            continue;
           const rawLang = normalizeLanguage(s.lang || s.Audio || s.langLabel || s.language || s.audio || "Latino");
+          const l = rawLang.toLowerCase();
+          const isLatino = l.includes("latino") || l.includes("espa\xF1ol") || l.includes("subtitulado");
+          if (!isLatino && providerName !== "FuegoCine")
+            continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
           const isReal = s.isReal === true;
+          const isVerified = s.verified === true;
           const checkMark = isReal ? " \u2705" : "";
           const streamName = `${providerName} - ${quality}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
