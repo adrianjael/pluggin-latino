@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-29T16:52:47.856Z
+ * Generated: 2026-04-30T16:02:42.539Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -71,18 +71,18 @@ var require_ua = __commonJS({
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
     ];
-    function getRandomUA2() {
+    function getRandomUA() {
       const index = Math.floor(Math.random() * UA_POOL.length);
       return UA_POOL[index];
     }
-    module2.exports = { getRandomUA: getRandomUA2, UA_POOL };
+    module2.exports = { getRandomUA, UA_POOL };
   }
 });
 
 // src/utils/http.js
 var require_http = __commonJS({
   "src/utils/http.js"(exports2, module2) {
-    var { getRandomUA: getRandomUA2 } = require_ua();
+    var { getRandomUA } = require_ua();
     var DEFAULT_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var sessionUA = null;
     function setSessionUA2(ua) {
@@ -395,6 +395,47 @@ var require_mirrors = __commonJS({
         "seekplays",
         "seekstreaming",
         "embedseek"
+      ],
+      DROPCDN: [
+        "dropcdn.io",
+        "dropload.io",
+        "dropcdn",
+        "dropload",
+        "dr0pstream"
+      ],
+      DOODSTREAM: [
+        "dood.li",
+        "dood.la",
+        "ds2video.com",
+        "ds2play.com",
+        "dood.yt",
+        "dood.ws",
+        "dood.so",
+        "dood.to",
+        "dood.pm",
+        "dood.watch",
+        "dood.sh",
+        "dood.cx",
+        "dood.wf",
+        "dood.re",
+        "dood.one",
+        "dood.tech",
+        "dood.work",
+        "doods.pro",
+        "dooood.com",
+        "doodstream.com",
+        "doodstream.co",
+        "d000d.com",
+        "d0000d.com",
+        "doodapi.com",
+        "d0o0d.com",
+        "do0od.com",
+        "dooodster.com",
+        "vidply.com",
+        "do7go.com",
+        "all3do.com",
+        "doply.net",
+        "dsvplay.com"
       ]
     };
     function isMirror(url, groupName) {
@@ -445,6 +486,8 @@ var require_engine = __commonJS({
         return "VOE";
       if (isMirror(u, "FILEMOON") || isMirror(s, "FILEMOON"))
         return "Filemoon";
+      if (isMirror(u, "DOODSTREAM") || isMirror(s, "DOODSTREAM"))
+        return "DoodStream";
       if (url) {
         try {
           const domainParts = new URL(url).hostname.replace("www.", "").split(".");
@@ -459,7 +502,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.0`);
+        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.1`);
         const sorted = sortStreamsByQuality2(streams);
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
@@ -467,10 +510,8 @@ var require_engine = __commonJS({
           const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
           const skipFilter = providerName === "FuegoCine";
-          if (!isLatino && !skipFilter) {
-            console.log(`[Engine] Omitiendo link no latino: ${rawLang}`);
+          if (!isLatino && !skipFilter)
             continue;
-          }
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
           const isVerified = s.verified === true;
@@ -486,11 +527,10 @@ var require_engine = __commonJS({
             url: s.url,
             quality,
             verified: isVerified,
-            // Propiedad crítica para el 'check' de la UI de Nuvio
             provider: server,
             language: rawLang,
             headers: s.headers || {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
           });
         }
@@ -503,124 +543,71 @@ var require_engine = __commonJS({
 
 // src/brazucaplay/index.js
 var { fetchJson, setSessionUA } = require_http();
-var { getRandomUA } = require_ua();
 var { finalizeStreams } = require_engine();
 var API_DEC = "https://enc-dec.app/api/dec-videasy";
 var TMDB_API_KEY = "d131017ccc6e5462a81c9304d21476de";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var SERVERS = {
-  "Kayo": { url: "https://api2.videasy.net/cuevana/sources-with-title", language: "Spanish" }
+  "Kayo": { url: "https://api.videasy.net/cuevana-spanish/sources-with-title", language: "Spanish" }
 };
-function getStreams(tmdbId = "76600", mediaType = "movie", season = null, episode = null, title = "Avatar: The Way of Water") {
+var CHROME_ANDROID_HEADERS = {
+  "Accept": "*/*",
+  "Accept-Language": "es-ES,es;q=0.9",
+  "Sec-CH-UA": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+  "Sec-CH-UA-Mobile": "?1",
+  "Sec-CH-UA-Platform": '"Android"',
+  "Referer": "https://player.videasy.net/",
+  "Origin": "https://player.videasy.net",
+  "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+};
+function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
   return __async(this, null, function* () {
-    console.log(`[BrazucaPlay] Iniciando b\xFAsqueda: ${tmdbId} - ${mediaType}`);
+    console.log(`[BrazucaPlay] Resolviendo: ${tmdbId} | ${mediaType}`);
     const results = [];
     try {
-      const currentUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-      setSessionUA(currentUA);
-      console.log(`[BrazucaPlay] Obteniendo metadatos de TMDB...`);
+      setSessionUA(CHROME_ANDROID_HEADERS["User-Agent"]);
       const tmdbUrl = `${TMDB_BASE_URL}/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`;
       const tmdbData = yield fetchJson(tmdbUrl);
       const imdbId = tmdbData.external_ids && tmdbData.external_ids.imdb_id ? tmdbData.external_ids.imdb_id : "";
-      const cleanTitle = tmdbData.title || tmdbData.name || title;
-      const releaseDate = tmdbData.release_date || tmdbData.first_air_date || "";
-      const year = releaseDate ? releaseDate.split("-")[0] : "";
-      console.log(`[BrazucaPlay] Meta: ${cleanTitle} (${year}) - IMDB: ${imdbId}`);
+      const title = tmdbData.title || tmdbData.name;
+      const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
       for (const [serverName, config] of Object.entries(SERVERS)) {
         try {
-          const params = {
-            title: cleanTitle,
-            mediaType: mediaType === "tv" ? "tv" : "movie",
-            year,
-            tmdbId,
-            imdbId
-          };
-          if (mediaType === "tv" && season && episode) {
-            params.seasonId = season;
-            params.episodeId = episode;
-          }
-          const query = Object.keys(params).map((k) => encodeURIComponent(k) + "=" + encodeURIComponent(params[k])).join("&");
-          const searchUrl = `${config.url}?${query}`;
-          const encryptedResponse = yield fetch(searchUrl, {
-            headers: { "User-Agent": currentUA }
-          });
-          const encryptedText = yield encryptedResponse.text();
-          if (encryptedText.includes("<!DOCTYPE") || encryptedText.includes("<html") || encryptedText.includes('{"message"')) {
+          let searchUrl = `${config.url}?title=${encodeURIComponent(title)}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
+          if (mediaType === "tv")
+            searchUrl += `&seasonId=${season || 1}&episodeId=${episode || 1}`;
+          const encryptedRes = yield fetch(searchUrl, { headers: CHROME_ANDROID_HEADERS });
+          const encryptedText = yield encryptedRes.text();
+          if (!encryptedText || encryptedText.length < 20 || encryptedText.startsWith("<!"))
             continue;
-          }
-          const decResponse = yield fetch(API_DEC, {
+          const decRes = yield fetch(API_DEC, {
             method: "POST",
-            headers: {
-              "User-Agent": currentUA,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ text: encryptedText, id: tmdbId })
+            headers: { "Content-Type": "application/json", "User-Agent": CHROME_ANDROID_HEADERS["User-Agent"] },
+            body: JSON.stringify({ text: encryptedText, id: String(tmdbId) })
           });
-          if (!decResponse.ok) {
-            const errorText = yield decResponse.text();
-            console.log(`[BrazucaPlay] Error en decodificador: ${decResponse.status}`);
+          if (!decRes.ok)
             continue;
-          }
-          const decData = yield decResponse.json();
-          const mediaData = decData.result;
+          const decData = yield decRes.json();
+          const mediaData = decData.result || decData;
           if (mediaData && mediaData.sources) {
             for (const source of mediaData.sources) {
               if (source.url) {
-                const quality = source.quality || extractQuality(source.url);
-                const streamHeaders = {
-                  "User-Agent": currentUA,
-                  "Referer": "https://videasy.net/",
-                  "Origin": "https://videasy.net",
-                  "Accept": "*/*"
-                };
-                const alive = yield isUrlAlive(source.url, streamHeaders);
-                if (!alive) {
-                  console.log(`[BrazucaPlay] Enlace descartado (Servidor ca\xEDdo o l\xEDmite excedido): ${source.url.substring(0, 50)}...`);
-                  continue;
-                }
                 results.push({
-                  name: `Brazuca - ${quality}`,
-                  title: `Latino - ${source.label || serverName}`,
+                  serverName,
+                  audio: "Latino",
+                  quality: source.quality || "HD",
                   url: source.url,
-                  quality,
-                  headers: streamHeaders
+                  headers: CHROME_ANDROID_HEADERS
                 });
               }
             }
           }
-        } catch (innerError) {
-          console.log(`[BrazucaPlay] Error en servidor ${serverName}:`, innerError.message);
+        } catch (err) {
         }
       }
     } catch (error) {
-      console.log("[BrazucaPlay] Error cr\xEDtico:", error.message);
     }
-    return finalizeStreams(results);
+    return finalizeStreams(results, "BrazucaPlay", "");
   });
-}
-function isUrlAlive(url, headers) {
-  return __async(this, null, function* () {
-    try {
-      const response = yield fetch(url, {
-        method: "GET",
-        headers: __spreadProps(__spreadValues({}, headers), { "Range": "bytes=0-1" })
-      });
-      return response.ok || response.status === 206;
-    } catch (e) {
-      return false;
-    }
-  });
-}
-function extractQuality(url) {
-  const m = url.match(/(\d{3,4})p/i);
-  if (m)
-    return m[1] + "p";
-  if (url.includes("1080"))
-    return "1080p";
-  if (url.includes("720"))
-    return "720p";
-  if (url.includes("480"))
-    return "480p";
-  return "HD";
 }
 module.exports = { getStreams };
