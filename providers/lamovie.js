@@ -319,14 +319,22 @@ function resolveVimeos(embedUrl) {
 }
 function resolveDoodstream(embedUrl) {
   var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
-  var embedHost = embedUrl.replace(/\/(d|f)\//, "/e/");
-  return get(embedHost, { "User-Agent": UA, "Referer": "https://lamovie.cc/" }).then(function(html) {
-    var match = html.match(/\$\.get\(['"](\/pass_md5\/[\w-]+)\/([\w-]+)['"]/i);
+  var embedHost = embedUrl.replace(/\/(d|f)\//, "/e/").replace("dsvplay.com", "d0000d.com");
+  return get(embedHost, { 
+    "User-Agent": UA, 
+    "Referer": "https://lamovie.cc/",
+    "Origin": "https://lamovie.cc"
+  }).then(function(html) {
+    // Regex mejorado segun Rust: captura la ruta completa y el token final
+    var match = html.match(/\$\.get\(['"](\/pass_md5\/[\w-]+\/([\w-]+))['"]/i);
     if (!match) return null;
-    var passPath = match[1];
-    var token = match[2];
+    
+    var passPath = match[1]; // /pass_md5/TOKEN1/TOKEN2
+    var token = match[2];    // TOKEN2
     var domain = new URL(embedHost).origin;
+    
     return get(domain + passPath, { "User-Agent": UA, "Referer": embedHost }).then(function(videoBaseUrl) {
+      if (!videoBaseUrl) return null;
       var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
       var randomString = "";
       for (var i = 0; i < 10; i++) randomString += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -343,7 +351,7 @@ function getResolver(url) {
   if (url.indexOf("voe.sx") !== -1) return resolveVoe;
   if (url.indexOf("vimeos.net") !== -1) return resolveVimeos;
   if (url.indexOf("lacloud.live") !== -1) return resolveLacloud;
-  if (url.indexOf("earnvids.com") !== -1 || url.indexOf("hglink.to") !== -1 || url.indexOf("earnl.one") !== -1 || url.indexOf("vidnova.online") !== -1 || url.indexOf("streamfort.online") !== -1 || url.indexOf("dsvplay.com") !== -1) return resolvePacker;
+  if (url.indexOf("earnvids.com") !== -1 || url.indexOf("hglink.to") !== -1 || url.indexOf("earnl.one") !== -1 || url.indexOf("vidnova.online") !== -1 || url.indexOf("streamfort.online") !== -1) return resolvePacker;
   if (url.indexOf("dood") !== -1 || url.indexOf("d0000d") !== -1 || url.indexOf("ds2video") !== -1 || url.indexOf("ds2play") !== -1 || url.indexOf("dsvplay") !== -1) return resolveDoodstream;
   return null;
 }
