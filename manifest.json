@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "2.6.9",
+  "version": "2.7.0",
   "scrapers": [
     {
       "id": "embed69",
@@ -364,7 +364,7 @@
       "id": "brazucaplay",
       "name": "BrazucaPlay",
       "description": "Películas y series en Latino (vía Cuevana/Kayo).",
-      "version": "2.6.9",
+      "version": "2.7.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -410,7 +410,7 @@
       "id": "videasy",
       "name": "VidEasy Latino",
       "description": "Premium streams via OnionPlay & Cuevana (1080p Latino).",
-      "version": "2.6.9",
+      "version": "2.7.0",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",

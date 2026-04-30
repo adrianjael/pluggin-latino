@@ -1,8 +1,27 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T16:49:53.238Z
+ * Generated: 2026-04-30T16:53:55.069Z
  */
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -132,6 +151,113 @@ var require_http = __commonJS({
   }
 });
 
+// src/utils/m3u8.js
+var require_m3u8 = __commonJS({
+  "src/utils/m3u8.js"(exports2, module2) {
+    var { getSessionUA } = require_http();
+    function getQualityFromHeight(height) {
+      if (!height)
+        return "1080p";
+      const h = parseInt(height);
+      if (h >= 2160)
+        return "4K";
+      if (h >= 1440)
+        return "1440p";
+      if (h >= 1080)
+        return "1080p";
+      if (h >= 720)
+        return "720p";
+      if (h >= 480)
+        return "480p";
+      if (h >= 360)
+        return "360p";
+      return "1080p";
+    }
+    function parseBestQuality(content, url = "") {
+      let bestHeight = 0;
+      let bestBandwidth = 0;
+      if (content) {
+        const lines = content.split("\n");
+        for (const line of lines) {
+          if (line.includes("RESOLUTION=")) {
+            const match = line.match(/RESOLUTION=\d+x(\d+)/i);
+            if (match) {
+              const height = parseInt(match[1]);
+              if (height > bestHeight)
+                bestHeight = height;
+            }
+          }
+          if (line.includes("BANDWIDTH=")) {
+            const match = line.match(/BANDWIDTH=(\d+)/i);
+            if (match) {
+              const bandwidth = parseInt(match[1]);
+              if (bandwidth > bestBandwidth)
+                bestBandwidth = bandwidth;
+            }
+          }
+        }
+      }
+      let quality = "1080p";
+      let isReal = false;
+      if (bestHeight > 0) {
+        quality = getQualityFromHeight(bestHeight);
+      } else {
+        const qMatch = url.match(/([_-]|\/)(\d{3,4})([pP]|(\.m3u8))?/);
+        if (qMatch) {
+          const h = parseInt(qMatch[2]);
+          if (h >= 360 && h <= 4320)
+            quality = getQualityFromHeight(h);
+        }
+      }
+      if (quality === "1080p" && bestBandwidth >= 4e6)
+        isReal = true;
+      if (quality === "720p" && bestBandwidth >= 25e5)
+        isReal = true;
+      if (quality === "4K" && bestBandwidth >= 15e6)
+        isReal = true;
+      return { quality, isReal };
+    }
+    var VALIDATION_CACHE = /* @__PURE__ */ new Map();
+    function validateStream(stream, signal = null) {
+      return __async(this, null, function* () {
+        if (!stream || !stream.url)
+          return stream;
+        const { url, headers } = stream;
+        if (VALIDATION_CACHE.has(url))
+          return __spreadValues(__spreadValues({}, stream), VALIDATION_CACHE.get(url));
+        try {
+          const fetchOptions = {
+            method: "GET",
+            headers: __spreadValues({
+              "User-Agent": getSessionUA()
+            }, headers || {})
+          };
+          if (signal)
+            fetchOptions.signal = signal;
+          const response = yield fetch(url, fetchOptions);
+          if (!response.ok)
+            return __spreadProps(__spreadValues({}, stream), { verified: false });
+          const text = yield response.text();
+          const info = parseBestQuality(text, url);
+          const resultData = {
+            verified: true,
+            quality: info.quality,
+            isReal: info.isReal
+          };
+          VALIDATION_CACHE.set(url, resultData);
+          return __spreadValues(__spreadValues({}, stream), resultData);
+        } catch (error) {
+          const info = parseBestQuality("", url);
+          const resultData = { quality: info.quality, verified: true, isReal: false };
+          VALIDATION_CACHE.set(url, resultData);
+          return __spreadValues(__spreadValues({}, stream), resultData);
+        }
+      });
+    }
+    module2.exports = { validateStream, getQualityFromHeight };
+  }
+});
+
 // src/brazucaplay/index.js
 var { fetchJson, setSessionUA } = require_http();
 var API_DEC = "https://enc-dec.app/api/dec-videasy";
@@ -148,31 +274,30 @@ var CINEBY_HEADERS = {
 };
 function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
   return __async(this, null, function* () {
+    var _a;
     const results = [];
+    const providerName = "BrazucaPlay";
     try {
       setSessionUA(CINEBY_HEADERS["User-Agent"]);
       const tmdbUrl = `${TMDB_BASE_URL}/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`;
       const tmdbData = yield fetchJson(tmdbUrl);
-      const imdbId = tmdbData.external_ids && tmdbData.external_ids.imdb_id ? tmdbData.external_ids.imdb_id : "";
       const title = tmdbData.title || tmdbData.name;
       const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
       const doubleEncTitle = encodeURIComponent(encodeURIComponent(title));
       for (const [serverId, config] of Object.entries(SERVERS)) {
         try {
-          let searchUrl = `${config.url}?title=${doubleEncTitle}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
+          let searchUrl = `${config.url}?title=${doubleEncTitle}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${((_a = tmdbData.external_ids) == null ? void 0 : _a.imdb_id) || ""}`;
           if (mediaType === "tv")
             searchUrl += `&episodeId=${episode || 1}&seasonId=${season || 1}`;
           const encryptedRes = yield fetch(searchUrl, { headers: CINEBY_HEADERS });
           const encryptedText = yield encryptedRes.text();
-          if (!encryptedText || encryptedText.length < 20 || encryptedText.startsWith("<!"))
+          if (!encryptedText || encryptedText.length < 20)
             continue;
           const decRes = yield fetch(API_DEC, {
             method: "POST",
             headers: { "Content-Type": "application/json", "User-Agent": CINEBY_HEADERS["User-Agent"] },
             body: JSON.stringify({ text: encryptedText, id: String(tmdbId) })
           });
-          if (!decRes.ok)
-            continue;
           const decData = yield decRes.json();
           const mediaData = decData.result || decData;
           if (mediaData && mediaData.sources) {
@@ -182,10 +307,9 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
                 if (quality === "AUTO")
                   quality = "1080p";
                 results.push({
-                  name: `BrazucaPlay - ${config.label} ${quality} [Latino]`,
-                  title: `Servidor: ${config.label} | Audio: Latino \u2705`,
-                  url: source.url,
+                  serverName: config.label,
                   quality,
+                  url: source.url,
                   headers: CINEBY_HEADERS
                 });
               }
@@ -196,7 +320,19 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
       }
     } catch (error) {
     }
-    return results;
+    const { validateStream } = require_m3u8();
+    const finalized = yield Promise.all(results.map((s) => __async(this, null, function* () {
+      const validated = yield validateStream(s);
+      const realLabel = validated.isReal ? " [Real]" : "";
+      return {
+        name: `${providerName} - ${validated.quality}${realLabel} \u2705`,
+        title: `Latino - ${s.serverName}`,
+        url: s.url,
+        quality: validated.quality,
+        headers: s.headers
+      };
+    })));
+    return finalized;
   });
 }
 module.exports = { getStreams };
