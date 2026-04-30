@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-30T14:46:24.374Z
+ * Generated: 2026-04-30T16:55:40.578Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -274,9 +274,10 @@ var require_m3u8 = __commonJS({
       return "1080p";
     }
     function parseBestQuality(content, url = "") {
+      let bestHeight = 0;
+      let bestBandwidth = 0;
       if (content) {
         const lines = content.split("\n");
-        let bestHeight = 0;
         for (const line of lines) {
           if (line.includes("RESOLUTION=")) {
             const match = line.match(/RESOLUTION=\d+x(\d+)/i);
@@ -286,17 +287,35 @@ var require_m3u8 = __commonJS({
                 bestHeight = height;
             }
           }
+          if (line.includes("BANDWIDTH=")) {
+            const match = line.match(/BANDWIDTH=(\d+)/i);
+            if (match) {
+              const bandwidth = parseInt(match[1]);
+              if (bandwidth > bestBandwidth)
+                bestBandwidth = bandwidth;
+            }
+          }
         }
-        if (bestHeight > 0)
-          return getQualityFromHeight(bestHeight);
       }
-      const qMatch = url.match(/([_-]|\/)(\d{3,4})([pP]|(\.m3u8))?/);
-      if (qMatch) {
-        const h = parseInt(qMatch[2]);
-        if (h >= 360 && h <= 4320)
-          return getQualityFromHeight(h);
+      let quality = "1080p";
+      let isReal = false;
+      if (bestHeight > 0) {
+        quality = getQualityFromHeight(bestHeight);
+      } else {
+        const qMatch = url.match(/([_-]|\/)(\d{3,4})([pP]|(\.m3u8))?/);
+        if (qMatch) {
+          const h = parseInt(qMatch[2]);
+          if (h >= 360 && h <= 4320)
+            quality = getQualityFromHeight(h);
+        }
       }
-      return "1080p";
+      if (quality === "1080p" && bestBandwidth >= 4e6)
+        isReal = true;
+      if (quality === "720p" && bestBandwidth >= 25e5)
+        isReal = true;
+      if (quality === "4K" && bestBandwidth >= 15e6)
+        isReal = true;
+      return { quality, isReal };
     }
     var VALIDATION_CACHE = /* @__PURE__ */ new Map();
     function validateStream(stream, signal = null) {
@@ -319,14 +338,17 @@ var require_m3u8 = __commonJS({
           if (!response.ok)
             return __spreadProps(__spreadValues({}, stream), { verified: false });
           const text = yield response.text();
-          let resultData = { verified: true };
-          if (text && (url.includes(".m3u8") || text.includes("#EXTM3U"))) {
-            resultData.quality = parseBestQuality(text, url);
-          }
+          const info = parseBestQuality(text, url);
+          const resultData = {
+            verified: true,
+            quality: info.quality,
+            isReal: info.isReal
+          };
           VALIDATION_CACHE.set(url, resultData);
           return __spreadValues(__spreadValues({}, stream), resultData);
         } catch (error) {
-          const resultData = { quality: parseBestQuality("", url), verified: true };
+          const info = parseBestQuality("", url);
+          const resultData = { quality: info.quality, verified: true, isReal: false };
           VALIDATION_CACHE.set(url, resultData);
           return __spreadValues(__spreadValues({}, stream), resultData);
         }
@@ -585,11 +607,21 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
-        console.log(`[Engine] PROCESANDO STREAMS - Filtrado Latino Inteligente v7.5.1`);
+        console.log(`[Engine] PROCESANDO STREAMS - Bitrate Global v7.6.0`);
+        const { validateStream: validateStream2 } = require_m3u8();
         const sorted = sortStreamsByQuality2(streams);
+        const validatedStreams = yield Promise.all(sorted.map((s) => __async(this, null, function* () {
+          try {
+            if (s.url && (s.url.includes(".m3u8") || s.url.includes(".mp4"))) {
+              return yield validateStream2(s);
+            }
+          } catch (e) {
+          }
+          return s;
+        })));
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
-        for (const s of sorted) {
+        for (const s of validatedStreams) {
           const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const isLatino = rawLang.toLowerCase().includes("latino");
           const skipFilter = providerName === "FuegoCine";
@@ -598,8 +630,10 @@ var require_engine = __commonJS({
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
           const isVerified = s.verified === true;
+          const isReal = s.isReal === true;
           const checkMark = isVerified ? " \u2705" : "";
-          const streamName = `${providerName} - ${quality}${checkMark}`;
+          const realLabel = isReal ? " [Real]" : "";
+          const streamName = `${providerName} - ${quality}${realLabel}${checkMark}`;
           const streamTitle = `${rawLang} - ${server}`;
           if (seenTitles.has(streamName + streamTitle + s.url))
             continue;
@@ -610,6 +644,7 @@ var require_engine = __commonJS({
             url: s.url,
             quality,
             verified: isVerified,
+            isReal,
             provider: server,
             language: rawLang,
             headers: s.headers || {
