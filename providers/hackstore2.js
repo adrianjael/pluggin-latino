@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-30T17:28:23.112Z
+ * Generated: 2026-04-30T18:14:48.558Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -232,110 +232,6 @@ var require_http2 = __commonJS({
   }
 });
 
-// src/resolvers/voe.js
-var require_voe = __commonJS({
-  "src/resolvers/voe.js"(exports2, module2) {
-    var { getSessionUA } = require_http2();
-    function localAtob(input) {
-      if (!input)
-        return "";
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-      let str = String(input).replace(/=+$/, "").replace(/[\s\n\r\t]/g, "");
-      let output = "";
-      if (str.length % 4 === 1)
-        return "";
-      for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
-        buffer = chars.indexOf(buffer);
-      }
-      return output;
-    }
-    function resolve3(url, signal = null) {
-      return __async(this, null, function* () {
-        try {
-          const currentUA = getSessionUA();
-          console.log(`[VOE] TV-Resolving: ${url}`);
-          const response = yield fetch(url, {
-            headers: { "User-Agent": currentUA },
-            signal
-          });
-          if (!response.ok)
-            return null;
-          const html = yield response.text();
-          if (html.includes("window.location.href") && html.length < 2e3) {
-            const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
-            if (rm)
-              return resolve3(rm[1]);
-          }
-          const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
-          if (jsonMatch) {
-            try {
-              const parsed = JSON.parse(jsonMatch[1].trim());
-              let encText = Array.isArray(parsed) ? parsed[0] : parsed;
-              if (typeof encText !== "string")
-                return null;
-              let decoded = encText.replace(/[a-zA-Z]/g, (c) => {
-                const code = c.charCodeAt(0);
-                const limit = c <= "Z" ? 90 : 122;
-                const shifted = code + 13;
-                return String.fromCharCode(limit >= shifted ? shifted : shifted - 26);
-              });
-              const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
-              for (const n of noise)
-                decoded = decoded.split(n).join("");
-              const b64_1 = localAtob(decoded);
-              if (!b64_1)
-                throw new Error("LocalAtob failed stage 1");
-              let shiftedStr = "";
-              for (let j = 0; j < b64_1.length; j++) {
-                shiftedStr += String.fromCharCode(b64_1.charCodeAt(j) - 3);
-              }
-              const reversed = shiftedStr.split("").reverse().join("");
-              const decrypted = localAtob(reversed);
-              if (!decrypted)
-                throw new Error("LocalAtob failed stage 2");
-              const data = JSON.parse(decrypted);
-              if (data && data.source) {
-                console.log(`[VOE] Success: ${data.source.substring(0, 50)}...`);
-                return {
-                  url: data.source,
-                  quality: "1080p",
-                  verified: true,
-                  serverName: "VOE",
-                  headers: {
-                    "User-Agent": currentUA,
-                    "Referer": url
-                  }
-                };
-              }
-            } catch (ex) {
-              console.error(`[VOE] Decryption failed (QuickJS Match): ${ex.message}`);
-            }
-          }
-          const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
-          if (m3u8Match) {
-            return {
-              url: m3u8Match[1],
-              quality: "1080p",
-              verified: false,
-              serverName: "VOE",
-              headers: {
-                "Referer": url,
-                "User-Agent": currentUA
-              }
-            };
-          }
-          return null;
-        } catch (error) {
-          console.error(`[VOE] Error: ${error.message}`);
-          return null;
-        }
-      });
-    }
-    module2.exports = { resolve: resolve3 };
-    module2.exports = { resolve: resolve3 };
-  }
-});
-
 // src/utils/m3u8.js
 var require_m3u8 = __commonJS({
   "src/utils/m3u8.js"(exports2, module2) {
@@ -440,6 +336,122 @@ var require_m3u8 = __commonJS({
       });
     }
     module2.exports = { validateStream, getQualityFromHeight };
+  }
+});
+
+// src/resolvers/voe.js
+var require_voe = __commonJS({
+  "src/resolvers/voe.js"(exports2, module2) {
+    var { getSessionUA } = require_http2();
+    var { validateStream } = require_m3u8();
+    function localAtob(input) {
+      if (!input)
+        return "";
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+      let str = String(input).replace(/=+$/, "").replace(/[\s\n\r\t]/g, "");
+      let output = "";
+      if (str.length % 4 === 1)
+        return "";
+      for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+        buffer = chars.indexOf(buffer);
+      }
+      return output;
+    }
+    function resolve3(url, signal = null) {
+      return __async(this, null, function* () {
+        try {
+          const currentUA = getSessionUA();
+          console.log(`[VOE] TV-Resolving: ${url}`);
+          const response = yield fetch(url, {
+            headers: { "User-Agent": currentUA },
+            signal
+          });
+          if (!response.ok)
+            return null;
+          const html = yield response.text();
+          if (html.includes("window.location.href") && html.length < 2e3) {
+            const rm = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+            if (rm)
+              return resolve3(rm[1]);
+          }
+          const jsonMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[1].trim());
+              let encText = Array.isArray(parsed) ? parsed[0] : parsed;
+              if (typeof encText !== "string")
+                return null;
+              let decoded = encText.replace(/[a-zA-Z]/g, (c) => {
+                const code = c.charCodeAt(0);
+                const limit = c <= "Z" ? 90 : 122;
+                const shifted = code + 13;
+                return String.fromCharCode(limit >= shifted ? shifted : shifted - 26);
+              });
+              const noise = ["@$", "^^", "~@", "%?", "*~", "!!", "#&"];
+              for (const n of noise)
+                decoded = decoded.split(n).join("");
+              const b64_1 = localAtob(decoded);
+              if (!b64_1)
+                throw new Error("LocalAtob failed stage 1");
+              let shiftedStr = "";
+              for (let j = 0; j < b64_1.length; j++) {
+                shiftedStr += String.fromCharCode(b64_1.charCodeAt(j) - 3);
+              }
+              const reversed = shiftedStr.split("").reverse().join("");
+              const decrypted = localAtob(reversed);
+              if (!decrypted)
+                throw new Error("LocalAtob failed stage 2");
+              const data = JSON.parse(decrypted);
+              if (data && data.source) {
+                console.log(`[VOE] Success: ${data.source.substring(0, 50)}...`);
+                const reqHeaders = {
+                  "User-Agent": currentUA,
+                  "Referer": url
+                };
+                const streamObj = { url: data.source, headers: reqHeaders };
+                const validation = yield validateStream(streamObj, signal);
+                const isLive = validation ? validation.verified : true;
+                const streamQuality = validation && validation.quality ? validation.quality : "1080p";
+                return {
+                  url: data.source,
+                  quality: streamQuality,
+                  verified: isLive,
+                  serverName: "VOE",
+                  headers: reqHeaders
+                };
+              }
+            } catch (ex) {
+              console.error(`[VOE] Decryption failed (QuickJS Match): ${ex.message}`);
+            }
+          }
+          const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
+          if (m3u8Match) {
+            const fallbackUrl = m3u8Match[1];
+            const reqHeaders = {
+              "Referer": url,
+              "User-Agent": currentUA
+            };
+            const streamObj = { url: fallbackUrl, headers: reqHeaders };
+            const validation = yield validateStream(streamObj, signal);
+            const isLive = validation ? validation.verified : true;
+            const streamQuality = validation && validation.quality ? validation.quality : "1080p";
+            return {
+              url: fallbackUrl,
+              quality: streamQuality,
+              verified: isLive,
+              serverName: "VOE",
+              headers: reqHeaders
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error(`[VOE] Error: ${error.message}`);
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve3 };
+    module2.exports = { resolve: resolve3 };
   }
 });
 
@@ -552,15 +564,21 @@ var require_hlswish = __commonJS({
           });
           if (!validResult)
             return null;
+          const reqHeaders = {
+            "Referer": validResult.mirror,
+            "Origin": new URL(validResult.mirror).origin,
+            "User-Agent": UA3
+          };
+          const streamObj = { url: validResult.url, headers: reqHeaders };
+          const validation = yield validateStream(streamObj, signal);
+          const isLive = validation ? validation.verified : true;
+          const streamQuality = validation && validation.quality ? validation.quality : "Auto";
           return {
             url: validResult.url,
-            verified: true,
+            quality: streamQuality,
+            verified: isLive,
             serverName: "StreamWish",
-            headers: {
-              "Referer": validResult.mirror,
-              "Origin": new URL(validResult.mirror).origin,
-              "User-Agent": UA3
-            }
+            headers: reqHeaders
           };
         } catch (e) {
           return null;
@@ -802,16 +820,22 @@ var require_vidhide = __commonJS({
             finalUrl = new URL(url).origin + finalUrl;
           if (!finalUrl.includes("referer="))
             finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
+          const reqHeaders = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+            "Referer": url.split("?")[0],
+            "Origin": new URL(url).origin,
+            "X-Requested-With": "XMLHttpRequest",
+            "User-Agent": currentUA
+          });
+          const streamObj = { url: finalUrl, headers: reqHeaders };
+          const validation = yield validateStream(streamObj, signal);
+          const isLive = validation ? validation.verified : true;
+          const streamQuality = validation && validation.quality ? validation.quality : quality;
           return {
             url: finalUrl,
-            verified: true,
+            quality: streamQuality,
+            verified: isLive,
             serverName: "VidHide",
-            headers: __spreadProps(__spreadValues({}, getStealthHeaders()), {
-              "Referer": url.split("?")[0],
-              "Origin": new URL(url).origin,
-              "X-Requested-With": "XMLHttpRequest",
-              "User-Agent": currentUA
-            })
+            headers: reqHeaders
           };
         } catch (e) {
           console.error(`[VidHide] Error: ${e.message}`);
@@ -1861,15 +1885,28 @@ var require_doodstream = __commonJS({
           }
           const expiry = Date.now();
           const finalVideoUrl = `${videoBaseUrl}${randomString}?token=${token}&expiry=${expiry}`;
+          const reqHeaders = {
+            "User-Agent": UA3,
+            "Referer": domain + "/"
+          };
+          let isLive = false;
+          try {
+            const checkRes = yield fetch(finalVideoUrl, {
+              method: "HEAD",
+              headers: reqHeaders,
+              signal
+            });
+            isLive = checkRes.ok;
+          } catch (err) {
+            isLive = true;
+          }
           return {
             url: finalVideoUrl,
             quality: "720p",
-            verified: true,
+            // Doodstream suele ser 720p estático o adaptativo interno
+            verified: isLive,
             serverName: "DoodStream",
-            headers: {
-              "User-Agent": UA3,
-              "Referer": domain + "/"
-            }
+            headers: reqHeaders
           };
         } catch (e) {
           console.error(`[DoodStream] Error: ${e.message}`);

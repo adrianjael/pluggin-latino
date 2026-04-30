@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-30T17:28:23.094Z
+ * Generated: 2026-04-30T18:14:48.539Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -715,6 +715,7 @@ var require_base64 = __commonJS({
 var require_voe = __commonJS({
   "src/resolvers/voe.js"(exports2, module2) {
     var { getSessionUA } = require_http();
+    var { validateStream } = require_m3u8();
     function localAtob2(input) {
       if (!input)
         return "";
@@ -775,15 +776,20 @@ var require_voe = __commonJS({
               const data = JSON.parse(decrypted);
               if (data && data.source) {
                 console.log(`[VOE] Success: ${data.source.substring(0, 50)}...`);
+                const reqHeaders = {
+                  "User-Agent": currentUA,
+                  "Referer": url
+                };
+                const streamObj = { url: data.source, headers: reqHeaders };
+                const validation = yield validateStream(streamObj, signal);
+                const isLive = validation ? validation.verified : true;
+                const streamQuality = validation && validation.quality ? validation.quality : "1080p";
                 return {
                   url: data.source,
-                  quality: "1080p",
-                  verified: true,
+                  quality: streamQuality,
+                  verified: isLive,
                   serverName: "VOE",
-                  headers: {
-                    "User-Agent": currentUA,
-                    "Referer": url
-                  }
+                  headers: reqHeaders
                 };
               }
             } catch (ex) {
@@ -792,15 +798,21 @@ var require_voe = __commonJS({
           }
           const m3u8Match = html.match(/["'](https?:\/\/[^"']+?\.m3u8[^"']*?)["']/i);
           if (m3u8Match) {
+            const fallbackUrl = m3u8Match[1];
+            const reqHeaders = {
+              "Referer": url,
+              "User-Agent": currentUA
+            };
+            const streamObj = { url: fallbackUrl, headers: reqHeaders };
+            const validation = yield validateStream(streamObj, signal);
+            const isLive = validation ? validation.verified : true;
+            const streamQuality = validation && validation.quality ? validation.quality : "1080p";
             return {
-              url: m3u8Match[1],
-              quality: "1080p",
-              verified: false,
+              url: fallbackUrl,
+              quality: streamQuality,
+              verified: isLive,
               serverName: "VOE",
-              headers: {
-                "Referer": url,
-                "User-Agent": currentUA
-              }
+              headers: reqHeaders
             };
           }
           return null;
@@ -924,15 +936,21 @@ var require_hlswish = __commonJS({
           });
           if (!validResult)
             return null;
+          const reqHeaders = {
+            "Referer": validResult.mirror,
+            "Origin": new URL(validResult.mirror).origin,
+            "User-Agent": UA
+          };
+          const streamObj = { url: validResult.url, headers: reqHeaders };
+          const validation = yield validateStream(streamObj, signal);
+          const isLive = validation ? validation.verified : true;
+          const streamQuality = validation && validation.quality ? validation.quality : "Auto";
           return {
             url: validResult.url,
-            verified: true,
+            quality: streamQuality,
+            verified: isLive,
             serverName: "StreamWish",
-            headers: {
-              "Referer": validResult.mirror,
-              "Origin": new URL(validResult.mirror).origin,
-              "User-Agent": UA
-            }
+            headers: reqHeaders
           };
         } catch (e) {
           return null;
@@ -1174,16 +1192,22 @@ var require_vidhide = __commonJS({
             finalUrl = new URL(url).origin + finalUrl;
           if (!finalUrl.includes("referer="))
             finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
+          const reqHeaders = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+            "Referer": url.split("?")[0],
+            "Origin": new URL(url).origin,
+            "X-Requested-With": "XMLHttpRequest",
+            "User-Agent": currentUA
+          });
+          const streamObj = { url: finalUrl, headers: reqHeaders };
+          const validation = yield validateStream(streamObj, signal);
+          const isLive = validation ? validation.verified : true;
+          const streamQuality = validation && validation.quality ? validation.quality : quality;
           return {
             url: finalUrl,
-            verified: true,
+            quality: streamQuality,
+            verified: isLive,
             serverName: "VidHide",
-            headers: __spreadProps(__spreadValues({}, getStealthHeaders()), {
-              "Referer": url.split("?")[0],
-              "Origin": new URL(url).origin,
-              "X-Requested-With": "XMLHttpRequest",
-              "User-Agent": currentUA
-            })
+            headers: reqHeaders
           };
         } catch (e) {
           console.error(`[VidHide] Error: ${e.message}`);

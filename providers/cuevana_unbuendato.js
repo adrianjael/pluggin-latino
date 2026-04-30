@@ -1,6 +1,6 @@
 /**
- * pelisgo - Built from src/pelisgo/
- * Generated: 2026-04-30T18:14:48.569Z
+ * cuevana_unbuendato - Built from src/cuevana_unbuendato/
+ * Generated: 2026-04-30T18:14:48.528Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -73,152 +73,6 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/utils/string.js
-var string_exports = {};
-__export(string_exports, {
-  base64Decode: () => base64Decode,
-  calculateSimilarity: () => calculateSimilarity,
-  getHostname: () => getHostname,
-  getOrigin: () => getOrigin,
-  isGoodMatch: () => isGoodMatch,
-  normalizeTitle: () => normalizeTitle,
-  utf8Decode: () => utf8Decode
-});
-function normalizeTitle(t) {
-  if (!t)
-    return "";
-  var normalized = t.toLowerCase().replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u").replace(/ñ/g, "n").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-  var words = normalized.split(" ");
-  var filtered = [];
-  for (var i = 0; i < words.length; i++) {
-    var word = words[i];
-    var isNoise = false;
-    for (var j = 0; j < NOISE_WORDS.length; j++) {
-      if (NOISE_WORDS[j] === word) {
-        isNoise = true;
-        break;
-      }
-    }
-    if (!isNoise)
-      filtered.push(word);
-  }
-  return filtered.length > 0 ? filtered.join(" ") : normalized;
-}
-function calculateSimilarity(title1, title2) {
-  var norm1 = normalizeTitle(title1);
-  var norm2 = normalizeTitle(title2);
-  if (norm1 === norm2)
-    return 1;
-  if (norm1.length > 6 && norm2.length > 6 && (norm2.indexOf(norm1) !== -1 || norm1.indexOf(norm2) !== -1)) {
-    return 0.95;
-  }
-  var w1 = norm1.split(/\s+/);
-  var w2 = norm2.split(/\s+/);
-  var words1Map = {};
-  var words2Map = {};
-  var allUniqueWords = {};
-  for (var i = 0; i < w1.length; i++) {
-    if (w1[i].length > 1) {
-      words1Map[w1[i]] = true;
-      allUniqueWords[w1[i]] = true;
-    }
-  }
-  for (var j = 0; j < w2.length; j++) {
-    if (w2[j].length > 1) {
-      words2Map[w2[j]] = true;
-      allUniqueWords[w2[j]] = true;
-    }
-  }
-  var intersection = 0;
-  var union = 0;
-  for (var word in allUniqueWords) {
-    union++;
-    if (words1Map[word] && words2Map[word]) {
-      intersection++;
-    }
-  }
-  if (union === 0)
-    return 0;
-  var score = intersection / union;
-  var yearMatch1 = title1.match(/\b(19|20)\d{2}\b/);
-  var yearMatch2 = title2.match(/\b(19|20)\d{2}\b/);
-  if (yearMatch1 && yearMatch2 && yearMatch1[0] !== yearMatch2[0]) {
-    return score * 0.5;
-  }
-  return score;
-}
-function isGoodMatch(query, result, minScore) {
-  var ms = minScore || 0.45;
-  return calculateSimilarity(query, result) >= ms;
-}
-function base64Decode(input) {
-  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-  var str = String(input).replace(/=+$/, "");
-  var output = "";
-  if (str.length % 4 === 1)
-    throw new Error("Base64 invalido");
-  var bc = 0, bs, buffer, idx = 0;
-  while (buffer = str.charAt(idx++)) {
-    buffer = chars.indexOf(buffer);
-    if (~buffer) {
-      bs = bc % 4 ? bs * 64 + buffer : buffer;
-      if (bc++ % 4) {
-        output += String.fromCharCode(255 & bs >> (-2 * bc & 6));
-      }
-    }
-  }
-  return output;
-}
-function utf8Decode(bytes) {
-  var out = "", i = 0;
-  while (i < bytes.length) {
-    var c = bytes[i++];
-    if (c < 128)
-      out += String.fromCharCode(c);
-    else if (c > 191 && c < 224)
-      out += String.fromCharCode((c & 31) << 6 | bytes[i++] & 63);
-    else
-      out += String.fromCharCode((c & 15) << 12 | (bytes[i++] & 63) << 6 | bytes[i++] & 63);
-  }
-  return out;
-}
-function getOrigin(url) {
-  if (!url)
-    return "";
-  var match = url.match(/^(https?:\/\/[^\/]+)/);
-  return match ? match[1] : "";
-}
-function getHostname(url) {
-  if (!url)
-    return "";
-  var match = url.match(/^https?:\/\/([^\/]+)/);
-  return match ? match[1] : "";
-}
-var NOISE_WORDS;
-var init_string = __esm({
-  "src/utils/string.js"() {
-    NOISE_WORDS = [
-      "latino",
-      "espanol",
-      "hispano",
-      "dual",
-      "subs",
-      "subtitulado",
-      "hd",
-      "1080p",
-      "720p",
-      "4k",
-      "uhd",
-      "completa",
-      "pelicula",
-      "serie",
-      "episodio",
-      "capitulo",
-      "temporada"
-    ];
-  }
-});
-
 // src/utils/ua.js
 var require_ua = __commonJS({
   "src/utils/ua.js"(exports2, module2) {
@@ -247,7 +101,7 @@ var require_http = __commonJS({
     function getSessionUA() {
       return sessionUA || DEFAULT_CHROME_UA;
     }
-    function getStealthHeaders2() {
+    function getStealthHeaders() {
       return {
         "User-Agent": getSessionUA(),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -317,7 +171,7 @@ var require_http = __commonJS({
       fetchJson,
       getSessionUA,
       setSessionUA,
-      getStealthHeaders: getStealthHeaders2,
+      getStealthHeaders,
       DEFAULT_UA,
       MOBILE_UA
     };
@@ -1163,7 +1017,7 @@ var require_filemoon = __commonJS({
 // src/resolvers/vidhide.js
 var require_vidhide = __commonJS({
   "src/resolvers/vidhide.js"(exports2, module2) {
-    var { getSessionUA, getStealthHeaders: getStealthHeaders2 } = require_http();
+    var { getSessionUA, getStealthHeaders } = require_http();
     var { validateStream } = require_m3u8();
     function unpackVidHide(script) {
       try {
@@ -1234,7 +1088,7 @@ var require_vidhide = __commonJS({
             finalUrl = new URL(url).origin + finalUrl;
           if (!finalUrl.includes("referer="))
             finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
-          const reqHeaders = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
+          const reqHeaders = __spreadProps(__spreadValues({}, getStealthHeaders()), {
             "Referer": url.split("?")[0],
             "Origin": new URL(url).origin,
             "X-Requested-With": "XMLHttpRequest",
@@ -1548,7 +1402,7 @@ var require_vimeos = __commonJS({
 var require_buzzheavier = __commonJS({
   "src/resolvers/buzzheavier.js"(exports2, module2) {
     var axios3 = require("axios");
-    var { getStealthHeaders: getStealthHeaders2 } = require_http();
+    var { getStealthHeaders } = require_http();
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         if (!embedUrl)
@@ -1558,7 +1412,7 @@ var require_buzzheavier = __commonJS({
           const domain = new URL(cleanUrl).hostname;
           const downloadUrl = `${cleanUrl}/download`;
           console.log(`[Buzzheavier] Resolviendo v8.8.7 (Python Logic): ${cleanUrl}`);
-          const headers = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
+          const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
             "Referer": cleanUrl,
             "hx-current-url": cleanUrl,
             "hx-request": "true",
@@ -1911,7 +1765,7 @@ var require_embedseek = __commonJS({
 var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
     var axios3 = require("axios");
-    var { getStealthHeaders: getStealthHeaders2 } = require_http();
+    var { getStealthHeaders } = require_http();
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
@@ -1922,7 +1776,7 @@ var require_tplayer = __commonJS({
           const fileId = idMatch[1];
           const baseUrl = new URL(embedUrl).origin;
           const apiUrl = `${baseUrl}/api/resolve/${fileId}`;
-          const baseHeaders = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
+          const baseHeaders = __spreadProps(__spreadValues({}, getStealthHeaders()), {
             "Referer": embedUrl,
             "Origin": baseUrl,
             "X-Requested-With": "XMLHttpRequest"
@@ -2359,12 +2213,12 @@ var require_resolvers = __commonJS({
     function getDirectCdnHeaders(url) {
       if (!url)
         return null;
-      const { getStealthHeaders: getStealthHeaders2 } = require_http();
+      const { getStealthHeaders } = require_http();
       const s = url.toLowerCase();
       try {
         const domain = new URL(url).hostname;
         const baseOrigin = `https://${domain}`;
-        const headers = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
+        const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
           "Referer": baseOrigin,
           "Origin": baseOrigin
         });
@@ -2494,216 +2348,68 @@ var require_resolvers = __commonJS({
   }
 });
 
-// src/utils/id_mapper.js
-var require_id_mapper = __commonJS({
-  "src/utils/id_mapper.js"(exports2, module2) {
-    var { fetchJson, fetchHtml } = require_http();
-    var TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-    var ID_CACHE = /* @__PURE__ */ new Map();
-    var SERIES_MAPPINGS = {
-      // Ejemplo: 'tmdb_id': 'imdb_id'
-    };
-    function getImdbIdFromApi(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        try {
-          const type = mediaType === "movie" || mediaType === "movies" ? "movie" : "tv";
-          const apiKey = TMDB_API_KEY;
-          const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
-          const idUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}/external_ids?api_key=${apiKey}`;
-          const metaUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${apiKey}&language=es-MX`;
-          const idRes = yield fetchJson(idUrl, { headers: { "User-Agent": ua } }).catch(() => null);
-          if (!idRes || !idRes.imdb_id)
-            return null;
-          const metaRes = yield fetchJson(metaUrl, { headers: { "User-Agent": ua } }).catch(() => null);
-          const title = metaRes ? metaRes.title || metaRes.name : "Contenido";
-          const year = metaRes ? (metaRes.release_date || metaRes.first_air_date || "").split("-")[0] : null;
-          return {
-            imdbId: idRes.imdb_id,
-            title,
-            year,
-            offset: 0,
-            fromMapping: false
-          };
-        } catch (e) {
-          console.log(`[IDMapper] API error: ${e.message}`);
-          return null;
-        }
-      });
-    }
-    function scrapeTmdbId(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        try {
-          const url = `https://www.themoviedb.org/${mediaType}/${tmdbId}?language=es-MX`;
-          const html = yield fetchHtml(url, { timeout: 1e4 }).catch(() => null);
-          if (!html)
-            return { imdbId: null, title: "Contenido" };
-          const imdbMatch = html.match(/href="https:\/\/www\.imdb\.com\/title\/(tt\d+)"/i);
-          const titleMatch = html.match(/<title>(.*?) &#8212;/i);
-          return {
-            imdbId: imdbMatch ? imdbMatch[1] : null,
-            title: titleMatch ? titleMatch[1].trim() : "Contenido",
-            year: null,
-            offset: 0,
-            fromMapping: false
-          };
-        } catch (e) {
-          return { imdbId: null, title: "Contenido" };
-        }
-      });
-    }
-    function getCorrectImdbId2(tmdbId, mediaType) {
-      return __async(this, null, function* () {
-        if (!tmdbId)
-          return { imdbId: null, title: "" };
-        const cacheKey = `${mediaType}_${tmdbId}`;
-        if (ID_CACHE.has(cacheKey))
-          return ID_CACHE.get(cacheKey);
-        if (tmdbId.startsWith("tt")) {
-          const res = { imdbId: tmdbId, title: "Contenido", offset: 0, fromMapping: false };
-          ID_CACHE.set(cacheKey, res);
-          return res;
-        }
-        const apiResult = yield getImdbIdFromApi(tmdbId, mediaType);
-        if (apiResult && apiResult.imdbId) {
-          ID_CACHE.set(cacheKey, apiResult);
-          return apiResult;
-        }
-        const scrapeResult = yield scrapeTmdbId(tmdbId, mediaType);
-        ID_CACHE.set(cacheKey, scrapeResult);
-        return scrapeResult;
-      });
-    }
-    module2.exports = { getCorrectImdbId: getCorrectImdbId2, SERIES_MAPPINGS };
-  }
-});
-
-// src/pelisgo/index.js
-var { calculateSimilarity: calculateSimilarity2 } = (init_string(), __toCommonJS(string_exports));
+// src/cuevana_unbuendato/index.js
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
-var { getStealthHeaders } = require_http();
-var { getCorrectImdbId } = require_id_mapper();
-var BASE = "https://pelisgo.online";
-var WHITELIST = ["Magi", "Filemoon", "Pixeldrain"];
-function getPelisGoHeaders(referer = BASE) {
-  return __spreadProps(__spreadValues({}, getStealthHeaders()), {
-    "Referer": referer,
-    "Origin": BASE,
-    "X-Requested-With": "XMLHttpRequest"
-  });
-}
-function fetchWithTimeout(_0) {
-  return __async(this, arguments, function* (url, options = {}, timeout = 6e3) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    try {
-      const response = yield fetch(url, __spreadProps(__spreadValues({}, options), { signal: controller.signal }));
-      clearTimeout(id);
-      return response;
-    } catch (e) {
-      clearTimeout(id);
-      return { text: () => "", json: () => ({}), status: 404 };
-    }
-  });
-}
-function cleanTitle(str) {
-  if (!str)
-    return "";
-  return str.replace(/[\\"' ]+/g, "").replace(/\\u[\dA-F]{4}/gi, "").trim();
-}
-function normalizeLanguageStrict(str) {
-  if (!str)
-    return "Latino";
-  const low = str.toLowerCase();
-  if (low.includes("castellano") || low.includes("espa\xF1a") || low.includes("esp")) {
-    return null;
-  }
-  return "Latino";
-}
-function getOnlineStreams(rawHtml) {
+function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
-    const seenUrls = /* @__PURE__ */ new Set();
-    const resolutionPromises = [];
-    const objects = rawHtml.match(new RegExp(`\\{[^{}]*?server[\\\\"' ]+:[^{}]*?\\}`, "gis")) || [];
-    for (const objStr of objects) {
-      resolutionPromises.push((() => __async(this, null, function* () {
-        try {
-          const sM = objStr.match(/server[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-          const uM = objStr.match(/(url|download)[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-          const qM = objStr.match(/quality[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-          const lM = objStr.match(/language[\\"' ]+:[\\"' ]+([^\\"' ,}]+)/i);
-          if (!sM || !uM)
-            return null;
-          const serverName = cleanTitle(sM[1]);
-          let rawUrl = uM[2].replace(/\\/g, "").replace(/[\\"' ]+/g, "");
-          const quality = qM ? cleanTitle(qM[1]) : "1080p";
-          const lang = lM ? cleanTitle(lM[1]) : "Latino";
-          if (!WHITELIST.some((w) => serverName.toLowerCase().includes(w.toLowerCase())))
-            return null;
-          const finalLang = normalizeLanguageStrict(lang);
-          if (!finalLang) {
-            console.log(`[PelisGo] Omitiendo enlace Castellano de ${serverName}`);
-            return null;
-          }
-          let directUrl = rawUrl;
-          if (rawUrl.includes("/download/")) {
-            const id = rawUrl.split("/").pop();
-            const downloadRes = yield fetchWithTimeout(`${BASE}/api/download/${id}`, { headers: getPelisGoHeaders() });
-            const downloadData = yield downloadRes.json();
-            directUrl = downloadData.url || null;
-          }
-          if (!directUrl || seenUrls.has(directUrl))
-            return null;
-          seenUrls.add(directUrl);
-          const resEmbed = yield resolveEmbed(directUrl);
-          return {
-            name: "PelisGo",
-            langLabel: finalLang,
-            serverLabel: serverName,
-            url: resEmbed ? resEmbed.url : directUrl,
-            quality: (resEmbed ? resEmbed.quality : quality) || "1080p",
-            headers: (resEmbed ? resEmbed.headers : null) || getPelisGoHeaders(directUrl)
-          };
-        } catch (e) {
-          return null;
-        }
-      }))());
+    if (!tmdbId)
+      return [];
+    const rawId = tmdbId.toString().split(":")[0];
+    const isMovie = mediaType === "movie" || mediaType === "movies";
+    let apiUrl = `https://cuevana.unbuendato.com/?id=${rawId}`;
+    if (!isMovie && season && episode) {
+      apiUrl += `&season=${season}&episode=${episode}`;
     }
-    const results = yield Promise.allSettled(resolutionPromises);
-    return results.filter((r) => r.status === "fulfilled" && r.value !== null).map((r) => r.value);
-  });
-}
-function getStreams(tmdbId, mediaType, season, episode, title) {
-  return __async(this, null, function* () {
+    console.log(`[CuevanaUBD] Buscando: ${apiUrl}`);
     try {
-      const type = mediaType === "tv" || mediaType === "series" ? "tv" : "movie";
-      const meta = yield getCorrectImdbId(tmdbId, mediaType);
-      const mediaTitle = meta.title || title;
-      const slugPath = mediaTitle.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s\-]/gi, "").toLowerCase().trim().replace(/\s+/g, "-");
-      const targetPath = type === "movie" ? `/movies/${slugPath}` : `/series/${slugPath}`;
-      const finalUrl = type === "movie" ? `${BASE}${targetPath}` : `${BASE}${targetPath}/temporada/${season || 1}/episodio/${episode || 1}`;
-      const resPage = yield fetchWithTimeout(finalUrl);
-      const html = yield resPage.text();
-      if (!html || html.includes("404")) {
-        console.log(`[PelisGo] Slug fallido, reintentando con b\xFAsqueda...`);
-        const searchRes = yield fetchWithTimeout(`${BASE}/search?q=${encodeURIComponent(mediaTitle)}`);
-        const searchHtml = yield searchRes.text();
-        const re = new RegExp(`href=["\\\\"]+([^"\\\\"]+(movies|series)\\/([\\w\\d\\-]+))["\\\\"]+`, "gi");
-        let m;
-        while ((m = re.exec(searchHtml)) !== null) {
-          if (calculateSimilarity2(mediaTitle, m[3].replace(/-/g, " ")) > 0.7) {
-            const resRetry = yield fetchWithTimeout(`${BASE}${m[1].replace(/\\/g, "")}`);
-            const htmlRetry = yield resRetry.text();
-            const streams2 = yield getOnlineStreams(htmlRetry);
-            return yield finalizeStreams(streams2, "PelisGo", mediaTitle);
-          }
+      const response = yield fetch(apiUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
+        },
+        timeout: 8e3
+        // Timeout de seguridad
+      });
+      if (!response.ok)
+        return [];
+      const data = yield response.json();
+      if (!data.success || !data.languages) {
+        console.log("[CuevanaUBD] Sin resultados o API fall\xF3");
+        return [];
+      }
+      const rawStreams = [];
+      const promises = [];
+      for (const [langKey, servers] of Object.entries(data.languages)) {
+        const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
+        for (const [serverName, url] of Object.entries(servers)) {
+          promises.push(
+            resolveEmbed(url).then((res) => {
+              if (res) {
+                return __spreadProps(__spreadValues({}, res), {
+                  serverName: serverName.charAt(0).toUpperCase() + serverName.slice(1),
+                  lang: langLabel
+                });
+              }
+              return null;
+            }).catch((e) => null)
+            // Ignorar fallos individuales silenciosamente
+          );
         }
       }
-      const streams = yield getOnlineStreams(html);
-      return yield finalizeStreams(streams, "PelisGo", mediaTitle);
+      const results = yield Promise.all(promises);
+      results.forEach((r) => {
+        if (r)
+          rawStreams.push(r);
+      });
+      return yield finalizeStreams(rawStreams, "Cuevana UBD", data.title || title);
     } catch (e) {
+      console.error(`[CuevanaUBD] Error Cr\xEDtico: ${e.message}`);
       return [];
     }
   });
 }
-module.exports = { getStreams };
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getStreams };
+} else {
+  global.CuevanaUnBuenDatoModule = { getStreams };
+}
