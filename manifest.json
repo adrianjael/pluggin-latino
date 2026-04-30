@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.12.14",
+  "version": "12.12.15",
   "scrapers": [
     {
       "id": "embed69",
@@ -380,6 +380,29 @@
       "filename": "providers/cuevana_unbuendato.js",
       "enabled": true,
       "logo": "https://i.postimg.cc/4dJGhTmW/Gemini-Generated-Image-w81fzfw81fzfw81f.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "cinehdplus",
+      "name": "CineHDPlus",
+      "description": "Proveedor rápido JSON de CineHDPlus.",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/cinehdplus.js",
+      "enabled": true,
+      "logo": "https://cinehdplus.unbuendato.com/favicon.ico",
       "contentLanguage": [
         "es"
       ],

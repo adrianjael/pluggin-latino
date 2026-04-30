@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T18:23:32.641Z
+ * Generated: 2026-04-30T18:32:53.597Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -353,7 +353,8 @@ var require_mirrors = __commonJS({
         "vidhidepro",
         "vidhidevip",
         "masukestin",
-        "vidoza"
+        "vidoza",
+        "supervideo"
       ],
       STREAMWISH: [
         "hlswish",

@@ -1,6 +1,6 @@
 /**
  * pelispanda - Built from src/pelispanda/
- * Generated: 2026-04-30T18:23:32.740Z
+ * Generated: 2026-04-30T18:32:53.709Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1887,7 +1887,8 @@ var require_mirrors = __commonJS({
         "vidhidepro",
         "vidhidevip",
         "masukestin",
-        "vidoza"
+        "vidoza",
+        "supervideo"
       ],
       STREAMWISH: [
         "hlswish",

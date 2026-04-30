@@ -1,6 +1,6 @@
 /**
  * hackstore2 - Built from src/hackstore2/
- * Generated: 2026-04-30T18:23:32.717Z
+ * Generated: 2026-04-30T18:32:53.687Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1941,7 +1941,8 @@ var require_mirrors = __commonJS({
         "vidhidepro",
         "vidhidevip",
         "masukestin",
-        "vidoza"
+        "vidoza",
+        "supervideo"
       ],
       STREAMWISH: [
         "hlswish",

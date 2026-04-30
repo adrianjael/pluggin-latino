@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-30T18:23:32.699Z
+ * Generated: 2026-04-30T18:32:53.667Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -436,7 +436,8 @@ var require_mirrors = __commonJS({
         "vidhidepro",
         "vidhidevip",
         "masukestin",
-        "vidoza"
+        "vidoza",
+        "supervideo"
       ],
       STREAMWISH: [
         "hlswish",

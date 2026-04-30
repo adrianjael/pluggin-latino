@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-04-30T18:26:44.093Z
+ * Generated: 2026-04-30T18:32:53.657Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -363,7 +363,8 @@ var require_mirrors = __commonJS({
         "vidhidepro",
         "vidhidevip",
         "masukestin",
-        "vidoza"
+        "vidoza",
+        "supervideo"
       ],
       STREAMWISH: [
         "hlswish",

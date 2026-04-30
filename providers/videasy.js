@@ -1,6 +1,6 @@
 /**
  * videasy - Built from src/videasy/
- * Generated: 2026-04-30T18:23:32.803Z
+ * Generated: 2026-04-30T18:32:53.771Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -353,7 +353,8 @@ var require_mirrors = __commonJS({
         "vidhidepro",
         "vidhidevip",
         "masukestin",
-        "vidoza"
+        "vidoza",
+        "supervideo"
       ],
       STREAMWISH: [
         "hlswish",
