@@ -1,6 +1,6 @@
 /**
  * tioplus - Built from src/tioplus/
- * Generated: 2026-04-30T17:03:10.466Z
+ * Generated: 2026-04-30T17:05:22.266Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -390,7 +390,10 @@ var require_mirrors = __commonJS({
         "filemoon.live",
         "filemoon.online",
         "filemoon.me",
-        "bysedikamoum"
+        "bysedikamoum.com",
+        "r66nv9ed.com",
+        "398fitus.com",
+        "fmoon.top"
       ],
       VOE: [
         "voe.sx",

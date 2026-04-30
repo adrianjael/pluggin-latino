@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T17:03:10.315Z
+ * Generated: 2026-04-30T17:05:22.122Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -380,7 +380,10 @@ var require_mirrors = __commonJS({
         "filemoon.live",
         "filemoon.online",
         "filemoon.me",
-        "bysedikamoum"
+        "bysedikamoum.com",
+        "r66nv9ed.com",
+        "398fitus.com",
+        "fmoon.top"
       ],
       VOE: [
         "voe.sx",
