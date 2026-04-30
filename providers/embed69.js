@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-30T17:17:47.670Z
+ * Generated: 2026-04-30T17:22:23.283Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -633,11 +633,7 @@ var require_engine = __commonJS({
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of validatedStreams) {
-          const rawLang = normalizeLanguage(s.Audio || s.langLabel || s.language || s.audio || "Latino");
-          const isLatino = rawLang.toLowerCase().includes("latino");
-          const skipFilter = providerName === "FuegoCine";
-          if (!isLatino && !skipFilter)
-            continue;
+          const rawLang = normalizeLanguage(s.lang || s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
           const quality = s.quality || "HD";
           const isReal = s.isReal === true;
