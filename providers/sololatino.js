@@ -1,6 +1,6 @@
 /**
  * sololatino - Built from src/sololatino/
- * Generated: 2026-04-30T19:06:24.534Z
+ * Generated: 2026-04-30T19:12:42.535Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;

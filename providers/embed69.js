@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-04-30T19:06:24.449Z
+ * Generated: 2026-04-30T19:12:42.451Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1369,25 +1369,32 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       const seenUrls = /* @__PURE__ */ new Set();
       const langMap = { "LAT": "Latino", "ESP": "Espa\xF1ol", "SUB": "Subtitulado" };
       data.forEach((item) => {
-        const currentLangLabel = langMap[(item.video_language || "").toUpperCase()] || "Latino";
+        const vLang = (item.video_language || "").toUpperCase();
+        if (vLang === "ESP")
+          return;
+        const currentLangLabel = langMap[vLang] || "Latino";
         if (item.sortedEmbeds && Array.isArray(item.sortedEmbeds)) {
           item.sortedEmbeds.forEach((embed) => {
             if (embed.link) {
+              console.log(`[DEBUG_EMBED] ${JSON.stringify(embed)}`);
               let decodedLink = embed.link;
               if (decodedLink.includes(".")) {
                 try {
                   const parts = decodedLink.split(".");
                   if (parts.length === 3) {
                     const payload = localAtob(parts[1]);
-                    if (payload)
-                      decodedLink = JSON.parse(payload).link || decodedLink;
+                    if (payload) {
+                      const parsed = JSON.parse(payload);
+                      decodedLink = parsed.link || decodedLink;
+                    }
                   }
                 } catch (err) {
-                  console.error(`[Embed69] Decoding error: ${err.message}`);
                 }
               }
               const sLink = decodedLink.toLowerCase();
-              if (sLink.includes("/d/") || sLink.includes("/download/") || sLink.includes("/get/") || sLink.includes("embed69.org/f/") || sLink.includes("mediafire.com") || sLink.includes("mega.nz"))
+              const sName = (embed.servername || "").toLowerCase();
+              const eType = (embed.type || "").toLowerCase();
+              if (sLink.includes("/d/") || sLink.includes("/download/") || sLink.includes("/get/") || sLink.includes("embed69.org/f/") || sLink.includes("mediafire.com") || sLink.includes("mega.nz") || sName.includes("download") || sName.includes("direct") || sName.includes("descarga") || eType.includes("download") || eType.includes("direct"))
                 return;
               if (seenUrls.has(decodedLink))
                 return;
