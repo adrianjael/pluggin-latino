@@ -302,8 +302,8 @@
     {
       "id": "brazucaplay",
       "name": "BrazucaPlay",
-      "description": "Películas y series en Latino (vía Cuevana/Kayo).",
-      "version": "1.0.1",
+      "description": "Conteúdo em Português e Latino via VidEasy API.",
+      "version": "2.6.5",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
@@ -311,8 +311,9 @@
       ],
       "filename": "providers/brazucaplay.js",
       "enabled": true,
-      "logo": "https://i.postimg.cc/9F6zdnyb/brazucaplay.png",
+      "logo": "https://img.icons8.com/color/48/000000/brazil-flag.png",
       "contentLanguage": [
+        "pt",
         "es"
       ],
       "formats": [
@@ -349,7 +350,7 @@
       "id": "videasy",
       "name": "VidEasy Latino",
       "description": "Premium streams via OnionPlay & Cuevana (1080p Latino).",
-      "version": "1.1.1",
+      "version": "2.6.5",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
