@@ -1,6 +1,6 @@
 /**
  * cinehdplus - Built from src/cinehdplus/
- * Generated: 2026-04-30T18:32:53.638Z
+ * Generated: 2026-04-30T18:34:58.722Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -553,24 +553,35 @@ var require_engine = __commonJS({
         console.log(`[Engine] PROCESANDO STREAMS - Bitrate Global v7.6.0`);
         const { validateStream: validateStream2 } = require_m3u8();
         const sorted = sortStreamsByQuality2(streams);
-        const validatedStreams = yield Promise.all(sorted.map((s) => __async(this, null, function* () {
-          try {
-            if (s.url && (s.url.includes(".m3u8") || s.url.includes(".mp4"))) {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 4e3);
-              try {
-                const validated = yield validateStream2(s, controller.signal);
-                clearTimeout(timeoutId);
-                return validated;
-              } catch (e) {
-                clearTimeout(timeoutId);
-                return __spreadProps(__spreadValues({}, s), { verified: false, isReal: false });
-              }
-            }
-          } catch (e) {
+        const CONCURRENCY_LIMIT = 5;
+        const MAX_VALIDATIONS = 15;
+        const validatedStreams = [];
+        for (let i = 0; i < sorted.length; i += CONCURRENCY_LIMIT) {
+          if (i >= MAX_VALIDATIONS) {
+            validatedStreams.push(...sorted.slice(i));
+            break;
           }
-          return s;
-        })));
+          const batch = sorted.slice(i, i + CONCURRENCY_LIMIT);
+          const batchResults = yield Promise.all(batch.map((s) => __async(this, null, function* () {
+            try {
+              if (s.url && (s.url.includes(".m3u8") || s.url.includes(".mp4"))) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3e3);
+                try {
+                  const validated = yield validateStream2(s, controller.signal);
+                  clearTimeout(timeoutId);
+                  return validated;
+                } catch (e) {
+                  clearTimeout(timeoutId);
+                  return __spreadProps(__spreadValues({}, s), { verified: false, isReal: false });
+                }
+              }
+            } catch (e) {
+            }
+            return s;
+          })));
+          validatedStreams.push(...batchResults);
+        }
         const processed = [];
         const seenTitles = /* @__PURE__ */ new Set();
         for (const s of validatedStreams) {
@@ -2367,16 +2378,15 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       apiUrl += `&season=${season}&episode=${episode}`;
     }
     console.log(`[CineHDPlus] Buscando: ${apiUrl}`);
+    const axios3 = require("axios");
     try {
-      const response = yield fetch(apiUrl, {
+      const response = yield axios3.get(apiUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
         },
         timeout: 8e3
       });
-      if (!response.ok)
-        return [];
-      const data = yield response.json();
+      const data = response.data;
       if (!data.success || !data.data || !data.data.sources) {
         console.log("[CineHDPlus] Sin resultados");
         return [];
