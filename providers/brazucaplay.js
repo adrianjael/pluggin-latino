@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T16:55:40.509Z
+ * Generated: 2026-04-30T16:57:46.932Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -594,7 +594,6 @@ var CINEBY_HEADERS = {
 function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
   return __async(this, null, function* () {
     var _a;
-    const results = [];
     try {
       setSessionUA(CINEBY_HEADERS["User-Agent"]);
       const tmdbUrl = `${TMDB_BASE_URL}/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`;
@@ -602,15 +601,16 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
       const title = tmdbData.title || tmdbData.name;
       const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
       const doubleEncTitle = encodeURIComponent(encodeURIComponent(title));
-      for (const [serverId, config] of Object.entries(SERVERS)) {
+      const imdbId = ((_a = tmdbData.external_ids) == null ? void 0 : _a.imdb_id) || "";
+      const serverPromises = Object.entries(SERVERS).map((_0) => __async(this, [_0], function* ([serverId, config]) {
         try {
-          let searchUrl = `${config.url}?title=${doubleEncTitle}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${((_a = tmdbData.external_ids) == null ? void 0 : _a.imdb_id) || ""}`;
+          let searchUrl = `${config.url}?title=${doubleEncTitle}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
           if (mediaType === "tv")
             searchUrl += `&episodeId=${episode || 1}&seasonId=${season || 1}`;
           const encryptedRes = yield fetch(searchUrl, { headers: CINEBY_HEADERS });
           const encryptedText = yield encryptedRes.text();
           if (!encryptedText || encryptedText.length < 20)
-            continue;
+            return [];
           const decRes = yield fetch(API_DEC, {
             method: "POST",
             headers: { "Content-Type": "application/json", "User-Agent": CINEBY_HEADERS["User-Agent"] },
@@ -618,13 +618,14 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
           });
           const decData = yield decRes.json();
           const mediaData = decData.result || decData;
+          const localResults = [];
           if (mediaData && mediaData.sources) {
             for (const source of mediaData.sources) {
               if (source.url) {
                 let quality = (source.quality || "HD").toUpperCase();
                 if (quality === "AUTO")
                   quality = "1080p";
-                results.push({
+                localResults.push({
                   serverName: config.label,
                   audio: "Latino",
                   quality,
@@ -634,12 +635,17 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
               }
             }
           }
+          return localResults;
         } catch (err) {
+          return [];
         }
-      }
+      }));
+      const allResults = yield Promise.all(serverPromises);
+      const flattened = allResults.flat();
+      return finalizeStreams(flattened, "BrazucaPlay", "");
     } catch (error) {
+      return [];
     }
-    return finalizeStreams(results, "BrazucaPlay", "");
   });
 }
 module.exports = { getStreams };
