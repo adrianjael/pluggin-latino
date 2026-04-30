@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T16:31:33.753Z
+ * Generated: 2026-04-30T16:38:51.864Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -548,47 +548,38 @@ var API_DEC = "https://enc-dec.app/api/dec-videasy";
 var TMDB_API_KEY = "d131017ccc6e5462a81c9304d21476de";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var SERVERS = {
-  "Kayo": { url: "https://api.videasy.net/cuevana-spanish/sources-with-title", language: "Spanish" }
+  "Gekko": { url: "https://api2.videasy.net/cuevana/sources-with-title", language: "Spanish" }
 };
-var CLONED_HEADERS = {
-  "accept": "*/*",
-  "accept-language": "es-ES,es;q=0.9",
-  "cache-control": "no-cache",
-  "pragma": "no-cache",
-  "priority": "u=1, i",
-  "sec-ch-ua": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
-  "sec-ch-ua-mobile": "?1",
-  "sec-ch-ua-platform": '"Android"',
-  "sec-fetch-dest": "empty",
-  "sec-fetch-mode": "cors",
-  "sec-fetch-site": "cross-site",
-  "Referer": "https://player.videasy.net/",
-  "Origin": "https://player.videasy.net",
-  "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+var CINEBY_HEADERS = {
+  "Accept": "*/*",
+  "Origin": "https://cineby.sc",
+  "Referer": "https://cineby.sc/",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/126.0.0.0 (Edition std-2)"
 };
 function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
   return __async(this, null, function* () {
-    console.log(`[BrazucaPlay] Resolviendo con clonaci\xF3n: ${tmdbId}`);
+    console.log(`[BrazucaPlay] Resolviendo v\xEDa Cineby: ${tmdbId}`);
     const results = [];
     try {
-      setSessionUA(CLONED_HEADERS["User-Agent"]);
+      setSessionUA(CINEBY_HEADERS["User-Agent"]);
       const tmdbUrl = `${TMDB_BASE_URL}/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`;
       const tmdbData = yield fetchJson(tmdbUrl);
       const imdbId = tmdbData.external_ids && tmdbData.external_ids.imdb_id ? tmdbData.external_ids.imdb_id : "";
       const title = tmdbData.title || tmdbData.name;
       const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
+      const doubleEncTitle = encodeURIComponent(encodeURIComponent(title));
       for (const [serverName, config] of Object.entries(SERVERS)) {
         try {
-          let searchUrl = `${config.url}?title=${encodeURIComponent(title)}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
+          let searchUrl = `${config.url}?title=${doubleEncTitle}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
           if (mediaType === "tv")
-            searchUrl += `&seasonId=${season || 1}&episodeId=${episode || 1}`;
-          const encryptedRes = yield fetch(searchUrl, { headers: CLONED_HEADERS });
+            searchUrl += `&episodeId=${episode || 1}&seasonId=${season || 1}`;
+          const encryptedRes = yield fetch(searchUrl, { headers: CINEBY_HEADERS });
           const encryptedText = yield encryptedRes.text();
           if (!encryptedText || encryptedText.length < 20 || encryptedText.startsWith("<!"))
             continue;
           const decRes = yield fetch(API_DEC, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "User-Agent": CLONED_HEADERS["User-Agent"] },
+            headers: { "Content-Type": "application/json", "User-Agent": CINEBY_HEADERS["User-Agent"] },
             body: JSON.stringify({ text: encryptedText, id: String(tmdbId) })
           });
           if (!decRes.ok)
@@ -603,7 +594,7 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
                   audio: "Latino",
                   quality: source.quality || "HD",
                   url: source.url,
-                  headers: CLONED_HEADERS
+                  headers: CINEBY_HEADERS
                 });
               }
             }
