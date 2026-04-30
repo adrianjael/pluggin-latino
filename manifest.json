@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "29.04.26",
+  "version": "2.6.0",
   "scrapers": [
     {
       "id": "embed69",
@@ -335,6 +335,29 @@
       "filename": "providers/lamovie.js",
       "enabled": true,
       "logo": "https://lamovie.cc/img/favicon.png",
+      "contentLanguage": [
+        "es"
+      ],
+      "formats": [
+        "m3u8",
+        "mp4"
+      ],
+      "limited": false,
+      "supportsExternalPlayer": true
+    },
+    {
+      "id": "videasy",
+      "name": "VidEasy Latino",
+      "description": "Premium streams via OnionPlay & Cuevana (1080p Latino).",
+      "version": "1.0.0",
+      "author": "AdrianJael",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/videasy.js",
+      "enabled": true,
+      "logo": "https://player.videasy.net/favicon.ico",
       "contentLanguage": [
         "es"
       ],
