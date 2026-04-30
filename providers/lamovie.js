@@ -317,12 +317,34 @@ function resolveVimeos(embedUrl) {
   }
   return attempt(1);
 }
+function resolveDoodstream(embedUrl) {
+  var UA = DEFAULT_HEADERS["User-Agent"];
+  var embedHost = embedUrl.replace(/\/(d|f)\//, "/e/");
+  return get(embedHost, { "User-Agent": UA }).then(function(html) {
+    var match = html.match(/\$\.get\(['"](\/pass_md5\/[\w-]+)\/([\w-]+)['"]/i);
+    if (!match) return null;
+    var passPath = match[1];
+    var token = match[2];
+    var domain = new URL(embedHost).origin;
+    return get(domain + passPath, { "User-Agent": UA, "Referer": embedHost }).then(function(videoBaseUrl) {
+      var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      var randomString = "";
+      for (var i = 0; i < 10; i++) randomString += chars.charAt(Math.floor(Math.random() * chars.length));
+      var finalUrl = videoBaseUrl + randomString + "?token=" + token + "&expiry=" + Date.now();
+      return { url: finalUrl, quality: "720p", verified: true, headers: { "User-Agent": UA, "Referer": domain + "/" } };
+    });
+  }).catch(function(err) {
+    console.log("[DoodStream] Error: " + err.message);
+    return null;
+  });
+}
 function getResolver(url) {
   if (url.indexOf("hlswish") !== -1 || url.indexOf("streamwish") !== -1 || url.indexOf("strwish") !== -1 || url.indexOf("vibuxer") !== -1) return resolveHlswish;
   if (url.indexOf("voe.sx") !== -1) return resolveVoe;
   if (url.indexOf("vimeos.net") !== -1) return resolveVimeos;
   if (url.indexOf("lacloud.live") !== -1) return resolveLacloud;
   if (url.indexOf("earnvids.com") !== -1 || url.indexOf("hglink.to") !== -1 || url.indexOf("earnl.one") !== -1 || url.indexOf("vidnova.online") !== -1 || url.indexOf("streamfort.online") !== -1 || url.indexOf("dsvplay.com") !== -1) return resolvePacker;
+  if (url.indexOf("dood") !== -1 || url.indexOf("d0000d") !== -1 || url.indexOf("ds2video") !== -1 || url.indexOf("ds2play") !== -1 || url.indexOf("dsvplay") !== -1) return resolveDoodstream;
   return null;
 }
 function getServerName(url) {
@@ -332,7 +354,7 @@ function getServerName(url) {
   if (url.indexOf("lacloud.live") !== -1) return "Lacloud (Directo)";
   if (url.indexOf("earnvids.com") !== -1 || url.indexOf("earnl.one") !== -1 || url.indexOf("vidnova.online") !== -1) return "EarnVids";
   if (url.indexOf("hglink.to") !== -1 || url.indexOf("streamfort.online") !== -1) return "StreamHG";
-  if (url.indexOf("dsvplay.com") !== -1) return "DoodStream";
+  if (url.indexOf("dsvplay.com") !== -1 || url.indexOf("dood") !== -1 || url.indexOf("d0000d") !== -1 || url.indexOf("ds2video") !== -1 || url.indexOf("ds2play") !== -1) return "DoodStream";
   return "Online";
 }
 function getTmdbInfo(tmdbId, mediaType) {
