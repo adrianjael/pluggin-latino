@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-04-30T18:14:48.528Z
+ * Generated: 2026-04-30T18:23:32.688Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -236,11 +236,9 @@ var require_m3u8 = __commonJS({
             quality = getQualityFromHeight(h);
         }
       }
-      if (quality === "1080p" && bestBandwidth >= 4e6)
+      if (bestHeight > 0)
         isReal = true;
-      if (quality === "720p" && bestBandwidth >= 25e5)
-        isReal = true;
-      if (quality === "4K" && bestBandwidth >= 15e6)
+      if (bestBandwidth >= 2e6)
         isReal = true;
       return { quality, isReal };
     }
@@ -250,11 +248,12 @@ var require_m3u8 = __commonJS({
         if (!stream || !stream.url)
           return stream;
         const { url, headers } = stream;
+        const isMp4 = url.toLowerCase().includes(".mp4");
         if (VALIDATION_CACHE.has(url))
           return __spreadValues(__spreadValues({}, stream), VALIDATION_CACHE.get(url));
         try {
           const fetchOptions = {
-            method: "GET",
+            method: isMp4 ? "HEAD" : "GET",
             headers: __spreadValues({
               "User-Agent": getSessionUA()
             }, headers || {})
@@ -264,6 +263,11 @@ var require_m3u8 = __commonJS({
           const response = yield fetch(url, fetchOptions);
           if (!response.ok)
             return __spreadProps(__spreadValues({}, stream), { verified: false });
+          if (isMp4) {
+            const resultData2 = { verified: true, quality: stream.quality || "1080p", isReal: true };
+            VALIDATION_CACHE.set(url, resultData2);
+            return __spreadValues(__spreadValues({}, stream), resultData2);
+          }
           const text = yield response.text();
           const info = parseBestQuality(text, url);
           const resultData = {
@@ -552,7 +556,7 @@ var require_engine = __commonJS({
           try {
             if (s.url && (s.url.includes(".m3u8") || s.url.includes(".mp4"))) {
               const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 2500);
+              const timeoutId = setTimeout(() => controller.abort(), 4e3);
               try {
                 const validated = yield validateStream2(s, controller.signal);
                 clearTimeout(timeoutId);
