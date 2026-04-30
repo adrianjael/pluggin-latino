@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-04-30T17:23:30.362Z
+ * Generated: 2026-04-30T17:28:23.047Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -563,7 +563,7 @@ var require_engine = __commonJS({
             continue;
           const rawLang = normalizeLanguage(s.lang || s.Audio || s.langLabel || s.language || s.audio || "Latino");
           const l = rawLang.toLowerCase();
-          const isLatino = l.includes("latino") || l.includes("espa\xF1ol") || l.includes("subtitulado");
+          const isLatino = l.includes("latino") || l.includes("espa\xF1ol");
           if (!isLatino && providerName !== "FuegoCine")
             continue;
           const server = normalizeServer(s.serverLabel || s.serverName || s.servername, s.url, s.serverName);
