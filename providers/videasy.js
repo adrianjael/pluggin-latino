@@ -1,6 +1,6 @@
 /**
  * videasy - Built from src/videasy/
- * Generated: 2026-04-30T15:36:42.762Z
+ * Generated: 2026-04-30T15:57:00.259Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -548,35 +548,44 @@ var API_DEC = "https://enc-dec.app/api/dec-videasy";
 var TMDB_API_KEY = "1c29a5198ee1854bd5eb45dbe8d17d92";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var SERVERS = {
-  "Omen": { url: "https://api.videasy.net/onionplay/sources-with-title", label: "OnionPlay Latino" },
-  "Kayo": { url: "https://api2.videasy.net/cuevana/sources-with-title", label: "Cuevana Latino" }
+  "Vimeos": { url: "https://api.videasy.net/vimeos/sources-with-title" },
+  "Omen": { url: "https://api.videasy.net/onionplay/sources-with-title" },
+  "Kayo": { url: "https://api.videasy.net/cuevana-spanish/sources-with-title" },
+  "Raze": { url: "https://api.videasy.net/superflix/sources-with-title" }
+};
+var CHROME_ANDROID_HEADERS = {
+  "Accept": "*/*",
+  "Accept-Language": "es-ES,es;q=0.9",
+  "Sec-CH-UA": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+  "Sec-CH-UA-Mobile": "?1",
+  "Sec-CH-UA-Platform": '"Android"',
+  "Referer": "https://player.videasy.net/",
+  "Origin": "https://player.videasy.net",
+  "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 };
 function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
   return __async(this, null, function* () {
-    console.log(`[VidEasy Latino] Buscando: ${tmdbId} | ${mediaType}`);
+    console.log(`[VidEasy Latino] Resolviendo: ${tmdbId} | ${mediaType}`);
     const results = [];
     try {
-      const currentUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36";
-      setSessionUA(currentUA);
+      setSessionUA(CHROME_ANDROID_HEADERS["User-Agent"]);
       const tmdbUrl = `${TMDB_BASE_URL}/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`;
       const tmdbData = yield fetchJson(tmdbUrl);
       const imdbId = tmdbData.external_ids && tmdbData.external_ids.imdb_id ? tmdbData.external_ids.imdb_id : "";
       const title = tmdbData.title || tmdbData.name;
       const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
-      console.log(`[VidEasy Latino] Resolviendo: ${title} (${year})`);
       for (const [serverName, config] of Object.entries(SERVERS)) {
         try {
           let searchUrl = `${config.url}?title=${encodeURIComponent(title)}&mediaType=${mediaType === "tv" ? "tv" : "movie"}&year=${year}&tmdbId=${tmdbId}&imdbId=${imdbId}`;
-          if (mediaType === "tv") {
+          if (mediaType === "tv")
             searchUrl += `&seasonId=${season || 1}&episodeId=${episode || 1}`;
-          }
-          const encryptedRes = yield fetch(searchUrl, { headers: { "User-Agent": currentUA } });
+          const encryptedRes = yield fetch(searchUrl, { headers: CHROME_ANDROID_HEADERS });
           const encryptedText = yield encryptedRes.text();
           if (!encryptedText || encryptedText.length < 20 || encryptedText.startsWith("<!"))
             continue;
           const decRes = yield fetch(API_DEC, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "User-Agent": currentUA },
+            headers: { "Content-Type": "application/json", "User-Agent": CHROME_ANDROID_HEADERS["User-Agent"] },
             body: JSON.stringify({ text: encryptedText, id: String(tmdbId) })
           });
           if (!decRes.ok)
@@ -586,39 +595,22 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
           if (mediaData && mediaData.sources) {
             for (const source of mediaData.sources) {
               if (source.url) {
-                const quality = source.quality || extractQuality(source.url);
                 results.push({
-                  name: `VidEasy ${serverName}`,
-                  title: `${title} (${year}) - Latino ${quality}`,
+                  serverName,
+                  audio: "Latino",
+                  quality: source.quality || "HD",
                   url: source.url,
-                  quality,
-                  headers: {
-                    "Referer": "https://player.videasy.net/",
-                    "Origin": "https://player.videasy.net",
-                    "User-Agent": currentUA
-                  }
+                  headers: CHROME_ANDROID_HEADERS
                 });
               }
             }
           }
         } catch (err) {
-          console.log(`[VidEasy Latino] Error en servidor ${serverName}:`, err.message);
         }
       }
     } catch (error) {
-      console.log("[VidEasy Latino] Error cr\xEDtico:", error.message);
     }
-    return finalizeStreams(results);
+    return finalizeStreams(results, "VidEasy Latino", "");
   });
-}
-function extractQuality(url) {
-  const m = url.match(/(\d{3,4})p/i);
-  if (m)
-    return m[1] + "p";
-  if (url.includes("1080"))
-    return "1080p";
-  if (url.includes("720"))
-    return "720p";
-  return "HD";
 }
 module.exports = { getStreams };
