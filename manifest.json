@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.12.31",
+  "version": "12.12.32",
   "scrapers": [
     {
       "id": "embed69",
@@ -371,7 +371,7 @@
       "id": "cuevanaubd",
       "name": "Cuevana UBD",
       "description": "Proveedor rapido JSON nativo de Cuevana.",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
