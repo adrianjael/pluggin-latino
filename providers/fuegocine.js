@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-05-04T22:22:19.955Z
+ * Generated: 2026-05-04T22:26:55.071Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2411,6 +2411,7 @@ var require_rpmvid = __commonJS({
           const isUpns = embedUrl.includes("upns");
           const apiDomain = isUpns ? "https://fuegocineplayer.upns.online" : "https://rpmvid.com";
           const apiUrl = `${apiDomain}/api/v1/video`;
+          const bodyStr = `url=${encodeURIComponent(id)}`;
           const response = yield fetch(apiUrl, {
             method: "POST",
             headers: {
@@ -2419,7 +2420,7 @@ var require_rpmvid = __commonJS({
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
               "Referer": embedUrl
             },
-            body: `url=${id}`
+            body: bodyStr
           });
           if (!response.ok)
             return null;
