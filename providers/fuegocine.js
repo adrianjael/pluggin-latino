@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-05-04T22:10:55.315Z
+ * Generated: 2026-05-04T22:22:19.955Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2279,6 +2279,25 @@ var require_vidsonic = __commonJS({
           if (!response.ok)
             return null;
           const html = yield response.text();
+          const vMatch = html.match(/const\s+_0x1\s*=\s*['"]([^'"]+)['"]/);
+          if (vMatch) {
+            const hexPipe = vMatch[1];
+            const clean = hexPipe.split("|").join("");
+            let decoded = "";
+            for (let i = 0; i < clean.length; i += 2) {
+              decoded += String.fromCharCode(parseInt(clean.substr(i, 2), 16));
+            }
+            const finalUrl = decoded.split("").reverse().join("");
+            if (finalUrl.includes("http")) {
+              return {
+                url: finalUrl,
+                quality: "HD",
+                serverName: "Vidsonic",
+                verified: true,
+                headers: { "Referer": targetUrl }
+              };
+            }
+          }
           const hexMatch = html.match(/\["([a-f0-9]{50,})"\]/);
           if (hexMatch) {
             const hex = hexMatch[1].split("").reverse().join("");
@@ -2286,7 +2305,7 @@ var require_vidsonic = __commonJS({
             for (let i = 0; i < hex.length; i += 2) {
               decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
             }
-            if (decoded.includes(".m3u8")) {
+            if (decoded.includes("http")) {
               return {
                 url: decoded,
                 quality: "HD",
@@ -2803,7 +2822,7 @@ function normalize(t) {
 }
 function b64decode(str) {
   try {
-    return Buffer.from(str, "base64").toString("binary");
+    return atob(str);
   } catch (e) {
     return "";
   }
@@ -2947,17 +2966,25 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const resolutionResults = yield Promise.allSettled(
         sortedLinks.map((link) => __async(this, null, function* () {
           var _a2, _b2;
-          const result = yield resolveEmbed(link.url);
-          if (result && result.verified) {
-            const finalQuality = ((_a2 = link.quality) == null ? void 0 : _a2.includes("1080")) || ((_b2 = link.quality) == null ? void 0 : _b2.includes("FHD")) ? "1080p" : result.quality || link.quality || "720p";
-            return {
-              langLabel: "Latino",
-              serverLabel: result.serverName || link.serverName || "Server",
-              url: result.url,
-              quality: finalQuality,
-              headers: result.headers || DEFAULT_HEADERS,
-              verified: true
-            };
+          try {
+            const sName = link.serverName || "Server";
+            const result = yield resolveEmbed(link.url);
+            if (result && result.verified) {
+              const finalQuality = ((_a2 = link.quality) == null ? void 0 : _a2.includes("1080")) || ((_b2 = link.quality) == null ? void 0 : _b2.includes("FHD")) ? "1080p" : result.quality || link.quality || "720p";
+              addVisualLog(`\u2705 ${sName}: Resuelto`);
+              return {
+                langLabel: "Latino",
+                serverLabel: result.serverName || link.serverName || "Server",
+                url: result.url,
+                quality: finalQuality,
+                headers: result.headers || DEFAULT_HEADERS,
+                verified: true
+              };
+            } else {
+              addVisualLog(`\u274C ${sName}: No se pudo extraer link directo`);
+            }
+          } catch (err) {
+            addVisualLog(`\u274C ${link.serverName}: Error -> ${err.message}`);
           }
           return null;
         }))
