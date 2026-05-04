@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-04-30T19:12:42.441Z
+ * Generated: 2026-05-04T20:34:59.514Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2383,11 +2383,12 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
     if (!isMovie && season && episode) {
       apiUrl += `&season=${season}&episode=${episode}`;
     }
-    const { fetchJson } = require_http();
+    const { fetchJson, getSessionUA } = require_http();
+    console.log(`[CuevanaUBD] API: ${apiUrl}`);
     try {
       const data = yield fetchJson(apiUrl, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
+          "User-Agent": getSessionUA()
         }
       });
       if (!data.success || !data.languages) {
