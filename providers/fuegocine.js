@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-05-04T21:42:06.853Z
+ * Generated: 2026-05-04T21:44:36.636Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2831,7 +2831,6 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const bIdx = langOrder.indexOf(String(b.lang));
         return (aIdx === -1 ? 99 : aIdx) - (bIdx === -1 ? 99 : bIdx);
       });
-      console.log(`[FuegoCine] URLs encontradas:`, sortedLinks.map((l) => l.url));
       const resolutionResults = yield Promise.allSettled(
         sortedLinks.map((link) => __async(this, null, function* () {
           var _a2, _b2;
