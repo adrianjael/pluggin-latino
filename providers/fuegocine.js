@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-05-04T21:57:48.914Z
+ * Generated: 2026-05-04T22:04:43.713Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -101,7 +101,7 @@ var require_http = __commonJS({
     function getSessionUA() {
       return sessionUA || DEFAULT_CHROME_UA;
     }
-    function getStealthHeaders() {
+    function getStealthHeaders2() {
       return {
         "User-Agent": getSessionUA(),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -171,7 +171,7 @@ var require_http = __commonJS({
       fetchJson: fetchJson2,
       getSessionUA,
       setSessionUA,
-      getStealthHeaders,
+      getStealthHeaders: getStealthHeaders2,
       DEFAULT_UA,
       MOBILE_UA
     };
@@ -1061,7 +1061,7 @@ var require_filemoon = __commonJS({
 // src/resolvers/vidhide.js
 var require_vidhide = __commonJS({
   "src/resolvers/vidhide.js"(exports2, module2) {
-    var { getSessionUA, getStealthHeaders } = require_http();
+    var { getSessionUA, getStealthHeaders: getStealthHeaders2 } = require_http();
     var { validateStream } = require_m3u8();
     function unpackVidHide(script) {
       try {
@@ -1132,7 +1132,7 @@ var require_vidhide = __commonJS({
             finalUrl = new URL(url).origin + finalUrl;
           if (!finalUrl.includes("referer="))
             finalUrl += (finalUrl.includes("?") ? "&" : "?") + "referer=embed69.org";
-          const reqHeaders = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+          const reqHeaders = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
             "Referer": url.split("?")[0],
             "Origin": new URL(url).origin,
             "X-Requested-With": "XMLHttpRequest",
@@ -1447,7 +1447,7 @@ var require_vimeos = __commonJS({
 var require_buzzheavier = __commonJS({
   "src/resolvers/buzzheavier.js"(exports2, module2) {
     var axios3 = require("axios");
-    var { getStealthHeaders } = require_http();
+    var { getStealthHeaders: getStealthHeaders2 } = require_http();
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         if (!embedUrl)
@@ -1457,7 +1457,7 @@ var require_buzzheavier = __commonJS({
           const domain = new URL(cleanUrl).hostname;
           const downloadUrl = `${cleanUrl}/download`;
           console.log(`[Buzzheavier] Resolviendo v8.8.7 (Python Logic): ${cleanUrl}`);
-          const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+          const headers = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
             "Referer": cleanUrl,
             "hx-current-url": cleanUrl,
             "hx-request": "true",
@@ -1810,7 +1810,7 @@ var require_embedseek = __commonJS({
 var require_tplayer = __commonJS({
   "src/resolvers/tplayer.js"(exports2, module2) {
     var axios3 = require("axios");
-    var { getStealthHeaders } = require_http();
+    var { getStealthHeaders: getStealthHeaders2 } = require_http();
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
@@ -1821,7 +1821,7 @@ var require_tplayer = __commonJS({
           const fileId = idMatch[1];
           const baseUrl = new URL(embedUrl).origin;
           const apiUrl = `${baseUrl}/api/resolve/${fileId}`;
-          const baseHeaders = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+          const baseHeaders = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
             "Referer": embedUrl,
             "Origin": baseUrl,
             "X-Requested-With": "XMLHttpRequest"
@@ -2549,12 +2549,12 @@ var require_resolvers = __commonJS({
     function getDirectCdnHeaders(url) {
       if (!url)
         return null;
-      const { getStealthHeaders } = require_http();
+      const { getStealthHeaders: getStealthHeaders2 } = require_http();
       const s = url.toLowerCase();
       try {
         const domain = new URL(url).hostname;
         const baseOrigin = `https://${domain}`;
-        const headers = __spreadProps(__spreadValues({}, getStealthHeaders()), {
+        const headers = __spreadProps(__spreadValues({}, getStealthHeaders2()), {
           "Referer": baseOrigin,
           "Origin": baseOrigin
         });
@@ -2823,17 +2823,14 @@ var require_tmdb = __commonJS({
 });
 
 // src/fuegocine/index.js
-var { fetchHtml, fetchJson } = require_http();
+var { fetchHtml, fetchJson, getStealthHeaders } = require_http();
 var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
 var BASE_URL = "https://www.fuegocine.com";
 var SEARCH_BASE = `${BASE_URL}/feeds/posts/default?alt=json&max-results=10&q=`;
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-var DEFAULT_HEADERS = {
-  "User-Agent": UA3,
-  "Referer": `${BASE_URL}/`
-};
+var DEFAULT_HEADERS = getStealthHeaders();
 function normalize(t) {
   if (!t)
     return "";
@@ -2925,8 +2922,13 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       const normTarget = normalize(mediaTitle);
       const validEntries = entries.filter((e) => {
         var _a2;
-        const t = normalize(((_a2 = e.title) == null ? void 0 : _a2.$t) || "");
-        return t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
+        const entryTitle = ((_a2 = e.title) == null ? void 0 : _a2.$t) || "";
+        const t = normalize(entryTitle);
+        const mainWordMatch = t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
+        const isMatch = mainWordMatch || cleanTitle.length > 3 && t.includes(normalize(cleanTitle));
+        if (isMatch)
+          console.log(`[FuegoCine] \u2705 Match: ${entryTitle}`);
+        return isMatch;
       });
       const allRawLinks = [];
       yield Promise.all(validEntries.map((entry) => __async(this, null, function* () {
