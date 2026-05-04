@@ -1,6 +1,6 @@
 /**
  * cinecalidad - Built from src/cinecalidad/
- * Generated: 2026-05-04T20:34:59.480Z
+ * Generated: 2026-05-04T21:37:46.600Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -480,6 +480,13 @@ var require_mirrors = __commonJS({
         "all3do.com",
         "doply.net",
         "dsvplay.com"
+      ],
+      VIDNEST: [
+        "vidnest.io",
+        "vidnest.live"
+      ],
+      VIDSONIC: [
+        "vidsonic.net"
       ]
     };
     function isMirror(url, groupName) {
@@ -2208,6 +2215,77 @@ var require_doodstream = __commonJS({
   }
 });
 
+// src/resolvers/vidnest.js
+var require_vidnest = __commonJS({
+  "src/resolvers/vidnest.js"(exports2, module2) {
+    var axios3 = require("axios");
+    function resolve3(embedUrl) {
+      return __async(this, null, function* () {
+        try {
+          const { data: html } = yield axios3.get(embedUrl, {
+            headers: { "Referer": "https://www.fuegocine.com/" },
+            timeout: 8e3
+          });
+          const match = html.match(/sources\s*:\s*\[\s*\{[^}]*file\s*:\s*"([^"]+\.mp4[^"]*)"/);
+          if (match && match[1]) {
+            return {
+              url: match[1],
+              quality: "HD",
+              serverName: "VidNest",
+              verified: true,
+              headers: { "Referer": embedUrl }
+            };
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve3 };
+  }
+});
+
+// src/resolvers/vidsonic.js
+var require_vidsonic = __commonJS({
+  "src/resolvers/vidsonic.js"(exports2, module2) {
+    var axios3 = require("axios");
+    function resolve3(embedUrl) {
+      return __async(this, null, function* () {
+        try {
+          const { data: html } = yield axios3.get(embedUrl, {
+            headers: { "Referer": "https://www.fuegocine.com/" },
+            timeout: 8e3
+          });
+          const ox1Match = html.match(/const\s+_0x1\s*=\s*['"]([^'"]+)['"]/);
+          if (!ox1Match)
+            return null;
+          const raw = ox1Match[1];
+          const clean = raw.replace(/[^0-9a-fA-F]/g, "");
+          let out = "";
+          for (let i = 0; i < clean.length; i += 2) {
+            out += String.fromCharCode(parseInt(clean.substr(i, 2), 16));
+          }
+          const decoded = out.split("").reverse().join("");
+          if (decoded && decoded.startsWith("http")) {
+            return {
+              url: decoded,
+              quality: "HD",
+              serverName: "VidSonic",
+              verified: true,
+              headers: { "Referer": embedUrl }
+            };
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve3 };
+  }
+});
+
 // src/utils/resolvers.js
 var require_resolvers = __commonJS({
   "src/utils/resolvers.js"(exports2, module2) {
@@ -2229,6 +2307,8 @@ var require_resolvers = __commonJS({
     var { resolve: resolveDropcdn } = require_dropcdn();
     var { resolve: resolveVidsrc } = require_vidsrc();
     var { resolve: resolveDoodstream } = require_doodstream();
+    var { resolve: resolveVidnest } = require_vidnest();
+    var { resolve: resolveVidsonic } = require_vidsonic();
     var { getSessionUA } = require_http();
     var { isMirror } = require_mirrors();
     var UA4 = getSessionUA();
@@ -2349,6 +2429,16 @@ var require_resolvers = __commonJS({
         }
         if (isMirror(s, "DOODSTREAM")) {
           const res = yield resolveDoodstream(url, signal);
+          if (res)
+            return applyPiping(res);
+        }
+        if (isMirror(s, "VIDNEST")) {
+          const res = yield resolveVidnest(url);
+          if (res)
+            return applyPiping(res);
+        }
+        if (isMirror(s, "VIDSONIC")) {
+          const res = yield resolveVidsonic(url);
           if (res)
             return applyPiping(res);
         }

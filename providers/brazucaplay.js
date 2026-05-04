@@ -1,6 +1,6 @@
 /**
  * brazucaplay - Built from src/brazucaplay/
- * Generated: 2026-05-04T20:34:59.391Z
+ * Generated: 2026-05-04T21:37:46.572Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -470,6 +470,13 @@ var require_mirrors = __commonJS({
         "all3do.com",
         "doply.net",
         "dsvplay.com"
+      ],
+      VIDNEST: [
+        "vidnest.io",
+        "vidnest.live"
+      ],
+      VIDSONIC: [
+        "vidsonic.net"
       ]
     };
     function isMirror(url, groupName) {

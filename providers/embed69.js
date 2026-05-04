@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-05-04T20:48:27.236Z
+ * Generated: 2026-05-04T21:37:46.632Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -553,6 +553,13 @@ var require_mirrors = __commonJS({
         "all3do.com",
         "doply.net",
         "dsvplay.com"
+      ],
+      VIDNEST: [
+        "vidnest.io",
+        "vidnest.live"
+      ],
+      VIDSONIC: [
+        "vidsonic.net"
       ]
     };
     function isMirror2(url, groupName) {

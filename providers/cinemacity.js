@@ -1,6 +1,6 @@
 /**
  * cinemacity - Built from src/cinemacity/
- * Generated: 2026-05-04T20:34:59.506Z
+ * Generated: 2026-05-04T21:37:46.613Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -470,6 +470,13 @@ var require_mirrors = __commonJS({
         "all3do.com",
         "doply.net",
         "dsvplay.com"
+      ],
+      VIDNEST: [
+        "vidnest.io",
+        "vidnest.live"
+      ],
+      VIDSONIC: [
+        "vidsonic.net"
       ]
     };
     function isMirror(url, groupName) {
