@@ -1,6 +1,6 @@
 /**
  * cinehdplus - Built from src/cinehdplus/
- * Generated: 2026-05-04T21:07:20.170Z
+ * Generated: 2026-05-04T21:07:51.487Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2377,25 +2377,28 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     if (!tmdbId)
       return [];
-    const rawId = tmdbId.toString().includes(":") ? tmdbId.toString().split(":").find((x) => !isNaN(x) && x.length > 0) : tmdbId;
-    const isMovie = mediaType === "movie" || mediaType === "movies";
-    let apiUrl = `https://cinehdplus.unbuendato.com/?id=${rawId}`;
-    if (!isMovie && season && episode) {
-      apiUrl += `&season=${season}&episode=${episode}`;
-    }
-    const { fetchJson } = require_http();
     try {
-      const data = yield fetchJson(apiUrl, {
+      const rawId = String(tmdbId).split(":")[0];
+      const isMovie = mediaType === "movie" || mediaType === "movies";
+      let apiUrl = `https://cinehdplus.unbuendato.com/?id=${rawId}`;
+      if (!isMovie && season && episode) {
+        apiUrl += `&season=${season}&episode=${episode}`;
+      }
+      console.log(`[CineHDPlus] Buscando: ${apiUrl}`);
+      const axios3 = require("axios");
+      const response = yield axios3.get(apiUrl, {
+        timeout: 1e4,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
       });
-      if (!data.success || !data.data || !data.data.sources) {
+      const data = response.data;
+      if (!data || !data.success || !data.data || !data.data.sources) {
         console.log("[CineHDPlus] Sin resultados");
         return [];
       }
-      const rawStreams = [];
       const promises = [];
+      const seenLinks = /* @__PURE__ */ new Set();
       for (const [langKey, servers] of Object.entries(data.data.sources)) {
         const lKey = langKey.toLowerCase();
         if (!lKey.includes("latino") && !lKey.includes("subtitulado") && !lKey.includes("sub"))
@@ -2403,11 +2406,15 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
         for (const [serverKey, serverData] of Object.entries(servers)) {
           if (serverData.available && serverData.original_url) {
+            const url = serverData.original_url;
             const sKey = serverKey.toLowerCase();
             if (sKey.includes("netu") || sKey.includes("hqq") || sKey.includes("waaw"))
               continue;
+            if (seenLinks.has(url))
+              continue;
+            seenLinks.add(url);
             promises.push(
-              resolveEmbed(serverData.original_url).then((res) => {
+              resolveEmbed(url).then((res) => {
                 if (res) {
                   return __spreadProps(__spreadValues({}, res), {
                     serverName: res.serverName || serverKey.charAt(0).toUpperCase() + serverKey.slice(1),
@@ -2421,10 +2428,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         }
       }
       const results = yield Promise.all(promises);
-      results.forEach((r) => {
-        if (r)
-          rawStreams.push(r);
-      });
+      const rawStreams = results.filter((r) => r !== null);
       return yield finalizeStreams(rawStreams, "CineHDPlus", data.data.title || title);
     } catch (e) {
       console.error(`[CineHDPlus] Error: ${e.message}`);
