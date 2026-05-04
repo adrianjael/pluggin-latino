@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-05-04T20:43:09.629Z
+ * Generated: 2026-05-04T21:07:20.135Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2375,8 +2375,6 @@ var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
-    const log = typeof logger !== "undefined" ? logger.log : console.log;
-    const errLog = typeof logger !== "undefined" ? logger.error : console.error;
     if (!tmdbId)
       return [];
     try {
@@ -2386,21 +2384,19 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       if (!isMovie && season && episode) {
         apiUrl += `&season=${season}&episode=${episode}`;
       }
-      log(`[CuevanaUBD] Iniciando b\xFAsqueda para ID: ${rawId} | API: ${apiUrl}`);
+      console.log(`[CuevanaUBD] Buscando: ${apiUrl}`);
       const axios3 = require("axios");
       const response = yield axios3.get(apiUrl, {
-        timeout: 15e3,
+        timeout: 1e4,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "application/json"
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
       });
       const data = response.data;
       if (!data || !data.success || !data.languages) {
-        log(`[CuevanaUBD] Sin resultados en API (Success: ${data == null ? void 0 : data.success})`);
+        console.log("[CuevanaUBD] Sin resultados");
         return [];
       }
-      log(`[CuevanaUBD] API respondi\xF3 \xE9xito. Procesando lenguajes...`);
       const promises = [];
       const seenLinks = /* @__PURE__ */ new Set();
       for (const [langKey, servers] of Object.entries(data.languages)) {
@@ -2409,10 +2405,10 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           continue;
         const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
         for (const [serverKey, url] of Object.entries(servers)) {
-          if (!url || typeof url !== "string")
+          if (!url)
             continue;
           const sKey = serverKey.toLowerCase();
-          if (sKey.includes("netu") || sKey.includes("hqq") || sKey.includes("waaw") || url.includes("netu") || url.includes("hqq") || url.includes("waaw"))
+          if (sKey.includes("netu") || sKey.includes("hqq") || sKey.includes("waaw"))
             continue;
           if (seenLinks.has(url))
             continue;
@@ -2426,19 +2422,15 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                 });
               }
               return null;
-            }).catch((e) => {
-              log(`[CuevanaUBD] Error resolviendo ${serverKey}: ${e.message}`);
-              return null;
-            })
+            }).catch(() => null)
           );
         }
       }
       const results = yield Promise.all(promises);
       const rawStreams = results.filter((r) => r !== null);
-      log(`[CuevanaUBD] Enlaces extra\xEDdos: ${rawStreams.length}`);
       return yield finalizeStreams(rawStreams, "Cuevana UBD", data.title || title);
     } catch (e) {
-      errLog(`[CuevanaUBD] Fallo cr\xEDtico en ejecuci\xF3n: ${e.message}`);
+      console.error(`[CuevanaUBD] Error: ${e.message}`);
       return [];
     }
   });
@@ -2446,5 +2438,5 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { getStreams };
 } else {
-  global.getStreams = getStreams;
+  global.CuevanaUnBuenDatoModule = { getStreams };
 }

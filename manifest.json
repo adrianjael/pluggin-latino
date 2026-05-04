@@ -1,6 +1,6 @@
 {
   "name": "Nuvio Latino",
-  "version": "12.12.25",
+  "version": "12.12.26",
   "scrapers": [
     {
       "id": "embed69",
@@ -368,10 +368,10 @@
       "supportsExternalPlayer": true
     },
     {
-      "id": "cuevana_unbuendato",
+      "id": "cuevanaubd",
       "name": "Cuevana UBD",
-      "description": "Proveedor rápido JSON nativo de Cuevana.",
-      "version": "1.0.5",
+      "description": "Proveedor rapido JSON nativo de Cuevana.",
+      "version": "1.0.6",
       "author": "AdrianJael",
       "supportedTypes": [
         "movie",
