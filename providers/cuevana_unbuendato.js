@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-05-04T21:11:36.041Z
+ * Generated: 2026-05-04T21:13:35.509Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2375,8 +2375,20 @@ var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
-    if (!tmdbId)
-      return [];
+    const visualLogs = [];
+    const addVisualLog = (msg) => {
+      visualLogs.push({
+        url: "https://nuvio.internal/log",
+        serverName: `[LOG] ${msg}`,
+        Audio: "INFO",
+        Quality: "LOG",
+        headers: {}
+      });
+    };
+    if (!tmdbId) {
+      addVisualLog("Error: TMDB ID faltante");
+      return visualLogs;
+    }
     try {
       const rawId = String(tmdbId).split(":")[0];
       const isMovie = mediaType === "movie" || mediaType === "movies";
@@ -2384,29 +2396,36 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       if (!isMovie && season && episode) {
         apiUrl += `&season=${season}&episode=${episode}`;
       }
-      console.log(`[CuevanaUBD] TMDB:${rawId} | Media:${mediaType} | Title:${title}`);
-      console.log(`[CuevanaUBD] URL:${apiUrl}`);
+      addVisualLog(`Buscando ID:${rawId}...`);
       const axios3 = require("axios");
-      const response = yield axios3.get(apiUrl, {
-        timeout: 1e4,
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "application/json"
-        }
-      });
-      const data = response.data;
-      if (!data) {
-        console.log("[CuevanaUBD] ERROR: Data es null o undefined");
-        return [];
+      let response;
+      try {
+        response = yield axios3.get(apiUrl, {
+          timeout: 8e3,
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json"
+          }
+        });
+      } catch (apiErr) {
+        addVisualLog(`Error API: ${apiErr.message}`);
+        if (apiErr.response)
+          addVisualLog(`Status: ${apiErr.response.status}`);
+        return visualLogs;
       }
-      console.log(`[CuevanaUBD] API Success: ${data.success} | Type: ${data.type}`);
-      if (!data.success || !data.languages) {
-        console.log(`[CuevanaUBD] API no retorn\xF3 lenguajes para ID: ${rawId}`);
-        return [];
+      const data = response.data;
+      if (!data || !data.success) {
+        addVisualLog(`API: Sin \xE9xito (${data ? data.success : "no-data"})`);
+        return visualLogs;
+      }
+      addVisualLog(`API: OK | Titulo: ${data.title || "??"}`);
+      if (!data.languages) {
+        addVisualLog("API: No hay lenguajes");
+        return visualLogs;
       }
       const promises = [];
       const seenLinks = /* @__PURE__ */ new Set();
-      let linkCount = 0;
+      let totalFound = 0;
       for (const [langKey, servers] of Object.entries(data.languages)) {
         const lKey = langKey.toLowerCase();
         if (!lKey.includes("latino") && !lKey.includes("subtitulado") && !lKey.includes("sub"))
@@ -2421,34 +2440,32 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           if (seenLinks.has(url))
             continue;
           seenLinks.add(url);
-          linkCount++;
+          totalFound++;
           promises.push(
             resolveEmbed(url).then((res) => {
               if (res) {
                 return __spreadProps(__spreadValues({}, res), {
                   serverName: res.serverName || serverKey.charAt(0).toUpperCase() + serverKey.slice(1),
-                  lang: langLabel
+                  Audio: langLabel
                 });
               }
               return null;
             }).catch((err) => {
-              console.log(`[CuevanaUBD] Error en ${serverKey}: ${err.message}`);
+              console.log(`[CuevanaUBD] Fail ${serverKey}: ${err.message}`);
               return null;
             })
           );
         }
       }
-      console.log(`[CuevanaUBD] Enlaces por procesar: ${linkCount}`);
+      addVisualLog(`Procesando ${totalFound} enlaces...`);
       const results = yield Promise.all(promises);
       const rawStreams = results.filter((r) => r !== null);
-      console.log(`[CuevanaUBD] Finalizados: ${rawStreams.length}`);
-      return yield finalizeStreams(rawStreams, "Cuevana UBD", data.title || title);
+      addVisualLog(`Encontrados: ${rawStreams.length} funcionales`);
+      const finalResults = [...visualLogs, ...rawStreams];
+      return yield finalizeStreams(finalResults, "Cuevana UBD", data.title || title);
     } catch (e) {
-      console.error(`[CuevanaUBD] Error Cr\xEDtico: ${e.message}`);
-      if (e.response) {
-        console.log(`[CuevanaUBD] HTTP Status: ${e.response.status}`);
-      }
-      return [];
+      addVisualLog(`Error Cr\xEDtico: ${e.message}`);
+      return visualLogs;
     }
   });
 }
