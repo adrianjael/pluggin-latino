@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-05-04T21:13:35.509Z
+ * Generated: 2026-05-04T21:18:11.351Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -546,7 +546,7 @@ var require_engine = __commonJS({
       }
       return server || "Servidor";
     }
-    function finalizeStreams2(streams, providerName, mediaTitle) {
+    function finalizeStreams(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
@@ -621,7 +621,7 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
+    module2.exports = { finalizeStreams, normalizeLanguage };
   }
 });
 
@@ -2270,7 +2270,7 @@ var require_resolvers = __commonJS({
       result.url = url;
       return result;
     }
-    function resolveEmbed2(url, signal = null) {
+    function resolveEmbed(url, signal = null) {
       return __async(this, null, function* () {
         if (!url)
           return null;
@@ -2366,29 +2366,23 @@ var require_resolvers = __commonJS({
         });
       });
     }
-    module2.exports = { resolveEmbed: resolveEmbed2 };
+    module2.exports = { resolveEmbed };
   }
 });
 
 // src/cuevana_unbuendato/index.js
-var { finalizeStreams } = require_engine();
-var { resolveEmbed } = require_resolvers();
 function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     const visualLogs = [];
     const addVisualLog = (msg) => {
       visualLogs.push({
-        url: "https://nuvio.internal/log",
-        serverName: `[LOG] ${msg}`,
-        Audio: "INFO",
-        Quality: "LOG",
+        name: "\u26A0\uFE0F CUEVANA LOG",
+        title: msg,
+        url: "https://log.info/" + Math.random(),
         headers: {}
       });
     };
-    if (!tmdbId) {
-      addVisualLog("Error: TMDB ID faltante");
-      return visualLogs;
-    }
+    addVisualLog(`Iniciando para: ${title || "Contenido"}`);
     try {
       const rawId = String(tmdbId).split(":")[0];
       const isMovie = mediaType === "movie" || mediaType === "movies";
@@ -2396,41 +2390,40 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       if (!isMovie && season && episode) {
         apiUrl += `&season=${season}&episode=${episode}`;
       }
-      addVisualLog(`Buscando ID:${rawId}...`);
+      addVisualLog(`Conectando a API...`);
       const axios3 = require("axios");
       let response;
       try {
         response = yield axios3.get(apiUrl, {
-          timeout: 8e3,
+          timeout: 1e4,
           headers: {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "application/json"
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
           }
         });
-      } catch (apiErr) {
-        addVisualLog(`Error API: ${apiErr.message}`);
-        if (apiErr.response)
-          addVisualLog(`Status: ${apiErr.response.status}`);
+      } catch (netErr) {
+        addVisualLog(`Error de Red: ${netErr.message}`);
+        if (netErr.response)
+          addVisualLog(`HTTP Status: ${netErr.response.status}`);
         return visualLogs;
       }
       const data = response.data;
       if (!data || !data.success) {
-        addVisualLog(`API: Sin \xE9xito (${data ? data.success : "no-data"})`);
+        addVisualLog(`API Error: Success=${data ? data.success : "null"}`);
         return visualLogs;
       }
-      addVisualLog(`API: OK | Titulo: ${data.title || "??"}`);
+      addVisualLog(`Contenido Encontrado: ${data.title}`);
       if (!data.languages) {
-        addVisualLog("API: No hay lenguajes");
+        addVisualLog("Error: No se encontraron idiomas en API");
         return visualLogs;
       }
+      const { finalizeStreams } = require_engine();
+      const { resolveEmbed } = require_resolvers();
       const promises = [];
       const seenLinks = /* @__PURE__ */ new Set();
-      let totalFound = 0;
       for (const [langKey, servers] of Object.entries(data.languages)) {
         const lKey = langKey.toLowerCase();
         if (!lKey.includes("latino") && !lKey.includes("subtitulado") && !lKey.includes("sub"))
           continue;
-        const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
         for (const [serverKey, url] of Object.entries(servers)) {
           if (!url)
             continue;
@@ -2440,31 +2433,29 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           if (seenLinks.has(url))
             continue;
           seenLinks.add(url);
-          totalFound++;
           promises.push(
             resolveEmbed(url).then((res) => {
               if (res) {
                 return __spreadProps(__spreadValues({}, res), {
-                  serverName: res.serverName || serverKey.charAt(0).toUpperCase() + serverKey.slice(1),
-                  Audio: langLabel
+                  serverName: res.serverName || serverKey,
+                  Audio: langKey
                 });
               }
               return null;
-            }).catch((err) => {
-              console.log(`[CuevanaUBD] Fail ${serverKey}: ${err.message}`);
-              return null;
-            })
+            }).catch(() => null)
           );
         }
       }
-      addVisualLog(`Procesando ${totalFound} enlaces...`);
       const results = yield Promise.all(promises);
       const rawStreams = results.filter((r) => r !== null);
-      addVisualLog(`Encontrados: ${rawStreams.length} funcionales`);
-      const finalResults = [...visualLogs, ...rawStreams];
-      return yield finalizeStreams(finalResults, "Cuevana UBD", data.title || title);
+      addVisualLog(`Resoluci\xF3n completa: ${rawStreams.length} links`);
+      if (rawStreams.length === 0) {
+        return visualLogs;
+      }
+      const finalResults = yield finalizeStreams(rawStreams, "Cuevana UBD", data.title);
+      return [...visualLogs, ...finalResults];
     } catch (e) {
-      addVisualLog(`Error Cr\xEDtico: ${e.message}`);
+      addVisualLog(`Fallo General: ${e.message}`);
       return visualLogs;
     }
   });
