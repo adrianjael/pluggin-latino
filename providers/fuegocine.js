@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-05-04T22:04:43.713Z
+ * Generated: 2026-05-04T22:06:58.859Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -793,7 +793,7 @@ var require_hlswish = __commonJS({
     function resolve3(url, signal = null) {
       return __async(this, null, function* () {
         try {
-          const UA4 = getSessionUA();
+          const UA3 = getSessionUA();
           const rawId = url.split("/").pop().replace(/\.html$/, "");
           const urlObj = new URL(url);
           const mirrors = [
@@ -816,7 +816,7 @@ var require_hlswish = __commonJS({
                 const mirrorObj = new URL(mirror);
                 const mirrorOrigin = mirrorObj.origin;
                 const resp = yield fetch(mirror, {
-                  headers: { "Referer": mirror, "User-Agent": UA4 },
+                  headers: { "Referer": mirror, "User-Agent": UA3 },
                   signal
                 });
                 if (!resp.ok)
@@ -828,7 +828,7 @@ var require_hlswish = __commonJS({
                   const hash = hashMatch[0];
                   const dlUrl = `${mirrorOrigin}/dl?op=view&file_code=${rawId}&hash=${hash}&embed=1&referer=&adb=1&hls4=1`;
                   const dlResp = yield fetch(dlUrl, {
-                    headers: { "User-Agent": UA4, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" },
+                    headers: { "User-Agent": UA3, "Referer": mirror, "X-Requested-With": "XMLHttpRequest" },
                     signal
                   });
                   if (dlResp.ok) {
@@ -878,7 +878,7 @@ var require_hlswish = __commonJS({
           const reqHeaders = {
             "Referer": validResult.mirror,
             "Origin": new URL(validResult.mirror).origin,
-            "User-Agent": UA4
+            "User-Agent": UA3
           };
           const streamObj = { url: validResult.url, headers: reqHeaders };
           const validation = yield validateStream(streamObj, signal);
@@ -1220,11 +1220,11 @@ var require_goodstream = __commonJS({
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
-          const UA4 = getSessionUA();
+          const UA3 = getSessionUA();
           console.log(`[GoodStream] Resolviendo: ${embedUrl}`);
           const response = yield axios3.get(embedUrl, {
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": UA3,
               "Referer": "https://goodstream.one/",
               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
               "Accept-Language": "es-MX,es;q=0.9",
@@ -1242,7 +1242,7 @@ var require_goodstream = __commonJS({
           const refererHeaders = {
             "Referer": embedUrl,
             "Origin": "https://goodstream.one",
-            "User-Agent": UA4,
+            "User-Agent": UA3,
             "Accept-Language": "es-MX,es;q=0.9"
           };
           const quality = yield detectQuality(videoUrl, refererHeaders);
@@ -1267,7 +1267,7 @@ var require_goodstream = __commonJS({
 // src/resolvers/fastream.js
 var require_fastream = __commonJS({
   "src/resolvers/fastream.js"(exports2, module2) {
-    var UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     function unpackPacker(data) {
       const match = data.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)\)\)/);
       if (!match)
@@ -1286,7 +1286,7 @@ var require_fastream = __commonJS({
       return __async(this, arguments, function* (m3u8Url, headers = {}) {
         try {
           const res = yield fetch(m3u8Url, {
-            headers: __spreadValues({ "User-Agent": UA4 }, headers),
+            headers: __spreadValues({ "User-Agent": UA3 }, headers),
             redirect: "follow"
           });
           const data = yield res.text();
@@ -1324,7 +1324,7 @@ var require_fastream = __commonJS({
         try {
           const res = yield fetch(url, {
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": UA3,
               "Referer": "https://www3.seriesmetro.net/"
             },
             redirect: "follow"
@@ -1340,7 +1340,7 @@ var require_fastream = __commonJS({
           return {
             url: m3u8,
             quality,
-            headers: { "User-Agent": UA4, "Referer": "https://fastream.to/" }
+            headers: { "User-Agent": UA3, "Referer": "https://fastream.to/" }
           };
         } catch (e) {
           console.error("[Fastream] Error:", e.message);
@@ -1358,12 +1358,12 @@ var require_vimeos = __commonJS({
     var { fetchHtml: fetchHtml2, fetchJson: fetchJson2, getSessionUA } = require_http();
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
-        const UA4 = getSessionUA();
+        const UA3 = getSessionUA();
         try {
           console.log("[Vimeos] Resolviendo: " + embedUrl);
           var html = yield fetchHtml2(embedUrl, {
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": UA3,
               "Referer": "https://vimeos.net/",
               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
               "Accept-Language": "es-MX,es;q=0.9,en-US;q=0.8"
@@ -1376,7 +1376,7 @@ var require_vimeos = __commonJS({
             var vimeoId = vimeoIdMatch[1];
             try {
               var config = yield fetchJson2("https://player.vimeo.com/video/" + vimeoId + "/config", {
-                headers: { "User-Agent": UA4, "Referer": embedUrl }
+                headers: { "User-Agent": UA3, "Referer": embedUrl }
               });
               var hlsUrl = null;
               if (config && config.request && config.request.files && config.request.files.hls && config.request.files.hls.cdns && config.request.files.hls.cdns.default) {
@@ -1387,7 +1387,7 @@ var require_vimeos = __commonJS({
                   url: hlsUrl,
                   verified: true,
                   serverName: "Vimeos",
-                  headers: { "User-Agent": UA4, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-MX,es;q=0.9" }
+                  headers: { "User-Agent": UA3, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-MX,es;q=0.9" }
                 };
               }
               var progressive = config && config.request && config.request.files ? config.request.files.progressive : null;
@@ -1399,7 +1399,7 @@ var require_vimeos = __commonJS({
                   url: best.url,
                   quality: best.quality ? best.quality + "p" : "1080p",
                   serverName: "Vimeos",
-                  headers: { "User-Agent": UA4, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-MX,es;q=0.9" }
+                  headers: { "User-Agent": UA3, "Referer": "https://player.vimeo.com/", "Accept-Language": "es-MX,es;q=0.9" }
                 };
               }
             } catch (e) {
@@ -1428,7 +1428,7 @@ var require_vimeos = __commonJS({
                 url: m3u8Match[1],
                 quality: "1080p",
                 serverName: "Vimeos",
-                headers: { "User-Agent": UA4, "Referer": "https://vimeos.net/", "Accept-Language": "es-MX,es;q=0.9" }
+                headers: { "User-Agent": UA3, "Referer": "https://vimeos.net/", "Accept-Language": "es-MX,es;q=0.9" }
               };
             }
           }
@@ -1708,7 +1708,7 @@ var require_embedseek = __commonJS({
     function resolve3(url) {
       return __async(this, null, function* () {
         try {
-          const UA4 = getSessionUA();
+          const UA3 = getSessionUA();
           const parsedUrl = new URL(url);
           const hostname = parsedUrl.hostname;
           const hash = parsedUrl.hash;
@@ -1717,7 +1717,7 @@ var require_embedseek = __commonJS({
             return null;
           const apiUrl = `${parsedUrl.origin}/api/v1/info?id=${id}`;
           const headers = {
-            "User-Agent": UA4,
+            "User-Agent": UA3,
             "Referer": url,
             "Origin": parsedUrl.origin
           };
@@ -1742,7 +1742,7 @@ var require_embedseek = __commonJS({
               verified: true,
               serverName: "SeekStreaming",
               headers: {
-                "User-Agent": UA4,
+                "User-Agent": UA3,
                 "Referer": url,
                 "Origin": parsedUrl.origin
               }
@@ -1894,12 +1894,12 @@ var require_lulustream = __commonJS({
     function resolve3(url) {
       return __async(this, null, function* () {
         try {
-          const UA4 = getSessionUA();
+          const UA3 = getSessionUA();
           const urlObj = new URL(url);
           const origin = urlObj.origin;
           const response = yield fetch(url, {
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": UA3,
               "Referer": url
             }
           });
@@ -1936,7 +1936,7 @@ var require_lulustream = __commonJS({
               headers: {
                 "Referer": url,
                 "Origin": origin,
-                "User-Agent": UA4
+                "User-Agent": UA3
               }
             };
             return yield validateStream(stream);
@@ -1963,9 +1963,9 @@ var require_dropcdn = __commonJS({
           const fileCode = idMatch ? idMatch[1] : normalizedUrl.split("/").pop();
           const embedUrl = `https://dr0pstream.com/e/${fileCode}`;
           console.log(`[DropCDN] Iniciando Handshake ds2 (v2.6): ${fileCode}`);
-          const UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+          const UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
           const BROWSER_HEADERS = {
-            "User-Agent": UA4,
+            "User-Agent": UA3,
             "Accept": "*/*",
             "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
             "Referer": "https://dr0pstream.com/",
@@ -2063,8 +2063,8 @@ var require_vidsrc = __commonJS({
         try {
           let embedUrl = url.toString().replace("vidsrc.to", "vidsrc.xyz").replace("vidsrc.pm", "vidsrc.xyz").replace("moviesapi.club/movie", "cdn.moviesapi.to/embed/movie").replace("moviesapi.to/movie", "cdn.moviesapi.to/embed/movie");
           console.log(`[VidSrc] Iniciando Resoluci\xF3n: ${embedUrl}`);
-          const UA4 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
-          const headers = { "User-Agent": UA4, "Referer": "https://vidsrc.xyz/" };
+          const UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+          const headers = { "User-Agent": UA3, "Referer": "https://vidsrc.xyz/" };
           const res1 = yield fetch(embedUrl, { headers, signal });
           if (!res1.ok)
             return null;
@@ -2095,7 +2095,7 @@ var require_vidsrc = __commonJS({
             verified: true,
             serverName: "VidSrc",
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": UA3,
               "Referer": nextUrl,
               "Origin": new URL(nextUrl).origin
             }
@@ -2154,7 +2154,7 @@ var require_doodstream = __commonJS({
     function resolve3(url, signal = null) {
       return __async(this, null, function* () {
         try {
-          const UA4 = getSessionUA();
+          const UA3 = getSessionUA();
           console.log(`[DoodStream] Resolviendo: ${url}`);
           let embedUrl = url;
           if (!embedUrl.includes("/e/")) {
@@ -2163,7 +2163,7 @@ var require_doodstream = __commonJS({
           const response = yield fetch(embedUrl, {
             signal,
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": UA3,
               "Referer": "https://lamovie.cc/"
               // Referer de confianza para evadir 403
             }
@@ -2183,7 +2183,7 @@ var require_doodstream = __commonJS({
           const passUrl = domain + passPath;
           const passRes = yield fetch(passUrl, {
             headers: {
-              "User-Agent": UA4,
+              "User-Agent": UA3,
               "Referer": embedUrl
             },
             signal
@@ -2199,7 +2199,7 @@ var require_doodstream = __commonJS({
           const expiry = Date.now();
           const finalVideoUrl = `${videoBaseUrl}${randomString}?token=${token}&expiry=${expiry}`;
           const reqHeaders = {
-            "User-Agent": UA4,
+            "User-Agent": UA3,
             "Referer": domain + "/"
           };
           let isLive = false;
@@ -2545,7 +2545,7 @@ var require_resolvers = __commonJS({
     var { resolve: resolveGeneric } = require_generic_fuegocine();
     var { getSessionUA } = require_http();
     var { isMirror } = require_mirrors();
-    var UA4 = getSessionUA();
+    var UA3 = getSessionUA();
     function getDirectCdnHeaders(url) {
       if (!url)
         return null;
@@ -2568,7 +2568,7 @@ var require_resolvers = __commonJS({
         }
         return headers;
       } catch (e) {
-        return { "User-Agent": UA4, "referer": url.split("?")[0] };
+        return { "User-Agent": UA3, "referer": url.split("?")[0] };
       }
     }
     function applyPiping(result) {
@@ -2829,7 +2829,6 @@ var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
 var BASE_URL = "https://www.fuegocine.com";
 var SEARCH_BASE = `${BASE_URL}/feeds/posts/default?alt=json&max-results=10&q=`;
-var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var DEFAULT_HEADERS = getStealthHeaders();
 function normalize(t) {
   if (!t)
@@ -2901,23 +2900,43 @@ function extractSvLinks(html) {
 function getStreams(tmdbId, mediaType, season, episode, title) {
   return __async(this, null, function* () {
     var _a, _b;
+    const visualLogs = [];
+    const addVisualLog = (msg) => {
+      visualLogs.push({
+        name: "\u{1F525} FUEGO LOG",
+        title: msg,
+        url: "https://log.info/" + Math.random(),
+        headers: {}
+      });
+    };
     try {
       let mediaTitle = title;
       if (!mediaTitle && tmdbId) {
+        addVisualLog(`Consultando TMDB ID: ${tmdbId}`);
         mediaTitle = yield getTmdbTitle(tmdbId, mediaType);
       }
-      if (!mediaTitle)
-        return [];
+      if (!mediaTitle) {
+        addVisualLog(`Error: No se pudo obtener t\xEDtulo`);
+        return visualLogs;
+      }
       const cleanTitle = mediaTitle.split(":")[0].trim();
       const searchTitle = mediaType === "tv" && season ? `${cleanTitle} ${season}x${String(episode).padStart(2, "0")}` : cleanTitle;
       const searchUrl = SEARCH_BASE + encodeURIComponent(searchTitle);
-      console.log(`[FuegoCine Nitro v4] Buscando: ${searchTitle}`);
-      const searchJson = yield fetchJson(searchUrl, { headers: { "User-Agent": UA3 } });
+      addVisualLog(`Buscando: ${searchTitle}`);
+      const searchJson = yield fetchJson(searchUrl, { headers: DEFAULT_HEADERS });
       const entries = ((_a = searchJson == null ? void 0 : searchJson.feed) == null ? void 0 : _a.entry) || [];
-      if (entries.length === 0 && cleanTitle.includes(" ")) {
-        const retryTitle = cleanTitle.split(" ")[0];
-        const retryJson = yield fetchJson(SEARCH_BASE + encodeURIComponent(retryTitle), { headers: { "User-Agent": UA3 } });
-        entries.push(...((_b = retryJson == null ? void 0 : retryJson.feed) == null ? void 0 : _b.entry) || []);
+      if (entries.length === 0) {
+        addVisualLog(`API: 0 entradas para ${searchTitle}`);
+        if (cleanTitle.includes(" ")) {
+          const retryTitle = cleanTitle.split(" ")[0];
+          addVisualLog(`Reintentando con: ${retryTitle}`);
+          const retryJson = yield fetchJson(SEARCH_BASE + encodeURIComponent(retryTitle), { headers: DEFAULT_HEADERS });
+          entries.push(...((_b = retryJson == null ? void 0 : retryJson.feed) == null ? void 0 : _b.entry) || []);
+        }
+      }
+      if (entries.length === 0) {
+        addVisualLog(`API: Sin resultados finales`);
+        return visualLogs;
       }
       const normTarget = normalize(mediaTitle);
       const validEntries = entries.filter((e) => {
@@ -2926,23 +2945,32 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const t = normalize(entryTitle);
         const mainWordMatch = t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
         const isMatch = mainWordMatch || cleanTitle.length > 3 && t.includes(normalize(cleanTitle));
-        if (isMatch)
+        if (isMatch) {
           console.log(`[FuegoCine] \u2705 Match: ${entryTitle}`);
+          addVisualLog(`Post encontrado: ${entryTitle}`);
+        }
         return isMatch;
       });
+      if (validEntries.length === 0) {
+        addVisualLog(`Filtro: Ning\xFAn post coincide con ${mediaTitle}`);
+        return visualLogs;
+      }
       const allRawLinks = [];
       yield Promise.all(validEntries.map((entry) => __async(this, null, function* () {
         var _a2, _b2;
         const url = (_b2 = (_a2 = entry.link) == null ? void 0 : _a2.find((l) => l.rel === "alternate")) == null ? void 0 : _b2.href;
         if (!url)
           return;
+        addVisualLog(`Extrayendo: ${url.split("/").pop()}`);
         const html = yield fetchHtml(url, { headers: DEFAULT_HEADERS });
         const links = extractSvLinks(html);
         allRawLinks.push(...links);
       })));
-      if (allRawLinks.length === 0)
-        return [];
-      console.log(`[FuegoCine] Encontrados ${allRawLinks.length} links en el HTML. Resolviendo...`);
+      if (allRawLinks.length === 0) {
+        addVisualLog(`HTML: No se detect\xF3 _SV_LINKS`);
+        return visualLogs;
+      }
+      addVisualLog(`Detectados ${allRawLinks.length} servidores. Resolviendo...`);
       const streams = [];
       const langOrder = ["lat", "mex", "col", "esp", "sub"];
       const sortedLinks = allRawLinks.sort((a, b) => {
@@ -2972,11 +3000,14 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         if (res.status === "fulfilled" && res.value)
           streams.push(res.value);
       });
-      console.log(`[FuegoCine v7.1.0] ${streams.length} enlaces directos encontrados.`);
+      if (streams.length === 0) {
+        addVisualLog(`Resoluci\xF3n: Ning\xFAn enlace directo extra\xEDdo`);
+        return visualLogs;
+      }
       return yield finalizeStreams(streams, "FuegoCine", mediaTitle);
     } catch (e) {
-      console.error(`[FuegoCine Nitro v4] Error: ${e.message}`);
-      return [];
+      addVisualLog(`Fallo Fatal: ${e.message}`);
+      return visualLogs;
     }
   });
 }
