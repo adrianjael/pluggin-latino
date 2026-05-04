@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-05-04T21:37:46.640Z
+ * Generated: 2026-05-04T21:42:06.853Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -487,6 +487,22 @@ var require_mirrors = __commonJS({
       ],
       VIDSONIC: [
         "vidsonic.net"
+      ],
+      BARMONREY: [
+        "barmonrey.com"
+      ],
+      VIDMOLY: [
+        "vidmoly.biz",
+        "vidmoly.to"
+      ],
+      UNLIMPLAY: [
+        "unlimplay.com"
+      ],
+      KRAKENFILES: [
+        "krakenfiles.com"
+      ],
+      UPNS: [
+        "upns.online"
       ]
     };
     function isMirror(url, groupName) {
@@ -2286,6 +2302,109 @@ var require_vidsonic = __commonJS({
   }
 });
 
+// src/resolvers/barmonrey.js
+var require_barmonrey = __commonJS({
+  "src/resolvers/barmonrey.js"(exports2, module2) {
+    var axios3 = require("axios");
+    function resolve3(embedUrl) {
+      return __async(this, null, function* () {
+        try {
+          const { data: html } = yield axios3.get(embedUrl, {
+            headers: { "Referer": "https://www.fuegocine.com/" },
+            timeout: 8e3
+          });
+          const m3u8 = html.match(/https?:\/\/[^"']+\.m3u8[^"']*/);
+          if (m3u8) {
+            return {
+              url: m3u8[0],
+              quality: "HD",
+              serverName: "Barmonrey",
+              verified: true,
+              headers: { "Referer": embedUrl }
+            };
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve3 };
+  }
+});
+
+// src/resolvers/vidmoly.js
+var require_vidmoly = __commonJS({
+  "src/resolvers/vidmoly.js"(exports2, module2) {
+    var axios3 = require("axios");
+    function resolve3(embedUrl) {
+      return __async(this, null, function* () {
+        try {
+          const { data: html } = yield axios3.get(embedUrl, {
+            headers: { "Referer": "https://www.fuegocine.com/" },
+            timeout: 8e3
+          });
+          const match = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
+          if (match && match[1]) {
+            return {
+              url: match[1],
+              quality: "HD",
+              serverName: "Vidmoly",
+              verified: true,
+              headers: { "Referer": embedUrl }
+            };
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve3 };
+  }
+});
+
+// src/resolvers/generic_fuegocine.js
+var require_generic_fuegocine = __commonJS({
+  "src/resolvers/generic_fuegocine.js"(exports2, module2) {
+    var axios3 = require("axios");
+    function resolve3(embedUrl) {
+      return __async(this, null, function* () {
+        try {
+          const { data: html } = yield axios3.get(embedUrl, {
+            headers: { "Referer": "https://www.fuegocine.com/" },
+            timeout: 8e3
+          });
+          const m3u8 = html.match(/https?:\/\/[^"']+\.m3u8[^"']*/);
+          if (m3u8) {
+            return {
+              url: m3u8[0].replace(/\\/g, ""),
+              quality: "HD",
+              serverName: "Server",
+              verified: true,
+              headers: { "Referer": embedUrl }
+            };
+          }
+          const mp4 = html.match(/https?:\/\/[^"']+\.mp4[^"']*/);
+          if (mp4) {
+            return {
+              url: mp4[0].replace(/\\/g, ""),
+              quality: "HD",
+              serverName: "Server",
+              verified: true,
+              headers: { "Referer": embedUrl }
+            };
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    module2.exports = { resolve: resolve3 };
+  }
+});
+
 // src/utils/resolvers.js
 var require_resolvers = __commonJS({
   "src/utils/resolvers.js"(exports2, module2) {
@@ -2309,6 +2428,9 @@ var require_resolvers = __commonJS({
     var { resolve: resolveDoodstream } = require_doodstream();
     var { resolve: resolveVidnest } = require_vidnest();
     var { resolve: resolveVidsonic } = require_vidsonic();
+    var { resolve: resolveBarmonrey } = require_barmonrey();
+    var { resolve: resolveVidmoly } = require_vidmoly();
+    var { resolve: resolveGeneric } = require_generic_fuegocine();
     var { getSessionUA } = require_http();
     var { isMirror } = require_mirrors();
     var UA4 = getSessionUA();
@@ -2439,6 +2561,21 @@ var require_resolvers = __commonJS({
         }
         if (isMirror(s, "VIDSONIC")) {
           const res = yield resolveVidsonic(url);
+          if (res)
+            return applyPiping(res);
+        }
+        if (isMirror(s, "BARMONREY")) {
+          const res = yield resolveBarmonrey(url);
+          if (res)
+            return applyPiping(res);
+        }
+        if (isMirror(s, "VIDMOLY")) {
+          const res = yield resolveVidmoly(url);
+          if (res)
+            return applyPiping(res);
+        }
+        if (isMirror(s, "UNLIMPLAY") || isMirror(s, "KRAKENFILES") || isMirror(s, "UPNS")) {
+          const res = yield resolveGeneric(url);
           if (res)
             return applyPiping(res);
         }
@@ -2574,7 +2711,7 @@ var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 var { getTmdbTitle } = require_tmdb();
 var BASE_URL = "https://www.fuegocine.com";
-var SEARCH_BASE = `${BASE_URL}/feeds/posts/summary?alt=json&max-results=8&q=`;
+var SEARCH_BASE = `${BASE_URL}/feeds/posts/default?alt=json&max-results=10&q=`;
 var UA3 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 var DEFAULT_HEADERS = {
   "User-Agent": UA3,
@@ -2673,7 +2810,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         var _a2;
         const t = normalize(((_a2 = e.title) == null ? void 0 : _a2.$t) || "");
         return t.includes(normTarget) || normTarget.includes(t.split(" ")[0]);
-      }).slice(0, 3);
+      });
       const allRawLinks = [];
       yield Promise.all(validEntries.map((entry) => __async(this, null, function* () {
         var _a2, _b2;
@@ -2686,6 +2823,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
       })));
       if (allRawLinks.length === 0)
         return [];
+      console.log(`[FuegoCine] Encontrados ${allRawLinks.length} links en el HTML. Resolviendo...`);
       const streams = [];
       const langOrder = ["lat", "mex", "col", "esp", "sub"];
       const sortedLinks = allRawLinks.sort((a, b) => {
@@ -2693,6 +2831,7 @@ function getStreams(tmdbId, mediaType, season, episode, title) {
         const bIdx = langOrder.indexOf(String(b.lang));
         return (aIdx === -1 ? 99 : aIdx) - (bIdx === -1 ? 99 : bIdx);
       });
+      console.log(`[FuegoCine] URLs encontradas:`, sortedLinks.map((l) => l.url));
       const resolutionResults = yield Promise.allSettled(
         sortedLinks.map((link) => __async(this, null, function* () {
           var _a2, _b2;
