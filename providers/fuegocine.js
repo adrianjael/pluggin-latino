@@ -1,6 +1,6 @@
 /**
  * fuegocine - Built from src/fuegocine/
- * Generated: 2026-05-04T22:06:58.859Z
+ * Generated: 2026-05-04T22:10:55.315Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2265,32 +2265,36 @@ var require_vidnest = __commonJS({
 // src/resolvers/vidsonic.js
 var require_vidsonic = __commonJS({
   "src/resolvers/vidsonic.js"(exports2, module2) {
-    var axios3 = require("axios");
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
-          const { data: html } = yield axios3.get(embedUrl, {
-            headers: { "Referer": "https://www.fuegocine.com/" },
-            timeout: 8e3
+          const id = embedUrl.split("/").pop().replace(".html", "");
+          const targetUrl = `https://vidsonic.net/e/${id}`;
+          const response = yield fetch(targetUrl, {
+            headers: {
+              "Referer": "https://www.fuegocine.com/",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            }
           });
-          const ox1Match = html.match(/const\s+_0x1\s*=\s*['"]([^'"]+)['"]/);
-          if (!ox1Match)
+          if (!response.ok)
             return null;
-          const raw = ox1Match[1];
-          const clean = raw.replace(/[^0-9a-fA-F]/g, "");
-          let out = "";
-          for (let i = 0; i < clean.length; i += 2) {
-            out += String.fromCharCode(parseInt(clean.substr(i, 2), 16));
-          }
-          const decoded = out.split("").reverse().join("");
-          if (decoded && decoded.startsWith("http")) {
-            return {
-              url: decoded,
-              quality: "HD",
-              serverName: "VidSonic",
-              verified: true,
-              headers: { "Referer": embedUrl }
-            };
+          const html = yield response.text();
+          const hexMatch = html.match(/\["([a-f0-9]{50,})"\]/);
+          if (hexMatch) {
+            const hex = hexMatch[1].split("").reverse().join("");
+            let decoded = "";
+            for (let i = 0; i < hex.length; i += 2) {
+              decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            if (decoded.includes(".m3u8")) {
+              return {
+                url: decoded,
+                quality: "HD",
+                serverName: "Vidsonic",
+                verified: true,
+                headers: { "Referer": targetUrl }
+              };
+            }
           }
           return null;
         } catch (e) {
@@ -2336,7 +2340,6 @@ var require_barmonrey = __commonJS({
 // src/resolvers/vidmoly.js
 var require_vidmoly = __commonJS({
   "src/resolvers/vidmoly.js"(exports2, module2) {
-    var axios3 = require("axios");
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
@@ -2344,18 +2347,16 @@ var require_vidmoly = __commonJS({
           const redirectBase = "https://vidmoly.to";
           const videoId = urlObj.pathname.split("/").pop().replace(".html", "").replace("embed-", "");
           const targetUrl = `${redirectBase}/embed-${videoId}.html`;
-          console.log(`[Vidmoly] Intentando resolver: ${targetUrl}`);
-          const response = yield axios3.get(targetUrl, {
+          const response = yield fetch(targetUrl, {
             headers: {
               "Referer": redirectBase + "/",
-              // Streamflix usa el dominio base como referer
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-              "Accept": "text/html",
-              "X-Requested-With": "XMLHttpRequest"
-            },
-            timeout: 8e3
+              "Accept": "text/html"
+            }
           });
-          const html = response.data;
+          if (!response.ok)
+            return null;
+          const html = yield response.text();
           const match = html.match(/sources\s*:\s*\[\s*\{\s*file\s*:\s*["']([^"']+)["']/);
           if (match && match[1]) {
             return {
@@ -2369,19 +2370,8 @@ var require_vidmoly = __commonJS({
               }
             };
           }
-          const match2 = html.match(/file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/);
-          if (match2 && match2[1]) {
-            return {
-              url: match2[1],
-              quality: "HD",
-              serverName: "Vidmoly",
-              verified: true,
-              headers: { "Referer": targetUrl }
-            };
-          }
           return null;
         } catch (e) {
-          console.error(`[Vidmoly] Error: ${e.message}`);
           return null;
         }
       });
@@ -2393,83 +2383,55 @@ var require_vidmoly = __commonJS({
 // src/resolvers/rpmvid.js
 var require_rpmvid = __commonJS({
   "src/resolvers/rpmvid.js"(exports2, module2) {
-    var axios3 = require("axios");
+    var CryptoJS2 = require("crypto-js");
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
+        var _a;
         try {
-          const idMatch = embedUrl.match(/#([a-zA-Z0-9]+)/);
-          if (!idMatch)
-            return null;
-          const id = idMatch[1];
-          const urlObj = new URL(embedUrl);
-          const mainLink = `${urlObj.protocol}//${urlObj.host}`;
-          const apiUrl = `${mainLink}/api/v1/video?id=${id}&w=1920&h=1080`;
-          console.log(`[Rpmvid] Resolviendo ID: ${id} en ${mainLink}`);
-          const response = yield axios3.get(apiUrl, {
+          const id = embedUrl.split("/").pop().replace(".html", "");
+          const isUpns = embedUrl.includes("upns");
+          const apiDomain = isUpns ? "https://fuegocineplayer.upns.online" : "https://rpmvid.com";
+          const apiUrl = `${apiDomain}/api/v1/video`;
+          const response = yield fetch(apiUrl, {
+            method: "POST",
             headers: {
-              "Referer": mainLink,
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "X-Requested-With": "XMLHttpRequest",
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-              "X-Requested-With": "XMLHttpRequest"
+              "Referer": embedUrl
             },
-            timeout: 8e3
+            body: `url=${id}`
           });
-          const hexResponse = response.data;
-          if (!hexResponse || typeof hexResponse !== "string")
+          if (!response.ok)
             return null;
-          const decryptedJson = decryptHexPayload(hexResponse);
-          if (!decryptedJson)
+          const data = yield response.json();
+          if (data.status !== "success" || !data.payload)
             return null;
-          const data = JSON.parse(decryptedJson);
-          let videoUrl = "";
-          if (data.hls) {
-            videoUrl = `${mainLink}${data.hls}`;
-          } else if (data.hlsVideoTiktok) {
-            videoUrl = `${mainLink}${data.hlsVideoTiktok}`;
-          } else if (data.cf) {
-            videoUrl = data.cf;
-            if (data.cfExpire) {
-              const parts = data.cfExpire.split("::");
-              if (parts.length >= 2)
-                videoUrl += `?t=${parts[0]}&e=${parts[1]}`;
-            }
-          }
+          const key = CryptoJS2.enc.Utf8.parse("kiemtienmua911ca");
+          const iv = CryptoJS2.enc.Utf8.parse("1234567890oiuytr");
+          const decrypted = CryptoJS2.AES.decrypt(data.payload, key, {
+            iv,
+            mode: CryptoJS2.mode.CBC,
+            padding: CryptoJS2.pad.Pkcs7
+          }).toString(CryptoJS2.enc.Utf8);
+          const payload = JSON.parse(decrypted);
+          let videoUrl = payload.url || payload.sources && ((_a = payload.sources[0]) == null ? void 0 : _a.file);
           if (videoUrl) {
             if (videoUrl.includes(".txt"))
               videoUrl += "#index.m3u8";
             return {
               url: videoUrl,
               quality: "HD",
-              serverName: "UPNS/Rpmvid",
+              serverName: isUpns ? "UPNS" : "Rpmvid",
               verified: true,
-              headers: { "Referer": mainLink }
+              headers: { "Referer": apiDomain }
             };
           }
           return null;
         } catch (e) {
-          console.error(`[Rpmvid] Error: ${e.message}`);
           return null;
         }
       });
-    }
-    function decryptHexPayload(hex) {
-      try {
-        const CryptoJS2 = require("crypto-js");
-        const KEY = CryptoJS2.enc.Utf8.parse("kiemtienmua911ca");
-        const IV = CryptoJS2.enc.Utf8.parse("1234567890oiuytr");
-        const ciphertext = CryptoJS2.enc.Hex.parse(hex.replace(/[^0-9a-f]/gi, ""));
-        const decrypted = CryptoJS2.AES.decrypt(
-          { ciphertext },
-          KEY,
-          {
-            iv: IV,
-            mode: CryptoJS2.mode.CBC,
-            padding: CryptoJS2.pad.Pkcs7
-          }
-        );
-        return decrypted.toString(CryptoJS2.enc.Utf8);
-      } catch (e) {
-        return null;
-      }
     }
     module2.exports = { resolve: resolve3 };
   }
@@ -2478,14 +2440,18 @@ var require_rpmvid = __commonJS({
 // src/resolvers/generic_fuegocine.js
 var require_generic_fuegocine = __commonJS({
   "src/resolvers/generic_fuegocine.js"(exports2, module2) {
-    var axios3 = require("axios");
     function resolve3(embedUrl) {
       return __async(this, null, function* () {
         try {
-          const { data: html } = yield axios3.get(embedUrl, {
-            headers: { "Referer": "https://www.fuegocine.com/" },
-            timeout: 8e3
+          const response = yield fetch(embedUrl, {
+            headers: {
+              "Referer": "https://www.fuegocine.com/",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            }
           });
+          if (!response.ok)
+            return null;
+          const html = yield response.text();
           const m3u8 = html.match(/https?:\/\/[^"'\s]+\.m3u8[^"'\s]*/i);
           if (m3u8) {
             return {
