@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-05-04T21:18:11.351Z
+ * Generated: 2026-05-04T21:24:42.941Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -546,7 +546,7 @@ var require_engine = __commonJS({
       }
       return server || "Servidor";
     }
-    function finalizeStreams(streams, providerName, mediaTitle) {
+    function finalizeStreams2(streams, providerName, mediaTitle) {
       return __async(this, null, function* () {
         if (!Array.isArray(streams) || streams.length === 0)
           return [];
@@ -621,7 +621,7 @@ var require_engine = __commonJS({
         return processed;
       });
     }
-    module2.exports = { finalizeStreams, normalizeLanguage };
+    module2.exports = { finalizeStreams: finalizeStreams2, normalizeLanguage };
   }
 });
 
@@ -2270,7 +2270,7 @@ var require_resolvers = __commonJS({
       result.url = url;
       return result;
     }
-    function resolveEmbed(url, signal = null) {
+    function resolveEmbed2(url, signal = null) {
       return __async(this, null, function* () {
         if (!url)
           return null;
@@ -2366,11 +2366,13 @@ var require_resolvers = __commonJS({
         });
       });
     }
-    module2.exports = { resolveEmbed };
+    module2.exports = { resolveEmbed: resolveEmbed2 };
   }
 });
 
 // src/cuevana_unbuendato/index.js
+var { finalizeStreams } = require_engine();
+var { resolveEmbed } = require_resolvers();
 function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
     const visualLogs = [];
@@ -2382,7 +2384,8 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         headers: {}
       });
     };
-    addVisualLog(`Iniciando para: ${title || "Contenido"}`);
+    if (!tmdbId)
+      return [];
     try {
       const rawId = String(tmdbId).split(":")[0];
       const isMovie = mediaType === "movie" || mediaType === "movies";
@@ -2390,55 +2393,50 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       if (!isMovie && season && episode) {
         apiUrl += `&season=${season}&episode=${episode}`;
       }
-      addVisualLog(`Conectando a API...`);
+      addVisualLog(`Buscando ID:${rawId} (Solo Latino)`);
       const axios3 = require("axios");
-      let response;
-      try {
-        response = yield axios3.get(apiUrl, {
-          timeout: 1e4,
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-          }
-        });
-      } catch (netErr) {
-        addVisualLog(`Error de Red: ${netErr.message}`);
-        if (netErr.response)
-          addVisualLog(`HTTP Status: ${netErr.response.status}`);
-        return visualLogs;
-      }
+      const response = yield axios3.get(apiUrl, {
+        timeout: 1e4,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
       const data = response.data;
-      if (!data || !data.success) {
-        addVisualLog(`API Error: Success=${data ? data.success : "null"}`);
+      if (!data || !data.success || !data.languages) {
+        addVisualLog(`API: Sin resultados o fallo`);
         return visualLogs;
       }
-      addVisualLog(`Contenido Encontrado: ${data.title}`);
-      if (!data.languages) {
-        addVisualLog("Error: No se encontraron idiomas en API");
-        return visualLogs;
-      }
-      const { finalizeStreams } = require_engine();
-      const { resolveEmbed } = require_resolvers();
+      addVisualLog(`Contenido: ${data.title}`);
       const promises = [];
       const seenLinks = /* @__PURE__ */ new Set();
+      let latinoCount = 0;
+      const blacklist = ["netu", "waaw", "hqq", "streamtape", "mixdrop", "doodstream"];
       for (const [langKey, servers] of Object.entries(data.languages)) {
         const lKey = langKey.toLowerCase();
-        if (!lKey.includes("latino") && !lKey.includes("subtitulado") && !lKey.includes("sub"))
+        if (!lKey.includes("latino")) {
+          console.log(`[CuevanaUBD] Ignorando idioma: ${langKey}`);
           continue;
+        }
         for (const [serverKey, url] of Object.entries(servers)) {
           if (!url)
             continue;
           const sKey = serverKey.toLowerCase();
-          if (sKey.includes("netu") || sKey.includes("hqq") || sKey.includes("waaw") || sKey.includes("streamtape"))
+          const isBlacklisted = blacklist.some((b) => sKey.includes(b) || url.includes(b));
+          if (isBlacklisted) {
+            console.log(`[CuevanaUBD] Blacklist: ${serverKey}`);
             continue;
+          }
           if (seenLinks.has(url))
             continue;
           seenLinks.add(url);
+          latinoCount++;
           promises.push(
             resolveEmbed(url).then((res) => {
               if (res) {
                 return __spreadProps(__spreadValues({}, res), {
                   serverName: res.serverName || serverKey,
-                  Audio: langKey
+                  Audio: "Latino"
+                  // Forzamos etiqueta Latino
                 });
               }
               return null;
@@ -2446,16 +2444,21 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           );
         }
       }
+      addVisualLog(`Latino encontrados: ${latinoCount}`);
       const results = yield Promise.all(promises);
       const rawStreams = results.filter((r) => r !== null);
-      addVisualLog(`Resoluci\xF3n completa: ${rawStreams.length} links`);
-      if (rawStreams.length === 0) {
-        return visualLogs;
+      addVisualLog(`Listos para reproducir: ${rawStreams.length}`);
+      if (rawStreams.length === 0 && latinoCount > 0) {
+        addVisualLog("Error: Los enlaces latino no pudieron resolverse");
       }
       const finalResults = yield finalizeStreams(rawStreams, "Cuevana UBD", data.title);
-      return [...visualLogs, ...finalResults];
+      if (rawStreams.length > 0) {
+        return finalResults;
+      } else {
+        return visualLogs;
+      }
     } catch (e) {
-      addVisualLog(`Fallo General: ${e.message}`);
+      addVisualLog(`Fallo: ${e.message}`);
       return visualLogs;
     }
   });
