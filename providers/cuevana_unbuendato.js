@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-05-04T21:24:42.941Z
+ * Generated: 2026-05-04T21:26:44.142Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2393,7 +2393,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       if (!isMovie && season && episode) {
         apiUrl += `&season=${season}&episode=${episode}`;
       }
-      addVisualLog(`Buscando ID:${rawId} (Solo Latino)`);
+      addVisualLog(`Buscando ID:${rawId} (Filtro Latino)`);
       const axios3 = require("axios");
       const response = yield axios3.get(apiUrl, {
         timeout: 1e4,
@@ -2406,26 +2406,21 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         addVisualLog(`API: Sin resultados o fallo`);
         return visualLogs;
       }
-      addVisualLog(`Contenido: ${data.title}`);
       const promises = [];
       const seenLinks = /* @__PURE__ */ new Set();
       let latinoCount = 0;
-      const blacklist = ["netu", "waaw", "hqq", "streamtape", "mixdrop", "doodstream"];
+      const blacklist = ["netu", "waaw", "hqq", "mixdrop"];
       for (const [langKey, servers] of Object.entries(data.languages)) {
         const lKey = langKey.toLowerCase();
-        if (!lKey.includes("latino")) {
-          console.log(`[CuevanaUBD] Ignorando idioma: ${langKey}`);
+        if (!lKey.includes("latino"))
           continue;
-        }
         for (const [serverKey, url] of Object.entries(servers)) {
           if (!url)
             continue;
           const sKey = serverKey.toLowerCase();
           const isBlacklisted = blacklist.some((b) => sKey.includes(b) || url.includes(b));
-          if (isBlacklisted) {
-            console.log(`[CuevanaUBD] Blacklist: ${serverKey}`);
+          if (isBlacklisted)
             continue;
-          }
           if (seenLinks.has(url))
             continue;
           seenLinks.add(url);
@@ -2436,7 +2431,6 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                 return __spreadProps(__spreadValues({}, res), {
                   serverName: res.serverName || serverKey,
                   Audio: "Latino"
-                  // Forzamos etiqueta Latino
                 });
               }
               return null;
@@ -2444,19 +2438,16 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           );
         }
       }
-      addVisualLog(`Latino encontrados: ${latinoCount}`);
       const results = yield Promise.all(promises);
       const rawStreams = results.filter((r) => r !== null);
-      addVisualLog(`Listos para reproducir: ${rawStreams.length}`);
-      if (rawStreams.length === 0 && latinoCount > 0) {
-        addVisualLog("Error: Los enlaces latino no pudieron resolverse");
-      }
-      const finalResults = yield finalizeStreams(rawStreams, "Cuevana UBD", data.title);
-      if (rawStreams.length > 0) {
-        return finalResults;
-      } else {
+      if (rawStreams.length === 0) {
+        addVisualLog(`Buscado: ${data.title}`);
+        addVisualLog(`Encontrados: ${latinoCount} enlaces Latino`);
+        if (latinoCount > 0)
+          addVisualLog("Error: No se pudo resolver ning\xFAn enlace");
         return visualLogs;
       }
+      return yield finalizeStreams(rawStreams, "Cuevana UBD", data.title);
     } catch (e) {
       addVisualLog(`Fallo: ${e.message}`);
       return visualLogs;
