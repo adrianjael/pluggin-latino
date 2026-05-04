@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-05-04T20:34:59.525Z
+ * Generated: 2026-05-04T20:48:27.236Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1329,7 +1329,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       let displayTitle = title || "Contenido";
       const currentUA = getRandomUA();
       setSessionUA(currentUA);
-      console.log(`[Embed69] MOBILE-STRATEGY v7.9.3 | UA: ${currentUA.substring(0, 40)}...`);
+      console.log(`[Embed69] MOBILE-STRATEGY v2.9.2 | UA: ${currentUA.substring(0, 40)}...`);
       if (!rawId)
         return [];
       const tmdbIdOnly = String(tmdbId).split(":")[0];
@@ -1376,7 +1376,6 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
         if (item.sortedEmbeds && Array.isArray(item.sortedEmbeds)) {
           item.sortedEmbeds.forEach((embed) => {
             if (embed.link) {
-              console.log(`[DEBUG_EMBED] ${JSON.stringify(embed)}`);
               let decodedLink = embed.link;
               if (decodedLink.includes(".")) {
                 try {
@@ -1394,7 +1393,8 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
               const sLink = decodedLink.toLowerCase();
               const sName = (embed.servername || "").toLowerCase();
               const eType = (embed.type || "").toLowerCase();
-              if (sLink.includes("/d/") || sLink.includes("/download/") || sLink.includes("/get/") || sLink.includes("embed69.org/f/") || sLink.includes("mediafire.com") || sLink.includes("mega.nz") || sName.includes("download") || sName.includes("direct") || sName.includes("descarga") || eType.includes("download") || eType.includes("direct"))
+              const isDownload = sName.includes("download") || sName.includes("direct") || sName.includes("descarga") || eType.includes("download") || eType.includes("direct") || sLink.includes("/d/") || sLink.includes("/download/") || sLink.includes("/get/") || sLink.includes("mediafire.com") || sLink.includes("mega.nz") || sLink.includes("embed69.org/d/") || sLink.includes("gdrive");
+              if (isDownload)
                 return;
               if (seenUrls.has(decodedLink))
                 return;
@@ -1409,11 +1409,10 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
           });
         }
       });
-      console.log(`[Embed69] Processing ${batch.length} mirrors in batches of ${BATCH_SIZE}...`);
+      console.log(`[Embed69] Procesando ${batch.length} reproductores v\xE1lidos...`);
       const rawStreams = [];
       for (let i = 0; i < batch.length; i += BATCH_SIZE) {
         const currentBatch = batch.slice(i, i + BATCH_SIZE);
-        console.log(`[Embed69] Processing batch ${Math.floor(i / BATCH_SIZE) + 1} (${currentBatch.length} servers)`);
         const batchPromises = currentBatch.map((task) => {
           return Promise.race([
             resolveEmbedLocal(task.url, task.hint).then((res) => {
@@ -1422,9 +1421,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
               return __spreadProps(__spreadValues({}, res), { Audio: task.lang, serverLabel: task.server });
             }),
             new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), INDIVIDUAL_TIMEOUT))
-          ]).catch((err) => {
-            return null;
-          });
+          ]).catch(() => null);
         });
         const batchResults = yield Promise.all(batchPromises);
         batchResults.forEach((r) => {
@@ -1434,7 +1431,7 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
       }
       return yield finalizeStreams(rawStreams, "Embed69", displayTitle);
     } catch (error) {
-      console.error(`[Embed69] Critical Error: ${error.message}`);
+      console.error(`[Embed69] Error Cr\xEDtico: ${error.message}`);
       return [];
     }
   });

@@ -1,6 +1,6 @@
 /**
  * cuevana_unbuendato - Built from src/cuevana_unbuendato/
- * Generated: 2026-05-04T20:34:59.514Z
+ * Generated: 2026-05-04T20:43:09.629Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -2375,37 +2375,48 @@ var { finalizeStreams } = require_engine();
 var { resolveEmbed } = require_resolvers();
 function getStreams(tmdbId, mediaType, season, episode, title, year) {
   return __async(this, null, function* () {
+    const log = typeof logger !== "undefined" ? logger.log : console.log;
+    const errLog = typeof logger !== "undefined" ? logger.error : console.error;
     if (!tmdbId)
       return [];
-    const rawId = tmdbId.toString().includes(":") ? tmdbId.toString().split(":").find((x) => !isNaN(x) && x.length > 0) : tmdbId;
-    const isMovie = mediaType === "movie" || mediaType === "movies";
-    let apiUrl = `https://cuevana.unbuendato.com/?id=${rawId}`;
-    if (!isMovie && season && episode) {
-      apiUrl += `&season=${season}&episode=${episode}`;
-    }
-    const { fetchJson, getSessionUA } = require_http();
-    console.log(`[CuevanaUBD] API: ${apiUrl}`);
     try {
-      const data = yield fetchJson(apiUrl, {
+      const rawId = String(tmdbId).split(":")[0];
+      const isMovie = mediaType === "movie" || mediaType === "movies";
+      let apiUrl = `https://cuevana.unbuendato.com/?id=${rawId}`;
+      if (!isMovie && season && episode) {
+        apiUrl += `&season=${season}&episode=${episode}`;
+      }
+      log(`[CuevanaUBD] Iniciando b\xFAsqueda para ID: ${rawId} | API: ${apiUrl}`);
+      const axios3 = require("axios");
+      const response = yield axios3.get(apiUrl, {
+        timeout: 15e3,
         headers: {
-          "User-Agent": getSessionUA()
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "application/json"
         }
       });
-      if (!data.success || !data.languages) {
-        console.log("[CuevanaUBD] Sin resultados o API fall\xF3");
+      const data = response.data;
+      if (!data || !data.success || !data.languages) {
+        log(`[CuevanaUBD] Sin resultados en API (Success: ${data == null ? void 0 : data.success})`);
         return [];
       }
-      const rawStreams = [];
+      log(`[CuevanaUBD] API respondi\xF3 \xE9xito. Procesando lenguajes...`);
       const promises = [];
+      const seenLinks = /* @__PURE__ */ new Set();
       for (const [langKey, servers] of Object.entries(data.languages)) {
         const lKey = langKey.toLowerCase();
         if (!lKey.includes("latino") && !lKey.includes("subtitulado") && !lKey.includes("sub"))
           continue;
         const langLabel = langKey.charAt(0).toUpperCase() + langKey.slice(1);
         for (const [serverKey, url] of Object.entries(servers)) {
+          if (!url || typeof url !== "string")
+            continue;
           const sKey = serverKey.toLowerCase();
           if (sKey.includes("netu") || sKey.includes("hqq") || sKey.includes("waaw") || url.includes("netu") || url.includes("hqq") || url.includes("waaw"))
             continue;
+          if (seenLinks.has(url))
+            continue;
+          seenLinks.add(url);
           promises.push(
             resolveEmbed(url).then((res) => {
               if (res) {
@@ -2415,18 +2426,19 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
                 });
               }
               return null;
-            }).catch((e) => null)
+            }).catch((e) => {
+              log(`[CuevanaUBD] Error resolviendo ${serverKey}: ${e.message}`);
+              return null;
+            })
           );
         }
       }
       const results = yield Promise.all(promises);
-      results.forEach((r) => {
-        if (r)
-          rawStreams.push(r);
-      });
+      const rawStreams = results.filter((r) => r !== null);
+      log(`[CuevanaUBD] Enlaces extra\xEDdos: ${rawStreams.length}`);
       return yield finalizeStreams(rawStreams, "Cuevana UBD", data.title || title);
     } catch (e) {
-      console.error(`[CuevanaUBD] Error Cr\xEDtico: ${e.message}`);
+      errLog(`[CuevanaUBD] Fallo cr\xEDtico en ejecuci\xF3n: ${e.message}`);
       return [];
     }
   });
@@ -2434,5 +2446,5 @@ function getStreams(tmdbId, mediaType, season, episode, title, year) {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { getStreams };
 } else {
-  global.CuevanaUnBuenDatoModule = { getStreams };
+  global.getStreams = getStreams;
 }
