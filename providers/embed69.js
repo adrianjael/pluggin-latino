@@ -1,6 +1,6 @@
 /**
  * embed69 - Built from src/embed69/
- * Generated: 2026-05-04T21:37:46.632Z
+ * Generated: 2026-05-04T22:39:16.158Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -560,6 +560,22 @@ var require_mirrors = __commonJS({
       ],
       VIDSONIC: [
         "vidsonic.net"
+      ],
+      BARMONREY: [
+        "barmonrey.com"
+      ],
+      VIDMOLY: [
+        "vidmoly.biz",
+        "vidmoly.to"
+      ],
+      UNLIMPLAY: [
+        "unlimplay.com"
+      ],
+      KRAKENFILES: [
+        "krakenfiles.com"
+      ],
+      UPNS: [
+        "upns.online"
       ]
     };
     function isMirror2(url, groupName) {
@@ -711,8 +727,8 @@ var require_base64 = __commonJS({
     function localAtob2(input) {
       if (!input)
         return "";
+      let str = String(input).replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "").replace(/[\s\n\r\t]/g, "");
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-      let str = String(input).replace(/=+$/, "").replace(/[\s\n\r\t]/g, "");
       let output = "";
       if (str.length % 4 === 1)
         return "";
@@ -1093,20 +1109,12 @@ var require_filemoon = __commonJS({
                   const data = decrypted.includes("{") ? JSON.parse(decrypted) : null;
                   const directUrl = ((_b = (_a = data == null ? void 0 : data.sources) == null ? void 0 : _a[0]) == null ? void 0 : _b.url) || (data == null ? void 0 : data.url);
                   if (directUrl) {
-                    try {
-                      const vCheck = yield fetch(directUrl, { method: "HEAD", headers: { "User-Agent": UA_CHROME } });
-                      if (vCheck.status === 404) {
-                        console.log("[Filemoon] \u274C URL de video caducada (404).");
-                        return null;
-                      }
-                    } catch (ve) {
-                    }
                     return {
                       url: directUrl,
                       quality: ((_d = (_c = data == null ? void 0 : data.sources) == null ? void 0 : _c[0]) == null ? void 0 : _d.label) || "1080p",
                       verified: true,
                       serverName: "Filemoon",
-                      headers: { "User-Agent": UA_CHROME, "Referer": `https://${hostname}/`, "Origin": `https://${hostname}`, "x-embed-origin": "ww3.gnulahd.nu" }
+                      headers: { "User-Agent": UA_CHROME, "Referer": `https://${hostname}/`, "Origin": `https://${hostname}` }
                     };
                   }
                 }
@@ -1141,7 +1149,6 @@ var require_filemoon = __commonJS({
         }
       });
     }
-    module2.exports = { resolve };
     module2.exports = { resolve };
   }
 });
